@@ -190,6 +190,7 @@ class command_line:
     _defaults = { 'params'   : [],
                   'warn-all' : '0',
                   'quiet'    : '0',
+                  'force'    : '0',
                   'trace'    : '0',
                   'dry-run'  : '0',
                   'no-clean' : '0',
@@ -210,7 +211,8 @@ class command_line:
                    '--targetcxxflags' : '_targetcxxflags',
                    '--libstdcxxflags' : '_libstdcxxflags' }
 
-    _long_true_opts = { '--trace'    : '_trace',
+    _long_true_opts = { '--force'    : '_force',
+                        '--trace'    : '_trace',
                         '--dry-run'  : '_dry_run',
                         '--warn-all' : '_warn_all',
                         '--no-clean' : '_no_clean',
@@ -224,6 +226,7 @@ class command_line:
     def _help(self):
         print '%s: [options] [args]' % (self.command_name)
         print 'Options and arguments:'
+        print '--force                : Create directories that are not present'
         print '--trace                : Trace the execution (not current used)'
         print '--dry-run              : Do everything but actually run the build'
         print '--warn-all             : Generate warnings'
@@ -360,7 +363,9 @@ class command_line:
                                 if not lo:
                                     raise error.general('invalid argument: ' + a)
                 else:
-                    if a == '-n':
+                    if a == '-f':
+                        self.opts['force'] = '1'
+                    elif a == '-n':
                         self.opts['dry-run'] = '1'
                     elif a == '-q':
                         self.opts['quiet'] = '1'
@@ -394,6 +399,9 @@ class command_line:
 
     def command(self):
         return os.path.join(self.command_path, self.command_name)
+
+    def force(self):
+        return self.opts['force'] != '0'
 
     def dry_run(self):
         return self.opts['dry-run'] != '0'
