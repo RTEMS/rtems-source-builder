@@ -119,7 +119,10 @@ class build:
 
     def get_file(self, url, local):
         if not os.path.isdir(os.path.dirname(local)):
-            raise error.general('source path not found: ' + os.path.dirname(local))
+            if not self.opts.force():
+                raise error.general('source path not found: %s; (--force to create)' \
+                                        % (os.path.dirname(local)))
+            self.mkdir(os.path.dirname(local))
         if not os.path.exists(local):
             #
             # Not localy found so we need to download it. Check if a URL
