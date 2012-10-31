@@ -54,6 +54,7 @@ def load():
         'optflags':                '-O2 -fasynchronous-unwind-tables',
         '_smp_mflags':             smp_mflags,
         '__sh':                    'sh',
+        '__id':                    'id',
         '_buildshell':             '%{__sh}',
         '___setup_shell':          '%{__sh}',
         # Build flags
