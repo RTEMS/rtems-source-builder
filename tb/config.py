@@ -213,16 +213,20 @@ class file:
             s += str(self._packages[_package])
         return s
 
+    def _name_line_msg(self,  msg):
+        return '%s:%d: %s' % (os.path.basename(self.name), self.lc,  msg)
+
     def _output(self, text):
         if not self.opts.quiet():
             log.output(text)
 
     def _warning(self, msg):
-        self._output('warning: ' + self.name + ':' + str(self.lc) + ': ' + msg)
+        self._output('warning: %s' % (self._name_line_msg(msg)))
 
     def _error(self, msg):
-        print >> sys.stderr, \
-            'error: ' + self.name + ':' + str(self.lc) + ': ' + msg
+        err = 'error: %s' % (self._name_line_msg(msg))
+        print >> sys.stderr, err
+        self._output(err)
         self.in_error = True
         if not self.opts.dry_run():
             print >> sys.stderr, 'warning: switched to dry run due to errors'
@@ -597,7 +601,10 @@ class file:
                         return ('package', name)
                 elif ls[0] == '%error':
                     if isvalid:
-                        return ('data', ['%%error %s:%d: %s' % (self.name, self.lc, l[7:])])
+                        return ('data', ['%%error %s' % (self._name_line_msg(l[7:]))])
+                elif ls[0] == '%warning':
+                    if isvalid:
+                        return ('data', ['%%warning %s' % (self._name_line_msg(l[9:]))])
                 elif ls[0] == '%define' or ls[0] == '%global':
                     if isvalid:
                         self._define(config, ls)
@@ -773,6 +780,9 @@ class file:
                         l = self._expand(l)
                         if l.startswith('%error'):
                             raise error.general('config error: %s' % (l[7:]))
+                        elif l.startswith('%warning'):
+                            print >> sys.stderr, 'warning: %s' % (l[9:])
+                            self._warning(l[9:])
                         if not dir:
                             ls = self.tags.split(l, 1)
                             if self.opts.trace():
@@ -815,6 +825,9 @@ class file:
             else:
                 raise error.general('macro "' + name + '" not found')
         return self._expand(d)
+
+    def set_define(self, name, value):
+        self.defines[name.lower()] = value
 
     def expand(self, line):
         return self._expand(line)

@@ -1,0 +1,13 @@
+--- texane-stlink-3494c11.orig/configure.ac	2012-10-31 11:40:49.000000000 +1100
++++ texane-stlink-3494c11/configure.ac	2012-10-31 10:34:57.000000000 +1100
+@@ -21,9 +21,7 @@
+ AC_REPLACE_FUNCS(mmap)
+ 
+ # Checks for libraries.
+-PKG_CHECK_MODULES(USB, libusb-1.0 >= 1.0.0,,
+-                 AC_MSG_ERROR([*** Required libusb-1.0 >= 1.0.0 not installed ***]))
+-AC_CHECK_LIB([usbpath],[usb_path2devnum],,,-lusb)
++AC_CHECK_HEADER([libusb.h], [USB_LIBS="-lusb-1.0"])
+ 
+ LIBS="$LIBS $USB_LIBS"
+ CFLAGS="$CFLAGS $USB_CFLAGS"

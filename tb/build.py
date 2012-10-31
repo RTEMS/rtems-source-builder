@@ -142,7 +142,14 @@ class build:
                         url_file = url_path[slash + 1:]
                     urls.append(urlparse.urljoin(base, url_file))
             urls.append(url)
+            if self.opts.trace():
+                print '_url:', ','.join(urls), '->', local
             for url in urls:
+                #
+                # Hack for GitHub.
+                #
+                if url.startswith('https://api.github.com'):
+                    url = urlparse.urljoin(url, self.config.expand('tarball/%{version}'))
                 _notice(self.opts, 'download: ' + url + ' -> ' + local)
                 if not self.opts.dry_run():
                     failed = False
@@ -153,11 +160,13 @@ class build:
                         _out = open(local, 'wb')
                         _out.write(_in.read())
                     except IOError, err:
-                        _notice(self.opts, 'download: ' + url + ': failed: ' + str(err))
+                        msg = 'download: %s: error: %s' % (url, str(err))
+                        _notice(self.opts, msg)
                         if os.path.exists(local):
                             os.remove(local)
                         failed = True
                     except:
+                        print >> sys.stderr, msg
                         if _out is not None:
                             _out.close()
                         raise
@@ -169,9 +178,9 @@ class build:
                         if not os.path.isfile(local):
                             raise error.general('source is not a file: ' + local)
                         return
-            raise error.general('downloading ' + url + ': all paths have failed, giving up')
+            raise error.general('downloading %s: all paths have failed, giving up', url)
 
-    def parse_url(self, url):
+    def parse_url(self, url, pathkey):
         #
         # Split the source up into the parts we need.
         #
@@ -183,7 +192,7 @@ class build:
         #
         # Get the file. Checks the local source directory first.
         #
-        source['local'] = os.path.join(self.config.abspath('_sourcedir'),
+        source['local'] = os.path.join(self.config.abspath(pathkey),
                                        source['file'])
         #
         # Is the file compressed ?
@@ -215,7 +224,7 @@ class build:
                     break
         if url is None:
             raise error.general('source tag not found: source' + str(source_tag))
-        source = self.parse_url(url)
+        source = self.parse_url(url, '_sourcedir')
         self.get_file(source['url'], source['local'])
         if 'compressed' in source:
             source['script'] = source['compressed'] + ' ' + \
@@ -237,7 +246,15 @@ class build:
                 break
         if url is None:
             raise error.general('patch tag not found: ' + args[0])
-        patch = self.parse_url(url)
+        #
+        # Parse the URL first in the source builder's patch directory.
+        #
+        patch = self.parse_url(url, '_patchdir')
+        #
+        # If not in the source builder package check the source directory.
+        #
+        if not os.path.isfile(patch['local']):
+            patch = self.parse_url(url, '_sourcedir')
         self.get_file(patch['url'], patch['local'])
         if 'compressed' in patch:
             patch['script'] = patch['compressed'] + ' ' +  patch['local']
@@ -354,12 +371,14 @@ class build:
             prefixbase = ''
         inpath = os.path.join('%{buildroot}', prefixbase)
         tardir = os.path.abspath(self.config.expand('%{_tardir}'))
-        self.script.append('mkdir -p %s' % tardir)
-        self.script.append(self.config.expand('cd ' + inpath))
+        self.script.append(self.config.expand('if test -d %s; then' % (inpath)))
+        self.script.append('  mkdir -p %s' % tardir)
+        self.script.append(self.config.expand('  cd ' + inpath))
         tar = os.path.join(tardir, package.long_name() + '.tar.bz2')
-        cmd = self.config.expand('%{__tar} -cf - . ' + '| %{__bzip2} > ' + tar)
+        cmd = self.config.expand('  %{__tar} -cf - . ' + '| %{__bzip2} > ' + tar)
         self.script.append(cmd)
-        self.script.append(self.config.expand('cd %{_builddir}'))
+        self.script.append(self.config.expand('  cd %{_builddir}'))
+        self.script.append('fi')
 
     def clean(self, package):
         self.script.append('echo "==> %clean:"')
@@ -378,7 +397,7 @@ class build:
             _notice(self.opts, 'cleanup: %s' % (builddir))
             self.rmdir(builddir)
 
-    def make(self):
+    def make(self, path):
         packages = self.config.packages()
         package = packages['main']
         name = package.name()

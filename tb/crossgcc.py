@@ -66,30 +66,34 @@ class crossgcc:
             log.output(text)
 
     def copy(self, src, dst):
-        what = '%s -> %s' % (src, dst)
-        _notice(self.opts, 'coping: %s' % (what))
-        if not self.opts.dry_run():
-            try:
-                files = distutils.dir_util.copy_tree(src, dst)
-                for f in files:
-                    self._output(f)
-            except IOError, err:
-                raise error.general('coping tree: %s: %s' % (what, str(err)))
-            except distutils.errors.DistutilsFileError, err:
-                raise error.general('coping tree: %s' % (str(err)))
+        if os.path.isdir(src):
+            topdir = self.opts.expand('%{_topdir}', self.defaults)
+            what = '%s -> %s' % (src[len(topdir) + 1:], dst[len(topdir) + 1:])
+            _notice(self.opts, 'installing: %s' % (what))
+            if not self.opts.dry_run():
+                try:
+                    files = distutils.dir_util.copy_tree(src, dst)
+                    for f in files:
+                        self._output(f)
+                except IOError, err:
+                    raise error.general('installing tree: %s: %s' % (what, str(err)))
+                except distutils.errors.DistutilsFileError, err:
+                    raise error.general('installing tree: %s' % (str(err)))
 
     def first_package(self, _build):
-        what = _build.config.expand('crossgcc-%(%{__id_u} -n)-' + _build.name())
-        path = os.path.join(_build.config.abspath('%{_tmppath}'), what)
-        _build.rmdir(path)
-        _build.mkdir(path)
-        prefix = os.path.join(_build.config.expand('%{_prefix}'), 'bin')
+        tmproot = os.path.abspath(_build.config.expand('%{_tmproot}'))
+        _build.rmdir(tmproot)
+        _build.mkdir(tmproot)
+        prefix = _build.config.expand('%{_prefix}')
         if prefix[0] == os.sep:
             prefix = prefix[1:]
-        binpath = os.path.join(path, prefix)
-        os.environ['PATH'] = binpath + os.pathsep + os.environ['PATH']
+        tmpprefix = os.path.join(tmproot, prefix)
+        tmpbindir = os.path.join(tmpprefix, 'bin')
+        os.environ['TB_TMPPREFIX'] = tmpprefix
+        os.environ['TB_TMPBINDIR'] = tmpbindir
+        os.environ['PATH'] = tmpbindir + os.pathsep + os.environ['PATH']
         self._output('path: ' + os.environ['PATH'])
-        return path
+        return tmproot
 
     def every_package(self, _build, path):
         self.copy(_build.config.abspath('%{buildroot}'), path)
@@ -116,6 +120,8 @@ class crossgcc:
             return line.strip()
 
         extoolset = self.opts.expand(self.toolset, self.defaults)
+
+        self.defaults['_toolset'] = extoolset
 
         root, ext = os.path.splitext(extoolset)
 
@@ -202,7 +208,7 @@ class crossgcc:
                 b = build.build(configs[s], _defaults = self.defaults, opts = self.opts)
                 if s == 0:
                     path = self.first_package(b)
-                b.make()
+                b.make(path)
                 self.every_package(b, path)
                 if s == len(configs) - 1:
                     self.last_package(b, path)

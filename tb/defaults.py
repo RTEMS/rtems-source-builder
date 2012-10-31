@@ -49,9 +49,11 @@ defaults = {
 '_configdir':     '%{_topdir}/config:%{_tbdir}/config',
 '_tardir':        '%{_topdir}/tar',
 '_sourcedir':     '%{_topdir}/sources',
+'_patchdir':      '%{_tbdir}/patches',
 '_builddir':      '%{_topdir}/build/%{name}-%{version}-%{release}',
 '_docdir':        '%{_defaultdocdir}',
 '_tmppath':       '%{_topdir}/build/tmp',
+'_tmproot':       '%{_tmppath}/source-build-%(%{__id_u} -n)/%{_toolset}',
 'buildroot:':     '%{_tmppath}/%{name}-root-%(%{__id_u} -n)',
 
 # Defaults, override in platform specific modules.
