@@ -28,8 +28,14 @@ import os
 
 import error
 import execute
+import path
 
 basepath = 'sb'
+
+#
+# All paths in defaults must be Unix format. Do not store any Windows format
+# paths in the defaults.
+#
 
 defaults = {
 # Nothing
@@ -53,7 +59,7 @@ defaults = {
 '_builddir':      '%{_topdir}/build/%{name}-%{version}-%{release}',
 '_docdir':        '%{_defaultdocdir}',
 '_tmppath':       '%{_topdir}/build/tmp',
-'_tmproot':       '%{_tmppath}/source-build-%(%{__id_u} -n)/%{_toolset}',
+'_tmproot':       '%{_tmppath}/source-build-%(%{__id_u} -n)/%{_bset}',
 'buildroot:':     '%{_tmppath}/%{name}-root-%(%{__id_u} -n)',
 
 # Defaults, override in platform specific modules.
@@ -199,19 +205,21 @@ class command_line:
                   'no-smp'   : '0',
                   'rebuild'  : '0' }
 
-    _long_opts = { '--prefix'         : '_prefix',
-                   '--prefixbase'     : '_prefixbase',
-                   '--topdir'         : '_topdir',
-                   '--configdir'      : '_configdir',
-                   '--builddir'       : '_builddir',
-                   '--sourcedir'      : '_sourcedir',
-                   '--usrlibrpm'      : '_usrlibrpm', # XXX remove ?
-                   '--tmppath'        : '_tmppath',
-                   '--log'            : '_logfile',
-                   '--url'            : '_url_base',
-                   '--targetcflags'   : '_targetcflags',
-                   '--targetcxxflags' : '_targetcxxflags',
-                   '--libstdcxxflags' : '_libstdcxxflags' }
+    #
+    # The define and if it is a path and needs conversion.
+    #
+    _long_opts = { '--prefix'         : ('_prefix', True),
+                   '--prefixbase'     : ('_prefixbase', True),
+                   '--topdir'         : ('_topdir', True),
+                   '--configdir'      : ('_configdir', True),
+                   '--builddir'       : ('_builddir', True),
+                   '--sourcedir'      : ('_sourcedir', True),
+                   '--tmppath'        : ('_tmppath', True),
+                   '--log'            : ('_logfile', False),
+                   '--url'            : ('_url_base', False),
+                   '--targetcflags'   : ('_targetcflags', False),
+                   '--targetcxxflags' : ('_targetcxxflags', False),
+                   '--libstdcxxflags' : ('_libstdcxxflags', False) }
 
     _long_true_opts = { '--force'    : '_force',
                         '--trace'    : '_trace',
@@ -256,15 +264,15 @@ class command_line:
         raise error.exit()
 
     def __init__(self, argv):
-        self.command_path = os.path.dirname(argv[0])
+        self.command_path = path.dirname(argv[0])
         if len(self.command_path) == 0:
             self.command_path = '.'
-        self.command_name = os.path.basename(argv[0])
+        self.command_name = path.basename(argv[0])
         self.args = argv[1:]
         self.defaults = {}
         for to in command_line._long_true_opts:
             self.defaults[command_line._long_true_opts[to]] = '0'
-        self.defaults['_sbdir'] = self.command_path
+        self.defaults['_sbdir'] = path.shell(self.command_path)
         self._process()
 
     def __str__(self):
@@ -295,9 +303,11 @@ class command_line:
                         value = args[arg]
                     else:
                         value = opt[equals + 1:]
-                    return lo, long_opts[lo], value, arg
+                    if long_opts[lo][1]:
+                        value = path.shell(value)
+                    return lo, long_opts[lo][0], value, arg
                 elif opt == lo:
-                    return lo, long_opts[lo], True, arg
+                    return lo, long_opts[lo][0], True, arg
             return None, None, None, arg
 
         self.opts = command_line._defaults
@@ -337,8 +347,8 @@ class command_line:
                                     # make sure it is ok.
                                     #
                                     e = execute.capture_execution()
-                                    config_sub = os.path.join(self.command_path,
-                                                              basepath, 'config.sub')
+                                    config_sub = path.join(self.command_path,
+                                                           basepath, 'config.sub')
                                     exit_code, proc, output = e.shell(config_sub + ' ' + value)
                                     if exit_code == 0:
                                         value = output
@@ -401,7 +411,7 @@ class command_line:
         return s
 
     def command(self):
-        return os.path.join(self.command_path, self.command_name)
+        return path.join(self.command_path, self.command_name)
 
     def force(self):
         return self.opts['force'] != '0'
@@ -434,17 +444,24 @@ class command_line:
         return self.opts['params']
 
     def get_config_files(self, config):
+        #
+        # Convert to shell paths and return shell paths.
+        #
+        config = path.shell(config)
         if config.find('*') >= 0 or config.find('?'):
-            configdir = os.path.dirname(config)
-            configbase = os.path.basename(config)
+            configdir = path.dirname(config)
+            configbase = path.basename(config)
             if len(configbase) == 0:
                 configbase = '*'
             if len(configdir) == 0:
                 configdir = self.expand(defaults['_configdir'], defaults)
-            if not os.path.isdir(configdir):
-                raise error.general('configdir is not a directory or does not exist: ' + configdir)
-            files = glob.glob(os.path.join(configdir, configbase))
-            configs = files
+            hostconfigdir = path.host(configdir)
+            if not os.path.isdir(hostconfigdir):
+                raise error.general('configdir is not a directory or does not exist: %s' % (hostconfigdir))
+            files = glob.glob(os.path.join(hostconfigdir, configbase))
+            configs = []
+            for f in files:
+                configs += path.shell(f)
         else:
             configs = [config]
         return configs

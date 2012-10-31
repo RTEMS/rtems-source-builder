@@ -35,9 +35,10 @@ import defaults
 import error
 import execute
 import log
+import path
 
 #
-# Version of Tools Builder.
+# Version of Sourcer Builder Build.
 #
 version = '0.1'
 
@@ -72,10 +73,10 @@ class script:
     def write(self, name, check_for_errors = False):
         s = None
         try:
-            s = open(name, 'w')
+            s = open(path.host(name), 'w')
             s.write('\n'.join(self.body))
             s.close()
-            os.chmod(name, stat.S_IRWXU | \
+            os.chmod(path.host(name), stat.S_IRWXU | \
                          stat.S_IRGRP | stat.S_IXGRP | \
                          stat.S_IROTH | stat.S_IXOTH)
         except IOError, err:
@@ -100,33 +101,33 @@ class build:
         if not self.opts.quiet():
             log.output(text)
 
-    def rmdir(self, path):
-        self._output('removing: ' + path)
+    def rmdir(self, rmpath):
+        self._output('removing: %s' % (path.host(rmpath)))
         if not self.opts.dry_run():
-            if os.path.exists(path):
+            if path.exists(rmpath):
                 try:
-                    shutil.rmtree(path)
+                    shutil.rmtree(path.host(rmpath))
                 except IOError, err:
-                    raise error.error('error removing: ' + path)
+                    raise error.error('error removing: %s' % (path.host(rmpath)))
 
-    def mkdir(self, path):
-        self._output('making dir: ' + path)
+    def mkdir(self, mkpath):
+        self._output('making dir: %s' % (path.host(mkpath)))
         if not self.opts.dry_run():
             try:
-                os.makedirs(path)
+                os.makedirs(path.host(mkpath))
             except IOError, err:
-                raise error.general('error creating path: ' + path)
+                raise error.general('error creating path: %s' % (path.host(path)))
 
     def get_file(self, url, local):
-        if not os.path.isdir(os.path.dirname(local)):
+        if not path.isdir(path.dirname(local)):
             if not self.opts.force():
                 raise error.general('source path not found: %s; (--force to create)' \
-                                        % (os.path.dirname(local)))
-            self.mkdir(os.path.dirname(local))
-        if not os.path.exists(local):
+                                        % (path.host(path.dirname(local))))
+            self.mkdir(path.host(path.dirname(local)))
+        if not path.exists(local):
             #
-            # Not localy found so we need to download it. Check if a URL
-            # has been provided on the command line.
+            # Not localy found so we need to download it. Check if a URL has
+            # been provided on the command line.
             #
             url_bases = self.opts.urls()
             urls = []
@@ -150,20 +151,20 @@ class build:
                 #
                 if url.startswith('https://api.github.com'):
                     url = urlparse.urljoin(url, self.config.expand('tarball/%{version}'))
-                _notice(self.opts, 'download: ' + url + ' -> ' + local)
+                _notice(self.opts, 'download: %s -> %s' % (url, path.host(local)))
                 if not self.opts.dry_run():
                     failed = False
                     _in = None
                     _out = None
                     try:
                         _in = urllib2.urlopen(url)
-                        _out = open(local, 'wb')
+                        _out = open(path.host(local), 'wb')
                         _out.write(_in.read())
                     except IOError, err:
                         msg = 'download: %s: error: %s' % (url, str(err))
                         _notice(self.opts, msg)
-                        if os.path.exists(local):
-                            os.remove(local)
+                        if path.exists(local):
+                            os.remove(path.host(local))
                         failed = True
                     except:
                         print >> sys.stderr, msg
@@ -175,8 +176,8 @@ class build:
                     if _in is not None:
                         del _in
                     if not failed:
-                        if not os.path.isfile(local):
-                            raise error.general('source is not a file: ' + local)
+                        if not path.isfile(local):
+                            raise error.general('source is not a file: %s' % (path.host(local)))
                         return
             raise error.general('downloading %s: all paths have failed, giving up' % (url))
 
@@ -186,14 +187,13 @@ class build:
         #
         source = {}
         source['url'] = url
-        source['path'] = os.path.dirname(url)
-        source['file'] = os.path.basename(url)
-        source['name'], source['ext'] = os.path.splitext(source['file'])
+        source['path'] = path.dirname(url)
+        source['file'] = path.basename(url)
+        source['name'], source['ext'] = path.splitext(source['file'])
         #
         # Get the file. Checks the local source directory first.
         #
-        source['local'] = os.path.join(self.config.abspath(pathkey),
-                                       source['file'])
+        source['local'] = path.join(self.config.abspath(pathkey), source['file'])
         #
         # Is the file compressed ?
         #
@@ -223,7 +223,7 @@ class build:
                     url = sources[s][0]
                     break
         if url is None:
-            raise error.general('source tag not found: source' + str(source_tag))
+            raise error.general('source tag not found: source%d' % (source_tag))
         source = self.parse_url(url, '_sourcedir')
         self.get_file(source['url'], source['local'])
         if 'compressed' in source:
@@ -245,7 +245,7 @@ class build:
                 url = patches[p][0]
                 break
         if url is None:
-            raise error.general('patch tag not found: ' + args[0])
+            raise error.general('patch tag not found: %s' % (args[0]))
         #
         # Parse the URL first in the source builder's patch directory.
         #
@@ -253,7 +253,7 @@ class build:
         #
         # If not in the source builder package check the source directory.
         #
-        if not os.path.isfile(patch['local']):
+        if not path.isfile(patch['local']):
             patch = self.parse_url(url, '_sourcedir')
         self.get_file(patch['url'], patch['local'])
         if 'compressed' in patch:
@@ -264,7 +264,7 @@ class build:
         self.script.append(self.config.expand(patch['script']))
 
     def setup(self, package, args):
-        self._output('prep: ' + package.name() + ': ' + ' '.join(args))
+        self._output('prep: %s: %s' % (package.name(), ' '.join(args)))
         opts, args = getopt.getopt(args[1:], 'qDcTn:b:a:')
         source_tag = 0
         quiet = False
@@ -287,7 +287,7 @@ class build:
             elif o[0] == '-b':
                 unpack_before_chdir = True
                 if not o[1].isdigit():
-                    raise error.general('setup source tag no a number: ' + o[1])
+                    raise error.general('setup source tag no a number: %s' % (o[1]))
                 source_tag = int(o[1])
             elif o[0] == '-a':
                 unpack_before_chdir = False
@@ -328,7 +328,7 @@ class build:
         e = execute.capture_execution(log = log.default, dump = self.opts.quiet())
         cmd = self.config.expand('%{___build_shell} -ex ' + shell_opts + ' ' + command)
         self._output('run: ' + cmd)
-        exit_code, proc, output = e.shell(cmd, cwd = cwd)
+        exit_code, proc, output = e.shell(cmd, cwd = path.host(cwd))
         if exit_code != 0:
             raise error.general('shell cmd failed: ' + cmd)
 
@@ -369,12 +369,12 @@ class build:
         prefixbase = self.opts.prefixbase()
         if prefixbase is None:
             prefixbase = ''
-        inpath = os.path.join('%{buildroot}', prefixbase)
-        tardir = os.path.abspath(self.config.expand('%{_tardir}'))
+        inpath = path.join('%{buildroot}', prefixbase)
+        tardir = path.abspath(self.config.expand('%{_tardir}'))
         self.script.append(self.config.expand('if test -d %s; then' % (inpath)))
         self.script.append('  mkdir -p %s' % tardir)
         self.script.append(self.config.expand('  cd ' + inpath))
-        tar = os.path.join(tardir, package.long_name() + '.tar.bz2')
+        tar = path.join(tardir, package.long_name() + '.tar.bz2')
         cmd = self.config.expand('  %{__tar} -cf - . ' + '| %{__bzip2} > ' + tar)
         self.script.append(cmd)
         self.script.append(self.config.expand('  cd %{_builddir}'))
@@ -397,7 +397,7 @@ class build:
             _notice(self.opts, 'cleanup: %s' % (builddir))
             self.rmdir(builddir)
 
-    def make(self, path):
+    def make(self):
         packages = self.config.packages()
         package = packages['main']
         name = package.name()
@@ -413,7 +413,7 @@ class build:
             self.clean(package)
         if not self.opts.dry_run():
             self.builddir()
-            sn = self.config.expand(os.path.join('%{_builddir}', 'doit'))
+            sn = path.join(self.config.expand('%{_builddir}'), 'doit')
             self._output('write script: ' + sn)
             self.script.write(sn)
             _notice(self.opts, 'building: ' + name)
@@ -428,7 +428,7 @@ def run(args):
     try:
         opts, _defaults = defaults.load(args)
         log.default = log.log(opts.logfiles())
-        _notice(opts, 'Tools Builder, v%s' % (version))
+        _notice(opts, 'Source Builder, Package Builder v%s' % (version))
         for config_file in opts.config_files():
             b = build(config_file, _defaults = _defaults, opts = opts)
             b.make()

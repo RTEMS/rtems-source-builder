@@ -33,6 +33,7 @@ import defaults
 import error
 import execute
 import log
+import path
 
 class package:
 
@@ -75,7 +76,7 @@ class package:
 
     def get_info(self, info):
         if not info in self.infos:
-            raise error.general('no ' + info + ' in package "' + self.name + '"')
+            raise error.general('no %s in package "%s"' % (info, self.name))
         return self.info
 
     def version(self):
@@ -214,7 +215,7 @@ class file:
         return s
 
     def _name_line_msg(self,  msg):
-        return '%s:%d: %s' % (os.path.basename(self.name), self.lc,  msg)
+        return '%s:%d: %s' % (path.basename(self.name), self.lc,  msg)
 
     def _output(self, text):
         if not self.opts.quiet():
@@ -305,7 +306,7 @@ class file:
                 if exit_code == 0:
                     line = line.replace(s, output)
                 else:
-                    raise error.general('shell macro failed: ' + s + ': ' + output)
+                    raise error.general('shell macro failed: %s: %s' % (s, output))
         return line
 
     def _expand(self, s):
@@ -366,7 +367,7 @@ class file:
                     colon = m[start:].find(':')
                     if colon < 0:
                         if not m.endswith('}'):
-                            self._warning("malform conditional macro'" + m)
+                            self._warning("malform conditional macro '%s'" % (m))
                             mn = None
                         else:
                             mn = self._label(m[start:-1])
@@ -394,7 +395,7 @@ class file:
                         s = s.replace(m, self.defines[mn.lower()])
                         expanded = True
                     elif show_warning:
-                        self._error("macro '" + mn + "' not found")
+                        self._error("macro '%s' not found" % (mn))
         return self._shell(s)
 
     def _define(self, config, ls):
@@ -409,7 +410,7 @@ class file:
                     self.defines[d] = ls[2].strip()
             else:
                 if self.opts.warn_all():
-                    self._warning("macro '" + d + "' already defined")
+                    self._warning("macro '%s' already defined" % (d))
 
     def _undefine(self, config, ls):
         if len(ls) <= 1:
@@ -417,7 +418,7 @@ class file:
         else:
             mn = self._label(ls[1])
             if mn in self.defines:
-                self._error("macro '" + mn + "' not defined")
+                self._error("macro '%s' not defined" % (mn))
             del self.defines[mn]
 
     def _ifs(self, config, ls, label, iftrue, isvalid):
@@ -719,16 +720,16 @@ class file:
         else:
             configname = '%s.cfg' % (exname)
 
-        cfgname = os.path.basename(configname)
+        cfgname = path.basename(configname)
 
-        if not os.path.exists(configname):
+        if not path.exists(configname):
             if ':' in configname:
-                configdirs = os.path.dirname(configname).split(':')
+                configdirs = path.dirname(configname).split(':')
             else:
                 configdirs = self.define('_configdir').split(':')
             for cp in configdirs:
-                configname = os.path.join(os.path.abspath(cp), cfgname)
-                if os.path.exists(configname):
+                configname = path.join(path.abspath(cp), cfgname)
+                if path.exists(configname):
                     break
                 configname = None
             if configname is None:
@@ -736,10 +737,10 @@ class file:
 
         try:
             if self.opts.trace():
-                print '_open: %s' % (configname)
-            config = open(configname, 'r')
+                print '_open: %s' % (path.host(configname))
+            config = open(path.host(configname), 'r')
         except IOError, err:
-            raise error.general('error opening config file: %s' % (configname))
+            raise error.general('error opening config file: %s' % (path.host(configname)))
         self.configpath += [configname]
 
         try:
@@ -768,7 +769,7 @@ class file:
                             _package = r[2][0]
                         else:
                             if r[2][0].strip() != '-n':
-                                self._warning("unknown directive option: '" + ' '.join(r[2]) + "'")
+                                self._warning("unknown directive option: '%s'" % (' '.join(r[2])))
                             _package = r[2][1].strip()
                         self._set_package(_package)
                     if dir and dir != r[1]:
@@ -840,8 +841,8 @@ class file:
                                     '" not found in package "' + _package + '"')
         return self._packages[_package].directives[name]
 
-    def abspath(self, path):
-        return os.path.abspath(self.define(path))
+    def abspath(self, rpath):
+        return path.abspath(self.define(rpath))
 
     def packages(self):
         return self._packages

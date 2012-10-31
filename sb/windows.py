@@ -59,7 +59,7 @@ def load():
         # Build flags
         'optflags':                '-O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions --param=ssp-buffer-size=4 -mms-bitfields'
         }
-    Return defines
+    return defines
 
 if __name__ == '__main__':
     pprint.pprint(load())
