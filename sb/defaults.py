@@ -29,7 +29,7 @@ import os
 import error
 import execute
 
-basepath = 'tb'
+basepath = 'sb'
 
 defaults = {
 # Nothing
@@ -44,12 +44,12 @@ defaults = {
 '_host_platform': '%{_host_cpu}-%{_host_vendor}-%{_host_os}%{?_gnu}',
 '_build':         '%{_host}',
 '_arch':          '%{_host_arch}',
-'_tbdir':         '',
+'_sbdir':         '',
 '_topdir':        os.getcwd(),
-'_configdir':     '%{_topdir}/config:%{_tbdir}/config',
+'_configdir':     '%{_topdir}/config:%{_sbdir}/config',
 '_tardir':        '%{_topdir}/tar',
 '_sourcedir':     '%{_topdir}/sources',
-'_patchdir':      '%{_tbdir}/patches',
+'_patchdir':      '%{_sbdir}/patches',
 '_builddir':      '%{_topdir}/build/%{name}-%{version}-%{release}',
 '_docdir':        '%{_defaultdocdir}',
 '_tmppath':       '%{_topdir}/build/tmp',
@@ -131,23 +131,23 @@ defaults = {
 # Prebuild set up script.
 '___build_pre': '''# ___build_pre in as set up in defaults.py
 # Directories
-TB_SOURCE_DIR="%{_sourcedir}"
-TB_BUILD_DIR="%{_builddir}"
-TB_OPT_FLAGS="%{optflags}"
-TB_ARCH="%{_arch}"
-TB_OS="%{_os}"
-export TB_SOURCE_DIR TB_BUILD_DIR TB_OPT_FLAGS TB_ARCH TB_OS
+SB_SOURCE_DIR="%{_sourcedir}"
+SB_BUILD_DIR="%{_builddir}"
+SB_OPT_FLAGS="%{optflags}"
+SB_ARCH="%{_arch}"
+SB_OS="%{_os}"
+export SB_SOURCE_DIR SB_BUILD_DIR SB_OPT_FLAGS SB_ARCH SB_OS
 # Documentation
-TB_DOC_DIR="%{_docdir}"
-export TB_DOC_DIR
+SB_DOC_DIR="%{_docdir}"
+export SB_DOC_DIR
 # Packages
-TB_PACKAGE_NAME="%{name}"
-TB_PACKAGE_VERSION="%{version}"
-TB_PACKAGE_RELEASE="%{release}"
-export TBPACKAGE_NAME TB_PACKAGE_VERSION TB_PACKAGE_RELEASE
+SB_PACKAGE_NAME="%{name}"
+SB_PACKAGE_VERSION="%{version}"
+SB_PACKAGE_RELEASE="%{release}"
+export SBPACKAGE_NAME SB_PACKAGE_VERSION SB_PACKAGE_RELEASE
 # Build root directory
-%{?buildroot:TB_BUILD_ROOT="%{buildroot}"}
-export TB_BUILD_ROOT
+%{?buildroot:SB_BUILD_ROOT="%{buildroot}"}
+export SB_BUILD_ROOT
 # The compiler flags
 %{?_targetcflags:CFLAGS_FOR_TARGET="%{_targetcflags}"}
 %{?_targetcxxflags:CXXFLAGS_FOR_TARGET="%{_targetcxxflags}"}
@@ -227,6 +227,7 @@ class command_line:
 
     def _help(self):
         print '%s: [options] [args]' % (self.command_name)
+        print 'Source Builder, an RTEMS Tools Project (c) 2012 Chris Johns'
         print 'Options and arguments:'
         print '--force                : Create directories that are not present'
         print '--trace                : Trace the execution (not current used)'
@@ -263,7 +264,7 @@ class command_line:
         self.defaults = {}
         for to in command_line._long_true_opts:
             self.defaults[command_line._long_true_opts[to]] = '0'
-        self.defaults['_tbdir'] = self.command_path
+        self.defaults['_sbdir'] = self.command_path
         self._process()
 
     def __str__(self):

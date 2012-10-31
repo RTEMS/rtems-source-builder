@@ -89,8 +89,8 @@ class crossgcc:
             prefix = prefix[1:]
         tmpprefix = os.path.join(tmproot, prefix)
         tmpbindir = os.path.join(tmpprefix, 'bin')
-        os.environ['TB_TMPPREFIX'] = tmpprefix
-        os.environ['TB_TMPBINDIR'] = tmpbindir
+        os.environ['SB_TMPPREFIX'] = tmpprefix
+        os.environ['SB_TMPBINDIR'] = tmpbindir
         os.environ['PATH'] = tmpbindir + os.pathsep + os.environ['PATH']
         self._output('path: ' + os.environ['PATH'])
         return tmproot
