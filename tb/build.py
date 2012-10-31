@@ -178,7 +178,7 @@ class build:
                         if not os.path.isfile(local):
                             raise error.general('source is not a file: ' + local)
                         return
-            raise error.general('downloading %s: all paths have failed, giving up', url)
+            raise error.general('downloading %s: all paths have failed, giving up' % (url))
 
     def parse_url(self, url, pathkey):
         #
