@@ -51,7 +51,7 @@ defaults = {
 '_build':         '%{_host}',
 '_arch':          '%{_host_arch}',
 '_sbdir':         '',
-'_topdir':        os.getcwd(),
+'_topdir':        path.shell(os.getcwd()),
 '_configdir':     '%{_topdir}/config:%{_sbdir}/config',
 '_tardir':        '%{_topdir}/tar',
 '_sourcedir':     '%{_topdir}/sources',

@@ -89,8 +89,8 @@ class buildset:
         tmpprefix = path.join(tmproot, prefix)
         tmpbindir = path.join(tmpprefix, 'bin')
         # exporting to the environment
-        os.environ['SB_TMPPREFIX'] = path.host(tmpprefix)
-        os.environ['SB_TMPBINDIR'] = path.host(tmpbindir)
+        os.environ['SB_TMPPREFIX'] = tmpprefix
+        os.environ['SB_TMPBINDIR'] = tmpbindir
         os.environ['PATH'] = path.host(tmpbindir) + os.pathsep + os.environ['PATH']
         self._output('path: ' + os.environ['PATH'])
         # shell format
