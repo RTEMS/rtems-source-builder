@@ -303,11 +303,15 @@ class command_line:
                         value = args[arg]
                     else:
                         value = opt[equals + 1:]
-                    if long_opts[lo][1]:
-                        value = path.shell(value)
-                    return lo, long_opts[lo][0], value, arg
+                    if type(long_opts[lo]) is tuple:
+                        if long_opts[lo][1]:
+                            value = path.shell(value)
+                        macro = long_opts[lo][0]
+                    else:
+                        macro = long_opts[lo]
+                    return lo, macro, value, arg
                 elif opt == lo:
-                    return lo, long_opts[lo][0], True, arg
+                    return lo, long_opts[lo], True, arg
             return None, None, None, arg
 
         self.opts = command_line._defaults
@@ -352,6 +356,7 @@ class command_line:
                                     exit_code, proc, output = e.shell(config_sub + ' ' + value)
                                     if exit_code == 0:
                                         value = output
+                                    print macro, value
                                     self.defaults[macro] = value
                                     self.opts[lo[2:]] = value
                                     _arch = macro + '_cpu'
