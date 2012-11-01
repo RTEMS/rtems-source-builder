@@ -108,7 +108,9 @@ class build:
                 try:
                     shutil.rmtree(path.host(rmpath))
                 except IOError, err:
-                    raise error.error('error removing: %s' % (path.host(rmpath)))
+                    raise error.error('error removing: %s' % (rmpath))
+                except WindowsError, err:
+                    _notice(self.opts, 'warning: cannot remove: %s' % (rmpath))
 
     def mkdir(self, mkpath):
         self._output('making dir: %s' % (path.host(mkpath)))
@@ -116,7 +118,9 @@ class build:
             try:
                 os.makedirs(path.host(mkpath))
             except IOError, err:
-                raise error.general('error creating path: %s' % (path.host(path)))
+                _notice(self.opts, 'warning: cannot make directory: %s' % (mkpath))
+            except WindowsError, err:
+                _notice(self.opts, 'warning: cannot make directory: %s' % (mkpath))
 
     def get_file(self, url, local):
         if not path.isdir(path.dirname(local)):
