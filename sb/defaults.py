@@ -375,7 +375,6 @@ class command_line:
                                     exit_code, proc, output = e.shell(config_sub + ' ' + value)
                                     if exit_code == 0:
                                         value = output
-                                    print macro, value
                                     self.defaults[macro] = ('triplet', 'none', value)
                                     self.opts[lo[2:]] = value
                                     _arch = macro + '_cpu'
