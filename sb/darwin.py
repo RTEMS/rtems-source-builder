@@ -44,11 +44,13 @@ def load():
         '_host_cpu':    ('none',    'none',     uname[4]),
         '_host_alias':  ('none',    'none',     '%{nil}'),
         '_host_arch':   ('none',    'none',     uname[4]),
-        '_usr':         ('dir',     'optionsl', '/opt/local'),
-        '_var':         ('dir',     'optional', '/opt/local/var'),
+        '_usr':         ('dir',     'optional', '/usr/local'),
+        '_var':         ('dir',     'optional', '/usr/local/var'),
+        '_prefix':      ('dir',     'optional', '%{_usr}'),
         'optflags':     ('none',    'none',     '-O2'),
         '_smp_mflags':  ('none',    'none',     smp_mflags),
-        '__xz':         ('exe',     'required', '/usr/local/bin/xz'),
+        '__ldconfig':   ('exe',     'none',     ''),
+        '__xz':         ('exe',     'required', '%{_usr}/bin/xz'),
         'with_zlib':    ('none',    'none',     '--with-zlib=no')
         }
     return defines
