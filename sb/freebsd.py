@@ -53,10 +53,11 @@ def load():
         '_host_cpu':    ('none',    'none',     cpu),
         '_host_alias':  ('none',    'none',     '%{nil}'),
         '_host_arch':   ('none',    'none',     cpu),
-        '_usr':         ('dir',     'required', '/usr/local',
-        '_var':         ('dir',     'required', '/usr/local/var'),
+        '_usr':         ('dir',     'required', '/usr/local'),
+        '_var':         ('dir',     'optional', '/usr/local/var'),
         'optflags':     ('none',    'none',     '-O2 -I/usr/local/include -L/usr/local/lib'),
         '_smp_mflags':  ('none',    'none',     smp_mflags),
+        '__bash':       ('exe',     'optional', '/usr/local//bin/bash'),
         '__xz':         ('exe',     'optional', '/usr/bin/xz'),
         '__make':       ('exe',     'required', 'gmake')
         }
