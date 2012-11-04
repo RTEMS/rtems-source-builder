@@ -187,7 +187,7 @@ class file:
         self.sf = re.compile(r'%\([^\)]+\)')
         self.default_defines = {}
         for d in _defaults:
-            self.default_defines[self._label(d)] = _defaults[d]
+            self.default_defines[self._label(d)] = _defaults[d][2]
         for arg in self.opts.args:
             if arg.startswith('--with-') or arg.startswith('--without-'):
                 label = arg[2:].lower().replace('-', '_')

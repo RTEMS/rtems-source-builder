@@ -183,7 +183,8 @@ class build:
                         if not path.isfile(local):
                             raise error.general('source is not a file: %s' % (path.host(local)))
                         return
-            raise error.general('downloading %s: all paths have failed, giving up' % (url))
+            if not self.opts.dry_run():
+                raise error.general('downloading %s: all paths have failed, giving up' % (url))
 
     def parse_url(self, url, pathkey):
         #

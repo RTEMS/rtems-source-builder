@@ -75,6 +75,9 @@ def isdir(path):
 def isfile(path):
     return os.path.isfile(host(path))
 
+def isabspath(path):
+    return path[0] == '/'
+
 if __name__ == '__main__':
     print host('/a/b/c/d-e-f')
     print host('//a/b//c/d-e-f')

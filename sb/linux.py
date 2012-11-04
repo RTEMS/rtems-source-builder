@@ -42,20 +42,20 @@ def load():
         if cpus > 0:
             smp_mflags = '-j%d' % (cpus)
     defines = {
-        '_os':                     'linux',
-        '_host':                   uname[4] + '-linux-gnu',
-        '_host_vendor':            'gnu',
-        '_host_os':                'linux',
-        '_host_cpu':               uname[4],
-        '_host_alias':             '%{nil}',
-        '_host_arch':              uname[4],
-        '_usr':                    '/usr',
-        '_var':                    '/usr/var',
-        'optflags':                '-O2 -fasynchronous-unwind-tables',
-        '_smp_mflags':             smp_mflags,
-        '__bzip2':                 '/usr/bin/bzip2',
-        '__gzip':                  '/bin/gzip',
-        '__tar':                   '/bin/tar'
+        '_os':          ('none',    'none',     'linux'),
+        '_host':        ('triplet', 'required', uname[4] + '-linux-gnu'),
+        '_host_vendor': ('none',    'none',     'gnu'),
+        '_host_os':     ('none',    'none',     'linux'),
+        '_host_cpu':    ('none',    'none',     uname[4]),
+        '_host_alias':  ('none',    'none',     '%{nil}'),
+        '_host_arch':   ('none',    'none',     uname[4]),
+        '_usr':         ('dir',     'required', '/usr'),
+        '_var':         ('dir',     'required', '/usr/var'),
+        'optflags':     ('none',    'none',     '-O2 -fasynchronous-unwind-tables'),
+        '_smp_mflags':  ('none',    'none',     smp_mflags),
+        '__bzip2':      ('exe',     'required', '/usr/bin/bzip2'),
+        '__gzip':       ('exe',     'required', '/bin/gzip'),
+        '__tar':        ('exe',     'required', '/bin/tar')
         }
     return defines
 

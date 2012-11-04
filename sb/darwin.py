@@ -37,19 +37,19 @@ def load():
     else:
         smp_mflags = ''
     defines = {
-        '_os':                     'darwin',
-        '_host':                   uname[4] + '-apple-darwin' + uname[2],
-        '_host_vendor':            'apple',
-        '_host_os':                'darwin',
-        '_host_cpu':               uname[4],
-        '_host_alias':             '%{nil}',
-        '_host_arch':              uname[4],
-        '_usr':                    '/opt/local',
-        '_var':                    '/opt/local/var',
-        'optflags':                '-O2',
-        '_smp_mflags':             smp_mflags,
-        '__xz':                    '/usr/local/bin/xz',
-        'with_zlib':               '--with-zlib=no',
+        '_os':          ('none',    'none',     'darwin'),
+        '_host':        ('triplet', 'required', uname[4] + '-apple-darwin' + uname[2]),
+        '_host_vendor': ('none',    'none',     'apple'),
+        '_host_os':     ('none',    'none',     'darwin'),
+        '_host_cpu':    ('none',    'none',     uname[4]),
+        '_host_alias':  ('none',    'none',     '%{nil}'),
+        '_host_arch':   ('none',    'none',     uname[4]),
+        '_usr':         ('dir',     'optionsl', '/opt/local'),
+        '_var':         ('dir',     'optional', '/opt/local/var'),
+        'optflags':     ('none',    'none',     '-O2'),
+        '_smp_mflags':  ('none',    'none',     smp_mflags),
+        '__xz':         ('exe',     'required', '/usr/local/bin/xz'),
+        'with_zlib':    ('none',    'none',     '--with-zlib=no')
         }
     return defines
 

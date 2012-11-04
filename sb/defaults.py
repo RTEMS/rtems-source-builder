@@ -36,106 +36,121 @@ basepath = 'sb'
 # All paths in defaults must be Unix format. Do not store any Windows format
 # paths in the defaults.
 #
+# Every entry must describe the type of checking a host must pass.
+#
 
 defaults = {
 # Nothing
-'nil':                 '',
+'nil':                 ('none', 'none', ''),
 
 # Set to invalid values.
-'_host':          '',
-'_build':         '%{_host}',
-'_target':        '',
+'_bset':               ('none',    'none', ''),
+'name':                ('none',    'none', ''),
+'version':             ('none',    'none', ''),
+'release':             ('none',    'none', ''),
+
+# GNU triples needed to build packages
+'_host':               ('triplet', 'required', ''),
+'_build':              ('triplet', 'required', '%{_host}'),
+'_target':             ('none',    'optional', ''),
 
 # Paths
-'_host_platform': '%{_host_cpu}-%{_host_vendor}-%{_host_os}%{?_gnu}',
-'_build':         '%{_host}',
-'_arch':          '%{_host_arch}',
-'_sbdir':         '',
-'_topdir':        path.shell(os.getcwd()),
-'_configdir':     '%{_topdir}/config:%{_sbdir}/config',
-'_tardir':        '%{_topdir}/tar',
-'_sourcedir':     '%{_topdir}/sources',
-'_patchdir':      '%{_sbdir}/patches',
-'_builddir':      '%{_topdir}/build/%{name}-%{version}-%{release}',
-'_docdir':        '%{_defaultdocdir}',
-'_tmppath':       '%{_topdir}/build/tmp',
-'_tmproot':       '%{_tmppath}/source-build-%(%{__id_u} -n)/%{_bset}',
-'buildroot:':     '%{_tmppath}/%{name}-root-%(%{__id_u} -n)',
+'_host_platform':      ('none',    'none',     '%{_host_cpu}-%{_host_vendor}-%{_host_os}%{?_gnu}'),
+'_build':              ('none',    'none',     '%{_host}'),
+'_arch':               ('none',    'none',     '%{_host_arch}'),
+'_sbdir':              ('none',    'none',     ''),
+'_topdir':             ('dir',     'required',  path.shell(os.getcwd())),
+'_configdir':          ('dir',     'optional', '%{_topdir}/config:%{_sbdir}/config'),
+'_tardir':             ('dir',     'optional', '%{_topdir}/tar'),
+'_sourcedir':          ('dir',     'optional', '%{_topdir}/sources'),
+'_patchdir':           ('dir',     'required', '%{_sbdir}/patches'),
+'_builddir':           ('dir',     'optional', '%{_topdir}/build/%{name}-%{version}-%{release}'),
+'_docdir':             ('dir',     'none',     '%{_defaultdocdir}'),
+'_tmppath':            ('dir',     'none',     '%{_topdir}/build/tmp'),
+'_tmproot':            ('dir',     'none',     '%{_tmppath}/source-build-%(%{__id_u} -n)/%{_bset}'),
+'buildroot:':          ('dir',     'none',     '%{_tmppath}/%{name}-root-%(%{__id_u} -n)'),
+'_datadir':            ('dir',     'none',     '%{_prefix}/share'),
+'_defaultdocdir':      ('dir',     'none',     '%{_prefix}/share/doc'),
+'_exeext':             ('none',    'none',     ''),
+'_exec_prefix':        ('dir',     'none',     '%{_prefix}'),
+'_bindir':             ('dir',     'none',     '%{_exec_prefix}/bin'),
+'_sbindir':            ('dir',     'none',     '%{_exec_prefix}/sbin'),
+'_libexecdir':         ('dir',     'none',     '%{_exec_prefix}/libexec'),
+'_datarootdir':        ('dir',     'none',     '%{_prefix}/share'),
+'_datadir':            ('dir',     'none',     '%{_datarootdir}'),
+'_sysconfdir':         ('dir',     'none',     '%{_prefix}/etc'),
+'_sharedstatedir':     ('dir',     'none',     '%{_prefix}/com'),
+'_localstatedir':      ('dir',     'none',     '%{prefix}/var'),
+'_includedir':         ('dir',     'none',     '%{_prefix}/include'),
+'_lib':                ('dir',     'none',     'lib'),
+'_libdir':             ('dir',     'none',     '%{_exec_prefix}/%{_lib}'),
+'_libexecdir':         ('dir',     'none',     '%{_exec_prefix}/libexec'),
+'_mandir':             ('dir',     'none',     '%{_datarootdir}/man'),
+'_infodir':            ('dir',     'none',     '%{_datarootdir}/info'),
+'_localedir':          ('dir',     'none',     '%{_datarootdir}/locale'),
+'_localedir':          ('dir',     'none',     '%{_datadir}/locale'),
+'_localstatedir':      ('dir',     'none',     '%{_prefix}/var'),
+'_prefix':             ('dir',     'none',     '%{_usr}'),
+'_usr':                ('dir',     'none',     '/usr/local'),
+'_usrsrc':             ('dir',     'none',     '%{_usr}/src'),
+'_var':                ('dir',     'none',     '/usr/local/var'),
+'_varrun':             ('dir',     'none',     '%{_var}/run'),
 
 # Defaults, override in platform specific modules.
-'___setup_shell':      '/bin/sh',
-'__aclocal':           'aclocal',
-'__ar':                'ar',
-'__arch_install_post': '%{nil}',
-'__as':                'as',
-'__autoconf':          'autoconf',
-'__autoheader':        'autoheader',
-'__automake':          'automake',
-'__awk':               'awk',
-'__bash':              '/bin/bash',
-'__bzip2':             '/usr/bin/bzip2',
-'__cat':               '/bin/cat',
-'__cc':                '/usr/bin/gcc',
-'__chgrp':             '/usr/bin/chgrp',
-'__chmod':             '/bin/chmod',
-'__chown':             '/usr/sbin/chown',
-'__cp':                '/bin/cp',
-'__cpio':              '/usr/bin/cpio',
-'__cpp':               '/usr/bin/gcc -E',
-'__cxx':               '/usr/bin/g++',
-'__grep':              '/usr/bin/grep',
-'__gzip':              '/usr/bin/gzip',
-'__id':                '/usr/bin/id',
-'__id_u':              '%{__id} -u',
-'__install':           '/usr/bin/install',
-'__install_info':      '/usr/bin/install-info',
-'__ld':                '/usr/bin/ld',
-'__ldconfig':          '/sbin/ldconfig',
-'__ln_s':              'ln -s',
-'__make':              'make',
-'__mkdir':             '/bin/mkdir',
-'__mkdir_p':           '/bin/mkdir -p',
-'__mv':                '/bin/mv',
-'__nm':                '/usr/bin/nm',
-'__objcopy':           '%{_bindir}/objcopy',
-'__objdump':           '%{_bindir}/objdump',
-'__patch':             '/usr/bin/patch',
-'__perl':              'perl',
-'__perl_provides':     '%{_usrlibrpm}/perl.prov',
-'__perl_requires':     '%{_usrlibrpm}/perl.req',
-'__ranlib':            'ranlib',
-'__remsh':             '%{__rsh}',
-'__rm':                '/bin/rm',
-'__rsh':               '/usr/bin/rsh',
-'__sed':               '/usr/bin/sed',
-'__setup_post':        '%{__chmod} -R a+rX,g-w,o-w .',
-'__sh':                '/bin/sh',
-'__tar':               '/usr/bin/tar',
-'__tar_extract':       '%{__tar} -xvvf',
-'__unzip':             '/usr/bin/unzip',
-'__xz':                '/usr/bin/xz',
-'_datadir':            '%{_prefix}/share',
-'_defaultdocdir':      '%{_prefix}/share/doc',
-'_exeext':             '',
-'_exec_prefix':        '%{_prefix}',
-'_lib':                'lib',
-'_libdir':             '%{_exec_prefix}/%{_lib}',
-'_libexecdir':         '%{_exec_prefix}/libexec',
-'_localedir':          '%{_datadir}/locale',
-'_localstatedir':      '%{_prefix}/var',
-'_prefix':             '%{_usr}',
-'_usr':                '/usr/local',
-'_usrsrc':             '%{_usr}/src',
-'_var':                '/usr/local/var',
-'_varrun':             '%{_var}/run',
+'___setup_shell':      ('exe',     'required', '/bin/sh'),
+'__aclocal':           ('exe',     'optional', 'aclocal'),
+'__ar':                ('exe',     'required', 'ar'),
+'__arch_install_post': ('exe',     'none',     '%{nil}'),
+'__as':                ('exe',     'required', 'as'),
+'__autoconf':          ('exe',     'required', 'autoconf'),
+'__autoheader':        ('exe',     'required', 'autoheader'),
+'__automake':          ('exe',     'required', 'automake'),
+'__awk':               ('exe',     'required', 'awk'),
+'__bash':              ('exe',     'optional', '/bin/bash'),
+'__bzip2':             ('exe',     'required', '/usr/bin/bzip2'),
+'__cat':               ('exe',     'required', '/bin/cat'),
+'__cc':                ('exe',     'required', '/usr/bin/gcc'),
+'__chgrp':             ('exe',     'required', '/usr/bin/chgrp'),
+'__chmod':             ('exe',     'required', '/bin/chmod'),
+'__chown':             ('exe',     'required', '/usr/sbin/chown'),
+'__cp':                ('exe',     'required', '/bin/cp'),
+'__cpp':               ('exe',     'none',     '%{__cc} -E'),
+'__cxx':               ('exe',     'required', '/usr/bin/g++'),
+'__grep':              ('exe',     'required', '/usr/bin/grep'),
+'__gzip':              ('exe',     'required', '/usr/bin/gzip'),
+'__id':                ('exe',     'required', '/usr/bin/id'),
+'__id_u':              ('exe',     'none',     '%{__id} -u'),
+'__install':           ('exe',     'required', '/usr/bin/install'),
+'__install_info':      ('exe',     'optional', '/usr/bin/install-info'),
+'__ld':                ('exe',     'required', '/usr/bin/ld'),
+'__ldconfig':          ('exe',     'required', '/sbin/ldconfig'),
+'__ln_s':              ('exe',     'none',     'ln -s'),
+'__make':              ('exe',     'required', 'make'),
+'__mkdir':             ('exe',     'required', '/bin/mkdir'),
+'__mkdir_p':           ('exe',     'none',     '/bin/mkdir -p'),
+'__mv':                ('exe',     'required', '/bin/mv'),
+'__nm':                ('exe',     'required', '/usr/bin/nm'),
+'__objcopy':           ('exe',     'required', '%{_bindir}/objcopy'),
+'__objdump':           ('exe',     'required', '%{_bindir}/objdump'),
+'__patch':             ('exe',     'required', '/usr/bin/patch'),
+'__perl':              ('exe',     'optional', 'perl'),
+'__ranlib':            ('exe',     'required', 'ranlib'),
+'__rm':                ('exe',     'required', '/bin/rm'),
+'__sed':               ('exe',     'required', '/usr/bin/sed'),
+'__setup_post':        ('exe',     'none',     '%{__chmod} -R a+rX,g-w,o-w .'),
+'__sh':                ('exe',     'required', '/bin/sh'),
+'__tar':               ('exe',     'required', '/usr/bin/tar'),
+'__tar_extract':       ('exe',     'none',     '%{__tar} -xvvf'),
+'__unzip':             ('exe',     'required', '/usr/bin/unzip'),
+'__xz':                ('exe',     'required', '/usr/bin/xz'),
 
 # Shell Build Settings.
-'___build_args': '-e',
-'___build_cmd':  '%{?_sudo:%{_sudo} }%{?_remsh:%{_remsh} %{_remhost} }%{?_remsudo:%{_remsudo} }%{?_remchroot:%{_remchroot} %{_remroot} }%{___build_shell} %{___build_args}',
-'___build_post': 'exit 0',
+'___build_args': ('none', 'none', '-e'),
+'___build_cmd':  ('none', 'none', '%{?_sudo:%{_sudo} }%{?_remsh:%{_remsh} %{_remhost} }%{?_remsudo:%{_remsudo} }%{?_remchroot:%{_remchroot} %{_remroot} }%{___build_shell} %{___build_args}'),
+'___build_post': ('none', 'none', 'exit 0'),
 
 # Prebuild set up script.
-'___build_pre': '''# ___build_pre in as set up in defaults.py
+'___build_pre': ('none', 'none', '''# ___build_pre in as set up in defaults.py
 # Directories
 SB_SOURCE_DIR="%{_sourcedir}"
 SB_BUILD_DIR="%{_builddir}"
@@ -163,14 +178,14 @@ LANG=C
 export LANG
 unset DISPLAY || :
 umask 022
-cd "%{_builddir}"''',
-'___build_shell': '%{?_buildshell:%{_buildshell}}%{!?_buildshell:/bin/sh}',
-'___build_template': '''#!%{___build_shell}
+cd "%{_builddir}"'''),
+'___build_shell': ('none', 'none', '%{?_buildshell:%{_buildshell}}%{!?_buildshell:/bin/sh}'),
+'___build_template': ('none', 'none', '''#!%{___build_shell}
 %{___build_pre}
-%{nil}''',
+%{nil}'''),
 
 # Configure command
-'configure': '''
+'configure': ('none', 'none', '''
 CFLAGS="${CFLAGS:-%optflags}" ; export CFLAGS ;
 CXXFLAGS="${CXXFLAGS:-%optflags}" ; export CXXFLAGS ;
 FFLAGS="${FFLAGS:-%optflags}" ; export FFLAGS ;
@@ -189,7 +204,7 @@ FFLAGS="${FFLAGS:-%optflags}" ; export FFLAGS ;
       --localstatedir=%{_localstatedir} \
       --sharedstatedir=%{_sharedstatedir} \
       --mandir=%{_mandir} \
-      --infodir=%{_infodir}'''
+      --infodir=%{_infodir}''')
 }
 
 class command_line:
@@ -271,8 +286,8 @@ class command_line:
         self.args = argv[1:]
         self.defaults = {}
         for to in command_line._long_true_opts:
-            self.defaults[command_line._long_true_opts[to]] = '0'
-        self.defaults['_sbdir'] = path.shell(self.command_path)
+            self.defaults[command_line._long_true_opts[to]] = ('none', 'none', '0')
+        self.defaults['_sbdir'] = ('dir', 'required', path.shell(self.command_path))
         self._process()
 
     def __str__(self):
@@ -329,14 +344,14 @@ class command_line:
                                                             command_line._long_true_opts,
                                                             self.args)
                         if lo:
-                            self.defaults[macro] = '1'
+                            self.defaults[macro] = ('none', 'none', '1')
                             self.opts[lo[2:]] = '1'
                         else:
                             lo, macro, value, i = _process_lopt(a, i,
                                                                 command_line._long_opts,
                                                                 self.args, True)
                             if lo:
-                                self.defaults[macro] = value
+                                self.defaults[macro] = ('none', 'none', value)
                                 self.opts[lo[2:]] = value
                             else:
                                 #
@@ -357,7 +372,7 @@ class command_line:
                                     if exit_code == 0:
                                         value = output
                                     print macro, value
-                                    self.defaults[macro] = value
+                                    self.defaults[macro] = ('triplet', 'none', value)
                                     self.opts[lo[2:]] = value
                                     _arch = macro + '_cpu'
                                     _vendor = macro + '_vendor'
@@ -375,9 +390,9 @@ class command_line:
                                         value = value[dash + 1:]
                                     if len(value):
                                         _os_value = value
-                                    self.defaults[_arch] = _arch_value
-                                    self.defaults[_vendor] = _vendor_value
-                                    self.defaults[_os] = _os_value
+                                    self.defaults[_arch] = ('none', 'none', _arch_value)
+                                    self.defaults[_vendor] = ('none', 'none', _vendor_value)
+                                    self.defaults[_os] = ('none', 'none', _os_value)
                                 if not lo:
                                     raise error.general('invalid argument: ' + a)
                 else:
@@ -395,8 +410,8 @@ class command_line:
 
     def _post_process(self, _defaults):
         if self.no_smp():
-            _defaults['_smp_mflags'] = _defaults['nil']
-        if _defaults['_host'] == _defaults['nil']:
+            _defaults['_smp_mflags'] = ('none', 'none', _defaults['nil'])
+        if _defaults['_host'][2] == _defaults['nil'][2]:
             raise error.general('host not set')
         return _defaults
 
@@ -409,7 +424,7 @@ class command_line:
             for m in mf.findall(s):
                 name = m[2:-1]
                 if name in _defaults:
-                    s = s.replace(m, _defaults[name])
+                    s = s.replace(m, _defaults[name][2])
                     expanded = True
                 else:
                     raise error.general('cannot process default macro: ' + m)
@@ -452,6 +467,9 @@ class command_line:
         #
         # Convert to shell paths and return shell paths.
         #
+        # @fixme should this use a passed in set of defaults and not
+        #        not the initial set of values ?
+        #
         config = path.shell(config)
         if config.find('*') >= 0 or config.find('?'):
             configdir = path.dirname(config)
@@ -459,7 +477,7 @@ class command_line:
             if len(configbase) == 0:
                 configbase = '*'
             if len(configdir) == 0:
-                configdir = self.expand(defaults['_configdir'], defaults)
+                configdir = self.expand(defaults['_configdir'][2], defaults)
             hostconfigdir = path.host(configdir)
             if not os.path.isdir(hostconfigdir):
                 raise error.general('configdir is not a directory or does not exist: %s' % (hostconfigdir))

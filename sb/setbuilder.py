@@ -27,6 +27,7 @@ import operator
 import os
 
 import build
+import check
 import defaults
 import error
 import log
@@ -119,7 +120,7 @@ class buildset:
 
         exbset = self.opts.expand(self.bset, self.defaults)
 
-        self.defaults['_bset'] = exbset
+        self.defaults['_bset'] = ('none', 'none', exbset)
 
         root, ext = path.splitext(exbset)
 
@@ -161,11 +162,11 @@ class buildset:
                     ls = l.split(':')
                     if ls[0].strip() == 'package':
                         self.bset_pkg = self.opts.expand(ls[1].strip(), self.defaults)
-                        self.defaults['package'] = self.bset_pkg
+                        self.defaults['package'] = ('none', 'none', self.bset_pkg)
                 elif l[0] == '%':
                     if l.startswith('%define'):
                         ls = l.split()
-                        self.defaults[ls[1].strip()] = ls[2].strip()
+                        self.defaults[ls[1].strip()] = ('none', 'none', ls[2].strip())
                     else:
                         raise error.general('invalid directive in build set files: %s' % (l))
                 else:
@@ -216,6 +217,8 @@ def run():
         opts, _defaults = defaults.load(sys.argv)
         log.default = log.log(opts.logfiles())
         _notice(opts, 'Source Builder - Set Builder, v%s' % (version))
+        if not check.host_setup(opts, _defaults):
+            raise error.general('host build environment is not set up correctly')
         for bset in opts.params():
             c = buildset(bset, _defaults = _defaults, opts = opts)
             c.make()

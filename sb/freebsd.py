@@ -46,19 +46,19 @@ def load():
     if version.find('-') > 0:
         version = version.split('-')[0]
     defines = {
-        '_os':                     'freebsd',
-        '_host':                   cpu + '-freebsd' + version,
-        '_host_vendor':            'pc',
-        '_host_os':                'freebsd',
-        '_host_cpu':               cpu,
-        '_host_alias':             '%{nil}',
-        '_host_arch':              cpu,
-        '_usr':                    '/usr/local',
-        '_var':                    '/usr/local/var',
-        'optflags':                '-O2 -I/usr/local/include -L/usr/local/lib',
-        '_smp_mflags':             smp_mflags,
-        '__xz':                    '/usr/bin/xz',
-        '__make':                  'gmake',
+        '_os':          ('none',    'none',     'freebsd'),
+        '_host':        ('triplet', 'required', cpu + '-freebsd' + version),
+        '_host_vendor': ('none',    'none',     'pc'),
+        '_host_os':     ('none',    'none',     'freebsd'),
+        '_host_cpu':    ('none',    'none',     cpu),
+        '_host_alias':  ('none',    'none',     '%{nil}'),
+        '_host_arch':   ('none',    'none',     cpu),
+        '_usr':         ('dir',     'required', '/usr/local',
+        '_var':         ('dir',     'required', '/usr/local/var'),
+        'optflags':     ('none',    'none',     '-O2 -I/usr/local/include -L/usr/local/lib'),
+        '_smp_mflags':  ('none',    'none',     smp_mflags),
+        '__xz':         ('exe',     'optional', '/usr/bin/xz'),
+        '__make':       ('exe',     'required', 'gmake')
         }
     return defines
 
