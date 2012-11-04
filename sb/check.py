@@ -40,56 +40,14 @@ def _notice(opts, text):
     log.output(text)
     log.flush()
 
-#
-# Basic sanity check. All executables and directories must exist.
-#
-
-def host_setup(_opts, _defaults):
-
-    checks = { 'none':    _check_none,
-               'triplet': _check_triplet,
-               'dir':     _check_dir,
-               'exe':     _check_exe }
-
-    sane = True
-               
-    for d in _defaults:
-        try:
-            (test, constraint, value) = _defaults[d]
-        except:
-            raise error.general('invalid default: %s [%r]' % (d, _defaults[d]))
-        if _opts.trace():
-            _notice(_opts, '%15s: %r -> "%s"' % (d, _defaults[d], value))
-        if test is not 'none':
-            value = _opts.expand(value, _defaults)
-            if test not in checks:
-                raise error.general('invalid check test: %s' % (test))
-            if sane and not checks[test](_opts, d, value, constraint):
-                sane = False
-
-    return sane
-
-def run():
-    import sys
-    try:
-        _opts, _defaults = defaults.load(args = sys.argv)
-        if host_setup(_opts, _defaults):
-            print 'Source Builder environent is ok'
-        else:
-            print 'Source Builder environent is not correctly set up'
-    except error.general, gerr:
-        print gerr
-        sys.exit(1)
-    except error.internal, ierr:
-        print ierr
-        sys.exit(1)
-    sys.exit(0)
 
 def _check_none(_opts, macro, value, constraint):
     return True
 
+
 def _check_triplet(_opts, macro, value, constraint):
     return True
+
 
 def _check_dir(_opts, macro, value, constraint):
     if constraint != 'none' and not path.isdir(value):
@@ -99,6 +57,7 @@ def _check_dir(_opts, macro, value, constraint):
         if _opts.warn_all():
             _notice(_opts, 'warning: dir: not found: (%s) %s' % (macro, value))
     return True
+
 
 def _check_exe(_opts, macro, value, constraint):
 
@@ -126,8 +85,14 @@ def _check_exe(_opts, macro, value, constraint):
                     'warning: exe: absolute exe found in path: (%s) %s' % (macro, orig_value))
         return True
 
+    if constraint == 'optional':
+        if _opts.trace():
+            _notice(_opts, 'warning: exe: optional exe not found: (%s) %s' % (macro, orig_value))
+        return True
+
     _notice(_opts, 'error: exe: not found: (%s) %s' % (macro, orig_value))
     return False
+
 
 def _check_paths(name, paths):
     for p in paths:
@@ -138,6 +103,55 @@ def _check_paths(name, paths):
             if path.isfile('%s.exe' % (exe)):
                 return True
     return False
-        
+
+def host_setup(_opts, _defaults):
+    """ Basic sanity check. All executables and directories must exist."""
+
+    checks = { 'none':    _check_none,
+               'triplet': _check_triplet,
+               'dir':     _check_dir,
+               'exe':     _check_exe }
+
+    sane = True
+
+    for d in sorted(_defaults.iterkeys()):
+        try:
+            (test, constraint, value) = _defaults[d]
+        except:
+            raise error.general('invalid default: %s [%r]' % (d, _defaults[d]))
+        if test != 'none':
+            value = _opts.expand(value, _defaults)
+            if test not in checks:
+                raise error.general('invalid check test: %s [%r]' % (test, _defaults[d]))
+            ok = checks[test](_opts, d, value, constraint)
+            if _opts.trace():
+                if ok:
+                    tag = ' '
+                else:
+                    tag = '*'
+                _notice(_opts, '%c %15s: %r -> "%s"' % (tag, d, _defaults[d], value))
+            if sane and not ok:
+                sane = False
+
+    return sane
+
+
+def run():
+    import sys
+    try:
+        _opts, _defaults = defaults.load(args = sys.argv)
+        if host_setup(_opts, _defaults):
+            print 'Source Builder environent is ok'
+        else:
+            print 'Source Builder environent is not correctly set up'
+    except error.general, gerr:
+        print gerr
+        sys.exit(1)
+    except error.internal, ierr:
+        print ierr
+        sys.exit(1)
+    sys.exit(0)
+
+
 if __name__ == '__main__':
     run()
