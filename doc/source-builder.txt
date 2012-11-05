@@ -1,0 +1,145 @@
+Source Builder
+==============
+Chris Johns <chrisj@rtems.org>
+1.0, November 2012
+:doctype: book
+:toc:
+:icons:
+:numbered:
+
+image:images/rtemswhitebg.jpg["RTEMS",width="20%"]
+
+Introduction
+------------
+
+The Source Builder is a tool to aid building packages from source. It is not a
+package manager. It is just helps consolidate the details that you need to know
+to build a package from source. The tool is mainly aimed at those users who
+need to maintain tool sets for embedded type development, that is
+cross-compiled compiled tool chains, debuggers, and debugging aids. It is not
+limited to this role but designed to fit with-in that specific niche.
+
+The Source Builder attempts to support any host environment that runs Python
+and you can build the package on. It is not some sort of magic that can take
+any piece of source code and make it build. Someone at some point in time has
+figured out how to build that package from source and taught this tool.
+
+The Source Builder has two types configuration data. The first is configuration
+files and these are scripts based on the RPM spec file format that detail the
+steps needed to build a package. The steps are 'preparation', 'building', and
+'installing'. The second set of configuration files are 'build sets'. A build
+set describes a collection of packages you want built together. For example the
+GNU tool set is autoconf, automake, binutils, gcc, and gdb. This is the typical
+suite of tools you need for an embedded cross-development type project.
+
+The Source Builder does not interact with any host package management
+system. There is no automatic dependence checking between various packages you
+build or your host system may have installed. We assume you know what are doing
+or the build sets and configuration files you are using have been created by
+developers who do. A buld set should provide a known working configuration.
+
+Why build from source ?
+~~~~~~~~~~~~~~~~~~~~~~~
+
+If you are developing a system or product that has a long shelf life or is used
+in a critical piece of infastructure that has a long life cycle being able to
+build from source is important. It insulates the project from the fast ever
+changing world of the host development machines. If your tool set is binary and
+you have lost the ability to build it you have lost a degree of control and
+flexibility open source gives you. Fast moving host environments are
+fantastic. We have powerful multi-core computers with huge amounts of memory
+and state of the art operating systems to running on them. The product or
+project you are part of may need to be maintained well past the life time of
+these host. Being able to build from source an important and critical part of
+this process because you can move to a newer host and create an equivalent tool
+set.
+
+Building from source provides you with control over the configuration of the
+package you are building. If all or the most important dependent parts are
+built from source you limit the exposure to host variations. For example the
+GNU C compiler (gcc) currently uses a number of 3rd party libraries internally
+(gmp, mpfr, etc). If your validated compiler generating code for your target
+processor is dynamically linked against the host's version of these libraries
+any change in the host's configuration may effect you. The changes the host's
+package management system makes may be perfectly reasonible in relation to the
+distribution being managed how-ever this may not extend to you and your
+tools. Building your tools from source and controlling the specific version of
+these dependent parts means you are not exposing yourself to unexpected and
+often difficult to resolve problems. On the other side you need to make sure
+your tools build and work with newer versions of the host operating
+sytem. Given the stability of standards based libraries like 'libc' and ever
+improving support for standard header file locations this task is becoming
+easier.
+
+History
+~~~~~~~
+
+The Source Builder is a stand alone tool based on another tool called the
+'SpecBuilder'. The SpecBuilder was written for the RTEMS project too give me a
+way to build tools on hosts that did not support RPMs. At the time the RTEMS
+tools maintainer only used spec files to create various packages. This meant I
+had either spec files, RPM files or SRPM files. The RPM and SPRM files where
+useless because you needed an 'rpm' type tool to extract and manage them. There
+are versions of 'rpm' for a number of non-RPM hosts how-ever these proved to be
+in various broken states and randomally maintained. The solution I settled on
+was to use spec files so I wrote a Python based tool that parsed the spec file
+format and allowed me to create a shell script I could run to build the
+package. This approach proved successful and I was able to track the RPM
+version of the RTEMS tools on a non-RPM host over a number of years. How-ever
+the SpecBuilder tool did not help me build tools or other packages not related
+to the RTEMS project where there was no spec file I could use so I needed
+another tool. Rather than start again I decided to take the parsing code for
+the spec file format and build a new tool called the Source Builder.
+
+Quick Start
+-----------
+
+Check out the Source Builder tool from git:
+
+-------------------------------------------------------------
+$ git clone git://git.rtems.org/source-builder.git
+-------------------------------------------------------------
+
+The first step is to check if your host is set up correctly:
+
+-------------------------------------------------------------
+$ source-builder/sb-check
+warning: exe: absolute exe found in path: (__objcopy) /usr/local/bin/objcopy <1>
+warning: exe: absolute exe found in path: (__objdump) /usr/local/bin/objdump
+error: exe: not found: (_xz) /usr/local/bin/xz <2>
+Source Builder environent is not correctly set up
+$ source-builder/sb-check
+Source Builder environent is ok <3>
+-------------------------------------------------------------
+
+<1> A tool is in the environment path but does not match the shown path.
+<2> The executable 'xz' is not found.
+<3> The host's environment is set up correct.
+
+If there are problems you are given a list of executables that cannot be
+found. You may also be given a list of warnings about executables not in the
+expected location how-ever the executable was located somewhere in your
+environment's path. You will need to check the specific host section to resolve
+these issues.
+
+Create a suitable build directory away from the Source Builder source change
+into that directory and build a GNU tool set:
+
+-------------------------------------------------------------
+$ mkdir gnu-tools <1>
+$ cd gnu-tools
+$ ../source-builder/sb-set-builder <2> --log=l.txt <3> --force <4> \
+        --prefix=$HOME/gnu-tools-1 <5> --target=arm-eabi <6> gnu-toolset-4.6 <7>
+-------------------------------------------------------------
+
+<1> Make a build directory you can delete when finished.
+<2> The Source Builder command to build a set of tools.
+<3> Capture the output to a log file.
+<4> The force option will create any needed directories and allow the build to
+proceed if your host is not set up.
+<5> Give the tools a suitable prefix. This is the location you install the
+tools into once they have built.
+<6> The gnu-toolset requires you set a target. In this case the tool set will
+be a generic unpatched version of GCC 4.6 for a bare metel the ARM processor.
+<7> The build set.
+
