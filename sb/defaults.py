@@ -63,7 +63,7 @@ defaults = {
 '_configdir':          ('dir',     'optional', '%{_topdir}/config:%{_sbdir}/config'),
 '_tardir':             ('dir',     'optional', '%{_topdir}/tar'),
 '_sourcedir':          ('dir',     'optional', '%{_topdir}/sources'),
-'_patchdir':           ('dir',     'required', '%{_sbdir}/patches'),
+'_patchdir':           ('dir',     'optional', '%{_topdir}/patches:%{_sbdir}/patches'),
 '_builddir':           ('dir',     'optional', '%{_topdir}/build/%{name}-%{version}-%{release}'),
 '_docdir':             ('dir',     'none',     '%{_defaultdocdir}'),
 '_tmppath':            ('dir',     'none',     '%{_topdir}/build/tmp'),

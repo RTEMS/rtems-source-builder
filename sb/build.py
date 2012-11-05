@@ -125,6 +125,8 @@ class build:
                 _notice(self.opts, 'warning: cannot make directory: %s' % (mkpath))
 
     def get_file(self, url, local):
+        if local is None:
+            raise error.general('source/patch path invalid')
         if not path.isdir(path.dirname(local)):
             if not self.opts.force():
                 raise error.general('source path not found: %s; (--force to create)' \
@@ -200,7 +202,12 @@ class build:
         #
         # Get the file. Checks the local source directory first.
         #
-        source['local'] = path.join(self.config.abspath(pathkey), source['file'])
+        source['local'] = None
+        for p in self.config.define(pathkey).split(':'):
+            local = path.join(path.abspath(p), source['file'])
+            if source['local'] is None or path.exists(local):
+                source['local'] = local
+                break
         #
         # Is the file compressed ?
         #
@@ -260,7 +267,7 @@ class build:
         #
         # If not in the source builder package check the source directory.
         #
-        if not path.isfile(patch['local']):
+        if not path.exists(patch['local']):
             patch = self.parse_url(url, '_sourcedir')
         self.get_file(patch['url'], patch['local'])
         if 'compressed' in patch:
