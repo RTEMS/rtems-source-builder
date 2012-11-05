@@ -140,6 +140,75 @@ proceed if your host is not set up.
 <5> Give the tools a suitable prefix. This is the location you install the
 tools into once they have built.
 <6> The gnu-toolset requires you set a target. In this case the tool set will
-be a generic unpatched version of GCC 4.6 for a bare metel the ARM processor.
+be a generic unpatched version of GCC 4.6 for a bare metal the ARM processor.
 <7> The build set.
+
+To view the build sets lets change to the RTEMS project's source builder
+configuration and then list the build sets:
+
+-------------------------------------------------------------
+$ cd ../rtems-source-builder
+$ ../source-builder/sb-set-builder --list-bsets
+Source Builder - Set Builder, v0.1
+Examining: /usr/home/chris/development/rtems/src/rtems-source-builder/config <1>
+Examining: /usr/home/chris/development/rtems/src/source-builder/config <2>
+  gnu-tools-4.6 <3>
+  rtems-tools-4.10 <4>
+-------------------------------------------------------------
+
+<1> The local RTEMS configuration directory. Searched first.
+<2> The Source Builder configuration directory.
+<3> The Source Builder provided GNU tools GCC 4.6 build set.
+<4> The RTEMS Source Builder provided RTEMS 4.10 build set.
+
+And to view the configurations you can:
+
+-------------------------------------------------------------
+$ ../source-builder/sb-set-builder --list-configs
+Source Builder - Set Builder, v0.1
+Examining: /usr/home/chris/development/rtems/src/rtems-source-builder/config
+Examining: /usr/home/chris/development/rtems/src/source-builder/config
+  autoconf-2-1 <1>
+  autoconf-2.68-1
+  autoconf-2.69-1
+  autoconf-internal-2.68-1
+  automake-1-1
+  automake-1.12-1
+  automake-internal-1.12-1
+  base
+  binutils-2-1
+  binutils-2.22-1
+  checks
+  expat-2-1
+  expat-2.1.0-1
+  gcc-4.4-1
+  gcc-4.6-1
+  gcc-4.6-newlib-1.20-1
+  gdb-7-1
+  gdb-7.5-1
+  libusb-1-1
+  libusb-1.0.9-1
+  m4-1-1
+  m4-1.4.16-1
+  texane-stlink-1
+  rtems-binutils-2.20.1-1
+  rtems-gcc-4.4.7-newlib-1.18.0-1
+  rtems-gdb-7.3.1-1
+-------------------------------------------------------------
+
+<1> Configurations are built by using the builder. This creates a stand alone
+package.
+
+The Source Builder
+------------------
+
+The Source Builder provides a few generic build sets and the configuration
+support to build a number of packages. A project that uses the Source Builder
+can create a specialised set of configuration files that provides the specific
+configurations thet project uses.
+
+For example the RTEMS project provides its own set of configuration files. In
+the build set list in the 'Quick Start' section you can see a build set
++rtems-tools-4.10+. This build set defines the extact configration to use for
+the RTEMS 4.10 release.
 
