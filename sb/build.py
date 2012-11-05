@@ -30,6 +30,7 @@ import sys
 import urllib2
 import urlparse
 
+import check
 import config
 import defaults
 import error
@@ -429,15 +430,34 @@ class build:
         package = packages['main']
         return package.name()
 
+def list_configs(opts, _defaults):
+    configs = []
+    for cp in opts.expand('%{_configdir}', _defaults).split(':'):
+        print 'Examining: %s' % (os.path.abspath(cp))
+        configs += glob.glob(os.path.join(cp, '*.cfg'))
+    for c in sorted(configs):
+        config = os.path.basename(c)
+        if config.endswith('.cfg'):
+            config = config[:-4]
+        print ' ', config
+
 def run(args):
     try:
-        opts, _defaults = defaults.load(args)
+        optargs = { '--list-configs': 'List available configurations' }
+        opts, _defaults = defaults.load(args, optargs)
         log.default = log.log(opts.logfiles())
         _notice(opts, 'Source Builder, Package Builder v%s' % (version))
-        for config_file in opts.config_files():
-            b = build(config_file, _defaults = _defaults, opts = opts)
-            b.make()
-            del b
+        if not check.host_setup(opts, _defaults):
+            if not opts.force():
+                raise error.general('host build environment is not set up correctly (use --force to proceed)')
+            _notice(opts, 'warning: forcing build with known host setup problems')
+        if opts.get_arg('--list-configs'):
+            list_configs(opts, _defaults)
+        else:
+            for config_file in opts.config_files():
+                b = build(config_file, _defaults = _defaults, opts = opts)
+                b.make()
+                del b
     except error.general, gerr:
         print gerr
         sys.exit(1)

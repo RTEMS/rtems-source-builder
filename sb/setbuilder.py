@@ -23,6 +23,7 @@
 #
 
 import distutils.dir_util
+import glob
 import operator
 import os
 
@@ -214,15 +215,21 @@ class buildset:
 def run():
     import sys
     try:
-        opts, _defaults = defaults.load(sys.argv)
+        optargs = { '--list-configs': 'List available configurations' }
+        opts, _defaults = defaults.load(sys.argv, optargs)
         log.default = log.log(opts.logfiles())
         _notice(opts, 'Source Builder - Set Builder, v%s' % (version))
         if not check.host_setup(opts, _defaults):
-            raise error.general('host build environment is not set up correctly')
-        for bset in opts.params():
-            c = buildset(bset, _defaults = _defaults, opts = opts)
-            c.make()
-            del c
+            if not opts.force():
+                raise error.general('host build environment is not set up correctly (use --force to proceed)')
+            _notice(opts, 'warning: forcing build with known host setup problems')
+        if opts.get_arg('--list-configs'):
+            build.list_configs(opts, _defaults)
+        else:
+            for bset in opts.params():
+                c = buildset(bset, _defaults = _defaults, opts = opts)
+                c.make()
+                del c
     except error.general, gerr:
         print gerr
         sys.exit(1)

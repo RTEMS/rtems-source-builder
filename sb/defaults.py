@@ -276,14 +276,18 @@ class command_line:
         print '--libstdcxxflags flags : List of C++ flags to build the target libstdc++ code'
         print '--with-<label>         : Add the --with-<label> to the build'
         print '--without-<label>      : Add the --without-<label> to the build'
+        if self.optargs:
+            for a in self.optargs:
+                print '%-22s : %s' % (a, self.optargs[a])
         raise error.exit()
 
-    def __init__(self, argv):
+    def __init__(self, argv, optargs):
         self.command_path = path.dirname(argv[0])
         if len(self.command_path) == 0:
             self.command_path = '.'
         self.command_name = path.basename(argv[0])
         self.args = argv[1:]
+        self.optargs = optargs
         self.defaults = {}
         for to in command_line._long_true_opts:
             self.defaults[command_line._long_true_opts[to]] = ('none', 'none', '0')
@@ -393,8 +397,8 @@ class command_line:
                                     self.defaults[_arch] = ('none', 'none', _arch_value)
                                     self.defaults[_vendor] = ('none', 'none', _vendor_value)
                                     self.defaults[_os] = ('none', 'none', _os_value)
-                                if not lo:
-                                    raise error.general('invalid argument: ' + a)
+                                if not lo and a not in self.optargs:
+                                    raise error.general('invalid argument (try --help): %s' % (a))
                 else:
                     if a == '-f':
                         self.opts['force'] = '1'
@@ -404,6 +408,8 @@ class command_line:
                         self.opts['quiet'] = '1'
                     elif a == '-?':
                         self._help()
+                    else:
+                        raise error.general('invalid argument (try --help): %s' % (a))
             else:
                 self.opts['params'].append(a)
             i += 1
@@ -463,6 +469,14 @@ class command_line:
     def params(self):
         return self.opts['params']
 
+    def get_arg(self, arg):
+        if not arg in self.optargs:
+            raise error.internal('bad arg: %s' % (arg))
+        for a in self.args:
+            if a.startswith(arg):
+                return a
+        return None
+
     def get_config_files(self, config):
         #
         # Convert to shell paths and return shell paths.
@@ -471,20 +485,21 @@ class command_line:
         #        not the initial set of values ?
         #
         config = path.shell(config)
-        if config.find('*') >= 0 or config.find('?'):
+        if '*' in config or '?' in config:
+            print config
             configdir = path.dirname(config)
             configbase = path.basename(config)
             if len(configbase) == 0:
                 configbase = '*'
+            if not configbase.endswith('.cfg'):
+                configbase = configbase + '.cfg'
             if len(configdir) == 0:
                 configdir = self.expand(defaults['_configdir'][2], defaults)
-            hostconfigdir = path.host(configdir)
-            if not os.path.isdir(hostconfigdir):
-                raise error.general('configdir is not a directory or does not exist: %s' % (hostconfigdir))
-            files = glob.glob(os.path.join(hostconfigdir, configbase))
             configs = []
-            for f in files:
-                configs += path.shell(f)
+            for cp in configdir.split(':'):
+                hostconfigdir = path.host(cp)
+                for f in glob.glob(os.path.join(hostconfigdir, configbase)):
+                    configs += path.shell(f)
         else:
             configs = [config]
         return configs
@@ -510,7 +525,7 @@ class command_line:
             return self.opts['prefixbase']
         return None
 
-def load(args):
+def load(args, optargs = None):
     """
     Copy the defaults, get the host specific values and merge them overriding
     any matching defaults, then create an options object to handle the command
@@ -540,7 +555,7 @@ def load(args):
         raise error.general('no hosts defaults found; please add')
     for k in overrides:
         d[k] = overrides[k]
-    o = command_line(args)
+    o = command_line(args, optargs)
     for k in o.defaults:
         d[k] = o.defaults[k]
     d = o._post_process(d)
