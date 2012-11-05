@@ -403,7 +403,8 @@ class file:
             self._warning('invalid macro definition')
         else:
             d = self._label(ls[1])
-            if d not in self.defines:
+            if (d not in self.defines) or \
+                    (d in self.defines and len(self.defines[d]) == 0):
                 if len(ls) == 2:
                     self.defines[d] = '1'
                 else:
