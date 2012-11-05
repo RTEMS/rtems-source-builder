@@ -415,7 +415,7 @@ class command_line:
 
     def _post_process(self, _defaults):
         if self.no_smp():
-            _defaults['_smp_mflags'] = ('none', 'none', _defaults['nil'])
+            _defaults['_smp_mflags'] = ('none', 'none', _defaults['nil'][2])
         if _defaults['_host'][2] == _defaults['nil'][2]:
             raise error.general('host not set')
         return _defaults
