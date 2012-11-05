@@ -125,22 +125,22 @@ class buildset:
 
         root, ext = path.splitext(exbset)
 
-        if exbset.endswith('.cfg'):
-            bsetcfg = exbset
+        if exbset.endswith('.bset'):
+            bset = exbset
         else:
-            bsetcfg = '%s.cfg' % (exbset)
+            bset = '%s.bset' % (exbset)
 
-        bsetname = bsetcfg
+        bsetname = bset
 
         if not path.exists(bsetname):
             for cp in self.opts.expand('%{_configdir}', self.defaults).split(':'):
                 configdir = path.abspath(cp)
-                bsetname = path.join(configdir, bsetcfg)
+                bsetname = path.join(configdir, bset)
                 if path.exists(bsetname):
                     break
                 bsetname = None
             if bsetname is None:
-                raise error.general('no build set file found: %s' % (bsetcfg))
+                raise error.general('no build set file found: %s' % (bset))
         try:
             if self.opts.trace():
                 print '_bset:%s: open: %s' % (self.bset, bsetname)
@@ -215,7 +215,8 @@ class buildset:
 def run():
     import sys
     try:
-        optargs = { '--list-configs': 'List available configurations' }
+        optargs = { '--list-configs': 'List available configurations',
+                    '--list-bsets': 'List available build sets'}
         opts, _defaults = defaults.load(sys.argv, optargs)
         log.default = log.log(opts.logfiles())
         _notice(opts, 'Source Builder - Set Builder, v%s' % (version))
@@ -225,6 +226,8 @@ def run():
             _notice(opts, 'warning: forcing build with known host setup problems')
         if opts.get_arg('--list-configs'):
             build.list_configs(opts, _defaults)
+        elif opts.get_arg('--list-bsets'):
+            build.list_configs(opts, _defaults, ext = '.bset')
         else:
             for bset in opts.params():
                 c = buildset(bset, _defaults = _defaults, opts = opts)
