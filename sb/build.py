@@ -434,10 +434,10 @@ class build:
 def list_configs(opts, _defaults, ext = '.cfg'):
     configs = []
     for cp in opts.expand('%{_configdir}', _defaults).split(':'):
-        print 'Examining: %s' % (os.path.abspath(cp))
-        configs += glob.glob(os.path.join(cp, '*%s' % (ext)))
+        print 'Examining: %s' % (path.host(path.abspath(cp)))
+        configs += glob.glob(path.host(path.join(cp, '*%s' % (ext))))
     for c in sorted(configs):
-        config = os.path.basename(c)
+        config = path.basename(c)
         if config.endswith(ext):
             config = config[:0 - len(ext)]
         print ' ', config
