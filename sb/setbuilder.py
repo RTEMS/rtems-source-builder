@@ -183,7 +183,7 @@ class buildset:
     def make(self):
 
         _trace(self.opts, '_bset:%s: make' % (self.bset))
-        _notice(self.opts, 'bset: %s' % (self.bset))
+        _notice(self.opts, 'Build Set: %s' % (self.bset))
 
         configs = self.load()
 
