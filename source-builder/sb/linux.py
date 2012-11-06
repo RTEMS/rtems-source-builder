@@ -67,7 +67,7 @@ def load():
         }
     for v in variations:
         if path.exists(variations[v][2]):
-	    defines[v] = variations[u]
+	    defines[v] = variations[v]
     return defines
 
 if __name__ == '__main__':
