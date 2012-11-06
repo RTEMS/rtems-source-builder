@@ -26,6 +26,7 @@ import pprint
 import os
 
 import execute
+import path
 
 def load():
     uname = os.uname()
@@ -50,13 +51,23 @@ def load():
         '_host_alias':  ('none',    'none',     '%{nil}'),
         '_host_arch':   ('none',    'none',     uname[4]),
         '_usr':         ('dir',     'required', '/usr'),
-        '_var':         ('dir',     'required', '/usr/var'),
-        'optflags':     ('none',    'none',     '-O2 -fasynchronous-unwind-tables'),
+        '_var':         ('dir',     'required', '/var'),
+        'optflags':     ('none',    'none',     '-O2'),
         '_smp_mflags':  ('none',    'none',     smp_mflags),
         '__bzip2':      ('exe',     'required', '/usr/bin/bzip2'),
         '__gzip':       ('exe',     'required', '/bin/gzip'),
         '__tar':        ('exe',     'required', '/bin/tar')
         }
+    variations = {
+        '__bzip2':      ('exe',     'required', '/bin/bzip2'),
+	'__chgrp':      ('exe',     'required', '/bin/chgrp'),
+	'__chown':      ('exe',     'required', '/bin/chown'),
+	'__grep':       ('exe',     'required', '/bin/grep'),
+	'__sed':        ('exe',     'required', '/bin/sed')
+        }
+    for v in variations:
+        if path.exists(variations[v][2]):
+	    defines[v] = variations[u]
     return defines
 
 if __name__ == '__main__':
