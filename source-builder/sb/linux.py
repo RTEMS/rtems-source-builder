@@ -52,7 +52,7 @@ def load():
         '_host_arch':   ('none',    'none',     uname[4]),
         '_usr':         ('dir',     'required', '/usr'),
         '_var':         ('dir',     'required', '/var'),
-        'optflags':     ('none',    'none',     '-O2'),
+        'optflags':     ('none',    'none',     '-O2 -pipe'),
         '_smp_mflags':  ('none',    'none',     smp_mflags),
         '__bzip2':      ('exe',     'required', '/usr/bin/bzip2'),
         '__gzip':       ('exe',     'required', '/bin/gzip'),
