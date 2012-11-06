@@ -97,13 +97,13 @@ Quick Start
 Check out the Source Builder tool from git:
 
 -------------------------------------------------------------
-$ git clone git://git.rtems.org/source-builder.git
+$ git clone git://git.rtems.org/chrisj/rtems-source-builder.git
 -------------------------------------------------------------
 
 The first step is to check if your host is set up correctly:
 
 -------------------------------------------------------------
-$ source-builder/sb-check
+$ rtems-source-builder/source-builder/sb-check
 warning: exe: absolute exe found in path: (__objcopy) /usr/local/bin/objcopy <1>
 warning: exe: absolute exe found in path: (__objdump) /usr/local/bin/objdump
 error: exe: not found: (_xz) /usr/local/bin/xz <2>
@@ -128,7 +128,7 @@ into that directory and build a GNU tool set:
 -------------------------------------------------------------
 $ mkdir gnu-tools <1>
 $ cd gnu-tools
-$ ../source-builder/sb-set-builder <2> --log=l.txt <3> --force <4> \
+$ ../rtems-source-builder/source-builder/sb-set-builder <2> --log=l.txt <3> --force <4> \
         --prefix=$HOME/gnu-tools-1 <5> --target=arm-eabi <6> gnu-toolset-4.6 <7>
 -------------------------------------------------------------
 
@@ -147,7 +147,7 @@ To view the build sets lets change to the RTEMS project's source builder
 configuration and then list the build sets:
 
 -------------------------------------------------------------
-$ cd ../rtems-source-builder
+$ cd ../rtems-source-builder/rtems
 $ ../source-builder/sb-set-builder --list-bsets
 Source Builder - Set Builder, v0.1
 Examining: /usr/home/chris/development/rtems/src/rtems-source-builder/config <1>
