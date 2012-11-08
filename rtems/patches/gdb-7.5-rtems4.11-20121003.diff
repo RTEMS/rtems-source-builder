@@ -1,0 +1,833 @@
+diff -Naur gdb-7.5.orig/gdb/ChangeLog gdb-7.5/gdb/ChangeLog
+--- gdb-7.5.orig/gdb/ChangeLog	2012-08-17 19:21:44.000000000 +0200
++++ gdb-7.5/gdb/ChangeLog	2012-10-03 05:13:35.925579962 +0200
+@@ -1,3 +1,9 @@
++2012-08-21  Pierre Muller  <muller@ics.u-strasbg.fr>
++
++	* symfile.c (allocate_symtab): Use host_address_to_string
++	function instead of cast of pointer to long which is not
++	compatible with x86_64-w64-mingw32 build.
++
+ 2012-08-17  Joel Brobecker  <brobecker@adacore.com>
+ 
+ 	* version.in: Update GDB version number to 7.5.
+diff -Naur gdb-7.5.orig/gdb/symfile.c gdb-7.5/gdb/symfile.c
+--- gdb-7.5.orig/gdb/symfile.c	2012-06-26 22:14:02.000000000 +0200
++++ gdb-7.5/gdb/symfile.c	2012-10-03 05:13:35.926579978 +0200
+@@ -2889,8 +2889,8 @@
+ 			      last_objfile_name);
+ 	}
+       fprintf_unfiltered (gdb_stdlog,
+-			  "Created symtab 0x%lx for module %s.\n",
+-			  (long) symtab, filename);
++			  "Created symtab %s for module %s.\n",
++			  host_address_to_string (symtab), filename);
+     }
+ 
+   return (symtab);
+diff -Naur gdb-7.5.orig/libiberty/ChangeLog gdb-7.5/libiberty/ChangeLog
+--- gdb-7.5.orig/libiberty/ChangeLog	2012-07-14 01:39:45.000000000 +0200
++++ gdb-7.5/libiberty/ChangeLog	2012-10-03 05:13:35.932580071 +0200
+@@ -1,3 +1,8 @@
++2012-07-31  Mike Frysinger  <vapier@gentoo.org>
++
++	* md5.c (md5_finish_ctx): Declare swap_bytes.  Assign SWAP() output
++	to swap_bytes, and then call memcpy to move it to ctx->buffer.
++
+ 2012-07-13  Doug Evans  <dje@google.com>
+ 
+ 	* filename_cmp.c (filename_hash, filename_eq): New functions.
+diff -Naur gdb-7.5.orig/libiberty/md5.c gdb-7.5/libiberty/md5.c
+--- gdb-7.5.orig/libiberty/md5.c	2011-09-23 22:01:11.000000000 +0200
++++ gdb-7.5/libiberty/md5.c	2012-10-03 05:13:35.933580087 +0200
+@@ -103,6 +103,7 @@
+ {
+   /* Take yet unprocessed bytes into account.  */
+   md5_uint32 bytes = ctx->buflen;
++  md5_uint32 swap_bytes;
+   size_t pad;
+ 
+   /* Now count remaining bytes.  */
+@@ -113,10 +114,13 @@
+   pad = bytes >= 56 ? 64 + 56 - bytes : 56 - bytes;
+   memcpy (&ctx->buffer[bytes], fillbuf, pad);
+ 
+-  /* Put the 64-bit file length in *bits* at the end of the buffer.  */
+-  *(md5_uint32 *) &ctx->buffer[bytes + pad] = SWAP (ctx->total[0] << 3);
+-  *(md5_uint32 *) &ctx->buffer[bytes + pad + 4] = SWAP ((ctx->total[1] << 3) |
+-							(ctx->total[0] >> 29));
++  /* Put the 64-bit file length in *bits* at the end of the buffer.
++     Use memcpy to avoid aliasing problems.  On most systems, this
++     will be optimized away to the same code.  */
++  swap_bytes = SWAP (ctx->total[0] << 3);
++  memcpy (&ctx->buffer[bytes + pad], &swap_bytes, sizeof (swap_bytes));
++  swap_bytes = SWAP ((ctx->total[1] << 3) | (ctx->total[0] >> 29));
++  memcpy (&ctx->buffer[bytes + pad + 4], &swap_bytes, sizeof (swap_bytes));
+ 
+   /* Process last bytes.  */
+   md5_process_block (ctx->buffer, bytes + pad + 8, ctx);
+diff -Naur gdb-7.5.orig/sim/ChangeLog gdb-7.5/sim/ChangeLog
+--- gdb-7.5.orig/sim/ChangeLog	2012-06-15 19:19:56.000000000 +0200
++++ gdb-7.5/sim/ChangeLog	2012-10-03 05:13:35.934580102 +0200
+@@ -1,3 +1,8 @@
++2012-07-19  Ralf Corsépius  <ralf.corsepius@rtems.org>
++
++	* common/sim-events.c: Include <inttypes.h>.
++	Avoid bogus pointer to int casts.
++
+ 2012-06-15  Joel Brobecker  <brobecker@adacore.com>
+ 
+ 	* configure: Regenerate.
+diff -Naur gdb-7.5.orig/sim/common/sim-events.c gdb-7.5/sim/common/sim-events.c
+--- gdb-7.5.orig/sim/common/sim-events.c	2012-01-04 09:28:06.000000000 +0100
++++ gdb-7.5/sim/common/sim-events.c	2012-10-03 05:13:35.935580117 +0200
+@@ -38,6 +38,8 @@
+ #include <stdlib.h>
+ #endif
+ 
++#include <inttypes.h>
++
+ #include <signal.h> /* For SIGPROCMASK et al. */
+ 
+ typedef enum {
+@@ -418,14 +420,14 @@
+ 	   event = event->next, i++)
+ 	{
+ 	  ETRACE ((_ETRACE,
+-		   "event time-from-event - time %ld, delta %ld - event %d, tag 0x%lx, time %ld, handler 0x%lx, data 0x%lx%s%s\n",
+-		   (long)current_time,
+-		   (long)events->time_from_event,
++		   "event time-from-event - time %" PRId64 ", delta %" PRId64 " - event %d, tag 0x%p, time %" PRId64 ", handler 0x%p, data 0x%p%s%s\n",
++		   current_time,
++		   events->time_from_event,
+ 		   i,
+-		   (long)event,
+-		   (long)event->time_of_event,
+-		   (long)event->handler,
+-		   (long)event->data,
++		   event,
++		   event->time_of_event,
++		   event->handler,
++		   event->data,
+ 		   (event->trace != NULL) ? ", " : "",
+ 		   (event->trace != NULL) ? event->trace : ""));
+ 	}
+@@ -525,12 +527,12 @@
+     new_event->trace = NULL;
+   insert_sim_event (sd, new_event, delta_time);
+   ETRACE ((_ETRACE,
+-	   "event scheduled at %ld - tag 0x%lx - time %ld, handler 0x%lx, data 0x%lx%s%s\n",
++	   "event scheduled at %ld - tag 0x%p - time %ld, handler 0x%p, data 0x%p%s%s\n",
+ 	   (long)sim_events_time (sd),
+-	   (long)new_event,
++	   new_event,
+ 	   (long)new_event->time_of_event,
+-	   (long)new_event->handler,
+-	   (long)new_event->data,
++	   new_event->handler,
++	   new_event->data,
+ 	   (new_event->trace != NULL) ? ", " : "",
+ 	   (new_event->trace != NULL) ? new_event->trace : ""));
+   return new_event;
+@@ -577,12 +579,12 @@
+ #endif
+ 
+   ETRACE ((_ETRACE,
+-	   "signal scheduled at %ld - tag 0x%lx - time %ld, handler 0x%lx, data 0x%lx\n",
+-	   (long)sim_events_time (sd),
+-	   (long)new_event,
+-	   (long)new_event->time_of_event,
+-	   (long)new_event->handler,
+-	   (long)new_event->data));
++	   "signal scheduled at %" PRId64 " - tag 0x%p - time %" PRId64 ", handler 0x%p, data 0x%p\n",
++	   sim_events_time (sd),
++	   new_event,
++	   new_event->time_of_event,
++	   new_event->handler,
++	   new_event->data));
+ }
+ #endif
+ 
+@@ -613,12 +615,12 @@
+   events->watchpoints = new_event;
+   events->work_pending = 1;
+   ETRACE ((_ETRACE,
+-	  "event watching clock at %ld - tag 0x%lx - wallclock %ld, handler 0x%lx, data 0x%lx\n",
+-	   (long)sim_events_time (sd),
+-	   (long)new_event,
+-	   (long)new_event->wallclock,
+-	   (long)new_event->handler,
+-	   (long)new_event->data));
++	  "event watching clock at %" PRId64 " - tag 0x%p - wallclock %d, handler 0x%p, data 0x%p\n",
++	   sim_events_time (sd),
++	   new_event,
++	   new_event->wallclock,
++	   new_event->handler,
++	   new_event->data));
+   return new_event;
+ }
+ #endif
+@@ -689,14 +691,14 @@
+   events->watchpoints = new_event;
+   events->work_pending = 1;
+   ETRACE ((_ETRACE,
+-	   "event watching host at %ld - tag 0x%lx - host-addr 0x%lx, 0x%lx..0x%lx, handler 0x%lx, data 0x%lx\n",
+-	   (long)sim_events_time (sd),
+-	   (long)new_event,
+-	   (long)new_event->host_addr,
+-	   (long)new_event->lb,
+-	   (long)new_event->ub,
+-	   (long)new_event->handler,
+-	   (long)new_event->data));
++	   "event watching host at %" PRId64 " - tag 0x%p - host-addr 0x%p, 0x%x..0x%x, handler 0x%p, data 0x%p\n",
++	   sim_events_time (sd),
++	   new_event,
++	   new_event->host_addr,
++	   new_event->lb,
++	   new_event->ub,
++	   new_event->handler,
++	   new_event->data));
+   return new_event;
+ }
+ #endif
+@@ -769,14 +771,14 @@
+   events->watchpoints = new_event;
+   events->work_pending = 1;
+   ETRACE ((_ETRACE,
+-	   "event watching host at %ld - tag 0x%lx - host-addr 0x%lx, 0x%lx..0x%lx, handler 0x%lx, data 0x%lx\n",
+-	   (long)sim_events_time (sd),
+-	   (long)new_event,
+-	   (long)new_event->host_addr,
+-	   (long)new_event->lb,
+-	   (long)new_event->ub,
+-	   (long)new_event->handler,
+-	   (long)new_event->data));
++	   "event watching host at %" PRId64 " - tag 0x%p - host-addr 0x%p, 0x%x..0x%x, handler 0x%p, data 0x%p\n",
++	   sim_events_time (sd),
++	   new_event,
++	   new_event->host_addr,
++	   new_event->lb,
++	   new_event->ub,
++	   new_event->handler,
++	   new_event->data));
+   return new_event;
+ }
+ #endif
+@@ -803,12 +805,12 @@
+ 	      sim_event *dead = *ptr_to_current;
+ 	      *ptr_to_current = dead->next;
+ 	      ETRACE ((_ETRACE,
+-		       "event/watch descheduled at %ld - tag 0x%lx - time %ld, handler 0x%lx, data 0x%lx%s%s\n",
+-		       (long) sim_events_time (sd),
+-		       (long) event_to_remove,
+-		       (long) dead->time_of_event,
+-		       (long) dead->handler,
+-		       (long) dead->data,
++		       "event/watch descheduled at %" PRId64 " - tag 0x%p - time %" PRId64 ", handler 0x%p, data 0x%p%s%s\n",
++		       sim_events_time (sd),
++		       event_to_remove,
++		       dead->time_of_event,
++		       dead->handler,
++		       dead->data,
+ 		       (dead->trace != NULL) ? ", " : "",
+ 		       (dead->trace != NULL) ? dead->trace : ""));
+ 	      sim_events_free (sd, dead);
+@@ -819,9 +821,9 @@
+ 	}
+     }
+   ETRACE ((_ETRACE,
+-	   "event/watch descheduled at %ld - tag 0x%lx - not found\n",
+-	   (long) sim_events_time (sd),
+-	   (long) event_to_remove));
++	   "event/watch descheduled at %" PRId64 " - tag 0x%p - not found\n",
++	   sim_events_time (sd),
++	   event_to_remove));
+ }
+ #endif
+ 
+@@ -1146,11 +1148,11 @@
+ 	  sim_event_handler *handler = to_do->handler;
+ 	  void *data = to_do->data;
+ 	  ETRACE ((_ETRACE,
+-		   "event issued at %ld - tag 0x%lx - handler 0x%lx, data 0x%lx%s%s\n",
+-		   (long) event_time,
+-		   (long) to_do,
+-		   (long) handler,
+-		   (long) data,
++		   "event issued at %" PRId64 " - tag 0x%p - handler 0x%p, data 0x%p%s%s\n",
++		   event_time,
++		   to_do,
++		   handler,
++		   data,
+ 		   (to_do->trace != NULL) ? ", " : "",
+ 		   (to_do->trace != NULL) ? to_do->trace : ""));
+ 	  sim_events_free (sd, to_do);
+@@ -1174,11 +1176,11 @@
+       events->queue = to_do->next;
+       update_time_from_event (sd);
+       ETRACE ((_ETRACE,
+-	       "event issued at %ld - tag 0x%lx - handler 0x%lx, data 0x%lx%s%s\n",
+-	       (long) event_time,
+-	       (long) to_do,
+-	       (long) handler,
+-	       (long) data,
++	       "event issued at %" PRId64 " - tag 0x%p - handler 0x%p, data 0x%p%s%s\n",
++	       event_time,
++	       to_do,
++	       handler,
++	       data,
+ 	       (to_do->trace != NULL) ? ", " : "",
+ 	       (to_do->trace != NULL) ? to_do->trace : ""));
+       sim_events_free (sd, to_do);
+diff -Naur gdb-7.5.orig/sim/erc32/ChangeLog gdb-7.5/sim/erc32/ChangeLog
+--- gdb-7.5.orig/sim/erc32/ChangeLog	2012-06-15 19:20:30.000000000 +0200
++++ gdb-7.5/sim/erc32/ChangeLog	2012-10-03 05:13:35.935580117 +0200
+@@ -1,3 +1,18 @@
++2012-08-16  Ralf Corsépius  <ralf.corsepius@rtems.org>
++
++	* func.c, sis.c: Include <inttypes.h>.
++	Apply PRI* macros to print 64 bit types.
++	* sis.h: Include <stdint.h>.
++	Derive 64 bit types from POSIX 64 types.
++	Don't define UINT64_MAX if already defined.
++
++2012-07-20  Ralf Corsépius  <ralf.corsepius@rtems.org>
++
++	* Makefile.in, configure.ac: Backport from rtems-4.11-gdb-7.4.1.
++	Use system-readline. Fix EXEEXT handling.
++	* erc32.c: Backport from rtems-4.11-gdb-7.4.1.
++	* configure: Regenerate.
++
+ 2012-06-15  Joel Brobecker  <brobecker@adacore.com>
+ 
+ 	* sys.h: Include "config.h".
+diff -Naur gdb-7.5.orig/sim/erc32/configure gdb-7.5/sim/erc32/configure
+--- gdb-7.5.orig/sim/erc32/configure	2012-06-15 19:20:00.000000000 +0200
++++ gdb-7.5/sim/erc32/configure	2012-10-03 05:13:35.938580164 +0200
+@@ -591,8 +591,9 @@
+ ac_subst_vars='LTLIBOBJS
+ LIBOBJS
+ cgen_breaks
++READLINE_CFLAGS
++READLINE_DEPS
+ READLINE
+-TERMCAP
+ REPORT_BUGS_TEXI
+ REPORT_BUGS_TO
+ PKGVERSION
+@@ -723,6 +724,7 @@
+ enable_sim_profile
+ with_pkgversion
+ with_bugurl
++with_system_readline
+ '
+       ac_precious_vars='build_alias
+ host_alias
+@@ -1365,6 +1367,7 @@
+   --with-zlib             include zlib support (auto/yes/no) default=auto
+   --with-pkgversion=PKG   Use PKG in the version string in place of "GDB"
+   --with-bugurl=URL       Direct users to URL to report a bug
++  --with-system-readline  use installed readline library
+ 
+ Some influential environment variables:
+   CC          C compiler command
+@@ -4811,42 +4814,19 @@
+ done
+ 
+ 
+-# In the Cygwin environment, we need some additional flags.
+-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for cygwin" >&5
+-$as_echo_n "checking for cygwin... " >&6; }
+-if test "${sim_cv_os_cygwin+set}" = set; then :
+-  $as_echo_n "(cached) " >&6
+-else
+-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+-/* end confdefs.h.  */
+ 
+-#ifdef __CYGWIN__
+-lose
+-#endif
+-_ACEOF
+-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+-  $EGREP "lose" >/dev/null 2>&1; then :
+-  sim_cv_os_cygwin=yes
+-else
+-  sim_cv_os_cygwin=no
++# Check whether --with-system-readline was given.
++if test "${with_system_readline+set}" = set; then :
++  withval=$with_system_readline;
+ fi
+-rm -f conftest*
+ 
+-fi
+-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_cv_os_cygwin" >&5
+-$as_echo "$sim_cv_os_cygwin" >&6; }
+ 
+-if test x$sim_cv_os_cygwin = xyes; then
+-  TERMCAP='`if test -r ../../libtermcap/libtermcap.a; then echo ../../libtermcap/libtermcap.a; else echo -ltermcap; fi` -luser32'
+-else
+-  # Keep in sync with gdb's configure.ac list.
+-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing tgetent" >&5
+-$as_echo_n "checking for library containing tgetent... " >&6; }
+-if test "${ac_cv_search_tgetent+set}" = set; then :
+-  $as_echo_n "(cached) " >&6
+-else
+-  ac_func_search_save_LIBS=$LIBS
+-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
++if test "$with_system_readline" = yes; then
++  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for readline" >&5
++$as_echo_n "checking for readline... " >&6; }
++  save_LIBS="$LIBS"
++  LIBS="-lreadline $save_LIBS"
++  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ /* end confdefs.h.  */
+ 
+ /* Override any GCC internal prototype to avoid an error.
+@@ -4855,65 +4835,20 @@
+ #ifdef __cplusplus
+ extern "C"
+ #endif
+-char tgetent ();
++char add_history ();
+ int
+ main ()
+ {
+-return tgetent ();
++return add_history ();
+   ;
+   return 0;
+ }
+ _ACEOF
+-for ac_lib in '' termcap tinfo curses ncurses; do
+-  if test -z "$ac_lib"; then
+-    ac_res="none required"
+-  else
+-    ac_res=-l$ac_lib
+-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+-  fi
+-  if ac_fn_c_try_link "$LINENO"; then :
+-  ac_cv_search_tgetent=$ac_res
+-fi
+-rm -f core conftest.err conftest.$ac_objext \
+-    conftest$ac_exeext
+-  if test "${ac_cv_search_tgetent+set}" = set; then :
+-  break
+-fi
+-done
+-if test "${ac_cv_search_tgetent+set}" = set; then :
+-
+-else
+-  ac_cv_search_tgetent=no
+-fi
+-rm conftest.$ac_ext
+-LIBS=$ac_func_search_save_LIBS
+-fi
+-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_tgetent" >&5
+-$as_echo "$ac_cv_search_tgetent" >&6; }
+-ac_res=$ac_cv_search_tgetent
+-if test "$ac_res" != no; then :
+-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+-  TERMCAP=$ac_cv_search_tgetent
+-else
+-  TERMCAP=""
+-fi
+-
+-fi
+-
+-
+-# We prefer the in-tree readline.  Top-level dependencies make sure
+-# src/readline (if it's there) is configured before src/sim.
+-if test -r ../../readline/Makefile; then
+-  READLINE=../../readline/libreadline.a
+-else
+-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for readline in -lreadline" >&5
+-$as_echo_n "checking for readline in -lreadline... " >&6; }
+-if test "${ac_cv_lib_readline_readline+set}" = set; then :
+-  $as_echo_n "(cached) " >&6
++if ac_fn_c_try_link "$LINENO"; then :
++  READLINE=-lreadline
+ else
+-  ac_check_lib_save_LIBS=$LIBS
+-LIBS="-lreadline $TERMCAP $LIBS"
+-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
++   LIBS="-lreadline -lncurses $save_LIBS"
++      cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ /* end confdefs.h.  */
+ 
+ /* Override any GCC internal prototype to avoid an error.
+@@ -4922,33 +4857,39 @@
+ #ifdef __cplusplus
+ extern "C"
+ #endif
+-char readline ();
++char add_history ();
+ int
+ main ()
+ {
+-return readline ();
++return add_history ();
+   ;
+   return 0;
+ }
+ _ACEOF
+ if ac_fn_c_try_link "$LINENO"; then :
+-  ac_cv_lib_readline_readline=yes
++  READLINE="-lreadline -lncurses"
+ else
+-  ac_cv_lib_readline_readline=no
++  as_fn_error "unable to detect readline" "$LINENO" 5
+ fi
+ rm -f core conftest.err conftest.$ac_objext \
+     conftest$ac_exeext conftest.$ac_ext
+-LIBS=$ac_check_lib_save_LIBS
++
+ fi
+-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_readline_readline" >&5
+-$as_echo "$ac_cv_lib_readline_readline" >&6; }
+-if test "x$ac_cv_lib_readline_readline" = x""yes; then :
+-  READLINE=-lreadline
+-else
+-  as_fn_error "the required \"readline\" library is missing" "$LINENO" 5
++rm -f core conftest.err conftest.$ac_objext \
++    conftest$ac_exeext conftest.$ac_ext
++  LIBS="$save_LIBS"
++  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $READLINE" >&5
++$as_echo "$READLINE" >&6; }
++  READLINE_DEPS=
++  READLINE_CFLAGS=
++else
++  READLINE='../../readline/libreadline.a -lncurses'
++  READLINE_DEPS='$(READLINE)'
++  READLINE_CFLAGS='-I$(READLINE_SRC)/..'
+ fi
+ 
+-fi
++
++
+ 
+ 
+ ac_sources="$sim_link_files"
+diff -Naur gdb-7.5.orig/sim/erc32/configure.ac gdb-7.5/sim/erc32/configure.ac
+--- gdb-7.5.orig/sim/erc32/configure.ac	2011-12-31 08:06:47.000000000 +0100
++++ gdb-7.5/sim/erc32/configure.ac	2012-10-03 05:13:35.938580164 +0200
+@@ -7,29 +7,32 @@
+ 
+ AC_CHECK_HEADERS(stdlib.h)
+ 
+-# In the Cygwin environment, we need some additional flags.
+-AC_CACHE_CHECK([for cygwin], sim_cv_os_cygwin,
+-[AC_EGREP_CPP(lose, [
+-#ifdef __CYGWIN__
+-lose
+-#endif],[sim_cv_os_cygwin=yes],[sim_cv_os_cygwin=no])])
++AC_ARG_WITH([system-readline],
++  [AS_HELP_STRING([--with-system-readline],
++                  [use installed readline library])])
+ 
+-if test x$sim_cv_os_cygwin = xyes; then
+-  TERMCAP='`if test -r ../../libtermcap/libtermcap.a; then echo ../../libtermcap/libtermcap.a; else echo -ltermcap; fi` -luser32'
++if test "$with_system_readline" = yes; then
++  AC_MSG_CHECKING([for readline])
++  save_LIBS="$LIBS"
++  LIBS="-lreadline $save_LIBS"
++  AC_LINK_IFELSE([AC_LANG_CALL([],
++    [add_history])], [READLINE=-lreadline],
++    [ LIBS="-lreadline -lncurses $save_LIBS"
++      AC_LINK_IFELSE([AC_LANG_CALL([],
++        [add_history])], [READLINE="-lreadline -lncurses"],
++        [AC_MSG_ERROR([unable to detect readline])])
++    ])
++  LIBS="$save_LIBS"
++  AC_MSG_RESULT($READLINE)
++  READLINE_DEPS=
++  READLINE_CFLAGS=
+ else
+-  # Keep in sync with gdb's configure.ac list.
+-  AC_SEARCH_LIBS(tgetent, [termcap tinfo curses ncurses],
+-    [TERMCAP=$ac_cv_search_tgetent], [TERMCAP=""])
+-fi
+-AC_SUBST(TERMCAP)
+-
+-# We prefer the in-tree readline.  Top-level dependencies make sure
+-# src/readline (if it's there) is configured before src/sim.
+-if test -r ../../readline/Makefile; then
+-  READLINE=../../readline/libreadline.a
+-else
+-  AC_CHECK_LIB(readline, readline, READLINE=-lreadline,
+-	       AC_ERROR([the required "readline" library is missing]), $TERMCAP)
++  READLINE='../../readline/libreadline.a -lncurses'
++  READLINE_DEPS='$(READLINE)'
++  READLINE_CFLAGS='-I$(READLINE_SRC)/..'
+ fi
+ AC_SUBST(READLINE)
++AC_SUBST(READLINE_DEPS)
++AC_SUBST(READLINE_CFLAGS)
++
+ SIM_AC_OUTPUT
+diff -Naur gdb-7.5.orig/sim/erc32/erc32.c gdb-7.5/sim/erc32/erc32.c
+--- gdb-7.5.orig/sim/erc32/erc32.c	2010-05-11 16:18:20.000000000 +0200
++++ gdb-7.5/sim/erc32/erc32.c	2012-10-03 05:13:35.939580180 +0200
+@@ -414,7 +414,7 @@
+     if (rom8) mec_memcfg &= ~0x20000;
+     else mec_memcfg |= 0x20000;
+ 
+-    mem_ramsz = (256 * 1024) << ((mec_memcfg >> 10) & 7);
++    mem_ramsz = (512 * 1024) << ((mec_memcfg >> 10) & 7);
+     mem_romsz = (128 * 1024) << ((mec_memcfg >> 18) & 7);
+ 
+     if (sparclite_board) {
+diff -Naur gdb-7.5.orig/sim/erc32/func.c gdb-7.5/sim/erc32/func.c
+--- gdb-7.5.orig/sim/erc32/func.c	2010-05-11 16:18:20.000000000 +0200
++++ gdb-7.5/sim/erc32/func.c	2012-10-03 05:13:35.939580180 +0200
+@@ -25,6 +25,7 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <ctype.h>
++#include <inttypes.h>
+ #include "sis.h"
+ #include "end.h"
+ #include <dis-asm.h>
+@@ -640,8 +641,8 @@
+ 	sregs->nbranch;
+ #endif
+ 
+-    printf("\n Cycles       : %9d\n\r", ebase.simtime - sregs->simstart);
+-    printf(" Instructions : %9d\n", sregs->ninst);
++    printf("\n Cycles       : %9" PRId64 "\n\r", ebase.simtime - sregs->simstart);
++    printf(" Instructions : %9" PRId64 "\n", sregs->ninst);
+ 
+ #ifdef STAT
+     printf("   integer    : %9.2f %%\n", 100.0 * (float) iinst / (float) sregs->ninst);
+@@ -671,8 +672,8 @@
+     printf(" Processor utilisation       : %5.2f %%\n", 100.0 * (1.0 - ((float) sregs->pwdtime / (float) stime)));
+     printf(" Real-time / simulator-time  : 1/%.2f \n",
+       ((float) sregs->tottime) / ((float) (stime) / (sregs->freq * 1.0E6)));
+-    printf(" Simulator performance       : %d KIPS\n",sregs->ninst/tottime/1000);
+-    printf(" Used time (sys + user)      : %3d s\n\n", sregs->tottime);
++    printf(" Simulator performance       : %" PRId64 " KIPS\n",sregs->ninst/tottime/1000);
++    printf(" Used time (sys + user)      : %3" PRId64 " s\n\n", sregs->tottime);
+ }
+ 
+ 
+diff -Naur gdb-7.5.orig/sim/erc32/Makefile.in gdb-7.5/sim/erc32/Makefile.in
+--- gdb-7.5.orig/sim/erc32/Makefile.in	2012-01-04 09:28:09.000000000 +0100
++++ gdb-7.5/sim/erc32/Makefile.in	2012-10-03 05:13:35.936580132 +0200
+@@ -19,12 +19,12 @@
+ 
+ ## COMMON_PRE_CONFIG_FRAG
+ 
+-TERMCAP_LIB = @TERMCAP@
++# TERMCAP_LIB = -lncurses
+ READLINE_LIB = @READLINE@
+ 
+ SIM_OBJS = exec.o erc32.o func.o help.o float.o interf.o
+ SIM_EXTRA_LIBS = $(READLINE_LIB) $(TERMCAP_LIB) -lm
+-SIM_EXTRA_ALL = sis
++SIM_EXTRA_ALL = sis$(EXEEXT)
+ SIM_EXTRA_INSTALL = install-sis
+ SIM_EXTRA_CLEAN = clean-sis
+ 
+@@ -38,8 +38,8 @@
+ # `sis' doesn't need interf.o.
+ SIS_OFILES = exec.o erc32.o func.o help.o float.o
+ 
+-sis: sis.o $(SIS_OFILES) $(COMMON_OBJS) $(LIBDEPS)
+-	$(CC) $(ALL_CFLAGS) -o sis \
++sis$(EXEEXT): sis.o $(SIS_OFILES) $(COMMON_OBJS) $(LIBDEPS)
++	$(CC) $(ALL_CFLAGS) -o sis$(EXEEXT) \
+ 	  sis.o $(SIS_OFILES) $(COMMON_OBJS) $(EXTRA_LIBS)
+ 
+ # FIXME: This computes the build host's endianness, doesn't it?
+@@ -52,11 +52,11 @@
+ 
+ # Copy the files into directories where they will be run.
+ install-sis: installdirs
+-	n=`echo sis | sed '$(program_transform_name)'`; \
+-	$(INSTALL_PROGRAM) sis$(EXEEXT) $(DESTDIR)$(bindir)/$$n$(EXEEXT)
++	n=`echo sis$(EXEEXT) | sed '$(program_transform_name)'`; \
++	$(INSTALL_PROGRAM) sis$(EXEEXT) $(DESTDIR)$(bindir)/$$n
+ 
+ clean-sis:
+-	rm -f sis end end.h
++	rm -f sis$(EXEEXT) end end.h
+ 
+ configure:
+ 	@echo "Rebuilding configure..."
+diff -Naur gdb-7.5.orig/sim/erc32/sis.c gdb-7.5/sim/erc32/sis.c
+--- gdb-7.5.orig/sim/erc32/sis.c	2010-05-11 16:18:20.000000000 +0200
++++ gdb-7.5/sim/erc32/sis.c	2012-10-03 05:13:35.940580196 +0200
+@@ -28,6 +28,7 @@
+ #endif
+ #include <stdio.h>
+ #include <time.h>
++#include <inttypes.h>
+ #include <sys/fcntl.h>
+ #include "sis.h"
+ #include <dis-asm.h>
+@@ -124,7 +125,7 @@
+ 			        sregs->histind = 0;
+ 		        }
+ 		        if (dis) {
+-			    printf(" %8u ", ebase.simtime);
++			    printf(" %8" PRIu64, ebase.simtime);
+ 			    dis_mem(sregs->pc, 1, &dinfo);
+ 		        }
+ 		    }
+@@ -279,7 +280,7 @@
+ 	case CTRL_C:
+ 	    printf("\b\bInterrupt!\n");
+ 	case TIME_OUT:
+-	    printf(" Stopped at time %d (%.3f ms)\n", ebase.simtime, 
++	    printf(" Stopped at time %" PRId64 " (%.3f ms)\n", ebase.simtime,
+ 	      ((double) ebase.simtime / (double) sregs.freq) / 1000.0);
+ 	    break;
+ 	case BPT_HIT:
+@@ -289,7 +290,7 @@
+ 	case ERROR:
+ 	    printf("IU in error mode (%d)\n", sregs.trap);
+ 	    stat = 0;
+-	    printf(" %8d ", ebase.simtime);
++	    printf(" %8" PRId64, ebase.simtime);
+ 	    dis_mem(sregs.pc, 1, &dinfo);
+ 	    break;
+ 	default:
+diff -Naur gdb-7.5.orig/sim/erc32/sis.h gdb-7.5/sim/erc32/sis.h
+--- gdb-7.5.orig/sim/erc32/sis.h	2012-06-15 19:20:30.000000000 +0200
++++ gdb-7.5/sim/erc32/sis.h	2012-10-03 05:13:35.940580196 +0200
+@@ -22,6 +22,8 @@
+ 
+ #include "config.h"
+ #include "ansidecl.h"
++#include <stdint.h>
++
+ #include "gdb/callback.h"
+ #include "gdb/remote-sim.h"
+ 
+@@ -53,10 +55,12 @@
+ typedef double  float64;	/* 64-bit float */
+ 
+ /* FIXME: what about host compilers that don't support 64-bit ints? */
+-typedef unsigned long long uint64; /* 64-bit unsigned int */
+-typedef long long int64;	   /* 64-bit signed int */
++typedef uint64_t uint64; /* 64-bit unsigned int */
++typedef int64_t int64;	   /* 64-bit signed int */
+ 
++#ifndef UINT64_MAX
+ #define UINT64_MAX 18446744073709551615ULL
++#endif
+ 
+ struct pstate {
+ 
+diff -Naur gdb-7.5.orig/sim/microblaze/ChangeLog gdb-7.5/sim/microblaze/ChangeLog
+--- gdb-7.5.orig/sim/microblaze/ChangeLog	2012-06-15 19:20:04.000000000 +0200
++++ gdb-7.5/sim/microblaze/ChangeLog	2012-10-03 05:13:35.940580196 +0200
+@@ -1,3 +1,17 @@
++2012-10-02  Ralf Corsépius  <ralf.corsepius@rtems.org>
++
++	* interp.c: Define SIGBUS, SIGTRAP, SIGQUIT on mingw32.
++	Extend comment on _POSIX/__MINGW32__.
++
++2012-10-02  Ralf Corsépius  <ralf.corsepius@rtems.org>
++
++	Backport from rtems-4.11-gdb-7.4:
++
++	2012-04-29  Ralf Corsépius  <ralf.corsepius@rtems.org>
++
++	* interp.c: Don't include <sys/times.h>, <netinet/in.h>.
++	Define _POSIX on mingw32.
++
+ 2012-06-15  Joel Brobecker  <brobecker@adacore.com>
+ 
+ 	* config.in, configure: Regenerate.
+diff -Naur gdb-7.5.orig/sim/microblaze/interp.c gdb-7.5/sim/microblaze/interp.c
+--- gdb-7.5.orig/sim/microblaze/interp.c	2012-06-06 23:50:03.000000000 +0200
++++ gdb-7.5/sim/microblaze/interp.c	2012-10-03 05:13:35.941580211 +0200
+@@ -19,11 +19,29 @@
+    02110-1301, USA.  */
+ 
+ #include "config.h"
++
++#ifdef __MINGW32__
++/* mingw-w64 defines the SIG* defines if _POSIX is defined */
++#define _POSIX
++#endif
++
+ #include <signal.h>
++
++#ifdef __MINGW32__
++#ifndef SIGTRAP
++#define SIGTRAP 5
++#endif
++#ifndef SIGBUS
++#define SIGBUS 10
++#endif
++#ifndef SIGQUIT
++#define SIGQUIT 3
++#endif
++#endif
++
+ #include "sysdep.h"
+-#include <sys/times.h>
+ #include <sys/param.h>
+-#include <netinet/in.h>	/* for byte ordering macros */
++
+ #include "bfd.h"
+ #include "gdb/callback.h"
+ #include "libiberty.h"
+diff -Naur gdb-7.5.orig/sim/ppc/ChangeLog gdb-7.5/sim/ppc/ChangeLog
+--- gdb-7.5.orig/sim/ppc/ChangeLog	2012-06-15 19:20:07.000000000 +0200
++++ gdb-7.5/sim/ppc/ChangeLog	2012-10-03 05:13:35.942580226 +0200
+@@ -1,3 +1,10 @@
++2012-09-28  Ralf Corsépius  <ralf.corsepius@rtems.org>
++
++	Backport from gcc-7.4-rtems4.11:
++
++	* device.c, device.h: Use (void) device_error.
++	* hw_glue.c: Use %zd to print sizes.
++
+ 2012-06-15  Joel Brobecker  <brobecker@adacore.com>
+ 
+ 	* configure: Regenerate.
+diff -Naur gdb-7.5.orig/sim/ppc/device.c gdb-7.5/sim/ppc/device.c
+--- gdb-7.5.orig/sim/ppc/device.c	2011-02-14 06:14:27.000000000 +0100
++++ gdb-7.5/sim/ppc/device.c	2012-10-03 05:13:35.943580241 +0200
+@@ -1816,7 +1816,7 @@
+ /* I/O */
+ 
+ EXTERN_DEVICE\
+-(void volatile)
++(void)
+ device_error(device *me,
+ 	     const char *fmt,
+ 	     ...)
+diff -Naur gdb-7.5.orig/sim/ppc/device.h gdb-7.5/sim/ppc/device.h
+--- gdb-7.5.orig/sim/ppc/device.h	2001-12-14 01:22:12.000000000 +0100
++++ gdb-7.5/sim/ppc/device.h	2012-10-03 05:13:35.944580256 +0200
+@@ -727,7 +727,7 @@
+    */
+ 
+ EXTERN_DEVICE\
+-(void volatile) device_error
++(void) device_error
+ (device *me,
+  const char *fmt,
+  ...) __attribute__ ((format (printf, 2, 3)));
+diff -Naur gdb-7.5.orig/sim/ppc/hw_glue.c gdb-7.5/sim/ppc/hw_glue.c
+--- gdb-7.5.orig/sim/ppc/hw_glue.c	1999-04-16 03:35:09.000000000 +0200
++++ gdb-7.5/sim/ppc/hw_glue.c	2012-10-03 05:13:35.944580256 +0200
+@@ -194,13 +194,13 @@
+     if (glue->sizeof_output == 0)
+       device_error(me, "at least one reg property size must be nonzero");
+     if (glue->sizeof_output % sizeof(unsigned_word) != 0)
+-      device_error(me, "reg property size must be %d aligned", sizeof(unsigned_word));
++      device_error(me, "reg property size must be %zd aligned", sizeof(unsigned_word));
+     /* and the address */
+     device_address_to_attach_address(device_parent(me),
+ 				     &unit.address, &glue->space, &glue->address,
+ 				     me);
+     if (glue->address % (sizeof(unsigned_word) * max_nr_interrupts) != 0)
+-      device_error(me, "reg property address must be %d aligned",
++      device_error(me, "reg property address must be %zd aligned",
+ 		   sizeof(unsigned_word) * max_nr_interrupts);
+     glue->nr_outputs = glue->sizeof_output / sizeof(unsigned_word);
+     glue->output = zalloc(glue->sizeof_output);
