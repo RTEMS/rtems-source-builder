@@ -5,7 +5,8 @@ if [ $# -ne 1 ]; then
   exit 1
 fi
 
-targets="arm avr bfin h8300 lm32 m32c m32r m68k mips powerpc sh sparc"
+targets="arm avr bfin h8300 m32c m32r m68k mips powerpc sh sparc"
+bad_targets="lm32"
 
 log="rtems4.11-build-tools-results.txt"
 
