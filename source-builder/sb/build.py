@@ -174,7 +174,14 @@ class build:
                         if path.exists(local):
                             os.remove(path.host(local))
                         failed = True
+                    except ValueError, err:
+                        msg = 'download: %s: error: %s' % (url, str(err))
+                        _notice(self.opts, msg)
+                        if path.exists(local):
+                            os.remove(path.host(local))
+                        failed = True
                     except:
+                        msg = 'download: %s: error' % (url)
                         print >> sys.stderr, msg
                         if _out is not None:
                             _out.close()
@@ -205,7 +212,9 @@ class build:
         source['local'] = None
         for p in self.config.define(pathkey).split(':'):
             local = path.join(path.abspath(p), source['file'])
-            if source['local'] is None or path.exists(local):
+            if source['local'] is None:
+                source['local'] = local
+            if path.exists(local):
                 source['local'] = local
                 break
         #
