@@ -129,7 +129,7 @@ into that directory and build a GNU tool set:
 $ mkdir gnu-tools <1>
 $ cd gnu-tools
 $ ../rtems-source-builder/source-builder/sb-set-builder <2> --log=l.txt <3> --force <4> \
-        --prefix=$HOME/gnu-tools-1 <5> --target=arm-eabi <6> gnu-toolset-4.6 <7>
+        --prefix=$HOME/gnu-tools-1 <5> --target=arm-eabi <6> gnu-tools-4.6 <7>
 -------------------------------------------------------------
 
 <1> Make a build directory you can delete when finished.
