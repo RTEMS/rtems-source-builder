@@ -94,6 +94,9 @@ the spec file format and build a new tool called the Source Builder.
 Quick Start
 -----------
 
+The quick start will show you how to build a generic unpatched GNU tool set for
+any support target.
+
 Check out the Source Builder tool from git:
 
 -------------------------------------------------------------
@@ -154,12 +157,14 @@ Examining: /usr/home/chris/development/rtems/src/rtems-source-builder/config <1>
 Examining: /usr/home/chris/development/rtems/src/source-builder/config <2>
   gnu-tools-4.6 <3>
   rtems-tools-4.10 <4>
+  rtems-tools-4.11 <5>
 -------------------------------------------------------------
 
 <1> The local RTEMS configuration directory. Searched first.
 <2> The Source Builder configuration directory.
 <3> The Source Builder provided GNU tools GCC 4.6 build set.
 <4> The RTEMS Source Builder provided RTEMS 4.10 build set.
+<5> The RTEMS Source Builder provided RTEMS 4.11 (gcc-4.6.3)  build set.
 
 And to view the configurations you can:
 
@@ -192,8 +197,11 @@ Examining: /usr/home/chris/development/rtems/src/source-builder/config
   m4-1.4.16-1
   texane-stlink-1
   rtems-binutils-2.20.1-1
+  rtems-binutils-2.22-1
   rtems-gcc-4.4.7-newlib-1.18.0-1
+  rtems-gcc-4.6.3-newlib-1.20.0-1
   rtems-gdb-7.3.1-1
+  rtems-gdb-7.5-1
 -------------------------------------------------------------
 
 <1> Configurations are built by using the builder. This creates a stand alone
@@ -205,10 +213,558 @@ The Source Builder
 The Source Builder provides a few generic build sets and the configuration
 support to build a number of packages. A project that uses the Source Builder
 can create a specialised set of configuration files that provides the specific
-configurations thet project uses.
+configurations a project uses.
 
-For example the RTEMS project provides its own set of configuration files. In
-the build set list in the 'Quick Start' section you can see a build set
-+rtems-tools-4.10+. This build set defines the extact configration to use for
-the RTEMS 4.10 release.
+For example the RTEMS project provides its own set of configuration files
+inside the Source Builder. They do not have to be here. In the build set list
+in the 'Quick Start' section you can see the build sets +rtems-tools-4.10+ and
++rtems-tools-4.11+. These build set defines the extact configration to use for
+the RTEMS releases.
 
+The Source Builder has been tested on:
+
+. FreeBSD
+. MacOS (Mountain Lion)
+. Ubuntu
+. Fedora
+
+Windows will be support how-ever there are issues with the Python threading
+used in the Source Builder and the MinGW project's MSYS process handling of make.
+
+Set Builder and the Builder
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The Source Builder provides two commands, the +sb-set-builder+ to build sets of
+packages and the +sb-builder+ to build a specific package. The set builder uses
+the builder to build a set of packages. You could write a shell script that did
+th same thing so the set builder is a convenience command that allows you to
+define and control specific features of the packages you are building. The set
+builder looks for files with the +.bset" extension in the +config+
+directories. The builder command uses the configuration files have the +.cfg+
+file extension. They also live in the +config+ directories.
+
+The build set file for the RTEMS 4.10 tool set +rtems/rtems-tools-4.10.bset+
+shows a typical build set file structure:
+
+-------------------------------------------------------------
+#
+# Tools Set for RTEMS 4.10
+#
+
+%define rtems_version 4.10 <1>
+
+%define release 1 <2>
+
+package: rtems-%{rtems_version}-%{_target}-%{release} <3>
+
+#
+# Project custom message
+#
+%define gcc_version_message RTEMS %{rtems_version}-%{release},gcc-%{gcc_version}/newlib-%{newlib_version} <4>
+
+#
+# Tools configuration.
+#
+rtems-binutils-2.20.1-1 <5>
+rtems-gcc-4.4.7-newlib-1.18.0-1
+rtems-gdb-7.3.1-1
+-------------------------------------------------------------
+
+<1> Define the version of RTEMS.
+<2> Define the release. This allows us to number the tool releases.
+<3> The top level name of the package. The finaly tar file name.
+<4> The GCC configuration allow a custom message to be embedded into GCC.
+<5> The list of packages this build set contains.
+
+Currently the syntax of the set builder scripts is limited. It support
+comments, the package command, macros (the +%{}+), and defining macros
+(+%define+). It is planned to allow more of the configuration file syntax in
+the future.
+
+The builder uses configuration files that allow the full range of the
+configuration script syntax. Configuration files follow most of the RPM spec
+file format. They support macros and logic as well as the ability to include
+other configuration files. The ability to include other configuration files
+allow a simple way to configuration control the builds. Configuration files
+have four main areas:
+
+. Descriptions and definitions.
++
+The description lists various useful pieces of information about the
+package. None of this is currently enforced how-ever it is good practice to
+provide it. The definitions are the sources and the patches.
+. Preparation
++
+The preparation is the set up of the source code ready for building. The set up
+follows the unusual command structure used by RPM. The follwing macro
+trickshows how to conditional patch the source if a patch has been declared.
++
+-------------------------------------------------------------
+cd expat-%{expat_version}
+%{?patch0:%patch0 -p1}
+cd ..
+-------------------------------------------------------------
++
+. Build
++
+The build phase. This is a fragment of shell script that can be mixed with
+conditional configuration scripting to create the list of build commands.
++
+. Install
++
+The install phase. Again this is a fragment of shell script.
+
+This is a configuration script to build gdb:
+
+-------------------------------------------------------------
+#
+# GDB 7.xx Version 1.
+#
+# This configuration file configure's, make's and install's gdb.
+#
+
+%include %{_configdir}/checks.cfg <1>
+
+Name:      %{_target}-gdb-%{gdb_version}-%{release} <2>
+Summary:   GDB v%{gdb_version} for target %{_target} on host %{_host}
+Version:   %{gdb_version}
+Release:   %{release}
+URL: 	   http://www.gnu.org/software/gdb/
+BuildRoot: %{_tmppath}/%{name}-root-%(%{__id_u} -n)
+
+#
+# Source
+#
+Source0: http://ftp.gnu.org/gnu/gdb/gdb-%{gdb_version}.tar.bz2 <3>
+VersionControl0 git clone git://sourceware.org/git/gdb.git
+
+#
+# Prepare the source code.
+#
+%prep <4>
+%setup -q -c -T -n %{name}-%{version}
+cd gdb-%{gdb_version}
+%{?patch0:%patch0 -p1}
+cd ..
+
+%build <5>
+  export PATH="%{_bindir}:${PATH}"
+  mkdir -p build
+  cd build
+%if "%{_build}" != "%{_host}"
+  CFLAGS_FOR_BUILD="-g -O2 -Wall" \
+%endif
+  CFLAGS="$SB_OPT_FLAGS" \
+  ../gdb-%{gdb_version}/configure \
+    --build=%{_build} --host=%{_host} \
+    --target=%{_target} \
+    --verbose --disable-nls \
+    --without-included-gettext \
+    --disable-win32-registry \
+    --disable-werror \
+    --enable-sim \
+    --with-expat \
+    --with-python \
+    --prefix=%{_prefix} --bindir=%{_bindir} \
+    --exec-prefix=%{_exec_prefix} \
+    --includedir=%{_includedir} --libdir=%{_libdir} \
+    --mandir=%{_mandir} --infodir=%{_infodir}
+
+  %{__make} %{?_smp_mflags} all
+  cd ..
+
+%install <6>
+  export PATH="%{_bindir}:${PATH}"
+  rm -rf $SB_BUILD_ROOT
+
+  cd build
+  %{__make} DESTDIR=$SB_BUILD_ROOT install
+
+  # Dropped in FSF-binutils-2.9.5, but Cygwin still ships it.
+  rm -rf $SB_BUILD_ROOT%{_infodir}/configure.info*
+
+  rm -f $SB_BUILD_ROOT%{_infodir}/dir
+  touch $SB_BUILD_ROOT%{_infodir}/dir
+
+  cd ..
+-------------------------------------------------------------
+
+<1> Including a file. The +_configdir+ macro searchs a list of paths.
+<2> The description section.
+<3> The source file as a URL. If not found in the +sources+ directories it is
+downloaded.
+<4> Preparing the source code.
+<5> The commands to build +gdb+.
+<6> The installation phase. Notice the +DESTDIR=+ feature is used.
+
+Controlling Configurations
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is a simple process of including the specific pieces you need. There
+typically is three layers where the top level is specific and each sub-layer is
+more generic configured by the layer above it. The typical layering is:
+
+. Build Set
+. Package definition
+. Package configuration
+
+The build set defines the packages to be built plus any specific configuration
+needed. Some packages default to standard values if the build set does not
+provide any specific configuration and some configurations raise an error
+indicating a required configuration is missing.
+
+Using the RTEMS 4.10 Tools Set build as an example the build set configuration
+is:
+
+-------------------------------------------------------------
+#
+# Tools Set for RTEMS 4.10
+#
+
+%define rtems_version 4.10
+
+%define release 1 <1>
+
+package: rtems-%{rtems_version}-%{_target}-%{release}
+
+#
+# Project custom message
+#
+%define gcc_version_message RTEMS %{rtems_version}-%{release},gcc-%{gcc_version}/newlib-%{newlib_version}
+
+#
+# Tools configuration.
+#
+rtems-binutils-2.20.1-1 <2>
+rtems-gcc-4.4.7-newlib-1.18.0-1
+rtems-gdb-7.3.1-1
+-------------------------------------------------------------
+
+<1> The release of the RTEMS 4.10 tools package.
+<2> The build configurations. These reference the specific version of the tools
+including the related patches. You should note the configurations referenced
+are RTEMS specific, that is prefixed with +rtems-+.
+
+The GCC and Newlib file +rtems-gcc-4.4.7-newlib-1.18.0-1+ is:
+
+-------------------------------------------------------------
+#
+# GCC 4.4.7, Newlib 1.18.0
+#
+
+%include %{_configdir}/checks.cfg <1>
+%include %{_configdir}/base.cfg <2>
+
+%define gcc_version    4.4.7 <3>
+%define newlib_version 1.18.0
+%define mpfr_version   2.4.1
+%define mpc_version    0.8.2
+%define gmp_version    5.0.5
+
+%define with_threads 1 <4>
+%define with_plugin  0
+%define with_iconv   1
+
+#
+# AVR C++ does not work.
+#   configure: error: unable to detect exception model
+#
+%if %{_target} == avr-rtems4.10 <5>
+%define enable_cxx 0
+%endif
+
+#
+# M32C C++ does not work.
+#   gcc-4.4.7/libstdc++-v3/src/mt_allocator.cc:76: error: cast from 'void*' to 'size_t' loses precision
+#
+%if %{_target} == m32c-rtems4.10
+%define enable_cxx 0
+%endif
+
+%ifn %{defined enable_cxx} <6>
+%define enable_cxx 1
+%endif
+
+#
+# The RTEMS 4.10 patches
+#
+Patch0:  gcc-core-4.4.7-rtems4.10-20120314.diff <7>
+%if %{enable_cxx}
+Patch1:  gcc-g++-4.4.7-rtems4.10-20120314.diff
+%endif
+Patch10: newlib-1.18.0-rtems4.10-20110518.diff
+
+#
+# The gcc/newlib build instructions. We use 4.4 Release 1.
+#
+%include %{_configdir}/gcc-4.4-1.cfg <8>
+-------------------------------------------------------------
+
+<1> Perform some standard checks such as the release being set.
+<2> Set up some standard macros needed by most configure type packages.
+<3> The specific versions of the various parts that make a GCC embedded
+cross-compiler.
+<4> Configure some specific parts of GCC and Newlib for RTEMS.
+<5> Disable C++ for the AVR target because it does not build for RTEMS.
+<6> Default is to build C++.
+<7> The various patches. This file's revision increases with each patch change.
+<8> The generic GCC/Newlib build configuration for gcc-4.4.x.
+
+Project Configuration
+~~~~~~~~~~~~~~~~~~~~~
+
+The Source Builder has a +config+ and +patches+ directory that contain some
+useful and often needed configurations and patches. You do not need to add your
+project specific configurations into the Source Builder. You can create a
+private set and then use the Source Builder to build your packages.
+
+Create a +config+ directory and place your build sets and configuration in
+them. If you have private patches add them to a +patches+ directory next to the
++config+ directiory. When you run a Source Builder command it will first search
+the for the specific file then the local +config+ directoy then the Source
+Builder's +config+ directory. The same goes for +patches+.
+
+For example of this set up look in the +rtems+ directory in the Source
+Builder. It is actually a standard alone project configuration private to the
+RTEMS project.
+
+If you are an open source project and you find the Source Builder useful and
+would like your configuration held in the Source Builder's repository please
+contact me directly.
+
+Using the Builder
+~~~~~~~~~~~~~~~~~
+
+TBD
+
+RTEMS Build Sets
+----------------
+
+The Source Builder package comes with the RTEMS project's build sets and
+configurations. These let you build tools for RTEMS. To use clone the Source
+Builder repository and change into the +rtems+ directory:
+
+-------------------------------------------------------------
+$ git clone git://git.rtems.org/chrisj/rtems-source-builder.git
+$ cd rtems
+-------------------------------------------------------------
+
+To build all the available architectures you can run the provided script giving
+it a prefix:
+
+-------------------------------------------------------------
+$ ./build-4.10-targets.sh $HOME/development/rtems/4.10 <1>
+-------------------------------------------------------------
+
+<1> This is a local user path and does not need root to install.
+
+To build a tool set for a specific architecture you enter:
+
+-------------------------------------------------------------
+$ ../source-builder/sb-set-builder --log=l-arm.txt \
+             --prefix=$HOME/development/rtems/4.10 \
+             --target=arm-rtems4.10 rtems-tools-4.10
+-------------------------------------------------------------
+
+The results of the build are found in the +tar+ directory. The packages that
+make the build set are available as packages as well as the combined package
+for the whole build set:
+
+-------------------------------------------------------------
+$ ls -1 tar
+arm-rtems4.10-binutils-2.20.1-1.tar.bz2 <1>
+arm-rtems4.10-gcc-4.4.7-newlib-1.18.0-1.tar.bz2
+arm-rtems4.10-gdb-7.3.1-1.tar.bz2
+rtems-4.10-arm-rtems4.10-1.tar.bz2 <2>
+-------------------------------------------------------------
+
+<1> The bintuls part of the build set as a separate tar file.
+<2> The RTEMS ARM tool set. This is various packages combined.
+
+The tar files are constructed from the top of the prefix you provide. If you
+provide a relative prefix the installation will be relative. How well this
+works depends on the specifics of the application being packaged. Some such as
+binutils and gcc can be relocated without any issues how-ever other such as
+autoconf and automake cannot be relocated. Those packages contain absolute file
+names. In the example above the prefix was +$HOME/development/rtems/4.10+ so
+the contents of the tar file is:
+
+-------------------------------------------------------------
+tar jtf tar/rtems-4.10-arm-rtems4.10-1.tar.bz2
+./
+./home/
+./home/chris/
+./home/chris/development/
+./home/chris/development/rtems/
+./home/chris/development/rtems/4.10/
+./home/chris/development/rtems/4.10/arm-rtems4.10/
+./home/chris/development/rtems/4.10/bin/
+./home/chris/development/rtems/4.10/include/
+./home/chris/development/rtems/4.10/lib/
+./home/chris/development/rtems/4.10/libexec/
+  ....
+./home/chris/development/rtems/4.10/lib/gcc/arm-rtems4.10/4.4.7/fpu/libsupc++.la
+./home/chris/development/rtems/4.10/bin/arm-rtems4.10-addr2line
+./home/chris/development/rtems/4.10/bin/arm-rtems4.10-ar
+./home/chris/development/rtems/4.10/bin/arm-rtems4.10-as
+./home/chris/development/rtems/4.10/bin/arm-rtems4.10-c++
+./home/chris/development/rtems/4.10/bin/arm-rtems4.10-c++filt
+./home/chris/development/rtems/4.10/bin/arm-rtems4.10-cpp
+./home/chris/development/rtems/4.10/bin/arm-rtems4.10-g++
+./home/chris/development/rtems/4.10/bin/arm-rtems4.10-gcc
+./home/chris/development/rtems/4.10/bin/arm-rtems4.10-gcc-4.4.7
+./home/chris/development/rtems/4.10/bin/arm-rtems4.10-gccbug
+./home/chris/development/rtems/4.10/bin/arm-rtems4.10-gcov
+./home/chris/development/rtems/4.10/bin/arm-rtems4.10-gdb
+./home/chris/development/rtems/4.10/bin/arm-rtems4.10-gdbtui
+./home/chris/development/rtems/4.10/bin/arm-rtems4.10-gprof
+./home/chris/development/rtems/4.10/bin/arm-rtems4.10-ld
+./home/chris/development/rtems/4.10/bin/arm-rtems4.10-nm
+./home/chris/development/rtems/4.10/bin/arm-rtems4.10-objcopy
+./home/chris/development/rtems/4.10/bin/arm-rtems4.10-objdump
+./home/chris/development/rtems/4.10/bin/arm-rtems4.10-ranlib
+./home/chris/development/rtems/4.10/bin/arm-rtems4.10-readelf
+./home/chris/development/rtems/4.10/bin/arm-rtems4.10-run
+./home/chris/development/rtems/4.10/bin/arm-rtems4.10-size
+./home/chris/development/rtems/4.10/bin/arm-rtems4.10-strings
+./home/chris/development/rtems/4.10/bin/arm-rtems4.10-strip
+./home/chris/development/rtems/4.10/arm-rtems4.10/bin/
+./home/chris/development/rtems/4.10/arm-rtems4.10/include/
+ ....
+-------------------------------------------------------------
+
+Because the path is absolute and references directories that +root+ owns +root+
+access would normally be needed. This can be avoided if your tar supports the
++--strip-components=+ option. To install this package without becoming +root+:
+
+-------------------------------------------------------------
+$ cd
+$ tar --strip-components=3 -jxf \
+ development/rtems/build/rtems-source-builder/rtems/tar/tar/rtems-4.10-arm-rtems4.10-1.tar.bz2
+-------------------------------------------------------------
+
+Source Builder Commands
+-----------------------
+
+Checker (sb-check)
+~~~~~~~~~~~~~~~~~~
+
+This commands checks your system is set up correctly.
+
+-------------------------------------------------------------
+$ ./source-builder/sb-check --help
+sb-check: [options] [args]
+Source Builder, an RTEMS Tools Project (c) 2012 Chris Johns
+Options and arguments:
+--force                : Create directories that are not present
+--trace                : Trace the execution (not current used)
+--dry-run              : Do everything but actually run the build
+--warn-all             : Generate warnings
+--no-clean             : Do not clean up the build tree
+--no-smp               : Run with 1 job and not as many as CPUs
+--rebuild              : Rebuild (not used)
+--host                 : Set the host triplet
+--build                : Set the build triplet
+--target               : Set the target triplet
+--prefix path          : Tools build prefix, ie where they are installed
+--prefixbase path      :
+--topdir path          : Top of the build tree, default is $PWD
+--configdir path       : Path to the configuration directory, default: ./config
+--builddir path        : Path to the build directory, default: ./build
+--sourcedir path       : Path to the source directory, default: ./source
+--tmppath path         : Path to the temp directory, default: ./tmp
+--log file             : Log file where all build out is written too
+--url url              : URL to look for source
+--targetcflags flags   : List of C flags for the target code
+--targetcxxflags flags : List of C++ flags for the target code
+--libstdcxxflags flags : List of C++ flags to build the target libstdc++ code
+--with-<label>         : Add the --with-<label> to the build
+--without-<label>      : Add the --without-<label> to the build
+-------------------------------------------------------------
+
+Set Builder (sb-set-builder)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This command builds a set as described in a build set. Build set files have the
+extension of +.bset+.
+
+-------------------------------------------------------------
+$ ./source-builder/sb-set-builder --help
+sb-set-builder: [options] [args]
+Source Builder, an RTEMS Tools Project (c) 2012 Chris Johns
+Options and arguments:
+--force                : Create directories that are not present
+--trace                : Trace the execution (not current used)
+--dry-run              : Do everything but actually run the build
+--warn-all             : Generate warnings
+--no-clean             : Do not clean up the build tree
+--no-smp               : Run with 1 job and not as many as CPUs
+--rebuild              : Rebuild (not used)
+--host                 : Set the host triplet
+--build                : Set the build triplet
+--target               : Set the target triplet
+--prefix path          : Tools build prefix, ie where they are installed
+--prefixbase path      :
+--topdir path          : Top of the build tree, default is $PWD
+--configdir path       : Path to the configuration directory, default: ./config
+--builddir path        : Path to the build directory, default: ./build
+--sourcedir path       : Path to the source directory, default: ./source
+--tmppath path         : Path to the temp directory, default: ./tmp
+--log file             : Log file where all build out is written too
+--url url              : URL to look for source
+--targetcflags flags   : List of C flags for the target code
+--targetcxxflags flags : List of C++ flags for the target code
+--libstdcxxflags flags : List of C++ flags to build the target libstdc++ code
+--with-<label>         : Add the --with-<label> to the build
+--without-<label>      : Add the --without-<label> to the build
+--list-configs         : List available configurations
+--list-bsets           : List available build sets
+-------------------------------------------------------------
+
+Set Builder (sb-builder)
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+This command builds a configuration as described in a configuration
+file. Configuration files have the extension of +.cfg+.
+
+-------------------------------------------------------------
+$ ./source-builder/sb-builder --help
+sb-builder: [options] [args]
+Source Builder, an RTEMS Tools Project (c) 2012 Chris Johns
+Options and arguments:
+--force                : Create directories that are not present
+--trace                : Trace the execution (not current used)
+--dry-run              : Do everything but actually run the build
+--warn-all             : Generate warnings
+--no-clean             : Do not clean up the build tree
+--no-smp               : Run with 1 job and not as many as CPUs
+--rebuild              : Rebuild (not used)
+--host                 : Set the host triplet
+--build                : Set the build triplet
+--target               : Set the target triplet
+--prefix path          : Tools build prefix, ie where they are installed
+--prefixbase path      :
+--topdir path          : Top of the build tree, default is $PWD
+--configdir path       : Path to the configuration directory, default: ./config
+--builddir path        : Path to the build directory, default: ./build
+--sourcedir path       : Path to the source directory, default: ./source
+--tmppath path         : Path to the temp directory, default: ./tmp
+--log file             : Log file where all build out is written too
+--url url              : URL to look for source
+--targetcflags flags   : List of C flags for the target code
+--targetcxxflags flags : List of C++ flags for the target code
+--libstdcxxflags flags : List of C++ flags to build the target libstdc++ code
+--with-<label>         : Add the --with-<label> to the build
+--without-<label>      : Add the --without-<label> to the build
+--list-configs         : List available configurations
+-------------------------------------------------------------
+
+Host Setups
+-----------
+
+Ubuntu
+~~~~~~
+
+-------------------------------------------------------------
+sudo apt-get build-dep binutils gcc g++ gdb
+-------------------------------------------------------------
