@@ -150,6 +150,11 @@ def run():
     except error.internal, ierr:
         print ierr
         sys.exit(1)
+    except error.exit, eerr:
+        pass
+    except KeyboardInterrupt:
+        _notice(opts, 'user terminated')
+        sys.exit(1)
     sys.exit(0)
 
 
