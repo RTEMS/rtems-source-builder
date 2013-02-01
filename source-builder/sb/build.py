@@ -44,6 +44,14 @@ import path
 #
 version = '0.1'
 
+def removeall(path):
+
+    def _onerror(function, path, excinfo):
+        print 'removeall error: (%r) %s' % (function, path)
+
+    shutil.rmtree(path, onerror = _onerror)
+    return
+
 def _notice(opts, text):
     if not opts.quiet() and not log.default.has_stdout():
         print text
@@ -107,22 +115,27 @@ class build:
         self._output('removing: %s' % (path.host(rmpath)))
         if not self.opts.dry_run():
             if path.exists(rmpath):
-                try:
-                    shutil.rmtree(path.host(rmpath))
-                except IOError, err:
-                    raise error.error('error removing: %s' % (rmpath))
-                except WindowsError, err:
-                    _notice(self.opts, 'warning: cannot remove: %s' % (rmpath))
+                removeall(rmpath)
 
     def mkdir(self, mkpath):
         self._output('making dir: %s' % (path.host(mkpath)))
         if not self.opts.dry_run():
-            try:
-                os.makedirs(path.host(mkpath))
-            except IOError, err:
-                _notice(self.opts, 'warning: cannot make directory: %s' % (mkpath))
-            except WindowsError, err:
-                _notice(self.opts, 'warning: cannot make directory: %s' % (mkpath))
+            if os.name == 'nt':
+                try:
+                    os.makedirs(path.host(mkpath))
+                except IOError, err:
+                    _notice(self.opts, 'warning: cannot make directory: %s' % (mkpath))
+                except OSError, err:
+                    _notice(self.opts, 'warning: cannot make directory: %s' % (mkpath))
+                except WindowsError, err:
+                    _notice(self.opts, 'warning: cannot make directory: %s' % (mkpath))
+            else:
+                try:
+                    os.makedirs(path.host(mkpath))
+                except IOError, err:
+                    _notice(self.opts, 'warning: cannot make directory: %s' % (mkpath))
+                except OSError, err:
+                    _notice(self.opts, 'warning: cannot make directory: %s' % (mkpath))
 
     def get_file(self, url, local):
         if local is None:
