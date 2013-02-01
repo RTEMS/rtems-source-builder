@@ -21,4 +21,5 @@ package: gnu-tool-%{_target}-%{release}
 #
 binutils-2.22-1
 gcc-4.6-newlib-1.20-1
+expat-2.1.0-1
 gdb-7.5-1
