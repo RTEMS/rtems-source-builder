@@ -251,7 +251,7 @@ class command_line:
 
     def _help(self):
         print '%s: [options] [args]' % (self.command_name)
-        print 'Source Builder, an RTEMS Tools Project (c) 2012 Chris Johns'
+        print 'Source Builder, an RTEMS Tools Project (c) 2012-2013 Chris Johns'
         print 'Options and arguments:'
         print '--force                : Create directories that are not present'
         print '--trace                : Trace the execution (not current used)'

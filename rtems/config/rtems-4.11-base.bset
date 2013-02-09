@@ -1,0 +1,12 @@
+#
+# Base defines for RTEMS 4.11
+#
+
+%define rtems_version 4.11
+
+package: rtems-%{rtems_version}-%{_target}-%{release}
+
+#
+# Project custom message
+#
+%define gcc_version_message RTEMS %{rtems_version}-%{release},gcc-%{gcc_version}/newlib-%{newlib_version}

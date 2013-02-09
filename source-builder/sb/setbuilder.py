@@ -1,6 +1,6 @@
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2010-2012 Chris Johns (chrisj@rtems.org)
+# Copyright 2010-2013 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -18,7 +18,7 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #
-# This code builds a cross-gcc compiler tool suite given a tool set. A tool
+# This code builds a package compiler tool suite given a tool set. A tool
 # set lists the various tools. These are specific tool configurations.
 #
 
@@ -110,7 +110,7 @@ class buildset:
                                            " && %{__tar} -cf - . | %{__bzip2} > " + tar + "'")
             _build.run(cmd, shell_opts = '-c', cwd = tmproot)
 
-    def load(self):
+    def parse(self, bset):
 
         def _clean(line):
             line = line[0:-1]
@@ -118,17 +118,6 @@ class buildset:
             if b >= 0:
                 line = line[1:b]
             return line.strip()
-
-        exbset = self.opts.expand(self.bset, self.defaults)
-
-        self.defaults['_bset'] = ('none', 'none', exbset)
-
-        root, ext = path.splitext(exbset)
-
-        if exbset.endswith('.bset'):
-            bset = exbset
-        else:
-            bset = '%s.bset' % (exbset)
 
         bsetname = bset
 
@@ -168,6 +157,9 @@ class buildset:
                     if l.startswith('%define'):
                         ls = l.split()
                         self.defaults[ls[1].strip()] = ('none', 'none', ls[2].strip())
+                    elif l.startswith('%include'):
+                        ls = l.split(' ')
+                        configs += self.parse(ls[1].strip())
                     else:
                         raise error.general('invalid directive in build set files: %s' % (l))
                 else:
@@ -179,6 +171,21 @@ class buildset:
         bset.close()
 
         return configs
+
+    def load(self):
+
+        exbset = self.opts.expand(self.bset, self.defaults)
+
+        self.defaults['_bset'] = ('none', 'none', exbset)
+
+        root, ext = path.splitext(exbset)
+
+        if exbset.endswith('.bset'):
+            bset = exbset
+        else:
+            bset = '%s.bset' % (exbset)
+
+        return self.parse(bset)
 
     def make(self):
 
