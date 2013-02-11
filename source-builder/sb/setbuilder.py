@@ -156,7 +156,10 @@ class buildset:
                 elif l[0] == '%':
                     if l.startswith('%define'):
                         ls = l.split()
-                        self.defaults[ls[1].strip()] = ('none', 'none', ls[2].strip())
+                        if len(ls) > 2:
+                            self.defaults[ls[1].strip()] = ('none', 'none', ls[2].strip())
+                        else:
+                            self.defaults[ls[1].strip()] = ('none', 'none', '1')
                     elif l.startswith('%include'):
                         ls = l.split(' ')
                         configs += self.parse(ls[1].strip())
