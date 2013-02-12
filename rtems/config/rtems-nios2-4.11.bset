@@ -1,0 +1,25 @@
+#
+# Tools Set for RTEMS NIOS 4.11 Stable
+#
+# The NIOS source is a special version released by Altera.
+#
+
+%define rtems_version 4.11
+
+%define release 1
+
+%define _target nios2-rtems%{rtems_version}
+
+package: rtems-%{rtems_version}-%{_target}-%{release}
+
+#
+# The RTEMS 4.11 base defines.
+#
+%include rtems-4.11-base.bset
+
+#
+# Tools configuration.
+#
+rtems-nios2-binutils-2.20-1
+rtems-nios2-gcc-4.1-newlib-1.19.0-1
+rtems-nios2-gdb-7.0-1

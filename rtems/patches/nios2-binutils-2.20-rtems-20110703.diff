@@ -1,0 +1,21 @@
+--- binutils-2.20.orig/gas/configure.tgt	2011-07-03 18:19:58.000000000 +1000
++++ binutils-2.20/gas/configure.tgt	2011-07-03 18:14:15.000000000 +1000
+@@ -315,6 +315,7 @@
+ 
+   nios2*-linux*)                        fmt=elf em=linux ;;
+   nios2*-*-*)				fmt=elf ;;
++  nios2*-rtems*)                        fmt=elf ;;
+ 
+   ns32k-pc532-mach*)			fmt=aout em=pc532mach ;;
+   ns32k-pc532-ux*)			fmt=aout em=pc532mach ;;
+--- binutils-2.20.orig/gas/config/tc-nios2.c	2011-07-03 18:20:09.000000000 +1000
++++ binutils-2.20/gas/config/tc-nios2.c	2011-07-03 18:08:42.000000000 +1000
+@@ -1340,7 +1340,7 @@
+ void
+ md_number_to_chars (char *buf, valueT val, int n)
+ {
+-  assert (n == 1 || n == 2 || n == 4);
++  assert (n == 1 || n == 2 || n == 4 || n == 8);
+   if (target_big_endian)
+     {
+       number_to_chars_bigendian (buf, val, n);
