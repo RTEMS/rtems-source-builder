@@ -766,5 +766,19 @@ Ubuntu
 ~~~~~~
 
 -------------------------------------------------------------
-sudo apt-get build-dep binutils gcc g++ gdb
+$ sudo apt-get build-dep binutils gcc g++ gdb
 -------------------------------------------------------------
+
+CentOS 6
+~~~~~~~~
+
+The following packages are required on a minimal CentOS 6.3 installation:
+
+-------------------------------------------------------------
+# yum install autoconf automake binutils gcc gcc-c++ gdb make patch flex xz
+unzip ncurses-devel texinfo
+-------------------------------------------------------------
+
+The minimal CentOS distrbution is a specific DVD that installs a minimal
+system. If you use a full system some of these packages may have been
+installed.
