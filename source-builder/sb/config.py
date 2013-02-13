@@ -747,7 +747,6 @@ class file:
                 configdirs = self.define('_configdir').split(':')
             for cp in configdirs:
                 configname = path.join(path.abspath(cp), cfgname)
-                print configname
                 if path.exists(configname):
                     break
                 configname = None
