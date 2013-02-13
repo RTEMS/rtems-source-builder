@@ -776,7 +776,7 @@ The following packages are required on a minimal CentOS 6.3 installation:
 
 -------------------------------------------------------------
 # yum install autoconf automake binutils gcc gcc-c++ gdb make patch flex xz
-unzip ncurses-devel texinfo zlib-devel
+unzip ncurses-devel texinfo zlib-devel python-devel
 -------------------------------------------------------------
 
 The minimal CentOS distrbution is a specific DVD that installs a minimal
