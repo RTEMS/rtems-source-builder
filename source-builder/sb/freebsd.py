@@ -57,7 +57,8 @@ def load():
         '_var':         ('dir',     'optional', '/usr/local/var'),
         'optflags':     ('none',    'none',     '-O2 -I/usr/local/include -L/usr/local/lib'),
         '_smp_mflags':  ('none',    'none',     smp_mflags),
-        '__bash':       ('exe',     'optional', '/usr/local//bin/bash'),
+        '__bash':       ('exe',     'optional', '/usr/local/bin/bash'),
+        '__bison':      ('exe',     'required', '/usr/local/bin/bison'),
         '__xz':         ('exe',     'optional', '/usr/bin/xz'),
         '__make':       ('exe',     'required', 'gmake')
         }
