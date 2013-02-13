@@ -1,0 +1,19 @@
+#
+# Tools Set for RTEMS BFIN 4.11 Stable
+#
+
+%define _target bfin-rtems4.11
+
+%define release 1
+
+#
+# The RTEMS 4.11 base defines.
+#
+%include rtems-4.11-base.bset
+
+#
+# Tools configuration.
+#
+tools/rtems-binutils-2.22-1
+tools/rtems-gcc-4.7.2-newlib-1.20.0-1
+tools/rtems-gdb-7.5.1-1

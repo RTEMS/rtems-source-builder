@@ -687,6 +687,16 @@ class file:
 
     def load(self, name):
 
+        def common_end(left, right):
+            end = ''
+            while len(left) and len(right):
+                if left[-1] != right[-1]:
+                    return end
+                end = left[-1] + end
+                left = left[:-1]
+                right = right[:-1]
+            return end
+
         if self.load_depth == 0:
             self.in_error = False
             self.lc = 0
@@ -707,7 +717,7 @@ class file:
         self.lc = 0
 
         #
-        # Locate the config file. Expand any macors then Add the
+        # Locate the config file. Expand any macros then add the
         # extension. Check if the file exists, therefore directly
         # referenced. If not see if the file contains ':' or the path
         # separator. If it does split the path else use the standard config dir
@@ -716,12 +726,19 @@ class file:
 
         exname = self.expand(name)
 
+        #
+        # Macro could add an extension.
+        #
         if exname.endswith('.cfg'):
             configname = exname
         else:
             configname = '%s.cfg' % (exname)
+            name = '%s.cfg' % (name)
 
-        cfgname = path.basename(configname)
+        if ':' in configname:
+            cfgname = path.basename(configname)
+        else:
+            cfgname = common_end(configname, name)
 
         if not path.exists(configname):
             if ':' in configname:
@@ -730,6 +747,7 @@ class file:
                 configdirs = self.define('_configdir').split(':')
             for cp in configdirs:
                 configname = path.join(path.abspath(cp), cfgname)
+                print configname
                 if path.exists(configname):
                     break
                 configname = None

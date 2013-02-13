@@ -107,6 +107,7 @@ defaults = {
 '__automake':          ('exe',     'required', 'automake'),
 '__awk':               ('exe',     'required', 'awk'),
 '__bash':              ('exe',     'optional', '/bin/bash'),
+'__bison':             ('exe',     'required', '/usr/bin/bison'),
 '__bzip2':             ('exe',     'required', '/usr/bin/bzip2'),
 '__cat':               ('exe',     'required', '/bin/cat'),
 '__cc':                ('exe',     'required', '/usr/bin/gcc'),
@@ -127,6 +128,7 @@ defaults = {
 '__ldconfig':          ('exe',     'required', '/sbin/ldconfig'),
 '__ln_s':              ('exe',     'none',     'ln -s'),
 '__make':              ('exe',     'required', 'make'),
+'__makeinfo':          ('exe',     'required', '/usr/bin/makeinfo'),
 '__mkdir':             ('exe',     'required', '/bin/mkdir'),
 '__mkdir_p':           ('exe',     'none',     '/bin/mkdir -p'),
 '__mv':                ('exe',     'required', '/bin/mv'),
@@ -155,7 +157,7 @@ defaults = {
 # Directories
 SB_SOURCE_DIR="%{_sourcedir}"
 SB_BUILD_DIR="%{_builddir}"
-SB_OPT_FLAGS="%{optflags}"
+SB_OPT_FLAGS="%{?tmproot:-I%{tmproot}/%{_prefix}/include -L%{tmproot}/%{_prefix}/lib} %{optflags}"
 SB_ARCH="%{_arch}"
 SB_OS="%{_os}"
 export SB_SOURCE_DIR SB_BUILD_DIR SB_OPT_FLAGS SB_ARCH SB_OS
