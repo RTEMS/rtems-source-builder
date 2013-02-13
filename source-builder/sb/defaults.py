@@ -157,7 +157,7 @@ defaults = {
 # Directories
 SB_SOURCE_DIR="%{_sourcedir}"
 SB_BUILD_DIR="%{_builddir}"
-SB_OPT_FLAGS="%{?tmproot:-I%{tmproot}/%{_prefix}/include -L%{tmproot}/%{_prefix}/lib} %{optflags}"
+SB_OPT_FLAGS="%{?tmproot:-I%{_tmproot}/%{_prefix}/include -L%{_tmproot}/%{_prefix}/lib} %{optflags}"
 SB_ARCH="%{_arch}"
 SB_OS="%{_os}"
 export SB_SOURCE_DIR SB_BUILD_DIR SB_OPT_FLAGS SB_ARCH SB_OS
