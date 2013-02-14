@@ -461,12 +461,22 @@ class build:
         return package.name()
 
 def list_configs(opts, _defaults, ext = '.cfg'):
+
+    def _scan(_path, ext):
+        configs = []
+        for root, dirs, files in os.walk(_path):
+            prefix = root[len(_path) + 1:]
+            for file in files:
+                if file.endswith(ext):
+                    configs += [path.join(prefix, file)]
+        return configs
+
     configs = []
     for cp in opts.expand('%{_configdir}', _defaults).split(':'):
         print 'Examining: %s' % (path.host(path.abspath(cp)))
-        configs += glob.glob(path.host(path.join(cp, '*%s' % (ext))))
+        configs += _scan(cp, ext)
     for c in sorted(configs):
-        config = path.basename(c)
+        config = c # path.basename(c)
         if config.endswith(ext):
             config = config[:0 - len(ext)]
         print ' ', config
