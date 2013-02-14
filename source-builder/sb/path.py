@@ -56,7 +56,10 @@ def dirname(path):
 def join(path, *args):
     path = shell(path)
     for arg in args:
-        path += '/' + shell(arg)
+        if len(path):
+            path += '/' + shell(arg)
+        else:
+            path = shell(arg)
     return shell(path)
 
 def abspath(path):
