@@ -1,0 +1,22 @@
+--- gdb-7.5.1/bfd/config.bfd.orig	2013-02-14 11:47:19.000000000 +1100
++++ gdb-7.5.1/bfd/config.bfd	2013-02-14 11:47:37.000000000 +1100
+@@ -397,7 +397,7 @@
+     targ_selvecs=bfd_elf32_frv_vec
+     ;;
+ 
+-  moxie-*-elf | moxie-*-rtems | moxie-*-uclinux)
++  moxie-*-elf | moxie-*-rtems* | moxie-*-uclinux)
+     targ_defvec=bfd_elf32_moxie_vec
+     ;;
+ 
+--- gdb-7.5.1/gdb/configure.tgt.orig	2013-02-14 12:01:25.000000000 +1100
++++ gdb-7.5.1/gdb/configure.tgt	2013-02-14 12:02:07.000000000 +1100
+@@ -127,7 +127,7 @@
+ 	gdb_sim=../sim/frv/libsim.a
+ 	;;
+ 
+-moxie-*-elf)
++moxie-*-elf | moxie-*-rtems*)
+ 	gdb_target_obs="moxie-tdep.o"
+ 	gdb_sim=../sim/moxie/libsim.a
+ 	;;

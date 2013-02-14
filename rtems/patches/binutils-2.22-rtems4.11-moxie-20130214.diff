@@ -1,0 +1,11 @@
+--- binutils-2.22/bfd/config.bfd.orig	2011-07-29 08:35:13.000000000 +1000
++++ binutils-2.22/bfd/config.bfd	2013-02-14 11:30:43.000000000 +1100
+@@ -380,7 +380,7 @@
+     targ_selvecs=bfd_elf32_frv_vec
+     ;;
+ 
+-  moxie-*-elf | moxie-*-rtems | moxie-*-uclinux)
++  moxie-*-elf | moxie-*-rtems* | moxie-*-uclinux)
+     targ_defvec=bfd_elf32_moxie_vec
+     ;;
+ 
