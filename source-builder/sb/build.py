@@ -428,10 +428,16 @@ class build:
         if not self.opts.no_clean():
             buildroot = self.config.abspath('buildroot')
             builddir = self.config.abspath('_builddir')
-            _notice(self.opts, 'cleanup: %s' % (buildroot))
+            tmproot = self.config.abspath('_tmproot')
+            if self.opts.trace():
+                _notice(self.opts, 'cleanup: %s' % (buildroot))
             self.rmdir(buildroot)
-            _notice(self.opts, 'cleanup: %s' % (builddir))
+            if self.opts.trace():
+                _notice(self.opts, 'cleanup: %s' % (builddir))
             self.rmdir(builddir)
+            if self.opts.trace():
+                _notice(self.opts, 'cleanup: %s' % (tmproot))
+            self.rmdir(tmproot)
 
     def make(self):
         packages = self.config.packages()
@@ -460,7 +466,7 @@ class build:
         package = packages['main']
         return package.name()
 
-def list_configs(opts, _defaults, ext = '.cfg'):
+def get_configs(opts, _defaults, ext = '.cfg'):
 
     def _scan(_path, ext):
         configs = []
@@ -471,15 +477,18 @@ def list_configs(opts, _defaults, ext = '.cfg'):
                     configs += [path.join(prefix, file)]
         return configs
 
+    paths = []
     configs = []
+    files = []
     for cp in opts.expand('%{_configdir}', _defaults).split(':'):
-        print 'Examining: %s' % (path.host(path.abspath(cp)))
-        configs += _scan(cp, ext)
-    for c in sorted(configs):
-        config = c # path.basename(c)
+        paths += [path.host(path.abspath(cp))]
+        files += _scan(cp, ext)
+    for f in sorted(files):
+        config = f
         if config.endswith(ext):
             config = config[:0 - len(ext)]
-        print ' ', config
+        configs += [config]
+    return paths, configs
 
 def run(args):
     try:

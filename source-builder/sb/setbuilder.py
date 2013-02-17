@@ -69,7 +69,8 @@ class buildset:
             topdir = self.opts.expand('%{_topdir}', self.defaults)
             what = '%s -> %s' % \
                 (path.host(src[len(topdir) + 1:]), path.host(dst[len(topdir) + 1:]))
-            _notice(self.opts, 'installing: %s' % (what))
+            if self.opts.trace():
+                _notice(self.opts, 'installing: %s' % (what))
             if not self.opts.dry_run():
                 try:
                     files = distutils.dir_util.copy_tree(path.host(src),
@@ -234,10 +235,16 @@ def run():
             if not opts.force():
                 raise error.general('host build environment is not set up correctly (use --force to proceed)')
             _notice(opts, 'warning: forcing build with known host setup problems')
-        if opts.get_arg('--list-configs'):
-            build.list_configs(opts, _defaults)
-        elif opts.get_arg('--list-bsets'):
-            build.list_configs(opts, _defaults, ext = '.bset')
+        if opts.get_arg('--list-configs') or opts.get_arg('--list-bsets'):
+            if opts.get_arg('--list-configs'):
+                ext = '.cfg'
+            else:
+                ext = '.bset'
+            paths, configs = build.get_configs(opts, _defaults, ext = ext)
+            for p in paths:
+                print 'Examining: %s' % (os.path.relpath(p))
+            for c in configs:
+                print '    %s' % (c)
         else:
             for bset in opts.params():
                 c = buildset(bset, _defaults = _defaults, opts = opts)
