@@ -5,3 +5,13 @@
 tools/rtems-arm
 tools/rtems-avr
 tools/rtems-bfin
+tools/rtems-m32c
+tools/rtems-m32r
+tools/rtems-m68k
+tools/rtems-microblaze
+tools/rtems-mips
+tools/rtems-moxie
+tools/rtems-nios2
+tools/rtems-powerpc
+tools/rtems-sh
+tools/rtems-sparc
