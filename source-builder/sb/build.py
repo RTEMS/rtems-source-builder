@@ -466,29 +466,24 @@ class build:
         package = packages['main']
         return package.name()
 
-def get_configs(opts, _defaults, ext = '.cfg'):
+def get_configs(opts, _defaults):
 
     def _scan(_path, ext):
         configs = []
         for root, dirs, files in os.walk(_path):
             prefix = root[len(_path) + 1:]
             for file in files:
-                if file.endswith(ext):
-                    configs += [path.join(prefix, file)]
+                for e in ext:
+                    if file.endswith(e):
+                        configs += [path.join(prefix, file)]
         return configs
 
-    paths = []
-    configs = []
-    files = []
+    configs = { 'paths': [], 'files': [] }
     for cp in opts.expand('%{_configdir}', _defaults).split(':'):
-        paths += [path.host(path.abspath(cp))]
-        files += _scan(cp, ext)
-    for f in sorted(files):
-        config = f
-        if config.endswith(ext):
-            config = config[:0 - len(ext)]
-        configs += [config]
-    return paths, configs
+        configs['paths'] += [path.host(path.abspath(cp))]
+        configs['files'] += _scan(cp, ['.cfg', '.bset'])
+    configs['files'] = sorted(configs['files'])
+    return configs
 
 def run(args):
     try:

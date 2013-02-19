@@ -52,9 +52,10 @@ def _notice(opts, text):
 class buildset:
     """Build a set builds a set of packages."""
 
-    def __init__(self, bset, _defaults, opts):
+    def __init__(self, bset, _configs, _defaults, opts):
         _trace(opts, '_bset:%s: init' % (bset))
         self.opts = opts
+        self.configs = _configs
         self.defaults = _defaults
         self.bset = bset
         self.bset_pkg = '%s-%s-set' % (self.opts.expand('%{_target}', _defaults),
@@ -63,6 +64,18 @@ class buildset:
     def _output(self, text):
         if not self.opts.quiet():
             log.output(text)
+
+    def _find_config(self, config):
+        if config.endswith('.bset') or config.endswith('.cfg'):
+            names = [config]
+        else:
+            names = ['%s.cfg' % (path.basename(config)),
+                     '%s.bset' % (path.basename(config))]
+        for c in self.configs['files']:
+            if path.basename(c) in names:
+                if path.dirname(config).endswith(path.dirname(config)):
+                    return c
+        return None
 
     def copy(self, src, dst):
         if os.path.isdir(path.host(src)):
@@ -167,7 +180,11 @@ class buildset:
                     else:
                         raise error.general('invalid directive in build set files: %s' % (l))
                 else:
-                    configs += [l.strip()]
+                    l = l.strip()
+                    c = self._find_config(l)
+                    if c is None:
+                        raise error.general('cannot find file: %s' % (l))
+                    configs += [c]
         except:
             bset.close()
             raise
@@ -191,7 +208,7 @@ class buildset:
 
         return self.parse(bset)
 
-    def make(self):
+    def build(self):
 
         _trace(self.opts, '_bset:%s: make' % (self.bset))
         _notice(self.opts, 'Build Set: %s' % (self.bset))
@@ -204,14 +221,21 @@ class buildset:
         try:
             builds = []
             for s in range(0, len(configs)):
-                b = build.build(configs[s], _defaults = self.defaults, opts = self.opts)
-                if s == 0:
-                    tmproot = self.first_package(b)
-                b.make()
-                self.every_package(b, tmproot)
-                if s == len(configs) - 1:
-                    self.last_package(b, tmproot)
-                builds += [b]
+                if configs[s].endswith('.bset'):
+                    bs = buildset(configs[s], _configs = self.configs, _defaults = self.defaults, opts = self.opts)
+                    bs.build()
+                    del bs
+                elif configs[s].endswith('.cfg'):
+                    b = build.build(configs[s], _defaults = self.defaults, opts = self.opts)
+                    if s == 0:
+                        tmproot = self.first_package(b)
+                    b.make()
+                    self.every_package(b, tmproot)
+                    if s == len(configs) - 1:
+                        self.last_package(b, tmproot)
+                    builds += [b]
+                else:
+                    raise error.general('invalid config type: %s' % (configs[s]))
             if not self.opts.no_clean():
                 for b in builds:
                     _notice(self.opts, 'cleaning: %s' % (b.name()))
@@ -232,24 +256,23 @@ def run():
         log.default = log.log(opts.logfiles())
         _notice(opts, 'Source Builder - Set Builder, v%s' % (version))
         if not check.host_setup(opts, _defaults):
-            if not opts.force():
-                raise error.general('host build environment is not set up correctly (use --force to proceed)')
-            _notice(opts, 'warning: forcing build with known host setup problems')
+            raise error.general('host build environment is not set up correctly')
+        configs = build.get_configs(opts, _defaults)
         if opts.get_arg('--list-configs') or opts.get_arg('--list-bsets'):
             if opts.get_arg('--list-configs'):
                 ext = '.cfg'
             else:
                 ext = '.bset'
-            paths, configs = build.get_configs(opts, _defaults, ext = ext)
-            for p in paths:
+            for p in configs['paths']:
                 print 'Examining: %s' % (os.path.relpath(p))
-            for c in configs:
-                print '    %s' % (c)
+            for c in configs['files']:
+                if c.endswith(ext):
+                    print '    %s' % (c)
         else:
             for bset in opts.params():
-                c = buildset(bset, _defaults = _defaults, opts = opts)
-                c.make()
-                del c
+                b = buildset(bset, _configs = configs, _defaults = _defaults, opts = opts)
+                b.build()
+                del b
     except error.general, gerr:
         print gerr
         sys.exit(1)
