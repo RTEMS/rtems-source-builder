@@ -1,0 +1,7 @@
+#
+# All RTEMS 4.11 Tools Sets
+#
+
+tools/rtems-arm
+tools/rtems-avr
+tools/rtems-bfin
