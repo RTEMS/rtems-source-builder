@@ -176,6 +176,7 @@ export SB_BUILD_ROOT
 %{?_targetcflags:CFLAGS_FOR_TARGET="%{_targetcflags}"}
 %{?_targetcxxflags:CXXFLAGS_FOR_TARGET="%{_targetcxxflags}"}
 export CFLAGS_FOR_TARGET
+export CXXFLAGS_FOR_TARGET
 # Default environment set up.
 LANG=C
 export LANG
