@@ -225,25 +225,31 @@ class buildset:
         try:
             builds = []
             for s in range(0, len(configs)):
-                if configs[s].endswith('.bset'):
-                    bs = buildset(configs[s],
-                                  _configs = self.configs,
-                                  _defaults = self.defaults,
-                                  opts = self.opts)
-                    bs.build()
-                    del bs
-                elif configs[s].endswith('.cfg'):
-                    b = build.build(configs[s], _defaults = self.defaults, opts = self.opts)
-                    if s == 0:
-                        tmproot = self.first_package(b)
-                    b.make()
-                    self.every_package(b, tmproot)
-                    if s == len(configs) - 1:
-                        self.last_package(b, tmproot)
-                    builds += [b]
-                else:
-                    raise error.general('invalid config type: %s' % (configs[s]))
-            if not self.opts.no_clean():
+                try:
+                    if configs[s].endswith('.bset'):
+                        bs = buildset(configs[s],
+                                      _configs = self.configs,
+                                      _defaults = self.defaults,
+                                      opts = self.opts)
+                        bs.build()
+                        del bs
+                    elif configs[s].endswith('.cfg'):
+                        b = build.build(configs[s], _defaults = self.defaults, opts = self.opts)
+                        if s == 0:
+                            tmproot = self.first_package(b)
+                        b.make()
+                        self.every_package(b, tmproot)
+                        if s == len(configs) - 1:
+                            self.last_package(b, tmproot)
+                        builds += [b]
+                    else:
+                        raise error.general('invalid config type: %s' % (configs[s]))
+                except error.general, gerr:
+                    if self.opts.get_arg('--keep-going'):
+                        print gerr
+                    else:
+                        raise
+            if not self.opts.no_clean() or self.opts.get_arg('--keep-going'):
                 for b in builds:
                     _notice(self.opts, 'cleaning: %s' % (b.name()))
                     b.cleanup()
@@ -262,7 +268,8 @@ class buildset:
 def run():
     import sys
     try:
-        optargs = { '--list-configs': 'List available configurations',
+        optargs = { '--keep-going': 'Do not stop on error.',
+                    '--list-configs': 'List available configurations',
                     '--list-bsets': 'List available build sets'}
         opts, _defaults = defaults.load(sys.argv, optargs)
         log.default = log.log(opts.logfiles())
