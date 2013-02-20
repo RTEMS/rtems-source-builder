@@ -365,7 +365,7 @@ class build:
         self._output('run: ' + cmd)
         exit_code, proc, output = e.shell(cmd, cwd = path.host(cwd))
         if exit_code != 0:
-            raise error.general('shell cmd failed: ' + cmd)
+            raise error.general('shell cmd failed: %s' % (os.path.relpath(cmd)))
 
     def builddir(self):
         builddir = self.config.abspath('_builddir')
