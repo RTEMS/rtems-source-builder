@@ -22,6 +22,7 @@
 # set lists the various tools. These are specific tool configurations.
 #
 
+import datetime
 import distutils.dir_util
 import glob
 import operator
@@ -218,11 +219,17 @@ class buildset:
         _trace(self.opts, '_bset:%s: configs: %s'  % (self.bset, ','.join(configs)))
 
         current_path = os.environ['PATH']
+
+        start = datetime.datetime.now()
+
         try:
             builds = []
             for s in range(0, len(configs)):
                 if configs[s].endswith('.bset'):
-                    bs = buildset(configs[s], _configs = self.configs, _defaults = self.defaults, opts = self.opts)
+                    bs = buildset(configs[s],
+                                  _configs = self.configs,
+                                  _defaults = self.defaults,
+                                  opts = self.opts)
                     bs.build()
                     del bs
                 elif configs[s].endswith('.cfg'):
@@ -245,7 +252,12 @@ class buildset:
         except:
             os.environ['PATH'] = current_path
             raise
+
+        end = datetime.datetime.now()
+
         os.environ['PATH'] = current_path
+
+        _notice(self.opts, 'Build Set: Time %s' % (str(end - start)))
 
 def run():
     import sys
