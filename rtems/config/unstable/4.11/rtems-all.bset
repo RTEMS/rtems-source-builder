@@ -1,0 +1,16 @@
+#
+# All RTEMS 4.11 Unstable/4.11 Sets
+#
+
+unstable/4.11/rtems-arm
+unstable/4.11/rtems-avr
+unstable/4.11/rtems-bfin
+unstable/4.11/rtems-m32c
+unstable/4.11/rtems-m32r
+unstable/4.11/rtems-m68k
+unstable/4.11/rtems-microblaze
+unstable/4.11/rtems-mips
+unstable/4.11/rtems-moxie
+unstable/4.11/rtems-powerpc
+unstable/4.11/rtems-sh
+unstable/4.11/rtems-sparc
