@@ -141,9 +141,8 @@ class build:
         if local is None:
             raise error.general('source/patch path invalid')
         if not path.isdir(path.dirname(local)):
-            if not self.opts.force():
-                raise error.general('source path not found: %s; (--force to create)' \
-                                        % (path.host(path.dirname(local))))
+            _notice(self.opts,
+                    'Creating source directory: %s' % (os.path.relpath(path.host(path.dirname(local)))))
             self.mkdir(path.host(path.dirname(local)))
         if not path.exists(local):
             #

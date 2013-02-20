@@ -217,7 +217,7 @@ class command_line:
     _defaults = { 'params'   : [],
                   'warn-all' : '0',
                   'quiet'    : '0',
-                  'no-force' : '1',
+                  'force'    : '0',
                   'trace'    : '0',
                   'dry-run'  : '0',
                   'no-clean' : '0',
@@ -240,7 +240,7 @@ class command_line:
                    '--targetcxxflags' : ('_targetcxxflags', False),
                    '--libstdcxxflags' : ('_libstdcxxflags', False) }
 
-    _long_true_opts = { '--no-force' : '_force',
+    _long_true_opts = { '--force'    : '_force',
                         '--trace'    : '_trace',
                         '--dry-run'  : '_dry_run',
                         '--warn-all' : '_warn_all',
@@ -256,7 +256,7 @@ class command_line:
         print '%s: [options] [args]' % (self.command_name)
         print 'Source Builder, an RTEMS Tools Project (c) 2012-2013 Chris Johns'
         print 'Options and arguments:'
-        print '--no-force             : Do not create directories that are missing'
+        print '--force                : Force the build to proceed'
         print '--trace                : Trace the execution (not current used)'
         print '--dry-run              : Do everything but actually run the build'
         print '--warn-all             : Generate warnings'
