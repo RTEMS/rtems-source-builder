@@ -172,7 +172,7 @@ class build:
                 #
                 if url.startswith('https://api.github.com'):
                     url = urlparse.urljoin(url, self.config.expand('tarball/%{version}'))
-                _notice(self.opts, 'download: %s -> %s' % (url, path.host(local)))
+                _notice(self.opts, 'download: %s -> %s' % (url, os.path.relpath(path.host(local))))
                 if not self.opts.dry_run():
                     failed = False
                     _in = None
