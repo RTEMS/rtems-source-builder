@@ -73,7 +73,7 @@ class buildset:
                      '%s.bset' % (path.basename(config))]
         for c in self.configs['files']:
             if path.basename(c) in names:
-                if path.dirname(config).endswith(path.dirname(config)):
+                if path.dirname(c).endswith(path.dirname(config)):
                     return c
         return None
 
