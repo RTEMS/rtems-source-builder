@@ -61,8 +61,9 @@ def _notice(opts, text):
 class script:
     """Create and manage a shell script."""
 
-    def __init__(self, quiet = True):
+    def __init__(self, quiet = True, trace = False):
         self.quiet = quiet
+        self.trace = trace
         self.reset()
 
     def reset(self):
@@ -76,7 +77,9 @@ class script:
             i = 0
             for l in text:
                 i += 1
-                log.output('script:%3d: ' % (self.lc + i) + l)
+                log.output('script:%3d: %s' % (self.lc + i, l))
+                if self.trace:
+                    print '%3d: S %s' % (self.lc + i,  l)
         self.lc += len(text)
         self.body.extend(text)
 
@@ -101,11 +104,12 @@ class script:
 class build:
     """Build a package given a config file."""
 
-    def __init__(self, name, _defaults, opts):
+    def __init__(self, name, create_tar_files, _defaults, opts):
         self.opts = opts
+        self.create_tar_files = create_tar_files
         _notice(opts, 'building: ' + name)
         self.config = config.file(name, _defaults = _defaults, opts = opts)
-        self.script = script(quiet = opts.quiet())
+        self.script = script(quiet = opts.quiet(), trace = opts.trace())
 
     def _output(self, text):
         if not self.opts.quiet():
@@ -400,20 +404,21 @@ class build:
             self.script.append(' '.join(args))
 
     def files(self, package):
-        self.script.append('echo "==> %files:"')
-        prefixbase = self.opts.prefixbase()
-        if prefixbase is None:
-            prefixbase = ''
-        inpath = path.join('%{buildroot}', prefixbase)
-        tardir = path.abspath(self.config.expand('%{_tardir}'))
-        self.script.append(self.config.expand('if test -d %s; then' % (inpath)))
-        self.script.append('  mkdir -p %s' % tardir)
-        self.script.append(self.config.expand('  cd ' + inpath))
-        tar = path.join(tardir, package.long_name() + '.tar.bz2')
-        cmd = self.config.expand('  %{__tar} -cf - . ' + '| %{__bzip2} > ' + tar)
-        self.script.append(cmd)
-        self.script.append(self.config.expand('  cd %{_builddir}'))
-        self.script.append('fi')
+        if self.create_tar_files:
+            self.script.append('echo "==> %files:"')
+            prefixbase = self.opts.prefixbase()
+            if prefixbase is None:
+                prefixbase = ''
+            inpath = path.join('%{buildroot}', prefixbase)
+            tardir = path.abspath(self.config.expand('%{_tardir}'))
+            self.script.append(self.config.expand('if test -d %s; then' % (inpath)))
+            self.script.append('  mkdir -p %s' % tardir)
+            self.script.append(self.config.expand('  cd ' + inpath))
+            tar = path.join(tardir, package.long_name() + '.tar.bz2')
+            cmd = self.config.expand('  %{__tar} -cf - . ' + '| %{__bzip2} > ' + tar)
+            self.script.append(cmd)
+            self.script.append(self.config.expand('  cd %{_builddir}'))
+            self.script.append('fi')
 
     def clean(self, package):
         self.script.append('echo "==> %clean:"')
@@ -495,10 +500,15 @@ def run(args):
                 raise error.general('host build environment is not set up correctly (use --force to proceed)')
             _notice(opts, 'warning: forcing build with known host setup problems')
         if opts.get_arg('--list-configs'):
-            list_configs(opts, _defaults)
+            configs = get_configs(opts, _defaults)
+            for p in configs['paths']:
+                print 'Examining: %s' % (os.path.relpath(p))
+                for c in configs['files']:
+                    if c.endswith('.cfg'):
+                        print '    %s' % (c)
         else:
             for config_file in opts.config_files():
-                b = build(config_file, _defaults = _defaults, opts = opts)
+                b = build(config_file, True, _defaults = _defaults, opts = opts)
                 b.make()
                 del b
     except error.general, gerr:

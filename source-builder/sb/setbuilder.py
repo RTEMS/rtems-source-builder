@@ -79,22 +79,18 @@ class buildset:
         return None
 
     def copy(self, src, dst):
-        if os.path.isdir(path.host(src)):
-            topdir = self.opts.expand('%{_topdir}', self.defaults)
-            what = '%s -> %s' % \
-                (path.host(src[len(topdir) + 1:]), path.host(dst[len(topdir) + 1:]))
-            if self.opts.trace():
-                _notice(self.opts, 'installing: %s' % (what))
-            if not self.opts.dry_run():
-                try:
-                    files = distutils.dir_util.copy_tree(path.host(src),
-                                                         path.host(dst))
-                    for f in files:
-                        self._output(f)
-                except IOError, err:
-                    raise error.general('installing tree: %s: %s' % (what, str(err)))
-                except distutils.errors.DistutilsFileError, err:
-                    raise error.general('installing tree: %s' % (str(err)))
+        if not os.path.isdir(path.host(src)):
+            raise error.general('copying tree: no source directory: %s' % (path.host(src)))
+        if not self.opts.dry_run():
+            try:
+                files = distutils.dir_util.copy_tree(path.host(src),
+                                                     path.host(dst))
+                for f in files:
+                    self._output(f)
+            except IOError, err:
+                raise error.general('copying tree: %s: %s' % (what, str(err)))
+            except distutils.errors.DistutilsFileError, err:
+                raise error.general('copying tree: %s' % (str(err)))
 
     def first_package(self, _build):
         tmproot = path.abspath(_build.config.expand('%{_tmproot}'))
@@ -114,16 +110,31 @@ class buildset:
         return tmproot
 
     def every_package(self, _build, tmproot):
-        self.copy(_build.config.abspath('%{buildroot}'), tmproot)
+        src = _build.config.abspath('%{buildroot}')
+        dst = tmproot
+        if self.opts.get_arg('--bset-tar-file'):
+            what = '%s -> %s' % \
+                (os.path.relpath(path.host(src)), os.path.relpath(path.host(dst)))
+            if self.opts.trace():
+                _notice(self.opts, 'collecting: %s' % (what))
+            self.copy(src, dst)
+        if not self.opts.get_arg('--no-install'):
+            dst = _build.config.expand('%{_prefix}')
+            src = path.join(src, dst)
+            _notice(self.opts, 'installing: %s -> %s' % \
+                        (self.bset_pkg, os.path.relpath(path.host(dst))))
+            self.copy(src, dst)
 
     def last_package(self, _build, tmproot):
-        tar = path.join(_build.config.expand('%{_tardir}'),
-                        _build.config.expand('%s.tar.bz2' % (self.bset_pkg)))
-        _notice(self.opts, 'tarball: %s' % os.path.relpath(path.host(tar)))
-        if not self.opts.dry_run():
-            cmd = _build.config.expand("'cd " + tmproot + \
-                                           " && %{__tar} -cf - . | %{__bzip2} > " + tar + "'")
-            _build.run(cmd, shell_opts = '-c', cwd = tmproot)
+        if self.opts.get_arg('--bset-tar-file'):
+            tar = path.join(_build.config.expand('%{_tardir}'),
+                            _build.config.expand('%s.tar.bz2' % (self.bset_pkg)))
+            _notice(self.opts, 'tarball: %s -> %s' %
+                    (os.path.relpath(path.host(tmproot)), os.path.relpath(path.host(tar))))
+            if not self.opts.dry_run():
+                cmd = _build.config.expand("'cd " + tmproot + \
+                                               " && %{__tar} -cf - . | %{__bzip2} > " + tar + "'")
+                _build.run(cmd, shell_opts = '-c', cwd = tmproot)
 
     def parse(self, bset):
 
@@ -234,7 +245,10 @@ class buildset:
                         bs.build()
                         del bs
                     elif configs[s].endswith('.cfg'):
-                        b = build.build(configs[s], _defaults = self.defaults, opts = self.opts)
+                        b = build.build(configs[s],
+                                        self.opts.get_arg('--pkg-tar-files'),
+                                        _defaults = self.defaults,
+                                        opts = self.opts)
                         if s == 0:
                             tmproot = self.first_package(b)
                         b.make()
@@ -268,9 +282,12 @@ class buildset:
 def run():
     import sys
     try:
-        optargs = { '--keep-going': 'Do not stop on error.',
-                    '--list-configs': 'List available configurations',
-                    '--list-bsets': 'List available build sets'}
+        optargs = { '--list-configs':  'List available configurations',
+                    '--list-bsets':    'List available build sets',
+                    '--keep-going':    'Do not stop on error.',
+                    '--no-install':    'Do not install the packages to the prefix.',
+                    '--bset-tar-file': 'Create a build set tar file',
+                    '--pkg-tar-files': 'Create package tar files' }
         opts, _defaults = defaults.load(sys.argv, optargs)
         log.default = log.log(opts.logfiles())
         _notice(opts, 'Source Builder - Set Builder, v%s' % (version))
