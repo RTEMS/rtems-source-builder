@@ -36,20 +36,27 @@ def load():
     exit_code, proc, output = e.shell(processors)
     if exit_code == 0:
         cpus = 0
-        for l in output.split('\n'):
-            count = l.split(':')[1].strip()
-            if count > cpus:
-                cpus = int(count)
-        if cpus > 0:
-            smp_mflags = '-j%d' % (cpus)
+        try:
+            for l in output.split('\n'):
+                count = l.split(':')[1].strip()
+                if count > cpus:
+                    cpus = int(count)
+            if cpus > 0:
+                smp_mflags = '-j%d' % (cpus)
+        except:
+            pass
+    if uname[4].startswith('arm'):
+        cpu = 'arm'
+    else:
+        cpu = uname[4]
     defines = {
         '_os':            ('none',    'none',     'linux'),
-        '_host':          ('triplet', 'required', uname[4] + '-linux-gnu'),
+        '_host':          ('triplet', 'required', cpu + '-linux-gnu'),
         '_host_vendor':   ('none',    'none',     'gnu'),
         '_host_os':       ('none',    'none',     'linux'),
-        '_host_cpu':      ('none',    'none',     uname[4]),
+        '_host_cpu':      ('none',    'none',     cpu),
         '_host_alias':    ('none',    'none',     '%{nil}'),
-        '_host_arch':     ('none',    'none',     uname[4]),
+        '_host_arch':     ('none',    'none',     cpu),
         '_usr':           ('dir',     'required', '/usr'),
         '_var':           ('dir',     'required', '/var'),
         'optflags':       ('none',    'none',     '-O2 -pipe'),
