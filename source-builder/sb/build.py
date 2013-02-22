@@ -44,14 +44,6 @@ import path
 #
 version = '0.1'
 
-def removeall(path):
-
-    def _onerror(function, path, excinfo):
-        print 'removeall error: (%r) %s' % (function, path)
-
-    shutil.rmtree(path, onerror = _onerror)
-    return
-
 def _notice(opts, text):
     if not opts.quiet() and not log.default.has_stdout():
         print text
@@ -107,7 +99,7 @@ class build:
     def __init__(self, name, create_tar_files, _defaults, opts):
         self.opts = opts
         self.create_tar_files = create_tar_files
-        _notice(opts, 'building: ' + name)
+        _notice(opts, 'config: ' + name)
         self.config = config.file(name, _defaults = _defaults, opts = opts)
         self.script = script(quiet = opts.quiet(), trace = opts.trace())
 
@@ -119,27 +111,12 @@ class build:
         self._output('removing: %s' % (path.host(rmpath)))
         if not self.opts.dry_run():
             if path.exists(rmpath):
-                removeall(rmpath)
+                path.removeall(rmpath)
 
     def mkdir(self, mkpath):
         self._output('making dir: %s' % (path.host(mkpath)))
         if not self.opts.dry_run():
-            if os.name == 'nt':
-                try:
-                    os.makedirs(path.host(mkpath))
-                except IOError, err:
-                    _notice(self.opts, 'warning: cannot make directory: %s' % (mkpath))
-                except OSError, err:
-                    _notice(self.opts, 'warning: cannot make directory: %s' % (mkpath))
-                except WindowsError, err:
-                    _notice(self.opts, 'warning: cannot make directory: %s' % (mkpath))
-            else:
-                try:
-                    os.makedirs(path.host(mkpath))
-                except IOError, err:
-                    _notice(self.opts, 'warning: cannot make directory: %s' % (mkpath))
-                except OSError, err:
-                    _notice(self.opts, 'warning: cannot make directory: %s' % (mkpath))
+            path.mkdir(mkpath)
 
     def get_file(self, url, local):
         if local is None:
@@ -369,7 +346,7 @@ class build:
         self._output('run: ' + cmd)
         exit_code, proc, output = e.shell(cmd, cwd = path.host(cwd))
         if exit_code != 0:
-            raise error.general('shell cmd failed: %s' % (os.path.relpath(cmd)))
+            raise error.general('shell cmd failed: %s' % (cmd))
 
     def builddir(self):
         builddir = self.config.abspath('_builddir')

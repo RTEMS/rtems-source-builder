@@ -127,10 +127,10 @@ class buildset:
 
     def last_package(self, _build, tmproot):
         if self.opts.get_arg('--bset-tar-file'):
-            tar = path.join(_build.config.expand('%{_tardir}'),
-                            _build.config.expand('%s.tar.bz2' % (self.bset_pkg)))
-            _notice(self.opts, 'tarball: %s -> %s' %
-                    (os.path.relpath(path.host(tmproot)), os.path.relpath(path.host(tar))))
+            tardir = _build.config.expand('%{_tardir}')
+            path.mkdir(tardir)
+            tar = path.join(tardir, _build.config.expand('%s.tar.bz2' % (self.bset_pkg)))
+            _notice(self.opts, 'tarball: %s' % (os.path.relpath(path.host(tar))))
             if not self.opts.dry_run():
                 cmd = _build.config.expand("'cd " + tmproot + \
                                                " && %{__tar} -cf - . | %{__bzip2} > " + tar + "'")

@@ -24,7 +24,10 @@
 #
 
 import os
+import shutil
 import string
+
+import error
 
 windows = os.name == 'nt'
 
@@ -80,6 +83,36 @@ def isfile(path):
 
 def isabspath(path):
     return path[0] == '/'
+
+def mkdir(path):
+    if exists(path):
+        if not isdir(path):
+            raise error.general('path exists and is not a directory: %s' % (path))
+    else:
+        if windows:
+            try:
+                os.makedirs(host(path))
+            except IOError, err:
+                raise error.general('cannot make directory: %s' % (path))
+            except OSError, err:
+                raise error.general('cannot make directory: %s' % (path))
+            except WindowsError, err:
+                raise error.general('cannot make directory: %s' % (path))
+        else:
+            try:
+                os.makedirs(host(path))
+            except IOError, err:
+                raise error.general('cannot make directory: %s' % (path))
+            except OSError, err:
+                raise error.general('cannot make directory: %s' % (path))
+
+def removeall(path):
+
+    def _onerror(function, path, excinfo):
+        print 'removeall error: (%r) %s' % (function, path)
+
+    shutil.rmtree(path, onerror = _onerror)
+    return
 
 if __name__ == '__main__':
     print host('/a/b/c/d-e-f')
