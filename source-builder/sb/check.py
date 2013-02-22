@@ -141,9 +141,9 @@ def run():
     try:
         _opts, _defaults = defaults.load(args = sys.argv)
         if host_setup(_opts, _defaults):
-            print 'Source Builder environent is ok'
+            print 'RTEMS Source Builder environent is ok'
         else:
-            print 'Source Builder environent is not correctly set up'
+            print 'RTEMS Source Builder environent is not correctly set up'
     except error.general, gerr:
         print gerr
         sys.exit(1)

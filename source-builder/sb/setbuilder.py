@@ -36,7 +36,7 @@ import log
 import path
 
 #
-# Version of Source Builder Set Builder.
+# Version of RTEMS Source Builder Set Builder.
 #
 version = '0.1'
 
@@ -290,7 +290,7 @@ def run():
                     '--pkg-tar-files': 'Create package tar files' }
         opts, _defaults = defaults.load(sys.argv, optargs)
         log.default = log.log(opts.logfiles())
-        _notice(opts, 'Source Builder - Set Builder, v%s' % (version))
+        _notice(opts, 'RTEMS Source Builder - Set Builder, v%s' % (version))
         if not check.host_setup(opts, _defaults):
             raise error.general('host build environment is not set up correctly')
         configs = build.get_configs(opts, _defaults)

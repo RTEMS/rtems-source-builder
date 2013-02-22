@@ -471,7 +471,7 @@ def run(args):
         optargs = { '--list-configs': 'List available configurations' }
         opts, _defaults = defaults.load(args, optargs)
         log.default = log.log(opts.logfiles())
-        _notice(opts, 'Source Builder, Package Builder v%s' % (version))
+        _notice(opts, 'RTEMS Source Builder, Package Builder v%s' % (version))
         if not check.host_setup(opts, _defaults):
             if not opts.force():
                 raise error.general('host build environment is not set up correctly (use --force to proceed)')
