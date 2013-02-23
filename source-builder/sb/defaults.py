@@ -29,6 +29,7 @@ import os
 import error
 import execute
 import path
+import sys
 
 basepath = 'sb'
 
@@ -254,7 +255,7 @@ class command_line:
 
     def _help(self):
         print '%s: [options] [args]' % (self.command_name)
-        print 'Source Builder, an RTEMS Tools Project (c) 2012-2013 Chris Johns'
+        print 'RTEMS Source Builder, an RTEMS Tools Project (c) 2012-2013 Chris Johns'
         print 'Options and arguments:'
         print '--force                : Force the build to proceed'
         print '--trace                : Trace the execution (not current used)'
@@ -564,16 +565,41 @@ def load(args, optargs = None):
     d = o._post_process(d)
     return o, d
 
-if __name__ == '__main__':
-    import sys
+def run(args):
     try:
-        _opts, _defaults = load(args = sys.argv)
+        _opts, _defaults = load(args = args)
+        print 'Options:'
         print _opts
-        pprint.pprint(_defaults)
+        print 'Defaults:'
+        for k in sorted(_defaults.keys()):
+            d = _defaults[k]
+            print '%-20s: %-8s %-10s' % (k, d[0], d[1]),
+            indent = False
+            if len(d[2]) == 0:
+                print
+            text_len = 80
+            for l in d[2].split('\n'):
+                while len(l):
+                    if indent:
+                        print '%20s  %8s %10s' % (' ', ' ', ' '),
+                    print l[0:text_len],
+                    l = l[text_len:]
+                    if len(l):
+                        print ' \\',
+                    print
+                    indent = True
     except error.general, gerr:
         print gerr
         sys.exit(1)
     except error.internal, ierr:
         print ierr
         sys.exit(1)
+    except error.exit, eerr:
+        pass
+    except KeyboardInterrupt:
+        _notice(opts, 'user terminated')
+        sys.exit(1)
     sys.exit(0)
+
+if __name__ == '__main__':
+    run(sys.argv)
