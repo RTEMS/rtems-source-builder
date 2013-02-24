@@ -1,45 +1,440 @@
-Source Builder
-==============
-Chris Johns <chrisj@rtems.org>
-1.0, November 2012
+RTEMS Source Builder
+====================
 :doctype: book
-:toc:
+:toc2:
+:toclevels: 5
 :icons:
 :numbered:
 
-image:images/rtemswhitebg.jpg["RTEMS",width="20%"]
+image:images/rtemswhitebg.jpg["RTEMS",width="30%"]
 
-Introduction
-------------
+Chris Johns <chrisj@rtems.org>
+1.0, February 2013
 
-The Source Builder is a tool to aid building packages from source. It is not a
-package manager. It is just helps consolidate the details that you need to know
-to build a package from source. The tool is mainly aimed at those users who
-need to maintain tool sets for embedded type development, that is
-cross-compiled compiled tool chains, debuggers, and debugging aids. It is not
-limited to this role but designed to fit with-in that specific niche.
+RTEMS Tools From Source
+-----------------------
 
-The Source Builder attempts to support any host environment that runs Python
-and you can build the package on. It is not some sort of magic that can take
-any piece of source code and make it build. Someone at some point in time has
-figured out how to build that package from source and taught this tool.
+The RTEMS Source Builder is a tool to aid building packages from source. It is
+not a package manager. It helps consolidate the details you need to know to
+build a package from source in a controlled and verifiable way. The tool is
+mainly aimed at developers of software who use tool sets for embedded type
+development. Embedded development typically uses cross-compiling tool chains,
+debuggers, and debugging aids. Together we call these a tool set. The RTEMS
+Source Builder is not limited to this role but designed to fit with-in this
+specific niche. It can be used outside of the RTEMS project and we welcome this
+happening in other open source or commercial projects.
 
-The Source Builder has two types configuration data. The first is configuration
-files and these are scripts based on the RPM spec file format that detail the
-steps needed to build a package. The steps are 'preparation', 'building', and
-'installing'. The second set of configuration files are 'build sets'. A build
-set describes a collection of packages you want built together. For example the
-GNU tool set is autoconf, automake, binutils, gcc, and gdb. This is the typical
-suite of tools you need for an embedded cross-development type project.
+The RTEMS Source Builder is typically used to build a set of tools or a _build
+set_. A _build set_ is a collection of packages and a package is a specific
+tool, for example gcc or gdb. The RTEMS Source Builder attempts to support any
+host environment that runs Python and you can build the package on. It is not
+some sort of magic that can take any piece of source code and make it
+build. Someone at some point in time has figured out how to build that package
+from source and taught this tool. The RTEMS Source Builder has been tested on:
 
-The Source Builder does not interact with any host package management
+. FreeBSD
+. MacOS (Mountain Lion)
+. Ubuntu
+. Centos
+. Fedora
+. Raspbian
+
+Windows support is being added how-ever there are issues with the Python
+threading used in the RTEMS Source Builder and the MinGW project's MSYS process
+handling of make.
+
+The RTEMS Source Builder has two types configuration data. The first is the
+_build set_. A _build set_ describes a collection of packages that define a set
+of tools you would use when developing software for RTEMS. For example the
+basic GNU tool set is binutils, gcc, and gdb and is the typical base suite of
+tools you need for an embedded cross-development type project. The second type
+of configuration data is the configuration files and they define how a package
+is built. Configuration files are scripts based on the RPM spec file format
+and detail the steps needed to build a package. The steps are 'preparation',
+'building', and 'installing'. The script support macros, shell expansion,
+logic, includes and many more featured need to build packages.
+
+The RTEMS Source Builder does not interact with any host package management
 system. There is no automatic dependence checking between various packages you
-build or your host system may have installed. We assume you know what are doing
-or the build sets and configuration files you are using have been created by
-developers who do. A buld set should provide a known working configuration.
+build or packages or software your host system may have installed. We assume
+the build sets and configuration files you are using have been created by
+developers who do.
 
-Why build from source ?
-~~~~~~~~~~~~~~~~~~~~~~~
+Quick Start
+-----------
+
+The quick start will show you how to build a set of RTEMS tools for a supported
+architecture.
+
+There is no need to become root or the administrator and we recommend you avoid
+doing this. You can build and install the tools anywhere on the host's file
+system you as a standard user have read and write access. I recommend you use
+your home directory and work under the directory +~/development+. The
+examples shown here will do this.
+
+You can use the build _prefix_ to install and maintain different versions of
+the tools. Doing this lets you try a new set of tools while not touching your
+proven working production set of tools. Once you have proven the new tools are
+working rebuild with the _producion_ prefix switching your development to them.
+
+I also suggest you keep your environment to the bare minimum, particularly the
+path variable. Using environment variables has been proven over the years to be
+difficult to manage in production systems.
+
+Setup
+~~~~~
+
+Setup a development work space:
+
+-------------------------------------------------------------
+$ cd
+$ mkdir -p development/rtems/src
+$ cd development/rtems/src
+-------------------------------------------------------------
+
+The RTEMS Source Builder is distributed as source. It is Python code so all you
+need to do is head over to the RTEMS GIT repository and clone the code directly
+from git:
+
+-------------------------------------------------------------
+$ git clone git://git.rtems.org/chrisj/rtems-source-builder.git
+$ cd rtems-source-builder
+-------------------------------------------------------------
+
+Checking
+~~~~~~~~
+
+The next step is to check if your host is set up correctly. The RTEMS Source
+Builder provides a tool to help:
+
+-------------------------------------------------------------
+$ source-builder/sb-check
+warning: exe: absolute exe found in path: (__objcopy) /usr/local/bin/objcopy <1>
+warning: exe: absolute exe found in path: (__objdump) /usr/local/bin/objdump
+error: exe: not found: (_xz) /usr/local/bin/xz <2>
+RTEMS Source Builder environent is not correctly set up
+$ source-builder/sb-check
+RTEMS Source Builder environent is ok <3>
+-------------------------------------------------------------
+
+<1> A tool is in the environment path but does not match the shown path.
+<2> The executable 'xz' is not found.
+<3> The host's environment is set up correct.
+
+The checking tool will output a list of executables not found if problems are
+detected. Locate those executables and install them. You may also be given a
+list of warnings about executables not in the expected location how-ever the
+executable was located somewhere in your environment's path. You will need to
+check each tool to determine if this is an issue. An executable not in the
+standard location may indicate it is not the host operating system's standard
+tool. It maybe ok or it could be buggy.
+
+The <<_host_setups,Host Setups>> section lists packages you should install for
+common host operating systems. It maybe worth checking if you have those
+installed.
+
+Build Sets
+~~~~~~~~~~
+
+The RTEMS tools can be built within the RTEMS Source Builder's source tree. We
+recommend you do this so lets change into the RTEMS directory in the RTEMS
+Source Builder package:
+
+-------------------------------------------------------------
+$ cd rtems
+-------------------------------------------------------------
+
+If you are unsure how to specify the build set for the architecure you wish to
+build ask the tool:
+
+-------------------------------------------------------------
+$ ../source-builder/sb-set-builder --list-bsets <1>
+RTEMS Source Builder - Set Builder, v0.1
+Examining: config <2>
+Examining: ../source-builder/config <2>
+    4.11/rtems-all.bset <3>
+    4.11/rtems-arm.bset <4>
+    4.11/rtems-avr.bset
+    4.11/rtems-bfin.bset
+    4.11/rtems-h8300.bset
+    4.11/rtems-m32c.bset
+    4.11/rtems-m32r.bset
+    4.11/rtems-m68k.bset
+    4.11/rtems-microblaze.bset
+    4.11/rtems-mips.bset
+    4.11/rtems-moxie.bset
+    4.11/rtems-nios2.bset
+    4.11/rtems-powerpc.bset
+    4.11/rtems-sh.bset
+    4.11/rtems-sparc.bset
+    gnu-tools-4.6.bset
+    rtems-4.11-base.bset
+    unstable/4.11/rtems-all.bset <5>
+    unstable/4.11/rtems-arm.bset
+    unstable/4.11/rtems-avr.bset
+    unstable/4.11/rtems-bfin.bset
+    unstable/4.11/rtems-h8300.bset
+    unstable/4.11/rtems-m32c.bset
+    unstable/4.11/rtems-m32r.bset
+    unstable/4.11/rtems-m68k.bset
+    unstable/4.11/rtems-microblaze.bset
+    unstable/4.11/rtems-mips.bset
+    unstable/4.11/rtems-moxie.bset
+    unstable/4.11/rtems-powerpc.bset
+    unstable/4.11/rtems-sh.bset
+    unstable/4.11/rtems-sparc.bset
+-------------------------------------------------------------
+<1> Only option needed is +--list-bsets+
+<2> The paths inspected. See <<X1,+_configdir+>> variable.
+<3> Build all the architectures.
+<4> The build set for the ARM architecture.
+<5> Unstable tool sets are used by RTEMS developers to test new tool sets. You
+    are welcome to try them but you must remember they are unstable, can change
+    at point in time and your application may not work. If you have an issue
+    with a production tool it may pay to try the unstable tool to see if it has
+    been resolved.
+
+Building
+~~~~~~~~
+
+In this quick start I will build an SPARC tool set.
+
+-------------------------------------------------------------
+$ ../source-builder/sb-set-builder --log=l-sparc.txt <1> \
+                --prefix=$HOME/development/rtems/4.11 <2> 4.11/rtems-sparc <3>
+Source Builder - Set Builder, v0.1
+Build Set: 4.11/rtems-sparc
+config: expat-2.1.0-1.cfg <4>
+package: expat-2.1.0-x86_64-freebsd9.1-1
+building: expat-2.1.0-x86_64-freebsd9.1-1
+installing: rtems-4.11-sparc-rtems4.11-1 -> /home/chris/development/rtems/4.11 <5>
+config: tools/rtems-binutils-2.22-1.cfg <6>
+package: sparc-rtems4.11-binutils-2.22-1
+building: sparc-rtems4.11-binutils-2.22-1
+installing: rtems-4.11-sparc-rtems4.11-1 -> /home/chris/development/rtems/4.11
+config: tools/rtems-gcc-4.7.2-newlib-1.20.0-1.cfg <7>
+package: sparc-rtems4.11-gcc-4.7.2-newlib-1.20.0-1
+building: sparc-rtems4.11-gcc-4.7.2-newlib-1.20.0-1
+installing: rtems-4.11-sparc-rtems4.11-1 -> /home/chris/development/rtems/4.11
+config: tools/rtems-gdb-7.5.1-1.cfg <8>
+package: sparc-rtems4.11-gdb-7.5.1-1
+building: sparc-rtems4.11-gdb-7.5.1-1
+installing: rtems-4.11-sparc-rtems4.11-1 -> /home/chris/development/rtems/4.11
+cleaning: expat-2.1.0-x86_64-freebsd9.1-1 <9>
+cleaning: sparc-rtems4.11-binutils-2.22-1
+cleaning: sparc-rtems4.11-gcc-4.7.2-newlib-1.20.0-1
+cleaning: sparc-rtems4.11-gdb-7.5.1-1
+Build Set: Time 0:13:43.616383 <10>
+-------------------------------------------------------------
+
+<1> Providing a log file redirects the build output into a file. Logging the
+    build output provides a simple way to report problems.
+<2> The prefix is the location on your file system the tools are installed
+    into. Provide a prefix to a location you have read and write access. You
+    can use the prefix to install different version or builds of tools. Just
+    use the path to the tools you want to use when building RTEMS.
+<3> The build set. This is the SPARC build set.
+<4> The SPARC build set build the expat library that is used in GDB. This is the
+    expat configuration.
+<5> Installing the expat package to the install prefix.
+<6> The binutils build configuration.
+<7> The GCC and Newlib build configuration.
+<8> The GDB build configuration.
+<9> All the packages built are cleaned at the end. If the build fails all the
+    needed files are present. You may have to clean up by deleting the build
+    directory.
+<10> The time to build the package. This lets you see how different host
+     hardware or configurations perform.
+
+Your SPARC RTEMS 4.11 tool set will be installed and ready to build RTEMS and
+RTEMS applications. When the build runs you will notice the tool fetch the
+source code from the internet. These files are cached in a directory called
++source+. If you run the build again the cached files are used.
+
+-------------------------------------------------------------
+$ ls $HOME/development/rtems/4.11
+bin         include     lib         libexec     share       sparc-rtems4.11
+$ ls $HOME/development/rtems/4.11/bin
+sparc-rtems4.11-addr2line       sparc-rtems4.11-cpp
+sparc-rtems4.11-gcc-ar          sparc-rtems4.11-gprof
+sparc-rtems4.11-objdump         sparc-rtems4.11-size
+sparc-rtems4.11-ar              sparc-rtems4.11-elfedit
+sparc-rtems4.11-gcc-nm          sparc-rtems4.11-ld
+sparc-rtems4.11-ranlib          sparc-rtems4.11-strings
+sparc-rtems4.11-as              sparc-rtems4.11-g++
+sparc-rtems4.11-gcc-ranlib      sparc-rtems4.11-ld.bfd
+sparc-rtems4.11-readelf         sparc-rtems4.11-strip
+sparc-rtems4.11-c++             sparc-rtems4.11-gcc
+sparc-rtems4.11-gcov            sparc-rtems4.11-nm
+sparc-rtems4.11-run             xmlwf
+sparc-rtems4.11-c++filt         sparc-rtems4.11-gcc-4.7.2
+sparc-rtems4.11-gdb             sparc-rtems4.11-objcopy
+sparc-rtems4.11-sis
+$ $HOME/development/rtems/4.11/bin/sparc-rtems4.11-gcc -v
+Using built-in specs.
+COLLECT_GCC=/home/chris/development/rtems/4.11/bin/sparc-rtems4.11-gcc
+COLLECT_LTO_WRAPPER=/usr/home/chris/development/rtems/4.11/bin/../ \
+libexec/gcc/sparc-rtems4.11/4.7.2/lto-wrapper
+Target: sparc-rtems4.11
+Configured with: ../gcc-4.7.2/configure
+--prefix=/home/chris/development/rtems/4.11
+--bindir=/home/chris/development/rtems/4.11/bin
+--exec_prefix=/home/chris/development/rtems/4.11
+--includedir=/home/chris/development/rtems/4.11/include
+--libdir=/home/chris/development/rtems/4.11/lib
+--libexecdir=/home/chris/development/rtems/4.11/libexec
+--mandir=/home/chris/development/rtems/4.11/share/man
+--infodir=/home/chris/development/rtems/4.11/share/info
+--datadir=/home/chris/development/rtems/4.11/share
+--build=x86_64-freebsd9.1 --host=x86_64-freebsd9.1 --target=sparc-rtems4.11
+--disable-libstdcxx-pch --with-gnu-as --with-gnu-ld --verbose --with-newlib
+--with-system-zlib --disable-nls --without-included-gettext
+--disable-win32-registry --enable-version-specific-runtime-libs --disable-lto
+--enable-threads --enable-plugin --enable-newlib-io-c99-formats
+--enable-newlib-iconv --enable-languages=c,c++
+Thread model: rtems
+gcc version 4.7.2 20120920 (RTEMS) (GCC)
+-------------------------------------------------------------
+
+Installing and Tar Files
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The RTEMS Source Builder can install the built packages directly and optionally it can
+create a build set tar file or a tar file per package built. The normal and
+default behaviour is to let the RTEMS Source Builder install the tools. The
+source will be downloaded, built, installed and cleaned up.
+
+The tar files are created with the full build prefix present. This can cause
+problems if you are installing on a host you do not have super user or
+administrator rights on if the prefix path references part you do not have
+write access t0o. You can use the +--strip-components+ if you tar file has the
+option to remove the parts you do not have write access too or you may need to
+unpack the tar file somewhere and copy the file tree from the level you have
+write access from. Embedding the full prefix path in the tar files lets you know
+what the prefix is.
+
+A build set tar file can created by adding +--bset-tar-file+ option to the
++sb-set-builder+ command.
+
+-------------------------------------------------------------
+$ ../source-builder/sb-set-builder --log=l-sparc.txt \
+         --prefix=$HOME/development/rtems/4.11 \
+         --bset-tar-file <1> 4.11/rtems-sparc
+Source Builder - Set Builder, v0.1
+Build Set: 4.11/rtems-sparc
+config: expat-2.1.0-1.cfg
+package: expat-2.1.0-x86_64-freebsd9.1-1
+building: expat-2.1.0-x86_64-freebsd9.1-1
+installing: rtems-4.11-sparc-rtems4.11-1 -> /home/chris/development/rtems/4.11 <2>
+config: tools/rtems-binutils-2.22-1.cfg
+package: sparc-rtems4.11-binutils-2.22-1
+building: sparc-rtems4.11-binutils-2.22-1
+installing: rtems-4.11-sparc-rtems4.11-1 -> /home/chris/development/rtems/4.11
+config: tools/rtems-gcc-4.7.2-newlib-1.20.0-1.cfg
+package: sparc-rtems4.11-gcc-4.7.2-newlib-1.20.0-1
+building: sparc-rtems4.11-gcc-4.7.2-newlib-1.20.0-1
+installing: rtems-4.11-sparc-rtems4.11-1 -> /home/chris/development/rtems/4.11
+config: tools/rtems-gdb-7.5.1-1.cfg
+package: sparc-rtems4.11-gdb-7.5.1-1
+building: sparc-rtems4.11-gdb-7.5.1-1
+installing: rtems-4.11-sparc-rtems4.11-1 -> /home/chris/development/rtems/4.11
+tarball: tar/rtems-4.11-sparc-rtems4.11-1.tar.bz2 <3>
+cleaning: expat-2.1.0-x86_64-freebsd9.1-1
+cleaning: sparc-rtems4.11-binutils-2.22-1
+cleaning: sparc-rtems4.11-gcc-4.7.2-newlib-1.20.0-1
+cleaning: sparc-rtems4.11-gdb-7.5.1-1
+Build Set: Time 0:15:25.92873
+-------------------------------------------------------------
+
+<1> The option to create a build set tar file.
+<2> The installation still happens.
+<3> Creating the build set tar file.
+
+You can also suppress installing the files using the +--no-install+ option to
+the +sb-set-builder+.
+
+-------------------------------------------------------------
+$ ../source-builder/sb-set-builder --log=l-sparc.txt \
+            --prefix=$HOME/development/rtems/4.11 \
+            --bset-tar-file --no-install <1> 4.11/rtems-sparc
+Source Builder - Set Builder, v0.1
+Build Set: 4.11/rtems-sparc
+config: expat-2.1.0-1.cfg
+package: expat-2.1.0-x86_64-freebsd9.1-1
+building: expat-2.1.0-x86_64-freebsd9.1-1
+config: tools/rtems-binutils-2.22-1.cfg
+package: sparc-rtems4.11-binutils-2.22-1
+building: sparc-rtems4.11-binutils-2.22-1
+config: tools/rtems-gcc-4.7.2-newlib-1.20.0-1.cfg
+package: sparc-rtems4.11-gcc-4.7.2-newlib-1.20.0-1
+building: sparc-rtems4.11-gcc-4.7.2-newlib-1.20.0-1
+config: tools/rtems-gdb-7.5.1-1.cfg
+package: sparc-rtems4.11-gdb-7.5.1-1
+building: sparc-rtems4.11-gdb-7.5.1-1
+tarball: tar/rtems-4.11-sparc-rtems4.11-1.tar.bz2 <2>
+cleaning: expat-2.1.0-x86_64-freebsd9.1-1
+cleaning: sparc-rtems4.11-binutils-2.22-1
+cleaning: sparc-rtems4.11-gcc-4.7.2-newlib-1.20.0-1
+cleaning: sparc-rtems4.11-gdb-7.5.1-1
+Build Set: Time 0:14:11.721274
+$ ls tar
+rtems-4.11-sparc-rtems4.11-1.tar.bz2
+-------------------------------------------------------------
+
+<1> The option to supressing installing the packages.
+<2> Create the build set tar.
+
+A package tar file can be created by adding the +--pkg-tar-files+ to the
++sb-set-builder+ command. This creates a tar file per package built in the
+build set.
+
+-------------------------------------------------------------
+$ ../source-builder/sb-set-builder --log=l-sparc.txt \
+            --prefix=$HOME/development/rtems/4.11 \
+            --bset-tar-file --pkg-tar-files <1> --no-install 4.11/rtems-sparc
+Source Builder - Set Builder, v0.1
+Build Set: 4.11/rtems-sparc
+config: expat-2.1.0-1.cfg
+package: expat-2.1.0-x86_64-freebsd9.1-1
+building: expat-2.1.0-x86_64-freebsd9.1-1
+config: tools/rtems-binutils-2.22-1.cfg
+package: sparc-rtems4.11-binutils-2.22-1
+building: sparc-rtems4.11-binutils-2.22-1
+config: tools/rtems-gcc-4.7.2-newlib-1.20.0-1.cfg
+package: sparc-rtems4.11-gcc-4.7.2-newlib-1.20.0-1
+building: sparc-rtems4.11-gcc-4.7.2-newlib-1.20.0-1
+config: tools/rtems-gdb-7.5.1-1.cfg
+package: sparc-rtems4.11-gdb-7.5.1-1
+building: sparc-rtems4.11-gdb-7.5.1-1
+tarball: tar/rtems-4.11-sparc-rtems4.11-1.tar.bz2
+cleaning: expat-2.1.0-x86_64-freebsd9.1-1
+cleaning: sparc-rtems4.11-binutils-2.22-1
+cleaning: sparc-rtems4.11-gcc-4.7.2-newlib-1.20.0-1
+cleaning: sparc-rtems4.11-gdb-7.5.1-1
+Build Set: Time 0:14:37.658460
+$ ls tar
+expat-2.1.0-x86_64-freebsd9.1-1.tar.bz2           sparc-rtems4.11-binutils-2.22-1.tar.bz2
+sparc-rtems4.11-gdb-7.5.1-1.tar.bz2 <2>           rtems-4.11-sparc-rtems4.11-1.tar.bz2 <3>
+sparc-rtems4.11-gcc-4.7.2-newlib-1.20.0-1.tar.bz2
+-------------------------------------------------------------
+
+<1> The option to create packages tar files.
+<2> The GDB package tar file.
+<3> The build set tar file. All the others in a single tar file.
+
+Why Build from Source ?
+-----------------------
+
+The RTEMS Source Builder is not a replacement for the binary install systems
+you have with commercial operating systems or open source operating system
+distributions. Those products and distributions are critically important and
+are the base that allows the Source Builder to work. The RTEMS Source Builder
+sits somewhere between you manually entering the commands to build a tool set
+and a tool such as +yum+ or +apt-get+ to install binary packages made
+specifically for your host operating system. Building manually or installing a
+binary package from a remote repository are valid and real alternatives while
+the Source Builder is attempting to provide a specific service of repeatably
+being able to build tool sets from source code.
 
 If you are developing a system or product that has a long shelf life or is used
 in a critical piece of infastructure that has a long life cycle being able to
@@ -48,7 +443,7 @@ changing world of the host development machines. If your tool set is binary and
 you have lost the ability to build it you have lost a degree of control and
 flexibility open source gives you. Fast moving host environments are
 fantastic. We have powerful multi-core computers with huge amounts of memory
-and state of the art operating systems to running on them. The product or
+and state of the art operating systems to run on them how-ever the product or
 project you are part of may need to be maintained well past the life time of
 these host. Being able to build from source an important and critical part of
 this process because you can move to a newer host and create an equivalent tool
@@ -71,180 +466,463 @@ sytem. Given the stability of standards based libraries like 'libc' and ever
 improving support for standard header file locations this task is becoming
 easier.
 
-History
-~~~~~~~
+The RTEMS Source Builder is designed to be audited and incorporated into a
+project's verifcation and validation process. If your project is developing
+critical applications that needs to be traced from source to executable code in
+the target, you need to also consiser the tools and how to track them.
 
-The Source Builder is a stand alone tool based on another tool called the
-'SpecBuilder'. The SpecBuilder was written for the RTEMS project too give me a
-way to build tools on hosts that did not support RPMs. At the time the RTEMS
-tools maintainer only used spec files to create various packages. This meant I
-had either spec files, RPM files or SRPM files. The RPM and SPRM files where
-useless because you needed an 'rpm' type tool to extract and manage them. There
-are versions of 'rpm' for a number of non-RPM hosts how-ever these proved to be
-in various broken states and randomally maintained. The solution I settled on
-was to use spec files so I wrote a Python based tool that parsed the spec file
-format and allowed me to create a shell script I could run to build the
-package. This approach proved successful and I was able to track the RPM
-version of the RTEMS tools on a non-RPM host over a number of years. How-ever
-the SpecBuilder tool did not help me build tools or other packages not related
-to the RTEMS project where there was no spec file I could use so I needed
-another tool. Rather than start again I decided to take the parsing code for
-the spec file format and build a new tool called the Source Builder.
+If your IT department maintains all your computers and you do not have suitable
+rights to install binary packages, building from source lets you create your
+own tool set that you install under your home directory. Avoiding installing
+any extra packages as a super user is always helpful in maintaining a secure
+computing environment.
 
-Quick Start
------------
+Configuration
+-------------
 
-The quick start will show you how to build a generic unpatched GNU tool set for
-any support target.
+The RTEMS Source Builder has two types of configuration data:
 
-Check out the Source Builder tool from git:
+. Build Sets
+. Package Build Configurations
 
--------------------------------------------------------------
-$ git clone git://git.rtems.org/chrisj/rtems-source-builder.git
--------------------------------------------------------------
+By default these files can be located in two separate directories and
+searched. The first directory is +config+ in your current working directory
+(+_topdir+) and the second is +config+ located in the base directory the RTEMS
+Source Builder command you run (+_sbdir+). The RTEMS directory +rtems+ located
+at the top of the RTEMS Source Builder source code is an example of a specific
+build configuration directory. You cane create custom or private build
+configurations and if you run the RTEMS Source Builder command from that
+directory your configurations will be used.
 
-The first step is to check if your host is set up correctly:
+[[X1]] The configuration search path is the macro variable and is reference as
++%\{_configdir\}+. It's default is defined as:
 
 -------------------------------------------------------------
-$ rtems-source-builder/source-builder/sb-check
-warning: exe: absolute exe found in path: (__objcopy) /usr/local/bin/objcopy <1>
-warning: exe: absolute exe found in path: (__objdump) /usr/local/bin/objdump
-error: exe: not found: (_xz) /usr/local/bin/xz <2>
-Source Builder environent is not correctly set up
-$ source-builder/sb-check
-Source Builder environent is ok <3>
+_configdir          : dir      optional   %{_topdir}/config:%{_sbdir}/config <1>
 -------------------------------------------------------------
 
-<1> A tool is in the environment path but does not match the shown path.
-<2> The executable 'xz' is not found.
-<3> The host's environment is set up correct.
+<1> The +_topdir+ is the directory  you run the command from and +_sbdir+ is
+the location of the RTEMS Source Builder command.
 
-If there are problems you are given a list of executables that cannot be
-found. You may also be given a list of warnings about executables not in the
-expected location how-ever the executable was located somewhere in your
-environment's path. You will need to check the specific host section to resolve
-these issues.
+Build set files have the file extension +.bset+ and the package build
+configuration files have the file extension of +.cfg+. The +sb-set-builder+
+command will search for _build sets_ and the +sb-builder+ commands works with
+package build configuration files.
 
-Create a suitable build directory away from the Source Builder source change
-into that directory and build a GNU tool set:
+Both types of configuration files use the \'#' character as a comment
+character. Anything after this character on the line is ignored. There is no
+block comment.
 
--------------------------------------------------------------
-$ mkdir gnu-tools <1>
-$ cd gnu-tools
-$ ../rtems-source-builder/source-builder/sb-set-builder <2> --log=l.txt <3> --force <4> \
-        --prefix=$HOME/gnu-tools-1 <5> --target=arm-eabi <6> gnu-tools-4.6 <7>
--------------------------------------------------------------
+Macros and Defaults
+~~~~~~~~~~~~~~~~~~~
 
-<1> Make a build directory you can delete when finished.
-<2> The Source Builder command to build a set of tools.
-<3> Capture the output to a log file.
-<4> The force option will create any needed directories and allow the build to
-proceed if your host is not set up.
-<5> Give the tools a suitable prefix. This is the location you install the
-tools into once they have built.
-<6> The gnu-toolset requires you set a target. In this case the tool set will
-be a generic unpatched version of GCC 4.6 for a bare metal the ARM processor.
-<7> The build set.
-
-To view the build sets lets change to the RTEMS project's source builder
-configuration and then list the build sets:
+The RTEMS Source Builder uses a table of _macros_ called the _defaults_. The
+values the _defaults_ are initialised to are dependent on your host. This lets
+the Source Builder handle differences in the hosts. Build set and configuration
+files can define new values extending the defaults. For example builds are
+given a release number. This is typically a single number at the end of the
+package name. For RTEMS this is set in the top level build set configuration
+file with:
 
 -------------------------------------------------------------
-$ cd ../rtems-source-builder/rtems
-$ ../source-builder/sb-set-builder --list-bsets
-Source Builder - Set Builder, v0.1
-Examining: /usr/home/chris/development/rtems/src/rtems-source-builder/config <1>
-Examining: /usr/home/chris/development/rtems/src/source-builder/config <2>
-  gnu-tools-4.6 <3>
-  rtems-tools-4.10 <4>
-  rtems-tools-4.11 <5>
+%define release 1
 -------------------------------------------------------------
 
-<1> The local RTEMS configuration directory. Searched first.
-<2> The Source Builder configuration directory.
-<3> The Source Builder provided GNU tools GCC 4.6 build set.
-<4> The RTEMS Source Builder provided RTEMS 4.10 build set.
-<5> The RTEMS Source Builder provided RTEMS 4.11 (gcc-4.6.3)  build set.
-
-And to view the configurations you can:
+Once defined if can be accessed in a build set or package configuration file
+with:
 
 -------------------------------------------------------------
-$ ../source-builder/sb-set-builder --list-configs
-Source Builder - Set Builder, v0.1
-Examining: /usr/home/chris/development/rtems/src/rtems-source-builder/config
-Examining: /usr/home/chris/development/rtems/src/source-builder/config
-  autoconf-2-1 <1>
-  autoconf-2.68-1
-  autoconf-2.69-1
-  autoconf-internal-2.68-1
-  automake-1-1
-  automake-1.12-1
-  automake-internal-1.12-1
-  base
-  binutils-2-1
-  binutils-2.22-1
-  checks
-  expat-2-1
-  expat-2.1.0-1
-  gcc-4.4-1
-  gcc-4.6-1
-  gcc-4.6-newlib-1.20-1
-  gdb-7-1
-  gdb-7.5-1
-  libusb-1-1
-  libusb-1.0.9-1
-  m4-1-1
-  m4-1.4.16-1
-  texane-stlink-1
-  rtems-binutils-2.20.1-1
-  rtems-binutils-2.22-1
-  rtems-gcc-4.4.7-newlib-1.18.0-1
-  rtems-gcc-4.6.3-newlib-1.20.0-1
-  rtems-gdb-7.3.1-1
-  rtems-gdb-7.5-1
+%{release}
 -------------------------------------------------------------
 
-<1> Configurations are built by using the builder. This creates a stand alone
-package.
+The +sb-defaults+ command lists the defaults for your host. I will not include
+the output of this command beause of its size.
 
-The Source Builder
-------------------
+-------------------------------------------------------------
+$ ../source-builder/sb-defaults
+-------------------------------------------------------------
 
-The Source Builder provides a few generic build sets and the configuration
-support to build a number of packages. A project that uses the Source Builder
-can create a specialised set of configuration files that provides the specific
-configurations a project uses.
+Build Set Files
+~~~~~~~~~~~~~~~
 
-For example the RTEMS project provides its own set of configuration files
-inside the Source Builder. They do not have to be here. In the build set list
-in the 'Quick Start' section you can see the build sets +rtems-tools-4.10+ and
-+rtems-tools-4.11+. These build set defines the extact configration to use for
-the RTEMS releases.
+Build set files lets you list the packages in the build set you are defining
+and have a file extension of +.bset+. Build sets can define macro variables,
+inline include other files and reference other build set or package
+configuration files.
 
-The Source Builder has been tested on:
+Defining macros is performed with the +%define+ directive:
 
-. FreeBSD
-. MacOS (Mountain Lion)
-. Ubuntu
-. Fedora
+-------------------------------------------------------------
+%define _target m32r-rtems4.11
+-------------------------------------------------------------
 
-Windows will be support how-ever there are issues with the Python threading
-used in the Source Builder and the MinGW project's MSYS process handling of make.
+The top level RTEMS build set files specify the target. This is used by other
+referenced files or an undefined macro error is reported.
+
+Inline including another file with the +%include+ directive continues
+processing with the specified file returning to carry on from just after the
+include point.
+
+-------------------------------------------------------------
+%include rtems-4.11-base.bset
+-------------------------------------------------------------
+
+This includes the RTEMS 4.11 base set of defines and checks. The configuration
+paths as defined by +_configdir+ are scanned. The file extension is optional.
+
+You reference build set or package configuration files by placing the file name
+on a single line.
+
+-------------------------------------------------------------
+tools/rtems-binutils-2.22-1
+-------------------------------------------------------------
+
+The +_configdir+ path is scanned for +tools/rtems-binutils-2.22-1.bset+ or
++tools/rtems-binutils-2.22-1.cfg+. Build set files take precedent over package
+configuration files. If +tools/rtems-binutils-2.22-1+ is a build set a new
+instance of the build set processor is created and if the file is a package
+configuration the package is built. This all happens once the build set file
+has finished being scanned.
+
+Configuration Files
+~~~~~~~~~~~~~~~~~~~
+
+Configuration files specify how to build a package. Configuration files are
+scripts and have a +.cfg+ file extension. The script format is based loosely on
+the RPM spec file format how-ever the use and purpose in this tool does not
+compare with the functionality and therefore the important features of the spec
+format RPM needs and uses.
+
+Script Language
+~~~~~~~~~~~~~~~
+
+The script language is implemented in terms of directives. The directive list is:
+
+[horizontal]
++%prep+:: The source preparation shell commands.
++%build+:: The build shell commands.
++%install+:: The package install shell commands.
++%clean+:: The package clean shell commands.
++%include+:: Inline include another configuration file.
++%package+:: The package being built.
++%name+:: The name of the package.
++%description+:: A package description. Useful when reporting about a build.
++%release+:: The package release. A number that is the release as built by this tool.
++%version+:: The package's verison string.
++%buildarch+:: The build architecture.
++%setup+:: Setup a source package.
++%source+:: Define a source code package. This directive is number.
++%patch+:: Define a patch. This directive is number.
++%warning+:: Print the following string as a warning and continue.
++%error+:: Print the following string as an error and exit.
++%define+:: Define a macro. Macros cannot be redefined, you must first undefine it.
++%undefine+:: Undefine a macro.
++%if+:: Start a conditional logic block that ends with a +%endif+.
++%ifn+:: Inverted start of a conditional logic block.
++%ifarch+:: Test the architecture against the following string.
++%ifnarch+:: Inverted test of the architecture
++%ifos+:: Test the host operating system.
++%else+:: Start the _else_ conditional logic block.
++%endfi+:: End the conditional logic block.
++%bconf_with+:: Test the build condition _with_ setting. This is the +--with-*+
+command line option.
++%bconf_without+:: Test the build condition _without_ setting. This is the
++--without-*+ command line option.
+
+%prep
+^^^^^
+
+The +%prep+ directive starts a block that continues until the next block
+directive. The _prep_ or preparation block defines the setup of the package's
+source and is a mix of RTEMS Source Builder directives and shell scripting. The
+sequence is typically +%setup+ directives for source, +%patch+ directives to
+patch the source mixed with some shell commands to correct any source issues.
+A +%prep+ section starts with a +%setup+ command. This creates the package
+source top level directory then is followed by the first source file.
+
+-------------------------------------------------------------
+                     <1>       <2>
+%setup -q -c -T -n %{name}-%{version}
+%setup -q -T -D -n %{name}-%{version} -a0
+-------------------------------------------------------------
+
+<1> The package's name.
+<2> The version of the package.
+
+The source for a package is declared with the +%source*+ directive where +*+ is
+a number. For example +%source0+ is the source 0 tar file and is defined with
+something similar to this:
+
+-------------------------------------------------------------
+Source0: http://ftp.gnu.org/gnu/gdb/gdb-%{gdb_version}.tar.bz2
+-------------------------------------------------------------
+
+This URL is the primary location of the GNU GCC source code and the RTEMS
+Source Builder can download the file from this location and by inspecting the
+file extension use +bzip2+ decompression. When the +%prep+ section is processed
+a check of the local +source+ directory is made to see if the file has already
+been downloaded. If not found in the source cache directory the package is
+downloaded from the URL. You can append other base URLs via the command line
+option +--url+. This option accepts a comma delimited list of sites to try.
+
+You can combine the source directive with connditional logic to implement a
+default that can be overriden in the top level files. This lets you reuse a
+generic build script with different sources. This happens if you have a private
+source package with local modifications. The following example is taken from
+the +gcc-4.8-1.cfg+ build script.
+
+-------------------------------------------------------------
+%ifn %{defined Source0}
+ Source0: ftp://ftp.gnu.org/gnu/gcc/gcc-%{gcc_version}/gcc-%{gcc_version}.tar.bz2
+ VersionContro0: git clone git://gcc.gnu.org/git/gcc.git <1>
+%endif
+-------------------------------------------------------------
+
+<1> The version control directive is currently not implemented.
+
+You could optionally have a few source files that make up the package. For
+example GNU's GCC was a few tar files for a while and it is now a single tar
+file. Support for multiple source files can be conditionally implemented with
+the following scripting:
+
+-------------------------------------------------------------
+%{?source1:%setup -q -T -D -n %{name}-%{version} -a1}
+-------------------------------------------------------------
+
+The +source1+ macro value is checked and if present the command string after
+the +:+ is executed. It is common to see a number of these present allowing top
+level configuration files including a base configuration the ability to define
+a number of source packages.
+
+-------------------------------------------------------------
+%{?source1:%setup -q -T -D -n %{name}-%{version} -a1}
+%{?source2:%setup -q -T -D -n %{name}-%{version} -a2}
+%{?source3:%setup -q -T -D -n %{name}-%{version} -a3}
+-------------------------------------------------------------
+
+Patching also occurs during the preparation stage. Patches are handled in a
+similar way to the source packages. Most patches are based around the top of
+the source tree. This is an example of the patch scripting for the GCC 4.8
+series of compilers:
+
+-------------------------------------------------------------
+cd gcc-%{gcc_version} <1>
+%{?patch0:%patch0 -p1} <2>
+%{?patch1:%patch1 -p1}
+%{?patch2:%patch2 -p1}
+%{?patch3:%patch3 -p1}
+%{?patch4:%patch4 -p1}
+%{?patch5:%patch5 -p1}
+%{?patch6:%patch6 -p1}
+%{?patch7:%patch7 -p1}
+%{?patch8:%patch8 -p1}
+%{?patch9:%patch9 -p1}
+cd .. <3>
+-------------------------------------------------------------
+
+<1> Change from the top of the source tree into the package being patched's top
+    directory.
+<2> The conditional macro expansion checks if +%patch0+ is defined and if
+    defined issues the +%patch0" directive giving +-p1+ to the patch command.
+<3> Return back to the top of the source tree.
+
+%build
+^^^^^^
+
+The +%build+ directive starts a block that continues until the next block
+directive. The build block is a series of shell commands that execute to build
+the package. It assumes all source code has been unpacked, patch and adjusted
+so the build will succeed.
+
+The following is an example take from the GutHub STLink project [footnote:
+STLink is a JTAG debugging device for the ST ARM family of processors.]:
+
+-------------------------------------------------------------
+%build
+  export PATH="%{_bindir}:${PATH}" <1>
+
+  cd texane-stlink-%{stlink_version} <2>
+
+  ./autogen.sh <3>
+
+%if "%{_build}" != "%{_host}"
+  CFLAGS_FOR_BUILD="-g -O2 -Wall" \ <4>
+%endif
+  CPPFLAGS="-I $SB_TMPPREFIX/include/libusb-1.0" \ <5>
+  CFLAGS="$SB_OPT_FLAGS" \
+  LDFLAGS="-L $SB_TMPPREFIX/lib" \
+  ./configure \ <6>
+    --build=%{_build} --host=%{_host} \
+    --verbose \
+    --prefix=%{_prefix} --bindir=%{_bindir} \
+    --exec-prefix=%{_exec_prefix} \
+    --includedir=%{_includedir} --libdir=%{_libdir} \
+    --mandir=%{_mandir} --infodir=%{_infodir}
+
+  %{__make} %{?_smp_mflags} all <7>
+
+  cd ..
+-------------------------------------------------------------
+
+<1> Setup the PATH environment variable. This is not always needed.
+<2> This package builds in the source tree so enter it.
+<3> The package is actually checked directly out from the github project and so
+    it needs its autoconf and automake files generated.
+<4> Flags for a crosscompiled build.
+<5> Various settings passed to configure to customise the build. In this
+    example an include path is being set to the install point of _libusb_. This
+    package requires _libusb_ is build before it.
+<6> The +configure+ command. The RTEMS Source Builder provides all the needed
+    paths as macro variables. You just need to provide them to +configure+.
+<7> Running make. Do not use +make+ directly, use the RTEMS Source Builder's
+    defined value. This value is specific to the host. A large number of
+    packages need GNU make and on BSD systems this is +gmake+. You can
+    optionally add the SMP flags if the packages build system can handle
+    parallel building with multiple jobs. The +_smp_mflags+ value is
+    automatically setup for SMP hosts to match the number of cores the host has.
+
+%install
+^^^^^^^^
+
+The +%install+ directive starts a block that continues until the next block
+directive. The install block is a series of shell commands that execute to
+install the package. You can assumes the package has build correctly when this
+shell script executes.
+
+Never install the package to the actual _prefix_ the package was built
+with. Always install to the RTEMS Source Builder's temporary path defined in
+the macro variable +__tmpdir+. The RTEMS Source Builder sets up a shell
+environment variable called +SB_BUILD_ROOT+ as the standard install point. Most
+packages support adding +DESTDIR=+ to the _make install_ command.
+
+Looking at the same example as in <<_build, %build>>:
+
+-------------------------------------------------------------
+%install
+  export PATH="%{_bindir}:${PATH}" <1>
+  rm -rf $SB_BUILD_ROOT <2>
+
+  cd texane-stlink-%{stlink_version} <3>
+  %{__make} DESTDIR=$SB_BUILD_ROOT install <4>
+
+  cd ..
+-------------------------------------------------------------
+
+<1> Setup the PATH environment variable. This is not always needed.
+<2> Clean any installed files. This make sure the install is just what
+    the package installs and not any left over files from a broken build or
+    install.
+<3> Enter the build directory. In this example it just happens to be the source
+    directory.
+<4> Run +make install_ to install the package overriding the +DESTDIR+ make
+    variable.
+
+%clean
+^^^^^^
+
+%include
+^^^^^^^^
+
+%package
+^^^^^^^^
+
+%name
+^^^^^
+
+%description
+^^^^^^^^^^^^
+
+%release
+^^^^^^^^
+
+%version
+^^^^^^^^
+
+%buildarch
+^^^^^^^^^^
+
+%setup
+^^^^^^
+
+%source
+^^^^^^^
+
+%patch
+^^^^^^
+
+%warning
+^^^^^^^^
+
+%error
+^^^^^^
+
+%define
+^^^^^^^
+
+%undefine
+^^^^^^^^^
+
+%if
+^^^
+
+%ifn
+^^^^
+
+%ifarch
+^^^^^^^
+
+%ifnarch
+^^^^^^^^
+
+%ifos
+^^^^^
+
+%else
+^^^^^
+
+%endfi
+^^^^^^
+
+%bconf_with
+^^^^^^^^^^^
+
+%bconf_without
+^^^^^^^^^^^^^^
+
+
+RTEMS Build Sets
+----------------
+
+Configuration files are typically structured as outer files that are specific
+to a version of the package being built and become more generic as you move
+deeper. The outter layers are required to define various macro.
+
 
 Set Builder and the Builder
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The Source Builder provides two commands, the +sb-set-builder+ to build sets of
+The RTEMS Source Builder provides two commands, the +sb-set-builder+ to build sets of
 packages and the +sb-builder+ to build a specific package. The set builder uses
 the builder to build a set of packages. You could write a shell script that did
-th same thing so the set builder is a convenience command that allows you to
+the same thing so the set builder is a convenience command that allows you to
 define and control specific features of the packages you are building. The set
 builder looks for files with the +.bset" extension in the +config+
-directories. The builder command uses the configuration files have the +.cfg+
-file extension. They also live in the +config+ directories.
+directories. The builder command uses configuration files which have the +.cfg+
+file extension to control the build. The configuration files are written in a
+script language based on the _spec_ format the RPM builder uses. They also
+live in the +config+ directories.
 
-The build set file for the RTEMS 4.10 tool set +rtems/rtems-tools-4.10.bset+
-shows a typical build set file structure:
+The build set files for the RTEMS 4.11 can be found in +rtems/4.11/+. There is
+one per architecture RTEMS supports. This allows variation between
+architectures is bugs or patches are needed. Sometimes a specific version of a
+tool may needed to resolve an issue in an architecture, how-ever that version
+may have a bug in another architecture. We also want to limit architecture
+specific patches to the architecture it relates to. This avoids any crosstalk a
+patch may have with another architecture. An example of this is the NIOS2
+tools. They are built using a version of GCC released by Altera currently not
+in the Free Software Foundation's GCC project.
+
+This is the build set for the Blackfin processor or +bfin+.
 
 -------------------------------------------------------------
 #
@@ -513,14 +1191,14 @@ cross-compiler.
 Project Configuration
 ~~~~~~~~~~~~~~~~~~~~~
 
-The Source Builder has a +config+ and +patches+ directory that contain some
+The RTEMS Source Builder has a +config+ and +patches+ directory that contain some
 useful and often needed configurations and patches. You do not need to add your
-project specific configurations into the Source Builder. You can create a
-private set and then use the Source Builder to build your packages.
+project specific configurations into the RTEMS Source Builder. You can create a
+private set and then use the RTEMS Source Builder to build your packages.
 
 Create a +config+ directory and place your build sets and configuration in
 them. If you have private patches add them to a +patches+ directory next to the
-+config+ directiory. When you run a Source Builder command it will first search
++config+ directiory. When you run a RTEMS Source Builder command it will first search
 the for the specific file then the local +config+ directoy then the Source
 Builder's +config+ directory. The same goes for +patches+.
 
@@ -528,123 +1206,17 @@ For example of this set up look in the +rtems+ directory in the Source
 Builder. It is actually a standard alone project configuration private to the
 RTEMS project.
 
-If you are an open source project and you find the Source Builder useful and
-would like your configuration held in the Source Builder's repository please
+If you are an open source project and you find the RTEMS Source Builder useful and
+would like your configuration held in the RTEMS Source Builder's repository please
 contact me directly.
 
-Using the Builder
-~~~~~~~~~~~~~~~~~
+The Builder
+~~~~~~~~~~~
 
 TBD
 
-RTEMS Build Sets
-----------------
-
-The Source Builder package comes with the RTEMS project's build sets and
-configurations. These let you build tools for RTEMS. To use clone the Source
-Builder repository and change into the +rtems+ directory:
-
--------------------------------------------------------------
-$ git clone git://git.rtems.org/chrisj/rtems-source-builder.git
-$ cd rtems
--------------------------------------------------------------
-
-To build all the available architectures you can run the provided script giving
-it a prefix:
-
--------------------------------------------------------------
-$ ./build-4.10-targets.sh $HOME/development/rtems/4.10 <1>
--------------------------------------------------------------
-
-<1> This is a local user path and does not need root to install.
-
-To build a tool set for a specific architecture you enter:
-
--------------------------------------------------------------
-$ ../source-builder/sb-set-builder --log=l-arm.txt \
-             --prefix=$HOME/development/rtems/4.10 \
-             --target=arm-rtems4.10 rtems-tools-4.10
--------------------------------------------------------------
-
-The results of the build are found in the +tar+ directory. The packages that
-make the build set are available as packages as well as the combined package
-for the whole build set:
-
--------------------------------------------------------------
-$ ls -1 tar
-arm-rtems4.10-binutils-2.20.1-1.tar.bz2 <1>
-arm-rtems4.10-gcc-4.4.7-newlib-1.18.0-1.tar.bz2
-arm-rtems4.10-gdb-7.3.1-1.tar.bz2
-rtems-4.10-arm-rtems4.10-1.tar.bz2 <2>
--------------------------------------------------------------
-
-<1> The bintuls part of the build set as a separate tar file.
-<2> The RTEMS ARM tool set. This is various packages combined.
-
-The tar files are constructed from the top of the prefix you provide. If you
-provide a relative prefix the installation will be relative. How well this
-works depends on the specifics of the application being packaged. Some such as
-binutils and gcc can be relocated without any issues how-ever other such as
-autoconf and automake cannot be relocated. Those packages contain absolute file
-names. In the example above the prefix was +$HOME/development/rtems/4.10+ so
-the contents of the tar file is:
-
--------------------------------------------------------------
-tar jtf tar/rtems-4.10-arm-rtems4.10-1.tar.bz2
-./
-./home/
-./home/chris/
-./home/chris/development/
-./home/chris/development/rtems/
-./home/chris/development/rtems/4.10/
-./home/chris/development/rtems/4.10/arm-rtems4.10/
-./home/chris/development/rtems/4.10/bin/
-./home/chris/development/rtems/4.10/include/
-./home/chris/development/rtems/4.10/lib/
-./home/chris/development/rtems/4.10/libexec/
-  ....
-./home/chris/development/rtems/4.10/lib/gcc/arm-rtems4.10/4.4.7/fpu/libsupc++.la
-./home/chris/development/rtems/4.10/bin/arm-rtems4.10-addr2line
-./home/chris/development/rtems/4.10/bin/arm-rtems4.10-ar
-./home/chris/development/rtems/4.10/bin/arm-rtems4.10-as
-./home/chris/development/rtems/4.10/bin/arm-rtems4.10-c++
-./home/chris/development/rtems/4.10/bin/arm-rtems4.10-c++filt
-./home/chris/development/rtems/4.10/bin/arm-rtems4.10-cpp
-./home/chris/development/rtems/4.10/bin/arm-rtems4.10-g++
-./home/chris/development/rtems/4.10/bin/arm-rtems4.10-gcc
-./home/chris/development/rtems/4.10/bin/arm-rtems4.10-gcc-4.4.7
-./home/chris/development/rtems/4.10/bin/arm-rtems4.10-gccbug
-./home/chris/development/rtems/4.10/bin/arm-rtems4.10-gcov
-./home/chris/development/rtems/4.10/bin/arm-rtems4.10-gdb
-./home/chris/development/rtems/4.10/bin/arm-rtems4.10-gdbtui
-./home/chris/development/rtems/4.10/bin/arm-rtems4.10-gprof
-./home/chris/development/rtems/4.10/bin/arm-rtems4.10-ld
-./home/chris/development/rtems/4.10/bin/arm-rtems4.10-nm
-./home/chris/development/rtems/4.10/bin/arm-rtems4.10-objcopy
-./home/chris/development/rtems/4.10/bin/arm-rtems4.10-objdump
-./home/chris/development/rtems/4.10/bin/arm-rtems4.10-ranlib
-./home/chris/development/rtems/4.10/bin/arm-rtems4.10-readelf
-./home/chris/development/rtems/4.10/bin/arm-rtems4.10-run
-./home/chris/development/rtems/4.10/bin/arm-rtems4.10-size
-./home/chris/development/rtems/4.10/bin/arm-rtems4.10-strings
-./home/chris/development/rtems/4.10/bin/arm-rtems4.10-strip
-./home/chris/development/rtems/4.10/arm-rtems4.10/bin/
-./home/chris/development/rtems/4.10/arm-rtems4.10/include/
- ....
--------------------------------------------------------------
-
-Because the path is absolute and references directories that +root+ owns +root+
-access would normally be needed. This can be avoided if your tar supports the
-+--strip-components=+ option. To install this package without becoming +root+:
-
--------------------------------------------------------------
-$ cd
-$ tar --strip-components=3 -jxf \
- development/rtems/build/rtems-source-builder/rtems/tar/tar/rtems-4.10-arm-rtems4.10-1.tar.bz2
--------------------------------------------------------------
-
-Source Builder Commands
------------------------
+Commands
+--------
 
 Checker (sb-check)
 ~~~~~~~~~~~~~~~~~~
@@ -654,7 +1226,7 @@ This commands checks your system is set up correctly.
 -------------------------------------------------------------
 $ ./source-builder/sb-check --help
 sb-check: [options] [args]
-Source Builder, an RTEMS Tools Project (c) 2012 Chris Johns
+RTEMS Source Builder, an RTEMS Tools Project (c) 2012 Chris Johns
 Options and arguments:
 --force                : Create directories that are not present
 --trace                : Trace the execution (not current used)
@@ -691,7 +1263,7 @@ extension of +.bset+.
 -------------------------------------------------------------
 $ ./source-builder/sb-set-builder --help
 sb-set-builder: [options] [args]
-Source Builder, an RTEMS Tools Project (c) 2012 Chris Johns
+RTEMS Source Builder, an RTEMS Tools Project (c) 2012 Chris Johns
 Options and arguments:
 --force                : Create directories that are not present
 --trace                : Trace the execution (not current used)
@@ -730,7 +1302,7 @@ file. Configuration files have the extension of +.cfg+.
 -------------------------------------------------------------
 $ ./source-builder/sb-builder --help
 sb-builder: [options] [args]
-Source Builder, an RTEMS Tools Project (c) 2012 Chris Johns
+RTEMS Source Builder, an RTEMS Tools Project (c) 2012 Chris Johns
 Options and arguments:
 --force                : Create directories that are not present
 --trace                : Trace the execution (not current used)
@@ -762,12 +1334,37 @@ Options and arguments:
 Host Setups
 -----------
 
+MacOS X
+~~~~~~~
+
+The RTEMS Source Builder has been tested on Mountain Lion. You will need to
+install the Xcode app using the _App Store_ tool, run Xcode and instal the
+Developers Tools package within Xcode.
+
 Ubuntu
 ~~~~~~
 
+The latest testing was with 12.10. A minimal installation was used and the
+following packages installed.
+
 -------------------------------------------------------------
-$ sudo apt-get build-dep binutils gcc g++ gdb
+$ sudo apt-get build-dep binutils gcc g++ gdb unzip git
 -------------------------------------------------------------
+
+Raspbian
+~~~~~~~~
+
+The is the Debian distribution for the Raspberry Pi. The following packages are
+required.
+
+-------------------------------------------------------------
+$ sudo apt-get install autoconf automake bison flex binutils gcc g++ gdb \
+texinfo unzip ncurses-dev python-dev
+-------------------------------------------------------------
+
+It is recommended you get Model B of the Pi with 512M of memory and to mount a
+remote disk over the network. The tools can be build with a prefix under your
+home directory as recommended and end up on the SD card.
 
 CentOS 6
 ~~~~~~~~
@@ -775,10 +1372,30 @@ CentOS 6
 The following packages are required on a minimal CentOS 6.3 installation:
 
 -------------------------------------------------------------
-# yum install autoconf automake binutils gcc gcc-c++ gdb make patch flex xz
-unzip ncurses-devel texinfo zlib-devel python-devel
+# yum install autoconf automake binutils gcc gcc-c++ gdb make patch \
+bison flex xz unzip ncurses-devel texinfo zlib-devel python-devel git
 -------------------------------------------------------------
 
 The minimal CentOS distrbution is a specific DVD that installs a minimal
 system. If you use a full system some of these packages may have been
 installed.
+
+History
+-------
+
+The RTEMS Source Builder is a stand alone tool based on another tool called the
+'SpecBuilder'. The SpecBuilder was written for the RTEMS project too give me a
+way to build tools on hosts that did not support RPMs. At the time the RTEMS
+tools maintainer only used spec files to create various packages. This meant I
+had either spec files, RPM files or SRPM files. The RPM and SPRM files where
+useless because you needed an 'rpm' type tool to extract and manage them. There
+are versions of 'rpm' for a number of non-RPM hosts how-ever these proved to be
+in various broken states and randomally maintained. The solution I settled on
+was to use spec files so I wrote a Python based tool that parsed the spec file
+format and allowed me to create a shell script I could run to build the
+package. This approach proved successful and I was able to track the RPM
+version of the RTEMS tools on a non-RPM host over a number of years. How-ever
+the SpecBuilder tool did not help me build tools or other packages not related
+to the RTEMS project where there was no spec file I could use so I needed
+another tool. Rather than start again I decided to take the parsing code for
+the spec file format and build a new tool called the RTEMS Source Builder.

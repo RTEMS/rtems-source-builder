@@ -6,7 +6,7 @@ version = "1.0.0"
 
 def configure(ctx):
     ctx.env.ASCIIDOC = ctx.find_program(['asciidoc.py'], mandatory = True)
-    ctx.env.ASCIIDOC_FLAGS = ['-b', 'html', '-a', 'data-uri', '-a', 'icons', '-a', 'max-width=55em-a']
+    ctx.env.ASCIIDOC_FLAGS = ['-b', 'html5', '-a', 'data-uri', '-a', 'icons', '-a', 'max-width=55em-a']
 
 def build(ctx):
     ctx(target = 'source-builder.html', source = 'source-builder.txt')
