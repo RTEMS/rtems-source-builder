@@ -148,9 +148,6 @@ class package:
     def clean(self):
         return self.find_directive('%clean')
 
-    def post(self):
-        return self.find_directive('%post')
-
     def include(self):
         return self.find_directive('%include')
 
@@ -161,16 +158,12 @@ class file:
     """Parse a config file."""
 
     _directive = [ '%description',
-                   '%changelog',
                    '%prep',
                    '%build',
-                   '%check',
-                   '%include',
-                   '%install',
                    '%clean',
-                   '%post',
-                   '%preun',
-                   '%files' ]
+                   '%install',
+                   '%include',
+                   '%install' ]
 
     _ignore = [ re.compile('%setup'),
                 re.compile('%configure'),
