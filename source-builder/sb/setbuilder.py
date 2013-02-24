@@ -122,8 +122,9 @@ class buildset:
             dst = _build.config.expand('%{_prefix}')
             src = path.join(src, dst)
             _notice(self.opts, 'installing: %s -> %s' % \
-                        (self.bset_pkg, os.path.relpath(path.host(dst))))
-            self.copy(src, dst)
+                        (self.bset_pkg, path.host(dst)))
+            if not self.opts.dry_run():
+                self.copy(src, dst)
 
     def last_package(self, _build, tmproot):
         if self.opts.get_arg('--bset-tar-file'):
