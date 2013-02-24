@@ -1,0 +1,16 @@
+#
+# Tools Set for RTEMS 4.11 Autotools Stable
+#
+
+%define release 1
+
+#
+# The RTEMS 4.11 base defines.
+#
+%include rtems-4.11-base.bset
+
+#
+# Tools configuration.
+#
+autoconf-2.69-1
+automake-1.12.2-1
