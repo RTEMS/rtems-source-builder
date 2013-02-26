@@ -466,7 +466,7 @@ class file:
                 #
                 if ifls[0] == '==':
                     istrue = True
-                elif ifls[0] == '==':
+                elif ifls[0] == '!=':
                     istrue = False
                 else:
                     istrue = check_bool(ifls[0])
