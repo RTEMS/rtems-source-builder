@@ -197,7 +197,7 @@ Examining: ../source-builder/config <2>
 Building
 ~~~~~~~~
 
-In this quick start I will build an SPARC tool set.
+In this quick start I will build a SPARC tool set.
 
 -------------------------------------------------------------
 $ ../source-builder/sb-set-builder --log=l-sparc.txt <1> \
@@ -550,7 +550,7 @@ and have a file extension of +.bset+. Build sets can define macro variables,
 inline include other files and reference other build set or package
 configuration files.
 
-Defining macros is performed with the +%define+ directive:
+Defining macros is performed with the +%define+ macro:
 
 -------------------------------------------------------------
 %define _target m32r-rtems4.11
@@ -559,9 +559,9 @@ Defining macros is performed with the +%define+ directive:
 The top level RTEMS build set files specify the target. This is used by other
 referenced files or an undefined macro error is reported.
 
-Inline including another file with the +%include+ directive continues
-processing with the specified file returning to carry on from just after the
-include point.
+Inline including another file with the +%include+ macro continues processing
+with the specified file returning to carry on from just after the include
+point.
 
 -------------------------------------------------------------
 %include rtems-4.11-base.bset
@@ -584,8 +584,67 @@ instance of the build set processor is created and if the file is a package
 configuration the package is built. This all happens once the build set file
 has finished being scanned.
 
-Configuration Files
-~~~~~~~~~~~~~~~~~~~
+Configuration Control
+~~~~~~~~~~~~~~~~~~~~~
+
+The RTEMS Souce Builder is designed to fit within most verification and
+validation processes. All of the RTEMS Source Builder is source code. The
+Python code is source and comes with a commercial friendly license. All
+configuration data is text and can be read or parsed with standard text based
+tools.
+
+File naming provides configuration management. A specific version of a package
+is captured in a specific set of configuration files. The top level
+configuration file referenced in a _build set_ or passed to the +sb-builder+
+command relates to a specific configuration of the package being built. For
+example the RTEMS configuration file +rtems-gcc-4.7.2-newlib-2.0.0-1.cfg+
+creates an RTEMS GCC and Newlib package where the GCC version is 4.7.2, the
+Newlib version is 2.0.0, plus any RTEMS specific patches that related to this
+version. The configuration defines the version numbers of the various parts
+that make up this package:
+
+-------------------------------------------------------------
+%define gcc_version    4.7.2
+%define newlib_version 2.0.0
+%define mpfr_version   3.0.1
+%define mpc_version    0.8.2
+%define gmp_version    5.0.5
+-------------------------------------------------------------
+
+The package build options, if there are any are also defined:
+
+-------------------------------------------------------------
+%define with_threads 1
+%define with_plugin  0
+%define with_iconv   1
+-------------------------------------------------------------
+
+The generic configuration may provide defaults incase options are not
+specified. The patches this specific version of the package requires can be
+included:
+
+-------------------------------------------------------------
+Patch0: gcc-4.7.2-rtems4.11-20121026.diff
+-------------------------------------------------------------
+
+Finally including the GCC 4.7 configuration script:
+
+-------------------------------------------------------------
+%include %{_configdir}/gcc-4.7-1.cfg
+-------------------------------------------------------------
+
+The +gcc-4.7-1.cfg+ is a generic script to build a GCC 4.7 compiler with
+Newlib. It is not specific to RTEMS. A bare no operating system tool set can be
+built with this file.
+
+The +-1+ part of the file names is a revision. The GCC 4.7 script maybe revised
+to fix a problem and if this fix effects an existing script the file is copied
+and given a +-2+ revision number. Any dependent scripts referencing the earlier
+revision number will not be effected by the change. This locks down a specific
+configuration over time.
+
+Configuration Script Language
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Configuration files specify how to build a package. Configuration files are
 scripts and have a +.cfg+ file extension. The script format is based loosely on
@@ -593,10 +652,7 @@ the RPM spec file format how-ever the use and purpose in this tool does not
 compare with the functionality and therefore the important features of the spec
 format RPM needs and uses.
 
-Script Language
-~~~~~~~~~~~~~~~
-
-The script language is implemented in terms of directives. The directive list is:
+The script language is implemented in terms of macross. The builtin list is:
 
 [horizontal]
 +%prep+:: The source preparation shell commands.
@@ -604,15 +660,14 @@ The script language is implemented in terms of directives. The directive list is
 +%install+:: The package install shell commands.
 +%clean+:: The package clean shell commands.
 +%include+:: Inline include another configuration file.
-+%package+:: The package being built.
 +%name+:: The name of the package.
-+%description+:: A package description. Useful when reporting about a build.
++%summary+:: A brief package description. Useful when reporting about a build.
 +%release+:: The package release. A number that is the release as built by this tool.
 +%version+:: The package's verison string.
 +%buildarch+:: The build architecture.
 +%setup+:: Setup a source package.
-+%source+:: Define a source code package. This directive is number.
-+%patch+:: Define a patch. This directive is number.
++%source+:: Define a source code package. This macro has a number appended.
++%patch+:: Define a patch. This macro has a is number appended.
 +%warning+:: Print the following string as a warning and continue.
 +%error+:: Print the following string as an error and exit.
 +%define+:: Define a macro. Macros cannot be redefined, you must first undefine it.
@@ -632,13 +687,13 @@ command line option.
 %prep
 ^^^^^
 
-The +%prep+ directive starts a block that continues until the next block
-directive. The _prep_ or preparation block defines the setup of the package's
-source and is a mix of RTEMS Source Builder directives and shell scripting. The
-sequence is typically +%setup+ directives for source, +%patch+ directives to
-patch the source mixed with some shell commands to correct any source issues.
-A +%prep+ section starts with a +%setup+ command. This creates the package
-source top level directory then is followed by the first source file.
+The +%prep+ macro starts a block that continues until the next block macro. The
+_prep_ or preparation block defines the setup of the package's source and is a
+mix of RTEMS Source Builder macros and shell scripting. The sequence is
+typically +%setup+ macros for source, +%patch+ macros to patch the source
+mixed with some shell commands to correct any source issues.  A +%prep+ section
+starts with a +%setup+ command. This creates the package source top level
+directory then is followed by the first source file.
 
 -------------------------------------------------------------
                      <1>       <2>
@@ -649,7 +704,7 @@ source top level directory then is followed by the first source file.
 <1> The package's name.
 <2> The version of the package.
 
-The source for a package is declared with the +%source*+ directive where +*+ is
+The source for a package is declared with the +%source*+ macro where +*+ is
 a number. For example +%source0+ is the source 0 tar file and is defined with
 something similar to this:
 
@@ -665,11 +720,11 @@ been downloaded. If not found in the source cache directory the package is
 downloaded from the URL. You can append other base URLs via the command line
 option +--url+. This option accepts a comma delimited list of sites to try.
 
-You can combine the source directive with connditional logic to implement a
-default that can be overriden in the top level files. This lets you reuse a
-generic build script with different sources. This happens if you have a private
-source package with local modifications. The following example is taken from
-the +gcc-4.8-1.cfg+ build script.
+You can combine the source macro with connditional logic to implement a default
+that can be overriden in the top level files. This lets you reuse a generic
+build script with different sources. This happens if you have a private source
+package with local modifications. The following example is taken from the
++gcc-4.8-1.cfg+ build script.
 
 -------------------------------------------------------------
 %ifn %{defined Source0}
@@ -678,7 +733,7 @@ the +gcc-4.8-1.cfg+ build script.
 %endif
 -------------------------------------------------------------
 
-<1> The version control directive is currently not implemented.
+<1> The version control macro is currently not implemented.
 
 You could optionally have a few source files that make up the package. For
 example GNU's GCC was a few tar files for a while and it is now a single tar
@@ -723,16 +778,16 @@ cd .. <3>
 <1> Change from the top of the source tree into the package being patched's top
     directory.
 <2> The conditional macro expansion checks if +%patch0+ is defined and if
-    defined issues the +%patch0" directive giving +-p1+ to the patch command.
+    defined issues the +%patch0" macro giving +-p1+ to the patch command.
 <3> Return back to the top of the source tree.
 
 %build
 ^^^^^^
 
-The +%build+ directive starts a block that continues until the next block
-directive. The build block is a series of shell commands that execute to build
-the package. It assumes all source code has been unpacked, patch and adjusted
-so the build will succeed.
+The +%build+ macro starts a block that continues until the next block
+macro. The build block is a series of shell commands that execute to build the
+package. It assumes all source code has been unpacked, patch and adjusted so
+the build will succeed.
 
 The following is an example take from the GutHub STLink project [footnote:
 STLink is a JTAG debugging device for the ST ARM family of processors.]:
@@ -771,7 +826,7 @@ STLink is a JTAG debugging device for the ST ARM family of processors.]:
 <4> Flags for a crosscompiled build.
 <5> Various settings passed to configure to customise the build. In this
     example an include path is being set to the install point of _libusb_. This
-    package requires _libusb_ is build before it.
+    package requires _libusb_ is built before it.
 <6> The +configure+ command. The RTEMS Source Builder provides all the needed
     paths as macro variables. You just need to provide them to +configure+.
 <7> Running make. Do not use +make+ directly, use the RTEMS Source Builder's
@@ -784,14 +839,14 @@ STLink is a JTAG debugging device for the ST ARM family of processors.]:
 %install
 ^^^^^^^^
 
-The +%install+ directive starts a block that continues until the next block
-directive. The install block is a series of shell commands that execute to
-install the package. You can assumes the package has build correctly when this
-shell script executes.
+The +%install+ macro starts a block that continues until the next block
+macro. The install block is a series of shell commands that execute to install
+the package. You can assume the package has build correctly when this block
+starts executing.
 
 Never install the package to the actual _prefix_ the package was built
 with. Always install to the RTEMS Source Builder's temporary path defined in
-the macro variable +__tmpdir+. The RTEMS Source Builder sets up a shell
+the macro variable +\__tmpdir+. The RTEMS Source Builder sets up a shell
 environment variable called +SB_BUILD_ROOT+ as the standard install point. Most
 packages support adding +DESTDIR=+ to the _make install_ command.
 
@@ -814,406 +869,375 @@ Looking at the same example as in <<_build, %build>>:
     install.
 <3> Enter the build directory. In this example it just happens to be the source
     directory.
-<4> Run +make install_ to install the package overriding the +DESTDIR+ make
+<4> Run +make install+ to install the package overriding the +DESTDIR+ make
     variable.
 
 %clean
 ^^^^^^
 
+The +%clean+ macro starts a block that continues until the next block
+macro. The clean block is a series of shell commands that execute to clean up
+after a package has been built and install. This macro is currenly not been
+used because the RTEMS Source Builder automatically cleans up.
+
 %include
 ^^^^^^^^
 
-%package
-^^^^^^^^
+The +%include+ macro inline includes the specific file. The +\__confdir+
+path is searched. Any relative path component of the include file is appended
+to each part of the +\__configdir+. Adding an extension is optional as files
+with +.bset+ and +.cfg+ are automatically searched for.
+
+Inline including means the file is processed as part of the configuration at
+the point it is included. Parsing continues from the next line in the
+configuration file that contains the +%include+ macro.
+
+Including files allow a kind of configuration file reuse. The outter
+configuration files provide specific information such as package version
+numbers and patches and then include a generic configuration script which
+builds the package.
+
+-------------------------------------------------------------
+%include %{_configdir}/gcc-4.7-1.cfg
+-------------------------------------------------------------
 
 %name
 ^^^^^
 
-%description
-^^^^^^^^^^^^
+The name of the package being built. The name typically contains the components
+of the package and their version number plus a revision number. For the GCC
+with Newlib configuration the name is typically:
+
+-------------------------------------------------------------
+Name: %{_target}-gcc-%{gcc_version}-newlib-%{newlib_version}-%{release}
+-------------------------------------------------------------
+
+%summary
+^^^^^^^^
+
+The +%summary+ is a brief description of the package. It is useful when
+reporting. This information is not capture in the package anywhere. For the GCC
+with Newlib configuration the summary is typically:
+
+-------------------------------------------------------------
+Summary: GCC v%{gcc_version} and Newlib v%{newlib_version} for target %{_target} on host %{_host}
+-------------------------------------------------------------
 
 %release
 ^^^^^^^^
 
+The +%release+ is packaging number that allows revisions of a package to happen
+where none package versions change. This value typically increases when the
+configuration building the package changes.
+
+-------------------------------------------------------------
+%define release 1
+-------------------------------------------------------------
+
 %version
 ^^^^^^^^
+
+The +%version% macro sets the version the package. If the package is a single
+component it tracks that component's version number. For example in the
+_libusb_ configuration the +%version+ is the same as +%libusb_version+,
+how-ever in a GCC with Newlib configuration there is no single version
+number. In this case the GCC version is used.
+
+-------------------------------------------------------------
+Version: %{gcc_version}
+-------------------------------------------------------------
 
 %buildarch
 ^^^^^^^^^^
 
+The +%buildarch+ macro is set to the architecture the package contains. This is
+currently not used in the RTEMS Source Builder and may go away. This macro is
+more important in a real packaging system where the package could end up on the
+wrong architecture.
+
 %setup
 ^^^^^^
+
+The +%setup+ macro sets up the source code tree and is used in the +%prep+
+section of the script. The options are:
+
+[horizontal]
+*Switch*:: *Description*
++-n+:: The -n option is used to set the name of the software's build
+directory. This is necessary only when the source archive unpacks into a
+directory named other than +<name>-<version>+.
++-c+:: The -c option is used to direct %setup to create the top-level build
+directory before unpacking the sources.
++-D+:: The -D option is used to direct %setup to not delete the build directory
+prior to unpacking the sources. This option is used when more than one source
+archive is to be unpacked into the build directory, normally with the +-b+ or
++-a+ options.
++-T+:: The -T option is used to direct %setup to not perform the default
+unpacking of the source archive specified by the first Source: macro. It is used
+with the +-a+ or +-b+ options.
++-b <n>+:: The -b option is used to direct %setup to unpack the source archive
+specified on the nth Source: macro line before changing directory into the build
+directory.
++-a <n>+:: The -a option is used to direct %setup to unpack the source archive
+specified on the nth Source: macro line after changing directory into the build
+directory.
 
 %source
 ^^^^^^^
 
+The +%source+ macro is numbered and defines a source tar file used in the
+package. The +%setup+ macro references the packages defined here. A macro is
+defined as:
+
+-------------------------------------------------------------
+Source0: ftp://ftp.gnu.org/gnu/gcc/gcc-%{gcc_version}/gcc-%{gcc_version}.tar.bz2
+-------------------------------------------------------------
+
+The setup script is:
+
+-------------------------------------------------------------
+%setup -q -T -D -n %{name}-%{version} -a0
+-------------------------------------------------------------
+
+The +-a0+ means use +%source0+.
+
 %patch
 ^^^^^^
+
+The +%patch+ macro is numbered and can define a patch and in the +%prep+
+section applies the patch. To define a patch append a +:+ followed by the patch
+filename:
+
+-------------------------------------------------------------
+Patch0: gcc-4.7.2-rtems4.11-20121026.diff
+-------------------------------------------------------------
+
+The +__patchdir+ path is search.
+
+Placing +%patch+ in the +%prep+ section will apply it with any trailing options
+passed to the +patch+ command. This allows the +-p+ option to be passed to
+strip any leading path components from the patch contents.
+
+-------------------------------------------------------------
+%patch0 -p1
+-------------------------------------------------------------
+
+You will typically see the patch conditionally used as:
+
+-------------------------------------------------------------
+%{patch0:%patch0 -p1}
+-------------------------------------------------------------
+
+In this case the patch will only be applied if it is defined.
 
 %warning
 ^^^^^^^^
 
+The +%warning+ macro outputs the following string as a warning.
+
 %error
 ^^^^^^
+
+The +%error+ macro outputs the follow string as an error and exits the RTEMS
+Source Builder.
 
 %define
 ^^^^^^^
 
+The +%define+ macro defines a new macro. If the macro being defined already
+exists a warning is raised. If you value is given it is assumed to be 1.
+
+-------------------------------------------------------------
+%define foo bar
+%define one_plus_one 2
+%define one <1>
+-------------------------------------------------------------
+
+<1> The macro _one_ is set to 1.
+
 %undefine
 ^^^^^^^^^
+
+The +%undefine+ macro removes a macro if it exists. Any further references to
+it will result in an undefine macro error.
 
 %if
 ^^^
 
+The +%if+ macro starts a conditional logic block that can optionally have a
+_else_ section. A test follows this macro and can have the following operators:
+
+[horizontal]
+*Operator*:: *Description*
++%{}+:: Check the macro is set or _true_, ie non-zero.
++
+-------------------------------------------------------------
+%if ${foo}
+ %warning The test passes, must not be empty or is non-zero
+%else
+ %error The test fails, must be empty or zero
+%endif
+-------------------------------------------------------------
++!+:: The _not_ operator inverts the test of the macro.
++
+-------------------------------------------------------------
+%if ! ${foo}
+ %warning The test passes, must be empty or zero
+%else
+ %error The test fails, must not be empty or is non-zero
+%endif
+-------------------------------------------------------------
++==+:: The left hand size must equal the right hand side. For example:
++
+-------------------------------------------------------------
+%define one 1
+%if ${one} == 1
+ %warning The test passes
+%else
+ %error The test fails
+%endif
+-------------------------------------------------------------
++
+You can also check to see if a macro is empty:
++
+-------------------------------------------------------------
+%if ${nothing} == %{nil}
+ %warning The test passes
+%else
+ %error The test fails
+%endif
+-------------------------------------------------------------
++!=+:: The left hand size does not equal the right hand side. For example:
++
+-------------------------------------------------------------
+%define one 1
+%if ${one} != 2
+ %warning The test passes
+%else
+ %error The test fails
+%endif
+-------------------------------------------------------------
++
+You can also check to see if something is set:
++
+-------------------------------------------------------------
+%if ${something} != %{nil}
+ %warning The test passes
+%else
+ %error The test fails
+%endif
+-------------------------------------------------------------
++>+:: The left hand side is numerically greater than the right hand side.
++>=+:: The left hand side is numerically greater than or equal to the right
+hand side.
++<+:: The left hand side is numerically less than the right hand side.
++\<=+:: The left hand side is numerically less than or equal to the right hand
+side.
+
 %ifn
 ^^^^
+
+The +%ifn+ macro inverts the normal +%if+ logic. It avoids needing to provide
+empty _if_ blocks followed by _else_ blocks. It is useful when checking if a
+macro is defined:
+
+-------------------------------------------------------------
+%ifn %{defined foo}
+ %define foo bar
+%endif
+-------------------------------------------------------------
 
 %ifarch
 ^^^^^^^
 
+The +%ifarch+ is a short cut for "+%if %{\_arch} == i386+". Currently not used.
+
 %ifnarch
 ^^^^^^^^
+
+The +%ifnarch+ is a short cut for "+%if %{\_arch} != i386+". Currently not
+used.
 
 %ifos
 ^^^^^
 
+The +%ifos+ is a short cut for "+%if %{\_os} != mingw32+". It allows
+conditional support for various operating system differences when building
+packages.
+
 %else
 ^^^^^
+
+The +%else+ macro starts the conditional _else_ block.
 
 %endfi
 ^^^^^^
 
+The +%endif+ macro ends a conditional logic block.
+
 %bconf_with
 ^^^^^^^^^^^
+
+The +%bconf_with+ macro provides a way to test if the user has passed a
+specific option on the command line with the +--with-<label>+ option. This
+option is only available with the +sb-builder+ command.
 
 %bconf_without
 ^^^^^^^^^^^^^^
 
-
-RTEMS Build Sets
-----------------
-
-Configuration files are typically structured as outer files that are specific
-to a version of the package being built and become more generic as you move
-deeper. The outter layers are required to define various macro.
+The +%bconf_without+ macro provides a way to test if the user has passed a
+specific option on the command line with the +--without-<label>+ option. This
+option is only available with the +sb-builder+ command.
 
 
-Set Builder and the Builder
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Project Configuration Sets
+--------------------------
 
-The RTEMS Source Builder provides two commands, the +sb-set-builder+ to build sets of
-packages and the +sb-builder+ to build a specific package. The set builder uses
-the builder to build a set of packages. You could write a shell script that did
-the same thing so the set builder is a convenience command that allows you to
-define and control specific features of the packages you are building. The set
-builder looks for files with the +.bset" extension in the +config+
-directories. The builder command uses configuration files which have the +.cfg+
-file extension to control the build. The configuration files are written in a
-script language based on the _spec_ format the RPM builder uses. They also
-live in the +config+ directories.
+The RTEMS Source Builder supports project configurations. Project
+configurations can be public or private and can be contained in the RTEMS
+Source Builder project if suitable, other projects they use the RTEM Source
+Builder or privately on your local file system.
 
-The build set files for the RTEMS 4.11 can be found in +rtems/4.11/+. There is
-one per architecture RTEMS supports. This allows variation between
-architectures is bugs or patches are needed. Sometimes a specific version of a
-tool may needed to resolve an issue in an architecture, how-ever that version
-may have a bug in another architecture. We also want to limit architecture
-specific patches to the architecture it relates to. This avoids any crosstalk a
-patch may have with another architecture. An example of this is the NIOS2
-tools. They are built using a version of GCC released by Altera currently not
-in the Free Software Foundation's GCC project.
+The configuration file loader searches the macro +_configdir+ and by default
+this is set to +%{\_topdir}/config:%{\_sbdir}/config+ where +_topdir+ is the
+your current working direct, in other words the directory you invoke the RTEMS
+Source Builder command in, and +_sbdir+ is the directory where the RTEMS Source
+Builder command resides. Therefore the +config+ directory under each of these
+is searched so all you need to do is create a +config+ in your project and add
+your configuration files. They do not need to be under the RTEMS Source Builder
+source tree. Public projects are included in the main RTEMS Source Builder such
+as RTEMS.
 
-This is the build set for the Blackfin processor or +bfin+.
+You can also add your own +patches+ directory next to your +config+ directort
+as the +%patch+ command searches the +_patchdir+ macro variable and it is
+by default set to +%{\_topdir}/patches:%{\_sbdir}/patches+.
 
--------------------------------------------------------------
-#
-# Tools Set for RTEMS 4.10
-#
+The +source-builder/config+ directory provides generic scripts for building
+various tools. You can specialise these in your private configurations to make
+use of them. If you add new generic configurations please contribute them back
+to the project
 
-%define rtems_version 4.10 <1>
+RTEMS Configurations
+~~~~~~~~~~~~~~~~~~~~
 
-%define release 1 <2>
+The RTEMS Configurations are grouped by RTEMS version. In RTEMS the tools are
+specific to a specific version because of variations between Newlib and
+RTEMS. Restructuring in RTEMS and Newlib sometimes moves _libc_ functionality
+between them and this makes existing tool incompatible with RTEMS.
 
-package: rtems-%{rtems_version}-%{_target}-%{release} <3>
+RTEMS allows architectures to have different tool versions and patches. The
+large number of architectures RTEMS supports can make it difficult to get a
+common stable version of all the packages. An architecture may require a recent
+GCC because an existing bug has been fixed, how-ever the more recent verison
+may have a bug in other architecture. Architecture specific patches should be
+limited to the architecture it relates to. The patch may fix a problem on the
+effect architecture how-ever it could introduce a problem in another
+architecture. Limit exposure limits any possible crosstalk bewteen
+architectures.
 
-#
-# Project custom message
-#
-%define gcc_version_message RTEMS %{rtems_version}-%{release},gcc-%{gcc_version}/newlib-%{newlib_version} <4>
-
-#
-# Tools configuration.
-#
-rtems-binutils-2.20.1-1 <5>
-rtems-gcc-4.4.7-newlib-1.18.0-1
-rtems-gdb-7.3.1-1
--------------------------------------------------------------
-
-<1> Define the version of RTEMS.
-<2> Define the release. This allows us to number the tool releases.
-<3> The top level name of the package. The finaly tar file name.
-<4> The GCC configuration allow a custom message to be embedded into GCC.
-<5> The list of packages this build set contains.
-
-Currently the syntax of the set builder scripts is limited. It support
-comments, the package command, macros (the +%{}+), and defining macros
-(+%define+). It is planned to allow more of the configuration file syntax in
-the future.
-
-The builder uses configuration files that allow the full range of the
-configuration script syntax. Configuration files follow most of the RPM spec
-file format. They support macros and logic as well as the ability to include
-other configuration files. The ability to include other configuration files
-allow a simple way to configuration control the builds. Configuration files
-have four main areas:
-
-. Descriptions and definitions.
-+
-The description lists various useful pieces of information about the
-package. None of this is currently enforced how-ever it is good practice to
-provide it. The definitions are the sources and the patches.
-. Preparation
-+
-The preparation is the set up of the source code ready for building. The set up
-follows the unusual command structure used by RPM. The follwing macro
-trickshows how to conditional patch the source if a patch has been declared.
-+
--------------------------------------------------------------
-cd expat-%{expat_version}
-%{?patch0:%patch0 -p1}
-cd ..
--------------------------------------------------------------
-+
-. Build
-+
-The build phase. This is a fragment of shell script that can be mixed with
-conditional configuration scripting to create the list of build commands.
-+
-. Install
-+
-The install phase. Again this is a fragment of shell script.
-
-This is a configuration script to build gdb:
-
--------------------------------------------------------------
-#
-# GDB 7.xx Version 1.
-#
-# This configuration file configure's, make's and install's gdb.
-#
-
-%include %{_configdir}/checks.cfg <1>
-
-Name:      %{_target}-gdb-%{gdb_version}-%{release} <2>
-Summary:   GDB v%{gdb_version} for target %{_target} on host %{_host}
-Version:   %{gdb_version}
-Release:   %{release}
-URL: 	   http://www.gnu.org/software/gdb/
-BuildRoot: %{_tmppath}/%{name}-root-%(%{__id_u} -n)
-
-#
-# Source
-#
-Source0: http://ftp.gnu.org/gnu/gdb/gdb-%{gdb_version}.tar.bz2 <3>
-VersionControl0 git clone git://sourceware.org/git/gdb.git
-
-#
-# Prepare the source code.
-#
-%prep <4>
-%setup -q -c -T -n %{name}-%{version}
-cd gdb-%{gdb_version}
-%{?patch0:%patch0 -p1}
-cd ..
-
-%build <5>
-  export PATH="%{_bindir}:${PATH}"
-  mkdir -p build
-  cd build
-%if "%{_build}" != "%{_host}"
-  CFLAGS_FOR_BUILD="-g -O2 -Wall" \
-%endif
-  CFLAGS="$SB_OPT_FLAGS" \
-  ../gdb-%{gdb_version}/configure \
-    --build=%{_build} --host=%{_host} \
-    --target=%{_target} \
-    --verbose --disable-nls \
-    --without-included-gettext \
-    --disable-win32-registry \
-    --disable-werror \
-    --enable-sim \
-    --with-expat \
-    --with-python \
-    --prefix=%{_prefix} --bindir=%{_bindir} \
-    --exec-prefix=%{_exec_prefix} \
-    --includedir=%{_includedir} --libdir=%{_libdir} \
-    --mandir=%{_mandir} --infodir=%{_infodir}
-
-  %{__make} %{?_smp_mflags} all
-  cd ..
-
-%install <6>
-  export PATH="%{_bindir}:${PATH}"
-  rm -rf $SB_BUILD_ROOT
-
-  cd build
-  %{__make} DESTDIR=$SB_BUILD_ROOT install
-
-  # Dropped in FSF-binutils-2.9.5, but Cygwin still ships it.
-  rm -rf $SB_BUILD_ROOT%{_infodir}/configure.info*
-
-  rm -f $SB_BUILD_ROOT%{_infodir}/dir
-  touch $SB_BUILD_ROOT%{_infodir}/dir
-
-  cd ..
--------------------------------------------------------------
-
-<1> Including a file. The +_configdir+ macro searchs a list of paths.
-<2> The description section.
-<3> The source file as a URL. If not found in the +sources+ directories it is
-downloaded.
-<4> Preparing the source code.
-<5> The commands to build +gdb+.
-<6> The installation phase. Notice the +DESTDIR=+ feature is used.
-
-Controlling Configurations
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-This is a simple process of including the specific pieces you need. There
-typically is three layers where the top level is specific and each sub-layer is
-more generic configured by the layer above it. The typical layering is:
-
-. Build Set
-. Package definition
-. Package configuration
-
-The build set defines the packages to be built plus any specific configuration
-needed. Some packages default to standard values if the build set does not
-provide any specific configuration and some configurations raise an error
-indicating a required configuration is missing.
-
-Using the RTEMS 4.10 Tools Set build as an example the build set configuration
-is:
-
--------------------------------------------------------------
-#
-# Tools Set for RTEMS 4.10
-#
-
-%define rtems_version 4.10
-
-%define release 1 <1>
-
-package: rtems-%{rtems_version}-%{_target}-%{release}
-
-#
-# Project custom message
-#
-%define gcc_version_message RTEMS %{rtems_version}-%{release},gcc-%{gcc_version}/newlib-%{newlib_version}
-
-#
-# Tools configuration.
-#
-rtems-binutils-2.20.1-1 <2>
-rtems-gcc-4.4.7-newlib-1.18.0-1
-rtems-gdb-7.3.1-1
--------------------------------------------------------------
-
-<1> The release of the RTEMS 4.10 tools package.
-<2> The build configurations. These reference the specific version of the tools
-including the related patches. You should note the configurations referenced
-are RTEMS specific, that is prefixed with +rtems-+.
-
-The GCC and Newlib file +rtems-gcc-4.4.7-newlib-1.18.0-1+ is:
-
--------------------------------------------------------------
-#
-# GCC 4.4.7, Newlib 1.18.0
-#
-
-%include %{_configdir}/checks.cfg <1>
-%include %{_configdir}/base.cfg <2>
-
-%define gcc_version    4.4.7 <3>
-%define newlib_version 1.18.0
-%define mpfr_version   2.4.1
-%define mpc_version    0.8.2
-%define gmp_version    5.0.5
-
-%define with_threads 1 <4>
-%define with_plugin  0
-%define with_iconv   1
-
-#
-# AVR C++ does not work.
-#   configure: error: unable to detect exception model
-#
-%if %{_target} == avr-rtems4.10 <5>
-%define enable_cxx 0
-%endif
-
-#
-# M32C C++ does not work.
-#   gcc-4.4.7/libstdc++-v3/src/mt_allocator.cc:76: error: cast from 'void*' to 'size_t' loses precision
-#
-%if %{_target} == m32c-rtems4.10
-%define enable_cxx 0
-%endif
-
-%ifn %{defined enable_cxx} <6>
-%define enable_cxx 1
-%endif
-
-#
-# The RTEMS 4.10 patches
-#
-Patch0:  gcc-core-4.4.7-rtems4.10-20120314.diff <7>
-%if %{enable_cxx}
-Patch1:  gcc-g++-4.4.7-rtems4.10-20120314.diff
-%endif
-Patch10: newlib-1.18.0-rtems4.10-20110518.diff
-
-#
-# The gcc/newlib build instructions. We use 4.4 Release 1.
-#
-%include %{_configdir}/gcc-4.4-1.cfg <8>
--------------------------------------------------------------
-
-<1> Perform some standard checks such as the release being set.
-<2> Set up some standard macros needed by most configure type packages.
-<3> The specific versions of the various parts that make a GCC embedded
-cross-compiler.
-<4> Configure some specific parts of GCC and Newlib for RTEMS.
-<5> Disable C++ for the AVR target because it does not build for RTEMS.
-<6> Default is to build C++.
-<7> The various patches. This file's revision increases with each patch change.
-<8> The generic GCC/Newlib build configuration for gcc-4.4.x.
-
-Project Configuration
-~~~~~~~~~~~~~~~~~~~~~
-
-The RTEMS Source Builder has a +config+ and +patches+ directory that contain some
-useful and often needed configurations and patches. You do not need to add your
-project specific configurations into the RTEMS Source Builder. You can create a
-private set and then use the RTEMS Source Builder to build your packages.
-
-Create a +config+ directory and place your build sets and configuration in
-them. If you have private patches add them to a +patches+ directory next to the
-+config+ directiory. When you run a RTEMS Source Builder command it will first search
-the for the specific file then the local +config+ directoy then the Source
-Builder's +config+ directory. The same goes for +patches+.
-
-For example of this set up look in the +rtems+ directory in the Source
-Builder. It is actually a standard alone project configuration private to the
-RTEMS project.
-
-If you are an open source project and you find the RTEMS Source Builder useful and
-would like your configuration held in the RTEMS Source Builder's repository please
-contact me directly.
-
-The Builder
-~~~~~~~~~~~
-
-TBD
+RTEMS supports _stable_ and _unstable_ configuration of tools. The stable build sets
+are referenced as +<version>/rtems-<arch>+ and the unstable build sets are
+references as +<version>/unstable/rtems-<arch>+.
 
 Commands
 --------
@@ -1221,14 +1245,53 @@ Commands
 Checker (sb-check)
 ~~~~~~~~~~~~~~~~~~
 
-This commands checks your system is set up correctly.
+This commands checks your system is set up correctly. Most options are ignored.
 
 -------------------------------------------------------------
-$ ./source-builder/sb-check --help
+$ ../source-builder/sb-check --help
 sb-check: [options] [args]
-RTEMS Source Builder, an RTEMS Tools Project (c) 2012 Chris Johns
+RTEMS Source Builder, an RTEMS Tools Project (c) 2012-2013 Chris Johns
 Options and arguments:
 --force                : Create directories that are not present
+--trace                : Trace the execution (not current used)
+--dry-run              : Do everything but actually run the build
+--warn-all             : Generate warnings
+--no-clean             : Do not clean up the build tree
+--no-smp               : Run with 1 job and not as many as CPUs
+--rebuild              : Rebuild (not used)
+--host                 : Set the host triplet
+--build                : Set the build triplet
+--target               : Set the target triplet
+--prefix path          : Tools build prefix, ie where they are installed
+--prefixbase path      :
+--topdir path          : Top of the build tree, default is $PWD
+--configdir path       : Path to the configuration directory, default: ./config
+--builddir path        : Path to the build directory, default: ./build
+--sourcedir path       : Path to the source directory, default: ./source
+--tmppath path         : Path to the temp directory, default: ./tmp
+--log file             : Log file where all build out is written too
+--url url              : URL to look for source
+--targetcflags flags   : List of C flags for the target code
+--targetcxxflags flags : List of C++ flags for the target code
+--libstdcxxflags flags : List of C++ flags to build the target libstdc++ code
+--with-<label>         : Add the --with-<label> to the build
+--without-<label>      : Add the --without-<label> to the build
+$ ../source-builder/sb-check
+RTEMS Source Builder environent is ok
+-------------------------------------------------------------
+
+Defaults (sb-defaults)
+~~~~~~~~~~~~~~~~~~~~~~
+
+This commands outputs and the default macros for your when given no
+arguments. Most options are ignored.
+
+-------------------------------------------------------------
+$ ../source-builder/sb-defaults --help
+sb-defaults: [options] [args]
+RTEMS Source Builder, an RTEMS Tools Project (c) 2012-2013 Chris Johns
+Options and arguments:
+--force                : Force the build to proceed
 --trace                : Trace the execution (not current used)
 --dry-run              : Do everything but actually run the build
 --warn-all             : Generate warnings
@@ -1257,15 +1320,14 @@ Options and arguments:
 Set Builder (sb-set-builder)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This command builds a set as described in a build set. Build set files have the
-extension of +.bset+.
+This command builds a set.
 
 -------------------------------------------------------------
-$ ./source-builder/sb-set-builder --help
+$ ../source-builder/sb-set-builder --help
 sb-set-builder: [options] [args]
-RTEMS Source Builder, an RTEMS Tools Project (c) 2012 Chris Johns
+RTEMS Source Builder, an RTEMS Tools Project (c) 2012-2013 Chris Johns
 Options and arguments:
---force                : Create directories that are not present
+--force                : Force the build to proceed
 --trace                : Trace the execution (not current used)
 --dry-run              : Do everything but actually run the build
 --warn-all             : Generate warnings
@@ -1289,9 +1351,96 @@ Options and arguments:
 --libstdcxxflags flags : List of C++ flags to build the target libstdc++ code
 --with-<label>         : Add the --with-<label> to the build
 --without-<label>      : Add the --without-<label> to the build
---list-configs         : List available configurations
 --list-bsets           : List available build sets
+--keep-going           : Do not stop on error.
+--no-install           : Do not install the packages to the prefix.
+--bset-tar-file        : Create a build set tar file
+--list-configs         : List available configurations
+--pkg-tar-files        : Create package tar files
 -------------------------------------------------------------
+
+.Arguments
+The +[args]+ are a list build sets to build.
+
+.Options
++--force+;;
+Force the build to proceed even if the host check fails. Typically this happens
+if executables are found in the path at a different location to the host
+defaults.
++--trace+;;
+Trace enable printing of debug information to stdout. It is really only of use
+to RTEMS Source Builder's developers.
++--dry-run+;;
+Do everything but actually run the build commands. This is useful when checking
+a new configuration parses cleanly.
++--warn-all+;;
+Generate warnings.
++--no-clean+;;
+Do not clean up the build tree during the cleaning phase of the build. This
+leaves the source and the build output on disk so you can make changes, or
+amend or generate new patches. It also allows you to review configure type
+output such as +config.log+.
++--no-smp+;;
+Run +make+ with 1 job and not as many as there are cores. This option can help
+isolate parallel make type bugs or make the log file output
+sequential. Parallel jobs can make the output confusing.
++--host+;;
+Set the host triplet value. Becareful with this option.
++--build+;;
+Set the build triplet. Becareful with this option.
++--target+;;
+Set the target triplet. Becareful with this option. This is useful if you have
+a generic configuration script that can work for a range of architectures.
++--prefix path+;;
+Tools build prefix, ie where they are installed.
++--prefixbase path+;;
+The prefix base is appended to the build root path.
++--topdir path+;;
+Top of the build tree, that is the current directory you are in.
++--configdir path+;;
+Path to the configuration directory. This overrides the built in defaults.
++--builddir path+;;
+Path to the build directory. This overrides the default of +build+.
++--sourcedir path+;;
+Path to the source directory. This overrides the default of +source+.
++--tmppath path+;;
+Path to the temporary directory. This overrides the default of +tmp+.
++--log file+;;
+Log all the output from the build process. The output is directed to +stdout+
+if no log file is provided.
++--url url+;;
+URL to look for source when downloading. This is can be comma separate list.
++--targetcflags flags+;;
+List of C flags for the target code. This allows for specific local
+customisation when testing new variations.
++--targetcxxflags flags+;;
+List of C++ flags for the target code. This allows for specific local
+customisation when testing new variations.
++--libstdcxxflags flags+;;
+List of C\++ flags to build the target libstdc++ code. This allows for specific
+local customisation when testing new variations.
++--with-<label>+;;
+Add the --with-<label> to the build. This can be tested for in a script with
+the +%bconf_with+ macro.
++--without-<label>+;;
+Add the --without-<label> to the build. This can be tested for in a script with
+the +%bconf_without+ macro.
++--list-bsets+;;
+List available build sets.
++--list-configs+;;
+List available configurations.
++--keep-going+;;
+Do not stop on error. This is useful if your build sets performs a large number
+of testing related builds and there are errors.
++--no-install+;;
+Do not install the packages to the prefix. Use this if you are only after the
+tar files.
++--bset-tar-file+;;
+Create a build set tar file. This is a single tar file of all the packages in
+the build set.
++--pkg-tar-files+;;
+Create package tar files. A tar file will be created for each package built in
+a build set.
 
 Set Builder (sb-builder)
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1359,7 +1508,7 @@ required.
 
 -------------------------------------------------------------
 $ sudo apt-get install autoconf automake bison flex binutils gcc g++ gdb \
-texinfo unzip ncurses-dev python-dev
+texinfo unzip ncurses-dev python-dev git
 -------------------------------------------------------------
 
 It is recommended you get Model B of the Pi with 512M of memory and to mount a
