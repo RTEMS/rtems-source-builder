@@ -85,6 +85,7 @@ def isabspath(path):
     return path[0] == '/'
 
 def mkdir(path):
+    path = host(path)
     if exists(path):
         if not isdir(path):
             raise error.general('path exists and is not a directory: %s' % (path))
@@ -111,6 +112,7 @@ def removeall(path):
     def _onerror(function, path, excinfo):
         print 'removeall error: (%r) %s' % (function, path)
 
+    path = host(path)
     shutil.rmtree(path, onerror = _onerror)
     return
 

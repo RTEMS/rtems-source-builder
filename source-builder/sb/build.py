@@ -461,8 +461,9 @@ def get_configs(opts, _defaults):
 
     configs = { 'paths': [], 'files': [] }
     for cp in opts.expand('%{_configdir}', _defaults).split(':'):
-        configs['paths'] += [path.host(path.abspath(cp))]
-        configs['files'] += _scan(cp, ['.cfg', '.bset'])
+        hcp = path.host(path.abspath(cp))
+        configs['paths'] += [hcp]
+        configs['files'] += _scan(hcp, ['.cfg', '.bset'])
     configs['files'] = sorted(configs['files'])
     return configs
 
