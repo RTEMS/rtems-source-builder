@@ -1,6 +1,6 @@
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2010-2012 Chris Johns (chrisj@rtems.org)
+# Copyright 2010-2013 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -54,6 +54,7 @@ def load():
         '_smp_mflags':    ('none',    'none',     smp_mflags),
         '__bash':         ('exe',     'required', 'bash'),
         '__bzip2':        ('exe',     'required', 'bzip2'),
+        '__bison':        ('exe',     'required', 'bison'),
         '__cat':          ('exe',     'required', 'cat'),
         '__cc':           ('exe',     'required', 'gcc'),
         '__chgrp':        ('exe',     'required', 'chgrp'),
@@ -61,6 +62,7 @@ def load():
         '__chown':        ('exe',     'required', 'chown'),
         '__cp':           ('exe',     'required', 'cp'),
         '__cxx':          ('exe',     'required', 'g++'),
+        '__flex':         ('exe',     'required', 'flex'),
         '__grep':         ('exe',     'required', 'grep'),
         '__gzip':         ('exe',     'required', 'gzip'),
         '__id':           ('exe',     'required', 'id'),
@@ -68,6 +70,7 @@ def load():
         '__install_info': ('exe',     'required', 'install-info'),
         '__ld':           ('exe',     'required', 'ld'),
         '__ldconfig':     ('exe',     'none',     ''),
+        '__makeinfo':     ('exe',     'required', 'makeinfo'),
         '__mkdir':        ('exe',     'required', 'mkdir'),
         '__mv':           ('exe',     'required', 'mv'),
         '__nm':           ('exe',     'required', 'nm'),
