@@ -360,7 +360,7 @@ class file:
                     colon = m[start:].find(':')
                     if colon < 0:
                         if not m.endswith('}'):
-                            self._warning("malform conditional macro '%s'" % (m))
+                            self._warning("malformed conditional macro '%s'" % (m))
                             mn = None
                         else:
                             mn = self._label(m[start:-1])
