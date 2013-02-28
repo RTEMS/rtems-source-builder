@@ -285,10 +285,10 @@ class build:
         source_tag = 0
         quiet = False
         unpack_default_source = True
+        unpack_before_chdir = True
         delete_before_unpack = True
         create_dir = False
         name = None
-        unpack_before_chdir = True
         for o in opts:
             if o[0] == '-q':
                 quiet = True
@@ -325,7 +325,7 @@ class build:
         #
         # If -a? then change directory before unpacking.
         #
-        if not unpack_before_chdir:
+        if not unpack_before_chdir and create_dir:
             self.script.append(self.config.expand('cd ' + name))
         #
         # Unpacking the source. Note, treated the same as -a0.
@@ -336,11 +336,9 @@ class build:
                 raise error.general('no setup source0 tag found')
             self.script.append(self.config.expand(source0['script']))
         self.script.append(self.config.expand(source['script']))
-        if unpack_before_chdir:
+        if unpack_before_chdir and not create_dir:
             self.script.append(self.config.expand('cd ' + name))
         self.script.append(self.config.expand('%{__setup_post}'))
-        if create_dir:
-            self.script.append(self.config.expand('cd ..'))
 
     def run(self, command, shell_opts = '', cwd = None):
         e = execute.capture_execution(log = log.default, dump = self.opts.quiet())
