@@ -303,10 +303,12 @@ class build:
             elif o[0] == '-b':
                 unpack_before_chdir = True
                 if not o[1].isdigit():
-                    raise error.general('setup source tag no a number: %s' % (o[1]))
+                    raise error.general('setup -b source tag is not a number: %s' % (o[1]))
                 source_tag = int(o[1])
             elif o[0] == '-a':
                 unpack_before_chdir = False
+                if not o[1].isdigit():
+                    raise error.general('setup -a source tag is not a number: %s' % (o[1]))
                 source_tag = int(o[1])
         source0 = None
         source = self.source(package, source_tag)
@@ -314,7 +316,7 @@ class build:
             if source:
                 name = source['name']
             else:
-                name = source0['name']
+                raise error.general('setup source tag not found: %d' % (source_tag))
         self.script.append(self.config.expand('cd %{_builddir}'))
         if delete_before_unpack:
             self.script.append(self.config.expand('%{__rm} -rf ' + name))
