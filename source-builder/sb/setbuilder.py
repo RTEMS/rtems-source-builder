@@ -66,7 +66,7 @@ class buildset:
         if not self.opts.quiet():
             log.output(text)
 
-    def _find_config(self, config):
+    def find_config(self, config):
         if config.endswith('.bset') or config.endswith('.cfg'):
             names = [config]
         else:
@@ -194,7 +194,7 @@ class buildset:
                         raise error.general('invalid directive in build set files: %s' % (l))
                 else:
                     l = l.strip()
-                    c = self._find_config(l)
+                    c = self.find_config(l)
                     if c is None:
                         raise error.general('cannot find file: %s' % (l))
                     configs += [c]
@@ -280,6 +280,20 @@ class buildset:
 
         _notice(self.opts, 'Build Set: Time %s' % (str(end - start)))
 
+def list_bset_cfg_files(opts, configs):
+    if opts.get_arg('--list-configs') or opts.get_arg('--list-bsets'):
+        if opts.get_arg('--list-configs'):
+            ext = '.cfg'
+        else:
+            ext = '.bset'
+        for p in configs['paths']:
+            print 'Examining: %s' % (os.path.relpath(p))
+        for c in configs['files']:
+            if c.endswith(ext):
+                print '    %s' % (c)
+        return True
+    return False
+
 def run():
     import sys
     try:
@@ -295,17 +309,7 @@ def run():
         if not check.host_setup(opts, _defaults):
             raise error.general('host build environment is not set up correctly')
         configs = build.get_configs(opts, _defaults)
-        if opts.get_arg('--list-configs') or opts.get_arg('--list-bsets'):
-            if opts.get_arg('--list-configs'):
-                ext = '.cfg'
-            else:
-                ext = '.bset'
-            for p in configs['paths']:
-                print 'Examining: %s' % (os.path.relpath(p))
-            for c in configs['files']:
-                if c.endswith(ext):
-                    print '    %s' % (c)
-        else:
+        if not list_bset_cfg_files(opts, configs):
             for bset in opts.params():
                 b = buildset(bset, _configs = configs, _defaults = _defaults, opts = opts)
                 b.build()
