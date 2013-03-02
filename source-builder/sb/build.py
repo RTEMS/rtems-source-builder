@@ -325,7 +325,7 @@ class build:
         #
         # If -a? then change directory before unpacking.
         #
-        if not unpack_before_chdir and create_dir:
+        if not unpack_before_chdir or create_dir:
             self.script.append(self.config.expand('cd ' + name))
         #
         # Unpacking the source. Note, treated the same as -a0.
