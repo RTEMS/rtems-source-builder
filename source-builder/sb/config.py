@@ -35,6 +35,16 @@ import execute
 import log
 import path
 
+def _check_bool(value):
+    if value.isdigit():
+        if int(value) == 0:
+            istrue = False
+        else:
+            istrue = True
+    else:
+        istrue = None
+    return istrue
+
 class package:
 
     def __init__(self, name, arch):
@@ -368,19 +378,27 @@ class file:
                         mn = self._label(m[start:start + colon])
                     if mn:
                         if m.startswith('%{?'):
+                            istrue = False
                             if mn in self.defines:
-                                if colon >= 0:
-                                    s = s.replace(m, m[start + colon + 1:-1])
-                                    expanded = True
-                                    mn = None
+                                istrue = _check_bool(self.defines[mn])
+                                if istrue is None:
+                                    istrue = False
+                            if colon >= 0 and istrue:
+                                s = s.replace(m, m[start + colon + 1:-1])
+                                expanded = True
+                                mn = None
                             else:
                                 mn = '%{nil}'
                         else:
-                            if mn not in self.defines:
-                                if colon >= 0:
-                                    s = s.replace(m, m[start + colon + 1:-1])
-                                    expanded = True
-                                    mn = None
+                            isfalse = True
+                            if mn in self.defines:
+                                istrue = _check_bool(self.defines[mn])
+                                if istrue is not None and istrue == True:
+                                    isfalse = False
+                            if colon >= 0 and isfalse:
+                                s = s.replace(m, m[start + colon + 1:-1])
+                                expanded = True
+                                mn = None
                             else:
                                 mn = '%{nil}'
                 if mn:
@@ -442,16 +460,6 @@ class file:
         def add(x, y):
             return x + ' ' + str(y)
 
-        def check_bool(value):
-            if value.isdigit():
-                if int(value) == 0:
-                    istrue = False
-                else:
-                    istrue = True
-            else:
-                istrue = None
-            return istrue
-
         istrue = False
         if isvalid:
             if len(ls) == 2:
@@ -469,13 +477,13 @@ class file:
                 elif ifls[0] == '!=':
                     istrue = False
                 else:
-                    istrue = check_bool(ifls[0])
+                    istrue = _check_bool(ifls[0])
                     if istrue == None:
                         self._error('invalid if bool value: ' + reduce(add, ls, ''))
                         istrue = False
             elif len(ifls) == 2:
                 if ifls[0] == '!':
-                    istrue = check_bool(ifls[1])
+                    istrue = _check_bool(ifls[1])
                     if istrue == None:
                         self._error('invalid if bool value: ' + reduce(add, ls, ''))
                         istrue = False
