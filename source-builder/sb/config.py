@@ -380,9 +380,10 @@ class file:
                         if m.startswith('%{?'):
                             istrue = False
                             if mn in self.defines:
+                                # If defined and 0 then it is false.
                                 istrue = _check_bool(self.defines[mn])
                                 if istrue is None:
-                                    istrue = False
+                                    istrue = True
                             if colon >= 0 and istrue:
                                 s = s.replace(m, m[start + colon + 1:-1])
                                 expanded = True
@@ -393,7 +394,7 @@ class file:
                             isfalse = True
                             if mn in self.defines:
                                 istrue = _check_bool(self.defines[mn])
-                                if istrue is not None and istrue == True:
+                                if istrue is None or istrue == True:
                                     isfalse = False
                             if colon >= 0 and isfalse:
                                 s = s.replace(m, m[start + colon + 1:-1])
