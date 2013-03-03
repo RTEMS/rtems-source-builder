@@ -82,10 +82,10 @@ class report:
         return self.format == 'text'
 
     def is_asciidoc(self):
-        return self.format == 'asciidoc'
+        return self.format == 'asciidoc' or self.format == 'html'
 
     def setup(self):
-        if self.is_asciidoc():
+        if self.format == 'html':
             try:
                 import asciidocapi
             except:
@@ -292,7 +292,7 @@ class report:
             self.config(name)
 
     def generate(self, name):
-        if self.is_asciidoc():
+        if self.format == 'html':
             if self.asciidoc is None:
                 raise error.general('asciidoc not initialised')
             import StringIO
@@ -320,7 +320,7 @@ def run(args):
     try:
         optargs = { '--list-bsets':   'List available build sets',
                     '--list-configs': 'List available configurations',
-                    '--format':       'Output format (text, asciidoc)',
+                    '--format':       'Output format (text, html, asciidoc)',
                     '--output':       'File name to output the report' }
         opts, _defaults = defaults.load(args, optargs)
         log.default = log.log(opts.logfiles())
@@ -344,6 +344,9 @@ def run(args):
                     pass
                 elif format_opt[1] == 'asciidoc':
                     format = 'asciidoc'
+                    ext = '.txt'
+                elif format_opt[1] == 'html':
+                    format = 'html'
                     ext = '.html'
                 else:
                     raise error.general('invalid format: %s' % (format_opt[1]))
