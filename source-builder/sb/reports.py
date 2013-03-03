@@ -69,6 +69,12 @@ class report:
         self.out = ''
         self.asciidoc = None
 
+    def _sbpath(self, *args):
+        p = self.opts.expand('%{_sbdir}', self.defaults)
+        for arg in args:
+            p = path.join(p, arg)
+        return os.path.abspath(path.host(p))
+
     def output(self, text):
         self.out += '%s\n' % (text)
 
@@ -84,8 +90,9 @@ class report:
                 import asciidocapi
             except:
                 raise error.general('installation error: no asciidocapi found')
+            asciidoc_py = self._sbpath(defaults.basepath, 'asciidoc', 'asciidoc.py')
             try:
-                self.asciidoc = asciidocapi.AsciiDocAPI()
+                self.asciidoc = asciidocapi.AsciiDocAPI(asciidoc_py)
             except:
                 raise error.general('application error: asciidocapi failed')
 
@@ -168,8 +175,7 @@ class report:
             self.output('RTEMS Tools Project <rtems-users@rtems.org>')
             self.output(datetime.datetime.now().ctime())
             self.output('')
-            image = os.path.abspath(path.host(path.join(self.opts.expand('%{_sbdir}', self.defaults),
-                                                        'sb', 'images', 'rtemswhitebg.jpg')))
+            image = self._sbpath(defaults.basepath, 'images', 'rtemswhitebg.jpg')
             self.output('image:%s["RTEMS",width="20%%"]' % (image))
             self.output('')
             if intro_text:

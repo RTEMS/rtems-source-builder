@@ -3,3 +3,4 @@ sources
 tar
 build
 *.txt
+*.html
