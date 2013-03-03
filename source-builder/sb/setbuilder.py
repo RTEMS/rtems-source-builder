@@ -28,12 +28,20 @@ import glob
 import operator
 import os
 
-import build
-import check
-import defaults
-import error
-import log
-import path
+try:
+    import build
+    import check
+    import defaults
+    import error
+    import log
+    import path
+    import reports
+except KeyboardInterrupt:
+    print 'user terminated'
+    sys.exit(1)
+except:
+    print 'unknown application load error'
+    sys.exit(1)
 
 #
 # Version of RTEMS Source Builder Set Builder.

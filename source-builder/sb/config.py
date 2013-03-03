@@ -29,11 +29,18 @@ import os
 import re
 import sys
 
-import defaults
-import error
-import execute
-import log
-import path
+try:
+    import defaults
+    import error
+    import execute
+    import log
+    import path
+except KeyboardInterrupt:
+    print 'user terminated'
+    sys.exit(1)
+except:
+    print 'unknown application load error'
+    sys.exit(1)
 
 def _check_bool(value):
     if value.isdigit():
