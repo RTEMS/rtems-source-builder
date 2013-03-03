@@ -92,6 +92,34 @@ class buildset:
             except distutils.errors.DistutilsFileError, err:
                 raise error.general('copying tree: %s' % (str(err)))
 
+    def report(self, _config, tmproot):
+        if not self.opts.get_arg('--no-report'):
+            format = self.opts.get_arg('--report-format')
+            if format is None:
+                format = 'html'
+                ext = '.html'
+            else:
+                if len(format) != 2:
+                    raise error.general('invalid report format option: %s' % ('='.join(format)))
+                if format[1] == 'text':
+                    format = 'text'
+                    ext = '.txt'
+                elif format[1] == 'asciidoc':
+                    format = 'asciidoc'
+                    ext = '.txt'
+                elif format[1] == 'html':
+                    format = 'html'
+                    ext = '.html'
+                else:
+                    raise error.general('invalid report format: %s' % (format[1]))
+            prefix = self.opts.expand('%{_prefix}', self.defaults)
+            outname = path.host(path.join(tmproot, prefix, path.splitext(path.basename(_config))[0] + ext))
+            _notice(self.opts, 'reporting: %s -> %s' % (_config, outname))
+            if not self.opts.dry_run():
+                r = report.report(format, self.configs, self.defaults)
+                r.make(_config, outname)
+                del r
+
     def first_package(self, _build):
         tmproot = path.abspath(_build.config.expand('%{_tmproot}'))
         _build.rmdir(tmproot)
@@ -254,6 +282,7 @@ class buildset:
                             tmproot = self.first_package(b)
                         b.make()
                         self.every_package(b, tmproot)
+                        self.report(configs[s], tmproot)
                         if s == len(configs) - 1:
                             self.last_package(b, tmproot)
                         builds += [b]
@@ -301,6 +330,8 @@ def run():
                     '--list-bsets':    'List available build sets',
                     '--keep-going':    'Do not stop on error.',
                     '--no-install':    'Do not install the packages to the prefix.',
+                    '--no-report':     'Do not create a package report.',
+                    '--report-format': 'The report format (text, html, asciidoc).',
                     '--bset-tar-file': 'Create a build set tar file',
                     '--pkg-tar-files': 'Create package tar files' }
         opts, _defaults = defaults.load(sys.argv, optargs)
