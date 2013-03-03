@@ -266,30 +266,21 @@ class report:
         self.config_end(name)
 
     def buildset(self, name):
-        try_config = False
-        try:
-            self.bset_nesting += 1
-            self.buildset_start(name)
-            bset = setbuilder.buildset(name,
-                                       _configs = self.configs,
-                                       _defaults = self.defaults,
-                                       opts = self.opts)
-            for c in bset.load():
-                if c.endswith('.bset'):
-                    self.buildset(c)
-                elif c.endswith('.cfg'):
-                    self.config(c)
-                else:
-                    raise error.general('invalid config type: %s' % (c))
-            self.buildset_end(name)
-            self.bset_nesting -= 1
-        except error.general, gerr:
-            if gerr.msg.startswith('no build set file found'):
-                try_config = True
+        self.bset_nesting += 1
+        self.buildset_start(name)
+        bset = setbuilder.buildset(name,
+                                   _configs = self.configs,
+                                   _defaults = self.defaults,
+                                   opts = self.opts)
+        for c in bset.load():
+            if c.endswith('.bset'):
+                self.buildset(c)
+            elif c.endswith('.cfg'):
+                self.config(c)
             else:
-                raise
-        if try_config:
-            self.config(name)
+                raise error.general('invalid config type: %s' % (c))
+        self.buildset_end(name)
+        self.bset_nesting -= 1
 
     def generate(self, name):
         if self.format == 'html':
@@ -313,7 +304,15 @@ class report:
     def make(self, inname, outname, intro_text = None):
         self.setup()
         self.introduction(inname, intro_text)
-        self.buildset(inname)
+        config = setbuilder.find_config(inname, self.configs)
+        if config is None:
+            raise error.general('config file not found: %s' % (inname))
+        if config.endswith('.bset'):
+            self.buildset(config)
+        elif config.endswith('.cfg'):
+            self.config(config)
+        else:
+            raise error.general('invalid config type: %s' % (config))
         self.generate(outname)
 
 def run(args):
