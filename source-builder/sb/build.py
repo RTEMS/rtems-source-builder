@@ -467,6 +467,18 @@ def get_configs(opts, _defaults):
     configs['files'] = sorted(configs['files'])
     return configs
 
+def find_config(config, configs):
+    config_root, config_ext = path.splitext(config)
+    if config_ext not in ['', '.bset', '.cfg']:
+        config_root = config
+        config_ext = ''
+    for c in configs['files']:
+        r, e = path.splitext(c)
+        if config_root == r:
+            if config_ext == '' or config_ext == e:
+                return c
+    return None
+
 def run(args):
     try:
         optargs = { '--list-configs': 'List available configurations' }

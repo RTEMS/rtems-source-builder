@@ -304,7 +304,7 @@ class report:
     def make(self, inname, outname, intro_text = None):
         self.setup()
         self.introduction(inname, intro_text)
-        config = setbuilder.find_config(inname, self.configs)
+        config = build.find_config(inname, self.configs)
         if config is None:
             raise error.general('config file not found: %s' % (inname))
         if config.endswith('.bset'):

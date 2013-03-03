@@ -58,18 +58,6 @@ def _notice(opts, text):
     log.output(text)
     log.flush()
 
-def find_config(config, configs):
-    if config.endswith('.bset') or config.endswith('.cfg'):
-        names = [config]
-    else:
-        names = ['%s.cfg' % (path.basename(config)),
-                 '%s.bset' % (path.basename(config))]
-    for c in configs['files']:
-        if path.basename(c) in names:
-            if path.dirname(c).endswith(path.dirname(config)):
-                return c
-    return None
-
 class buildset:
     """Build a set builds a set of packages."""
 
@@ -123,9 +111,11 @@ class buildset:
             buildroot = _build.config.abspath('%{buildroot}')
             prefix = self.opts.expand('%{_prefix}', self.defaults)
             name = path.splitext(path.basename(_config))[0] + ext
-            outname = path.host(path.join(buildroot, prefix, name))
+            outpath = path.host(path.join(buildroot, prefix, 'rtems-source-builder'))
+            outname = path.host(path.join(outpath, name))
             _notice(self.opts, 'reporting: %s -> %s' % (_config, name))
             if not self.opts.dry_run():
+                _build.mkdir(outpath)
                 r = reports.report(format, self.configs, self.defaults, self.opts)
                 r.make(_config, outname)
                 del r
@@ -232,7 +222,7 @@ class buildset:
                         raise error.general('invalid directive in build set files: %s' % (l))
                 else:
                     l = l.strip()
-                    c = find_config(l, self.configs)
+                    c = build.find_config(l, self.configs)
                     if c is None:
                         raise error.general('cannot find file: %s' % (l))
                     configs += [c]
