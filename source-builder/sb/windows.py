@@ -63,6 +63,7 @@ def load():
         '__cp':           ('exe',     'required', 'cp'),
         '__cxx':          ('exe',     'required', 'g++'),
         '__flex':         ('exe',     'required', 'flex'),
+        '__git':          ('exe',     'required', 'git'),
         '__grep':         ('exe',     'required', 'grep'),
         '__gzip':         ('exe',     'required', 'gzip'),
         '__id':           ('exe',     'required', 'id'),

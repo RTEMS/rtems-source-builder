@@ -59,6 +59,7 @@ def load():
         '_smp_mflags':  ('none',    'none',     smp_mflags),
         '__bash':       ('exe',     'optional', '/usr/local/bin/bash'),
         '__bison':      ('exe',     'required', '/usr/local/bin/bison'),
+        '__git':        ('exe',     'required', '/usr/local/bin/git'),
         '__xz':         ('exe',     'optional', '/usr/bin/xz'),
         '__make':       ('exe',     'required', 'gmake')
         }

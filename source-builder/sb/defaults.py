@@ -119,6 +119,7 @@ defaults = {
 '__cpp':               ('exe',     'none',     '%{__cc} -E'),
 '__cxx':               ('exe',     'required', '/usr/bin/g++'),
 '__flex':              ('exe',     'required', '/usr/bin/flex'),
+'__git':               ('exe',     'required', '/usr/bin/git'),
 '__grep':              ('exe',     'required', '/usr/bin/grep'),
 '__gzip':              ('exe',     'required', '/usr/bin/gzip'),
 '__id':                ('exe',     'required', '/usr/bin/id'),
@@ -401,8 +402,10 @@ class command_line:
                                     self.defaults[_arch] = ('none', 'none', _arch_value)
                                     self.defaults[_vendor] = ('none', 'none', _vendor_value)
                                     self.defaults[_os] = ('none', 'none', _os_value)
-                                if not lo and a not in self.optargs:
-                                    raise error.general('invalid argument (try --help): %s' % (a))
+                                if not lo:
+                                    sa = a.split('=')
+                                    if sa[0] not in self.optargs:
+                                        raise error.general('invalid argument (try --help): %s' % (a))
                 else:
                     if a == '-f':
                         self.opts['force'] = '1'
@@ -477,8 +480,9 @@ class command_line:
         if not arg in self.optargs:
             raise error.internal('bad arg: %s' % (arg))
         for a in self.args:
-            if a.startswith(arg):
-                return a
+            sa = a.split('=')
+            if sa[0].startswith(arg):
+                return sa
         return None
 
     def get_config_files(self, config):
