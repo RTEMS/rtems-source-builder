@@ -3632,8 +3632,6 @@ class Table(AbstractBlock):
         # (the tab character does not appear elsewhere since it is expanded on
         # input) which are replaced after template attribute substitution.
         headrows = footrows = bodyrows = None
-        for option in self.parameters.options:
-            self.attributes[option+'-option'] = ''
         if self.rows and 'header' in self.parameters.options:
             headrows = self.subs_rows(self.rows[0:1],'header')
             self.attributes['headrows'] = '\x07headrows\x07'
@@ -4809,17 +4807,18 @@ class Config:
 
     def load_miscellaneous(self,d):
         """Set miscellaneous configuration entries from dictionary 'd'."""
-        def set_if_int_ge(name, d, min_value):
+        def set_if_int_gt_zero(name, d):
             if name in d:
                 try:
                     val = int(d[name])
-                    if not val >= min_value:
-                        raise ValueError, "not >= " + str(min_value)
-                    setattr(self, name, val)
+                    if not val > 0:
+                        raise ValueError, "not > 0"
+                    if val > 0:
+                        setattr(self, name, val)
                 except ValueError:
                     raise EAsciiDoc, 'illegal [miscellaneous] %s entry' % name
-        set_if_int_ge('tabsize', d, 0)
-        set_if_int_ge('textwidth', d, 1) # DEPRECATED: Old tables only.
+        set_if_int_gt_zero('tabsize', d)
+        set_if_int_gt_zero('textwidth', d) # DEPRECATED: Old tables only.
 
         if 'pagewidth' in d:
             try:
@@ -6000,10 +5999,6 @@ def asciidoc(backend, doctype, confiles, infile, outfile, options):
         # Document header attributes override conf file attributes.
         document.attributes.update(AttributeEntry.attributes)
         document.update_attributes()
-        # Set the default embedded icons directory.
-        if 'data-uri' in  document.attributes and not os.path.isdir(document.attributes['iconsdir']):
-            document.attributes['iconsdir'] = os.path.join(
-                     document.attributes['asciidoc-confdir'], 'images/icons')
         # Configuration is fully loaded.
         config.expand_all_templates()
         # Check configuration for consistency.

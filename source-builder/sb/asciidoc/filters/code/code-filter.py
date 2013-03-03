@@ -43,7 +43,7 @@ AUTHOR
 
 URLS
     http://sourceforge.net/projects/asciidoc/
-    http://asciidoc.org/
+    http://www.methods.co.nz/asciidoc/
 
 COPYING
     Copyright (C) 2002-2006 Stuart Rackham. Free use of this software is
