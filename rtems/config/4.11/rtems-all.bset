@@ -6,6 +6,8 @@
 4.11/rtems-arm
 4.11/rtems-avr
 4.11/rtems-bfin
+4.11/rtems-i386
+4.11/rtems-lm32
 4.11/rtems-m32c
 4.11/rtems-m32r
 4.11/rtems-m68k
@@ -16,3 +18,5 @@
 4.11/rtems-powerpc
 4.11/rtems-sh
 4.11/rtems-sparc
+4.11/rtems-sparc64
+4.11/rtems-v850
