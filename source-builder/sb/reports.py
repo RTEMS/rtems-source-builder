@@ -193,12 +193,6 @@ class report:
     def config_start(self, name):
         first = not self.configs_active
         self.configs_active = True
-        if self.is_asciidoc():
-            self.output('.Config: %s' % name)
-            self.output('')
-        else:
-            self.output('-' * self.line_len)
-            self.output('Config: %s' % (name))
 
     def config_end(self, name):
         if self.is_asciidoc():
@@ -223,20 +217,65 @@ class report:
     def patch(self, package, args):
         return package.patches()
 
-    def config(self, name):
-        self.config_start(name)
-        _config = config.file(name, _defaults = self.defaults, opts = self.opts)
+    def output_info(self, name, info, separated = False):
+        if info is not None:
+            end = ''
+            if self.is_asciidoc():
+                if separated:
+                    self.output('*%s:*::' % (name))
+                    self.output('')
+                else:
+                    self.output('*%s:* ' % (name))
+                    end = ' +'
+                spaces = ''
+            else:
+                self.output(' %s:' % (name))
+                spaces = '  '
+            for l in info:
+                self.output('%s%s%s' % (spaces, l, end))
+            if self.is_asciidoc() and separated:
+                self.output('')
+
+    def output_directive(self, name, directive):
+        if directive is not None:
+            if self.is_asciidoc():
+                self.output('')
+                self.output('*%s*:' % (name))
+                self.output('--------------------------------------------')
+                spaces = ''
+            else:
+                self.output(' %s:' % (name))
+                spaces = '  '
+            for l in directive:
+                self.output('%s%s' % (spaces, l))
+            if self.is_asciidoc():
+                self.output('--------------------------------------------')
+
+    def config(self, configname):
+
+        _config = config.file(configname, _defaults = self.defaults, opts = self.opts)
         packages = _config.packages()
         package = packages['main']
         name = package.name()
+        self.config_start(name)
         if self.is_asciidoc():
-            self.output('*Package*: _%s_' % name)
+            self.output('*Package*: _%s_ +' % (name))
+            self.output('*Config*: %s' % (configname))
             self.output('')
         else:
-            self.output(' Package: %s' % (name))
+            self.output('-' * self.line_len)
+            self.output('Package: %s' % (name))
+            self.output(' Config: %s' % (configname))
+        self.output_info('Summary', package.get_info('summary'), True)
+        self.output_info('URL', package.get_info('url'))
+        self.output_info('Version', package.get_info('version'))
+        self.output_info('Release', package.get_info('release'))
+        self.output_info('Build Arch', package.get_info('buildarch'))
+        if self.is_asciidoc():
+            self.output('')
         sources = package.sources()
         if self.is_asciidoc():
-            self.output('*Sources*:;;')
+            self.output('*Sources:*::')
             if len(sources) == 0:
                 self.output('No sources')
         else:
@@ -251,7 +290,7 @@ class report:
         patches = package.patches()
         if self.is_asciidoc():
             self.output('')
-            self.output('*Patches*:;;')
+            self.output('*Patches:*::')
             if len(patches) == 0:
                 self.output('No patches')
         else:
@@ -263,6 +302,10 @@ class report:
                 self.output('. %s' % (patches[p][0]))
             else:
                 self.output('   %2d: %s' % (c, patches[p][0]))
+        self.output_directive('Preparation', package.prep())
+        self.output_directive('Build', package.build())
+        self.output_directive('Install', package.install())
+        self.output_directive('Clean', package.clean())
         self.config_end(name)
 
     def buildset(self, name):
@@ -369,7 +412,7 @@ def run(args):
     except error.exit, eerr:
         pass
     except KeyboardInterrupt:
-        _notice(opts, 'user terminated')
+        _notice(opts, 'abort: user terminated')
         sys.exit(1)
     sys.exit(0)
 
