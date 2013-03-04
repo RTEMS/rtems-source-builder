@@ -27,6 +27,7 @@ import distutils.dir_util
 import glob
 import operator
 import os
+import sys
 
 try:
     import build
@@ -37,10 +38,10 @@ try:
     import path
     import reports
 except KeyboardInterrupt:
-    print 'user terminated'
+    print 'abort: user terminated'
     sys.exit(1)
 except:
-    print 'unknown application load error'
+    print 'error: unknown application load error'
     sys.exit(1)
 
 #
@@ -110,7 +111,7 @@ class buildset:
                     raise error.general('invalid report format: %s' % (format[1]))
             buildroot = _build.config.abspath('%{buildroot}')
             prefix = self.opts.expand('%{_prefix}', self.defaults)
-            name = path.splitext(path.basename(_config))[0] + ext
+            name = _build.main_package().name() + ext
             outpath = path.host(path.join(buildroot, prefix, 'rtems-source-builder'))
             outname = path.host(path.join(outpath, name))
             _notice(self.opts, 'reporting: %s -> %s' % (_config, name))
@@ -354,7 +355,7 @@ def run():
     except error.exit, eerr:
         pass
     except KeyboardInterrupt:
-        _notice(opts, 'user terminated')
+        _notice(opts, 'abort: user terminated')
         sys.exit(1)
     sys.exit(0)
 
