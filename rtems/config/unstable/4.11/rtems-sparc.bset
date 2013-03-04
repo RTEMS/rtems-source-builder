@@ -1,5 +1,5 @@
 #
-# Tools Set for RTEMS SPARC 4.11 Stable
+# Tools Set for RTEMS SPARC 4.11 Unstable
 #
 
 %define _target sparc-rtems4.11

@@ -1,5 +1,5 @@
 #
-# Tools Set for RTEMS MIPS 4.11 Stable
+# Tools Set for RTEMS MIPS 4.11 Unstable
 #
 
 %define _target mips-rtems4.11

@@ -1,5 +1,5 @@
 #
-# Tools Set for RTEMS M68K 4.11 Stable
+# Tools Set for RTEMS M68K 4.11 Unstable
 #
 
 %define _target m68k-rtems4.11

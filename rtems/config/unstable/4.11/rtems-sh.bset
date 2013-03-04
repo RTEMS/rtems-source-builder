@@ -1,5 +1,5 @@
 #
-# Tools Set for RTEMS SH 4.11 Stable
+# Tools Set for RTEMS SH 4.11 Unstable
 #
 
 %define _target sh-rtems4.11

@@ -1,5 +1,5 @@
 #
-# Tools Set for RTEMS H8300 4.11 Stable
+# Tools Set for RTEMS H8300 4.11 Unstable
 #
 
 %define _target h8300-rtems4.11

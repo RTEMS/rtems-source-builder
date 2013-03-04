@@ -1,5 +1,5 @@
 #
-# Tools Set for RTEMS Microblaze 4.11 Stable
+# Tools Set for RTEMS Microblaze 4.11 Unstable
 #
 
 %define _target microblaze-rtems4.11

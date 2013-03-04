@@ -1,5 +1,5 @@
 #
-# Tools Set for RTEMS AVR 4.11 Stable
+# Tools Set for RTEMS AVR 4.11 Unstable
 #
 
 %define _target avr-rtems4.11

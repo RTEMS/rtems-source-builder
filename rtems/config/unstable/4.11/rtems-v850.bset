@@ -1,8 +1,8 @@
 #
-# Tools Set for RTEMS BFIN 4.11 Unstable
+# Tools Set for RTEMS V850 4.11 Unstable
 #
 
-%define _target bfin-rtems4.11
+%define _target v850-rtems4.11
 
 %define release 1
 

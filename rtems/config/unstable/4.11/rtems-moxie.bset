@@ -1,5 +1,5 @@
 #
-# Tools Set for RTEMS Moxie 4.11 Stable
+# Tools Set for RTEMS Moxie 4.11 Unstable
 #
 
 %define _target moxie-rtems4.11

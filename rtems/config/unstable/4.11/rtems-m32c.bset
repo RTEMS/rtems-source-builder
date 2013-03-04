@@ -1,5 +1,5 @@
 #
-# Tools Set for RTEMS M32C 4.11 Stable
+# Tools Set for RTEMS M32C 4.11 Unstable
 #
 
 %define _target m32c-rtems4.11
