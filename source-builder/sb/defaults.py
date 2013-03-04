@@ -601,7 +601,7 @@ def run(args):
     except error.exit, eerr:
         pass
     except KeyboardInterrupt:
-        _notice(opts, 'user terminated')
+        _notice(opts, 'abort: user terminated')
         sys.exit(1)
     sys.exit(0)
 
