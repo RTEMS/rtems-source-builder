@@ -420,9 +420,12 @@ class build:
                 _notice(self.opts, 'cleanup: %s' % (tmproot))
             self.rmdir(tmproot)
 
-    def make(self):
+    def main_package(self):
         packages = self.config.packages()
-        package = packages['main']
+        return packages['main']
+
+    def make(self):
+        package = self.main_package()
         name = package.name()
         _notice(self.opts, 'package: %s' % (name))
         self.script.reset()
@@ -510,7 +513,7 @@ def run(args):
     except error.exit, eerr:
         pass
     except KeyboardInterrupt:
-        _notice(opts, 'user terminated')
+        _notice(opts, 'abort: user terminated')
         sys.exit(1)
     sys.exit(0)
 
