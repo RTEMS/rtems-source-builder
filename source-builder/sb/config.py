@@ -92,12 +92,9 @@ class package:
         self.infos[info].append(data)
 
     def get_info(self, info):
-        if not info in self.infos:
-            raise error.general('no %s in package "%s"' % (info, self.name))
-        return self.info
-
-    def version(self):
-        return self.get_info('Version')
+        if info in self.infos:
+            return self.infos[info]
+        return None
 
     def extract_info(self, label):
         infos = {}
@@ -128,6 +125,18 @@ class package:
         if info:
             return info[0]
         return self._name
+
+    def summary(self):
+        info = self.find_info('summary')
+        if info:
+            return info[0]
+        return ''
+
+    def url(self):
+        info = self.find_info('url')
+        if info:
+            return info[0]
+        return ''
 
     def version(self):
         info = self.find_info('version')
@@ -395,7 +404,7 @@ class file:
                                 s = s.replace(m, m[start + colon + 1:-1])
                                 expanded = True
                                 mn = None
-                            else:
+                            elif not istrue:
                                 mn = '%{nil}'
                         else:
                             isfalse = True
@@ -589,7 +598,6 @@ class file:
         # they match. This closes an opening '{' that is on another
         # line.
         #
-
         for l in config:
             self.lc += 1
             l = _clean(l)
@@ -772,6 +780,7 @@ class file:
 
         try:
             dir = None
+            info = None
             data = []
             while True:
                 r = self._parse(config)
@@ -816,16 +825,19 @@ class file:
                             if self.opts.trace():
                                 print '_tag: ', l, ls
                             if len(ls) > 1:
-                                i = ls[0]
-                                self._info_append(i, ls[1].strip())
+                                info = ls[0].lower()
+                                if info[-1] == ':':
+                                    info = info[:-1]
+                                info_data = ls[1].strip()
+                            else:
+                                info_data = ls[0].strip()
+                            if info is not None:
+                                self._info_append(info, info_data)
                                 # It seems like the info's also appear as
                                 # defines or can be accessed via macros.
-                                if ls[0][len(ls[0]) - 1] == ':':
-                                    ls[0] = ls[0][:-1]
-                                ls[0] = ls[0].lower()
-                                self._define(None, ('', ls[0], ls[1]))
+                                self._define(None, ('', info, info_data))
                             else:
-                                self._warning("invalid format: '" + l[:-1] + "'")
+                                self._warning("invalid format: '" + info_data[:-1] + "'")
                         else:
                             data.append(l)
                 else:
