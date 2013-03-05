@@ -133,6 +133,7 @@ class buildset:
         # exporting to the environment
         os.environ['SB_TMPPREFIX'] = tmpprefix
         os.environ['SB_TMPBINDIR'] = tmpbindir
+        os.environ['SB_ORIG_PATH'] = os.environ['PATH']
         os.environ['PATH'] = path.host(tmpbindir) + os.pathsep + os.environ['PATH']
         self._output('path: ' + os.environ['PATH'])
         # shell format
