@@ -12,6 +12,12 @@
 %include rtems-4.11-base.bset
 
 #
+# Disable building a C++ compiler.
+#  configure: error: unable to detect exception model
+#
+%define enable_cxx 0
+
+#
 # Tools configuration.
 #
 expat-2.1.0-1

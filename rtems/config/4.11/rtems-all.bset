@@ -7,7 +7,7 @@
 4.11/rtems-avr
 4.11/rtems-bfin
 4.11/rtems-i386
-4.11/rtems-lm32
+# broken 4.11/rtems-lm32
 4.11/rtems-m32c
 4.11/rtems-m32r
 4.11/rtems-m68k
