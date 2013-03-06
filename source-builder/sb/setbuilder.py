@@ -147,7 +147,8 @@ class buildset:
                 (os.path.relpath(path.host(src)), os.path.relpath(path.host(dst)))
             if self.opts.trace():
                 _notice(self.opts, 'collecting: %s' % (what))
-            self.copy(src, dst)
+            if not self.opts.dry_run():
+                self.copy(src, dst)
         if not self.opts.get_arg('--no-install'):
             dst = _build.config.expand('%{_prefix}')
             src = path.join(src, dst)
