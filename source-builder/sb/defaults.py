@@ -216,16 +216,6 @@ FFLAGS="${FFLAGS:-%optflags}" ; export FFLAGS ;
 class command_line:
     """Process the command line in a common way for all Tool Builder commands."""
 
-    _defaults = { 'params'   : [],
-                  'warn-all' : '0',
-                  'quiet'    : '0',
-                  'force'    : '0',
-                  'trace'    : '0',
-                  'dry-run'  : '0',
-                  'no-clean' : '0',
-                  'no-smp'   : '0',
-                  'rebuild'  : '0' }
-
     #
     # The define and if it is a path and needs conversion.
     #
@@ -292,12 +282,22 @@ class command_line:
         if len(self.command_path) == 0:
             self.command_path = '.'
         self.command_name = path.basename(argv[0])
+        self.argv = argv
         self.args = argv[1:]
         self.optargs = optargs
         self.defaults = {}
         for to in command_line._long_true_opts:
             self.defaults[command_line._long_true_opts[to]] = ('none', 'none', '0')
         self.defaults['_sbdir'] = ('dir', 'required', path.shell(self.command_path))
+        self.opts = { 'params'   : [],
+                      'warn-all' : '0',
+                      'quiet'    : '0',
+                      'force'    : '0',
+                      'trace'    : '0',
+                      'dry-run'  : '0',
+                      'no-clean' : '0',
+                      'no-smp'   : '0',
+                      'rebuild'  : '0' }
         self._process()
 
     def __str__(self):
@@ -339,7 +339,6 @@ class command_line:
                     return lo, long_opts[lo], True, arg
             return None, None, None, arg
 
-        self.opts = command_line._defaults
         i = 0
         while i < len(self.args):
             a = self.args[i]
@@ -502,7 +501,7 @@ class command_line:
             if not configbase.endswith('.cfg'):
                 configbase = configbase + '.cfg'
             if len(configdir) == 0:
-                configdir = self.expand(defaults['_configdir'][2], defaults)
+                configdir = self.expand(self.defaults['_configdir'][2], self.defaults)
             configs = []
             for cp in configdir.split(':'):
                 hostconfigdir = path.host(cp)
@@ -540,7 +539,8 @@ def load(args, optargs = None):
     line merging in any command line overrides. Finally post process the
     command line.
     """
-    d = defaults
+    import copy
+    d = copy.deepcopy(defaults)
     overrides = None
     if os.name == 'nt':
         import windows

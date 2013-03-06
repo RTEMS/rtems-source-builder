@@ -22,6 +22,7 @@
 # set lists the various tools. These are specific tool configurations.
 #
 
+import copy
 import datetime
 import distutils.dir_util
 import glob
@@ -64,8 +65,8 @@ class buildset:
 
     def __init__(self, bset, _configs, _defaults, opts):
         _trace(opts, '_bset:%s: init' % (bset))
-        self.opts = opts
         self.configs = _configs
+        self.opts = opts
         self.defaults = _defaults
         self.bset = bset
         self.bset_pkg = '%s-%s-set' % (self.opts.expand('%{_target}', _defaults),
@@ -269,18 +270,25 @@ class buildset:
             builds = []
             for s in range(0, len(configs)):
                 try:
+                    #
+                    # Each section of the build set gets a separate set of
+                    # defaults so we do not contaminate one configuration with
+                    # another.
+                    #
+                    _opts = copy.deepcopy(self.opts)
+                    _defaults = copy.deepcopy(self.defaults)
                     if configs[s].endswith('.bset'):
                         bs = buildset(configs[s],
                                       _configs = self.configs,
-                                      _defaults = self.defaults,
-                                      opts = self.opts)
+                                      _defaults = _defaults,
+                                      opts = _opts)
                         bs.build()
                         del bs
                     elif configs[s].endswith('.cfg'):
                         b = build.build(configs[s],
                                         self.opts.get_arg('--pkg-tar-files'),
-                                        _defaults = self.defaults,
-                                        opts = self.opts)
+                                        _defaults = _defaults,
+                                        opts = _opts)
                         if s == 0:
                             tmproot = self.first_package(b)
                         b.make()
