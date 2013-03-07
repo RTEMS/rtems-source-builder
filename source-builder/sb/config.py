@@ -211,6 +211,7 @@ class file:
             if arg.startswith('--with-') or arg.startswith('--without-'):
                 label = arg[2:].lower().replace('-', '_')
                 self.default_defines[self._label(label)] = label
+        self._includes = []
         self.load_depth = 0
         self.load(name)
 
@@ -778,6 +779,8 @@ class file:
             raise error.general('error opening config file: %s' % (path.host(configname)))
         self.configpath += [configname]
 
+        self._includes += [configname]
+
         try:
             dir = None
             info = None
@@ -885,6 +888,9 @@ class file:
 
     def packages(self):
         return self._packages
+
+    def includes(self):
+        return self._includes
 
 def run():
     import sys

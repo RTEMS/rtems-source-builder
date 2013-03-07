@@ -253,7 +253,7 @@ class buildset:
 
         return self.parse(bset)
 
-    def build(self):
+    def build(self, deps = None):
 
         _trace(self.opts, '_bset:%s: make' % (self.bset))
         _notice(self.opts, 'Build Set: %s' % (self.bset))
@@ -282,7 +282,7 @@ class buildset:
                                       _configs = self.configs,
                                       _defaults = _defaults,
                                       opts = _opts)
-                        bs.build()
+                        bs.build(deps)
                         del bs
                     elif configs[s].endswith('.cfg'):
                         b = build.build(configs[s],
@@ -291,11 +291,14 @@ class buildset:
                                         opts = _opts)
                         if s == 0:
                             tmproot = self.first_package(b)
-                        b.make()
-                        self.report(configs[s], b)
-                        self.every_package(b, tmproot)
-                        if s == len(configs) - 1:
-                            self.last_package(b, tmproot)
+                        if deps is None:
+                            b.make()
+                            self.report(configs[s], b)
+                            self.every_package(b, tmproot)
+                            if s == len(configs) - 1:
+                                self.last_package(b, tmproot)
+                        else:
+                            deps += b.config.includes()
                         builds += [b]
                     else:
                         raise error.general('invalid config type: %s' % (configs[s]))
@@ -304,7 +307,7 @@ class buildset:
                         print gerr
                     else:
                         raise
-            if not self.opts.no_clean() or self.opts.get_arg('--keep-going'):
+            if deps is None and (not self.opts.no_clean() or self.opts.get_arg('--keep-going')):
                 for b in builds:
                     _notice(self.opts, 'cleaning: %s' % (b.name()))
                     b.cleanup()
@@ -339,6 +342,7 @@ def run():
     try:
         optargs = { '--list-configs':  'List available configurations',
                     '--list-bsets':    'List available build sets',
+                    '--list-deps':     'List the dependent files.',
                     '--keep-going':    'Do not stop on error.',
                     '--no-install':    'Do not install the packages to the prefix.',
                     '--no-report':     'Do not create a package report.',
@@ -351,11 +355,20 @@ def run():
         if not check.host_setup(opts, _defaults):
             raise error.general('host build environment is not set up correctly')
         configs = build.get_configs(opts, _defaults)
+        if opts.get_arg('--list-deps'):
+            deps = []
+        else:
+            deps = None
         if not list_bset_cfg_files(opts, configs):
             for bset in opts.params():
                 b = buildset(bset, _configs = configs, _defaults = _defaults, opts = opts)
-                b.build()
+                b.build(deps)
                 del b
+        if deps is not None:
+            c = 0
+            for d in sorted(set(deps)):
+                c += 1
+                print 'dep[%d]: %s' % (c, d)
     except error.general, gerr:
         print gerr
         sys.exit(1)
