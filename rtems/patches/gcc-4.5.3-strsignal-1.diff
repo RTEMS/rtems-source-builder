@@ -1,0 +1,11 @@
+--- gcc-4.5.3/libiberty/strsignal.c.orig	2013-03-08 22:24:00.000000000 +0000
++++ gcc-4.5.3/libiberty/strsignal.c	2013-03-08 22:24:53.000000000 +0000
+@@ -551,7 +551,7 @@
+ #ifndef HAVE_PSIGNAL
+ 
+ void
+-psignal (int signo, char *message)
++psignal (int signo, const char *message)
+ {
+   if (signal_names == NULL)
+     {
