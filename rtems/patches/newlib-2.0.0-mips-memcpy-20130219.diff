@@ -1,0 +1,21 @@
+===================================================================
+RCS file: /cvs/src/src/newlib/libc/machine/mips/memcpy.S,v
+retrieving revision 1.2
+retrieving revision 1.3
+diff -u -r1.2 -r1.3
+--- src/newlib/libc/machine/mips/memcpy.S	2013/01/07 21:29:39	1.2
++++ src/newlib/libc/machine/mips/memcpy.S	2013/02/19 07:31:04	1.3
+@@ -49,7 +49,10 @@
+ #include <sys/asm.h>
+ #endif
+
+-#if (_MIPS_ISA == _MIPS_ISA_MIPS4) || (_MIPS_ISA == _MIPS_ISA_MIPS5) || \
+-    (_MIPS_ISA == _MIPS_ISA_MIPS32) || (_MIPS_ISA == _MIPS_ISA_MIPS64)
++/* Check to see if the MIPS architecture we are compiling for supports
++ * prefetching.
++ */
++
++#if (__mips == 4) || (__mips == 5) || (__mips == 32) || (__mips == 64)
+ #ifndef DISABLE_PREFETCH
+ #define USE_PREFETCH
+ #endif
