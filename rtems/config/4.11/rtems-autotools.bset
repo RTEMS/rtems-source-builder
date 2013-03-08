@@ -10,6 +10,11 @@
 %include rtems-4.11-base.bset
 
 #
+# The autotoolspackage.
+#
+package: rtems-%{rtems_version}-autotools-%{release}
+
+#
 # Tools configuration.
 #
 autoconf-2.69-1
