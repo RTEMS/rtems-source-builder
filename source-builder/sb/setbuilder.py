@@ -216,7 +216,9 @@ class buildset:
                     if l.startswith('%define'):
                         ls = l.split()
                         if len(ls) > 2:
-                            self.defaults[ls[1].strip()] = ('none', 'none', ls[2].strip())
+                            self.defaults[ls[1].strip()] = ('none',
+                                                            'none',
+                                                            ' '.join([f.strip() for f in ls[2:]]))
                         else:
                             self.defaults[ls[1].strip()] = ('none', 'none', '1')
                     elif l.startswith('%include'):

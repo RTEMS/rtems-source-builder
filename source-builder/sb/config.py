@@ -447,14 +447,14 @@ class file:
                     if len(ls) == 2:
                         self.defines[d] = '1'
                     else:
-                        self.defines[d] = ls[2].strip()
+                        self.defines[d] = ' '.join([f.strip() for f in ls[2:]])
                 else:
                     self._warning("macro '%s' already defined" % (d))
             else:
                 if len(ls) == 2:
                     self.defines[d] = '1'
                 else:
-                    self.defines[d] = ls[2].strip()
+                    self.defines[d] = ' '.join([f.strip() for f in ls[2:]])
 
     def _undefine(self, config, ls):
         if len(ls) <= 1:
