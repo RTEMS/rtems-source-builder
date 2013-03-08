@@ -546,6 +546,10 @@ the output of this command becauses of its size.
 $ ../source-builder/sb-defaults
 -------------------------------------------------------------
 
+A nested build set is given a separate copy of the defaults. Changes in one
+change set are not seen in other build sets. That same happens with
+configuration files unless inline includes are used.
+
 Build Set Files
 ~~~~~~~~~~~~~~~
 
@@ -1092,8 +1096,8 @@ Source Builder. This can also be used as `%{error: message}`.
 %define
 ^^^^^^^
 
-The +%define+ macro defines a new macro. If the macro being defined already
-exists a warning is raised. If you value is given it is assumed to be 1.
+The +%define+ macro defines a new macro or updates an existing one. If no value
+is given it is assumed to be 1.
 
 -------------------------------------------------------------
 %define foo bar

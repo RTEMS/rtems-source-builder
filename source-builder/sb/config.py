@@ -200,6 +200,7 @@ class file:
         self.opts = opts
         if self.opts.trace():
             print 'config: %s' % (name)
+        self.disable_macro_reassign = False
         self.configpath = []
         self.wss = re.compile(r'\s+')
         self.tags = re.compile(r':+')
@@ -370,7 +371,15 @@ class file:
                     expanded = True
                     mn = None
                 elif m.startswith('%{echo'):
-                    mn = None
+                    if not m.endswith('}'):
+                        self._warning("malformed conditional macro '%s'" % (m))
+                        mn = None
+                    else:
+                        e = self._expand(m[6:-1].strip())
+                        self._output('%s' % (self._name_line_msg(e)))
+                        s = ''
+                        expanded = True
+                        mn = None
                 elif m.startswith('%{defined'):
                     n = self._label(m[9:-1].strip())
                     if n in self.defines:
@@ -432,15 +441,20 @@ class file:
             self._warning('invalid macro definition')
         else:
             d = self._label(ls[1])
-            if (d not in self.defines) or \
-                    (d in self.defines and len(self.defines[d]) == 0):
+            if self.disable_macro_reassign:
+                if (d not in self.defines) or \
+                        (d in self.defines and len(self.defines[d]) == 0):
+                    if len(ls) == 2:
+                        self.defines[d] = '1'
+                    else:
+                        self.defines[d] = ls[2].strip()
+                else:
+                    self._warning("macro '%s' already defined" % (d))
+            else:
                 if len(ls) == 2:
                     self.defines[d] = '1'
                 else:
                     self.defines[d] = ls[2].strip()
-            else:
-                if self.opts.warn_all():
-                    self._warning("macro '%s' already defined" % (d))
 
     def _undefine(self, config, ls):
         if len(ls) <= 1:
@@ -448,8 +462,9 @@ class file:
         else:
             mn = self._label(ls[1])
             if mn in self.defines:
-                self._error("macro '%s' not defined" % (mn))
-            del self.defines[mn]
+                del self.defines[mn]
+            else:
+                self._warning("macro '%s' not defined" % (mn))
 
     def _ifs(self, config, ls, label, iftrue, isvalid):
         text = []
@@ -793,7 +808,7 @@ class file:
                 elif r[0] == 'control':
                     if r[1] == '%end':
                         break
-                    self._warning("unexpected '" + r[1] + "'")
+                    self._warning("unexpected '%s'" % (r[1]))
                 elif r[0] == 'directive':
                     new_data = []
                     if r[1] == '%description':
@@ -840,11 +855,11 @@ class file:
                                 # defines or can be accessed via macros.
                                 self._define(None, ('', info, info_data))
                             else:
-                                self._warning("invalid format: '" + info_data[:-1] + "'")
+                                self._warning("invalid format: '%s'" % (info_data[:-1]))
                         else:
                             data.append(l)
                 else:
-                    self._error("invalid parse state: '" + r[0] + "'")
+                    self._error("%d: invalid parse state: '%s" % (self.lc, r[0]))
             if dir is not None:
                 self._directive_extend(dir, data)
         except:
@@ -866,7 +881,7 @@ class file:
             if n in self.defines:
                 d = self.defines[n]
             else:
-                raise error.general('macro "' + name + '" not found')
+                raise error.general('%d: macro "%s" not found' % (self.lc, name))
         return self._expand(d)
 
     def set_define(self, name, value):
