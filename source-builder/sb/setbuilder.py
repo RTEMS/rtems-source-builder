@@ -207,22 +207,19 @@ class buildset:
                     continue
                 if self.opts.trace():
                     print '%03d: %s' % (lc, l)
-                if ':' in l:
-                    ls = l.split(':')
-                    if ls[0].strip() == 'package':
-                        self.bset_pkg = self.opts.expand(ls[1].strip(), self.defaults)
-                        self.defaults['package'] = ('none', 'none', self.bset_pkg)
-                elif l[0] == '%':
-                    if l.startswith('%define'):
-                        ls = l.split()
+                ls = l.split()
+                if ls[0][-1] == ':' and ls[0][:-1] == 'package':
+                    self.bset_pkg = self.opts.expand(ls[1].strip(), self.defaults)
+                    self.defaults['package'] = ('none', 'none', self.bset_pkg)
+                elif ls[0][0] == '%':
+                    if ls[0] == '%define':
                         if len(ls) > 2:
                             self.defaults[ls[1].strip()] = ('none',
                                                             'none',
                                                             ' '.join([f.strip() for f in ls[2:]]))
                         else:
                             self.defaults[ls[1].strip()] = ('none', 'none', '1')
-                    elif l.startswith('%include'):
-                        ls = l.split(' ')
+                    elif ls[0] == '%include':
                         configs += self.parse(ls[1].strip())
                     else:
                         raise error.general('invalid directive in build set files: %s' % (l))
