@@ -270,7 +270,7 @@ class build:
         # If not in the source builder package check the source directory.
         #
         if not path.exists(patch['local']):
-            patch = self.parse_url(url, '_sourcedir')
+            patch = self.parse_url(url, '_patchdir')
         self.get_file(patch['url'], patch['local'])
         if 'compressed' in patch:
             patch['script'] = patch['compressed'] + ' ' +  patch['local']
