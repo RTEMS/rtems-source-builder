@@ -39,7 +39,7 @@ except KeyboardInterrupt:
     print 'user terminated'
     sys.exit(1)
 except:
-    print 'unknown application load error'
+    print 'error: unknown application load error'
     sys.exit(1)
 
 def _check_bool(value):
