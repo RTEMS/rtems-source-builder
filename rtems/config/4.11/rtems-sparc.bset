@@ -2,9 +2,9 @@
 # Tools Set for RTEMS SPARC 4.11 Stable
 #
 
-%define _target sparc-rtems4.11
-
 %define release 1
+
+%define rtems_arch sparc
 
 #
 # The RTEMS 4.11 base defines.

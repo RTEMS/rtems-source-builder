@@ -2,9 +2,9 @@
 # Tools Set for RTEMS ARM 4.11 Stable
 #
 
-%define _target arm-rtems4.11
-
 %define release 1
+
+%define rtems_arch arm
 
 #
 # The RTEMS 4.11 base defines.
@@ -19,7 +19,7 @@
 #
 # Patch to enable EABI
 #
-Patch2: gcc-4.7-arm-to-eabi-20120511.diff
+%define rtems_gcc_patch2 %{rtems_gcc_patches}/arm/gcc-4.7-arm-to-eabi-20120511.diff
 
 #
 # Tools configuration.

@@ -4,6 +4,8 @@
 
 %define release 1
 
+%define rtems_arch none
+
 #
 # The RTEMS 4.11 base defines.
 #

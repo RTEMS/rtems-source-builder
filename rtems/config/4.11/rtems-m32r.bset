@@ -2,9 +2,9 @@
 # Tools Set for RTEMS M32R 4.11 Stable
 #
 
-%define _target m32r-rtems4.11
-
 %define release 1
+
+%define rtems_arch m32r
 
 #
 # The RTEMS 4.11 base defines.

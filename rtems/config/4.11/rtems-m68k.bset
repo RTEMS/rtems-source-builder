@@ -2,9 +2,9 @@
 # Tools Set for RTEMS M68K 4.11 Stable
 #
 
-%define _target m68k-rtems4.11
-
 %define release 1
+
+%define rtems_arch m68k
 
 #
 # The RTEMS 4.11 base defines.

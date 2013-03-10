@@ -4,13 +4,9 @@
 # The NIOS source is a special version released by Altera.
 #
 
-%define rtems_version 4.11
-
 %define release 1
 
-%define _target nios2-rtems%{rtems_version}
-
-package: rtems-%{rtems_version}-%{_target}-%{release}
+%define rtems_arch nios2
 
 #
 # The RTEMS 4.11 base defines.
