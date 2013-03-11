@@ -19,8 +19,7 @@
 #
 # Patch to enable EABI
 #
-%define rtems_gcc_patch2      %{rtems_gcc_patches}/arm/gcc-4.7-arm-to-eabi-20120511.diff
-%define rtems_gcc_patch2_opts -p0
+%define rtems_gcc_patch2 %{rtems_gcc_patches}/arm/gcc-4.7-arm-to-eabi-20120511-2.diff
 
 #
 # Tools configuration.
