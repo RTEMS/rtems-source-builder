@@ -214,11 +214,15 @@ class buildset:
                 elif ls[0][0] == '%':
                     if ls[0] == '%define':
                         if len(ls) > 2:
-                            self.defaults[ls[1].strip()] = ('none',
-                                                            'none',
-                                                            ' '.join([f.strip() for f in ls[2:]]))
+                            self.opts.define(self.defaults,
+                                             ls[1].strip(),
+                                             ' '.join([f.strip() for f in ls[2:]]))
                         else:
-                            self.defaults[ls[1].strip()] = ('none', 'none', '1')
+                            self.opts.define(self.defaults, ls[1].strip())
+                    elif ls[0] == '%undefine':
+                        if len(ls) > 2:
+                            raise error.general('%undefine requires just the name')
+                        self.opts.undefine(self.defaults, ls[1].strip())
                     elif ls[0] == '%include':
                         configs += self.parse(ls[1].strip())
                     else:
