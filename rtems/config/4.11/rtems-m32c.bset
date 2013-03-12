@@ -22,6 +22,6 @@
 # Tools configuration.
 #
 expat-2.1.0-1
-tools/rtems-binutils-2.22-1
+tools/rtems-binutils-2.23.1-1
 tools/rtems-gcc-4.7.2-newlib-2.0.0-1
 tools/rtems-gdb-7.5.1-1
