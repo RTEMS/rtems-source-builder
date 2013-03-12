@@ -12,6 +12,11 @@
 %include rtems-4.11-base.bset
 
 #
+# GCC 4.5.3 building LM32 breaks with multiple make jobs
+#
+%undefine _smp_mflags
+
+#
 # Tools configuration.
 #
 expat-2.1.0-1
