@@ -12,9 +12,10 @@
 %include rtems-4.11-base.bset
 
 #
-# Moxie Binutils patches
+# Moxie Binutil and GDB patches
 #
 %define rtems_binutils_patch1 %{rtems_binutils_patches}/moxie/binutils-2.22-rtems4.11-moxie-20130214.diff
+%define rtems_gdb_patch1      %{rtems_gdb_patches}/moxie/gdb-7.5.1-rtems4.11-moxie-20130214.diff
 
 #
 # Tools configuration.
@@ -23,4 +24,4 @@ expat-2.1.0-1
 dtc-1.2.0
 tools/rtems-binutils-2.22-1
 tools/rtems-gcc-4.7.2-newlib-2.0.0-1
-tools/rtems-moxie-gdb-7.5.1-1
+tools/rtems-gdb-7.5.1-1
