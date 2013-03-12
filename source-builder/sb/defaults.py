@@ -28,6 +28,7 @@ import os
 
 import error
 import execute
+import git
 import path
 import sys
 
@@ -427,6 +428,13 @@ class command_line:
             raise error.general('host not set')
         return _defaults
 
+    def define(self, _defaults, key, value = '1'):
+        _defaults[key] = ('none', 'none', value)
+
+    def undefine(self, _defaults, key):
+        if key in _defaults:
+            del _defaults[key]
+
     def expand(self, s, _defaults):
         """Simple basic expander of config file macros."""
         mf = re.compile(r'%{[^}]+}')
@@ -567,6 +575,23 @@ def load(args, optargs = None):
     for k in o.defaults:
         d[k] = o.defaults[k]
     d = o._post_process(d)
+    repo = git.repo(o.expand('%{_sbdir}', d), o, d)
+    if repo.valid():
+        repo_valid = '1'
+        repo_head = repo.head()
+        repo_clean = repo.clean()
+        repo_id = repo_head
+        if not repo_clean:
+            repo_id += '-modified'
+    else:
+        repo_valid = '0'
+        repo_head = '%{nil}'
+        repo_clean = '%{nil}'
+        repo_id = 'no-repo'
+    o.define(d, '_sbgit_valid', repo_valid)
+    o.define(d, '_sbgit_head', repo_head)
+    o.define(d, '_sbgit_clean', str(repo_clean))
+    o.define(d, '_sbgit_id', repo_id)
     return o, d
 
 def run(args):
