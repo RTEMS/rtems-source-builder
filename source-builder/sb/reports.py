@@ -356,7 +356,7 @@ class report:
         if config.endswith('.bset'):
             self.buildset(config)
         elif config.endswith('.cfg'):
-            self.config(config)
+            self.config(config, self.defaults, self.opts)
         else:
             raise error.general('invalid config type: %s' % (config))
         self.generate(outname)
