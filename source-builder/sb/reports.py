@@ -22,6 +22,7 @@
 # installed not to be package unless you run a packager around this.
 #
 
+import copy
 import datetime
 import os
 import sys
@@ -251,9 +252,9 @@ class report:
             if self.is_asciidoc():
                 self.output('--------------------------------------------')
 
-    def config(self, configname):
+    def config(self, configname, _defaults, _opts):
 
-        _config = config.file(configname, _defaults = self.defaults, opts = self.opts)
+        _config = config.file(configname, _defaults = _defaults, opts = _opts)
         packages = _config.packages()
         package = packages['main']
         name = package.name()
@@ -311,15 +312,17 @@ class report:
     def buildset(self, name):
         self.bset_nesting += 1
         self.buildset_start(name)
+        _opts = copy.deepcopy(self.opts)
+        _defaults = copy.deepcopy(self.defaults)
         bset = setbuilder.buildset(name,
                                    _configs = self.configs,
-                                   _defaults = self.defaults,
-                                   opts = self.opts)
+                                   _defaults = _defaults,
+                                   opts = _opts)
         for c in bset.load():
             if c.endswith('.bset'):
                 self.buildset(c)
             elif c.endswith('.cfg'):
-                self.config(c)
+                self.config(c, _defaults, _opts)
             else:
                 raise error.general('invalid config type: %s' % (c))
         self.buildset_end(name)
