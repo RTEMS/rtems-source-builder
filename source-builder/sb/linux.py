@@ -67,21 +67,24 @@ def load():
         '__tar':          ('exe',     'required', '/bin/tar')
         }
     variations = {
-        'Ubuntu' : {'__bzip2':        ('exe',     'required', '/bin/bzip2'),
-                    '__chgrp':        ('exe',     'required', '/bin/chgrp'),
-                    '__chown':        ('exe',     'required', '/bin/chown'),
-                    '__grep':         ('exe',     'required', '/bin/grep'),
-                    '__sed':          ('exe',     'required', '/bin/sed') },
-	'Fedora' : { '__install_info': ('exe',     'required', '/sbin/install-info') },
-	'Arch'   : { '__gzip':	 ('exe',     'required', '/usr/bin/gzip'),
-                     '__chown':  ('exe',     'required', '/usr/bin/chown') }
+        'Ubuntu' : {'__bzip2':         ('exe',     'required', '/bin/bzip2'),
+                    '__chgrp':         ('exe',     'required', '/bin/chgrp'),
+                    '__chown':         ('exe',     'required', '/bin/chown'),
+                    '__grep':          ('exe',     'required', '/bin/grep'),
+                    '__sed':           ('exe',     'required', '/bin/sed') },
+        'Fedora' : { '__install_info': ('exe',     'required', '/sbin/install-info') },
+        'Arch'   : { '__gzip':         ('exe',     'required', '/usr/bin/gzip'),
+                     '__chown':        ('exe',     'required', '/usr/bin/chown') }
         }
     # Works for LSB distros
     distro = platform.dist()[0]
     # Non LSB - fail over to issue
     if distro == '':
-        issue = open('/etc/issue').read()
-        distro = issue.split(' ')[0]
+        try:
+            issue = open('/etc/issue').read()
+            distro = issue.split(' ')[0]
+        except:
+            distro = 'Ubuntu'
 
     if variations.has_key(distro):
         for v in variations[distro]:
