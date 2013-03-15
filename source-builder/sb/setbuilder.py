@@ -153,8 +153,7 @@ class buildset:
         if not self.opts.get_arg('--no-install'):
             dst = _build.config.expand('%{_prefix}')
             src = path.join(src, dst)
-            _notice(self.opts, 'installing: %s -> %s' % \
-                        (self.bset_pkg, path.host(dst)))
+            _notice(self.opts, 'installing: %s -> %s' % (_build.name(), path.host(dst)))
             if not self.opts.dry_run():
                 self.copy(src, dst)
 
@@ -374,6 +373,7 @@ def run():
                 print 'dep[%d]: %s' % (c, d)
     except error.general, gerr:
         print gerr
+        print >> sys.stderr, 'Build FAILED'
         sys.exit(1)
     except error.internal, ierr:
         print ierr

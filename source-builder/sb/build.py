@@ -506,9 +506,11 @@ def run(args):
                 del b
     except error.general, gerr:
         print gerr
+        print >> sys.stderr, 'Build FAILED'
         sys.exit(1)
     except error.internal, ierr:
         print ierr
+        print >> sys.stderr, 'Build FAILED'
         sys.exit(1)
     except error.exit, eerr:
         pass
