@@ -50,6 +50,7 @@ def load():
         cpu = 'arm'
     else:
         cpu = uname[4]
+
     defines = {
         '_os':            ('none',    'none',     'linux'),
         '_host':          ('triplet', 'required', cpu + '-linux-gnu'),
@@ -66,25 +67,41 @@ def load():
         '__gzip':         ('exe',     'required', '/bin/gzip'),
         '__tar':          ('exe',     'required', '/bin/tar')
         }
-    variations = {
-        'Ubuntu' : {'__bzip2':         ('exe',     'required', '/bin/bzip2'),
-                    '__chgrp':         ('exe',     'required', '/bin/chgrp'),
-                    '__chown':         ('exe',     'required', '/bin/chown'),
-                    '__grep':          ('exe',     'required', '/bin/grep'),
-                    '__sed':           ('exe',     'required', '/bin/sed') },
-        'Fedora' : { '__install_info': ('exe',     'required', '/sbin/install-info') },
-        'Arch'   : { '__gzip':         ('exe',     'required', '/usr/bin/gzip'),
-                     '__chown':        ('exe',     'required', '/usr/bin/chown') }
-        }
+
     # Works for LSB distros
     distro = platform.dist()[0]
+
     # Non LSB - fail over to issue
     if distro == '':
         try:
             issue = open('/etc/issue').read()
             distro = issue.split(' ')[0]
         except:
-            distro = 'Ubuntu'
+            pass
+
+    # Manage distro aliases
+    if distro in ['centos', 'fedora']:
+        distro = 'redhat'
+    if distro in ['Ubuntu', 'ubuntu']:
+        distro = 'debian'
+    if distro in ['Arch']:
+        distro = 'arch'
+
+    variations = {
+        'debian' : { '__bzip2':        ('exe',     'required', '/bin/bzip2'),
+                     '__chgrp':        ('exe',     'required', '/bin/chgrp'),
+                     '__chown':        ('exe',     'required', '/bin/chown'),
+                     '__grep':         ('exe',     'required', '/bin/grep'),
+                     '__sed':          ('exe',     'required', '/bin/sed') },
+        'redhat' : { '__bzip2':        ('exe',     'required', '/bin/bzip2'),
+                     '__chgrp':        ('exe',     'required', '/bin/chgrp'),
+                     '__chown':        ('exe',     'required', '/bin/chown'),
+                     '__grep':         ('exe',     'required', '/bin/grep'),
+                     '__sed':          ('exe',     'required', '/bin/sed'),
+                     '__install_info': ('exe',     'required', '/sbin/install-info') },
+        'arch'   : { '__gzip':         ('exe',     'required', '/usr/bin/gzip'),
+                     '__chown':        ('exe',     'required', '/usr/bin/chown') },
+        }
 
     if variations.has_key(distro):
         for v in variations[distro]:
