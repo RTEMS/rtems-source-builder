@@ -73,7 +73,8 @@ def load():
                     '__grep':         ('exe',     'required', '/bin/grep'),
                     '__sed':          ('exe',     'required', '/bin/sed') },
 	'Fedora' : { '__install_info': ('exe',     'required', '/sbin/install-info') },
-	'Arch'   : { '__gzip':	 ('exe',     'required', '/usr/bin/gzip') }
+	'Arch'   : { '__gzip':	 ('exe',     'required', '/usr/bin/gzip'),
+                     '__chown':  ('exe',     'required', '/usr/bin/chown') }
         }
     # Works for LSB distros
     distro = platform.dist()[0]
