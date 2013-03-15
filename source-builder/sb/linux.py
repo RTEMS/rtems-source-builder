@@ -25,6 +25,7 @@
 import pprint
 import os
 
+import platform
 import execute
 import path
 
@@ -66,16 +67,25 @@ def load():
         '__tar':          ('exe',     'required', '/bin/tar')
         }
     variations = {
-        '__bzip2':        ('exe',     'required', '/bin/bzip2'),         # Ubuntu
-	'__chgrp':        ('exe',     'required', '/bin/chgrp'),         # Ubuntu
-	'__chown':        ('exe',     'required', '/bin/chown'),         # Ubuntu
-	'__grep':         ('exe',     'required', '/bin/grep'),          # Ubuntu
-	'__sed':          ('exe',     'required', '/bin/sed'),           # Ubuntu
-	'__install_info': ('exe',     'required', '/sbin/install-info')  # Fedora
+        'Ubuntu' : {'__bzip2':        ('exe',     'required', '/bin/bzip2'),
+                    '__chgrp':        ('exe',     'required', '/bin/chgrp'),
+                    '__chown':        ('exe',     'required', '/bin/chown'),
+                    '__grep':         ('exe',     'required', '/bin/grep'),
+                    '__sed':          ('exe',     'required', '/bin/sed') },
+	'Fedora' : { '__install_info': ('exe',     'required', '/sbin/install-info') },
+	'Arch'   : { '__gzip':	 ('exe',     'required', '/usr/bin/gzip') }
         }
-    for v in variations:
-        if path.exists(variations[v][2]):
-	    defines[v] = variations[v]
+    # Works for LSB distros
+    distro = platform.dist()[0]
+    # Non LSB - fail over to issue
+    if distro == '':
+        issue = open('/etc/issue').read()
+        distro = issue.split(' ')[0]
+
+    if variations.has_key(distro):
+        for v in variations[distro]:
+            if path.exists(variations[distro][v][2]):
+                defines[v] = variations[distro][v]
     return defines
 
 if __name__ == '__main__':
