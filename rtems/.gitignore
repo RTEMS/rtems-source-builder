@@ -5,3 +5,5 @@ tar
 build
 *.txt
 *.html
+#*#
+.*
