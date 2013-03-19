@@ -1,0 +1,7 @@
+#
+# Base defines for RTEMS 4.10
+#
+
+%define rtems_version 4.10
+
+%include rtems-base.bset

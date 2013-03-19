@@ -1,0 +1,23 @@
+#
+# Tools Set for RTEMS 4.9 Autotools Stable
+#
+
+%define release 1
+
+%define rtems_arch none
+
+#
+# The RTEMS 4.9 base defines.
+#
+%include rtems-4.9-base.bset
+
+#
+# The autotoolspackage.
+#
+package: rtems-%{rtems_version}-autotools-%{release}
+
+#
+# Tools configuration.
+#
+autoconf-2.69-1
+automake-1.12.2-1

@@ -1,0 +1,18 @@
+#
+# All RTEMS 4.10 Tools Sets
+#
+
+4.10/rtems-autotools
+4.10/rtems-arm
+4.10/rtems-avr
+4.10/rtems-bfin
+4.10/rtems-i386
+4.10/rtems-lm32
+4.10/rtems-m32c
+4.10/rtems-m32r
+4.10/rtems-m68k
+4.10/rtems-mips
+4.10/rtems-nios2
+4.10/rtems-powerpc
+4.10/rtems-sh
+4.10/rtems-sparc
