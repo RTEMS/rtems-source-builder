@@ -38,6 +38,7 @@ from source and taught this tool. The RTEMS Source Builder has been tested on:
 * Centos
 * Fedora
 * Raspbian
+* Archlinux
 
 Windows support is being added how-ever there are issues with the Python
 threading used in the RTEMS Source Builder and the MinGW project's MSYS process
@@ -705,7 +706,7 @@ become `foo`.
 
 `%{expand: string}`;;
 Expand the 'string' and then use it as a ``string'' to the macro expanding the
-macro. For example if _foo_ is set to 'bar' and 'bar' is set to 'foovar' then
+macro. For example if _foo_ is set to 'bar' and 'bar' is set to 'foobar' then
 `%{expand:foo}` would result in `foobar`. Shell expansion can also be used.
 
 `%{with string}`;;
@@ -1585,6 +1586,25 @@ bison flex xz unzip ncurses-devel texinfo zlib-devel python-devel git
 The minimal CentOS distribution is a specific DVD that installs a minimal
 system. If you use a full system some of these packages may have been
 installed.
+
+Archlinux
+~~~~~~~~~
+
+The following packages are required on a fresh Archlinux installation
+
+--------------------------------------------------------------
+# pacman -S base-devel gdb xz unzip ncurses git zlib
+--------------------------------------------------------------
+
+Archlinux, by default installs `texinfo-5` which is incompatible for building
+GCC 4.7 tree. You will have to obtain `texinfo-legacy` from `AUR` and provide 
+a manual override.
+
+--------------------------------------------------------------
+# pacman -R texinfo
+$ yaourt -S texinfo-legacy
+# ln -s /usr/bin/makeinfo-4.13a /usr/bin/makeinfo
+--------------------------------------------------------------
 
 History
 -------
