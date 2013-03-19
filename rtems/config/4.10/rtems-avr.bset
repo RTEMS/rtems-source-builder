@@ -18,7 +18,6 @@
 %define enable_cxx 0
 %define rtems_cxx  0
 
-
 #
 # Tools configuration.
 #
