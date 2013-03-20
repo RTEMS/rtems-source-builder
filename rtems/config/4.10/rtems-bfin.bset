@@ -12,6 +12,11 @@
 %include rtems-4.10-base.bset
 
 #
+# GDB simulator fix for the sed command.
+#
+%define rtems_gdb_patch2 %{rtems_gdb_patches}/bfin/gdb-7.3.1-bfin-sim-fix-sed-20130319.diff
+
+#
 # Tools configuration.
 #
 expat-2.1.0-1
