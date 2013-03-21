@@ -61,7 +61,8 @@ def load():
         '__bison':      ('exe',     'required', '/usr/local/bin/bison'),
         '__git':        ('exe',     'required', '/usr/local/bin/git'),
         '__xz':         ('exe',     'optional', '/usr/bin/xz'),
-        '__make':       ('exe',     'required', 'gmake')
+        '__make':       ('exe',     'required', 'gmake'),
+        '__patch_opts': ('none',     'none',    '-E')
         }
     return defines
 
