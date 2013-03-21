@@ -139,6 +139,7 @@ defaults = {
 '__objcopy':           ('exe',     'optional', '/usr/bin/objcopy'),
 '__objdump':           ('exe',     'optional', '/usr/bin/objdump'),
 '__patch_bin':         ('exe',     'required', '/usr/bin/patch'),
+'__patch_opts':        ('none',    'none',     '%{nil}'),
 '__patch':             ('exe',     'none',     '%{__patch_bin} %{__patch_opts}'),
 '__perl':              ('exe',     'optional', 'perl'),
 '__ranlib':            ('exe',     'required', 'ranlib'),
