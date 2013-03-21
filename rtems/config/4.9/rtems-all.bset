@@ -3,6 +3,9 @@
 #
 
 4.9/rtems-autotools
+4.9/rtems-arm
 4.9/rtems-i386
 4.9/rtems-m68k
+4.9/rtems-mips
+4.9/rtems-powerpc
 4.9/rtems-sparc
