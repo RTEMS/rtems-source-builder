@@ -113,7 +113,7 @@ class buildset:
             buildroot = _build.config.abspath('%{buildroot}')
             prefix = self.opts.expand('%{_prefix}', self.defaults)
             name = _build.main_package().name() + ext
-            outpath = path.host(path.join(buildroot, prefix, 'rtems-source-builder'))
+            outpath = path.host(path.join(buildroot, prefix, 'share', 'rtems-source-builder'))
             outname = path.host(path.join(outpath, name))
             _notice(self.opts, 'reporting: %s -> %s' % (_config, name))
             if not self.opts.dry_run():
