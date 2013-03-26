@@ -32,13 +32,14 @@ some sort of magic that can take any piece of source code and make it
 build. Someone at some point in time has figured out how to build that package
 from source and taught this tool. The RTEMS Source Builder has been tested on:
 
-* FreeBSD
-* MacOS (Mountain Lion)
-* Ubuntu
+* Archlinux
 * Centos
 * Fedora
+* FreeBSD
+* MacOS
+* openSUSE
 * Raspbian
-* Archlinux
+* Ubuntu
 
 Windows support is being added how-ever there are issues with the Python
 threading used in the RTEMS Source Builder and the MinGW project's MSYS process
@@ -1541,22 +1542,58 @@ Options and arguments:
 Host Setups
 -----------
 
+The host versions are listed. If a later version of the host operating system
+exists it should unless listed.
+
+Archlinux
+~~~~~~~~~
+
+The following packages are required on a fresh Archlinux installation
+
+--------------------------------------------------------------
+# pacman -S base-devel gdb xz unzip ncurses git zlib
+--------------------------------------------------------------
+
+Archlinux, by default installs `texinfo-5` which is incompatible for building
+GCC 4.7 tree. You will have to obtain `texinfo-legacy` from `AUR` and provide
+a manual override.
+
+--------------------------------------------------------------
+# pacman -R texinfo
+$ yaourt -S texinfo-legacy
+# ln -s /usr/bin/makeinfo-4.13a /usr/bin/makeinfo
+--------------------------------------------------------------
+
+CentOS
+~~~~~~
+
+The following packages are required on a minimal CentOS 6.3 installation:
+
+-------------------------------------------------------------
+# yum install autoconf automake binutils gcc gcc-c++ gdb make patch \
+bison flex xz unzip ncurses-devel texinfo zlib-devel python-devel git
+-------------------------------------------------------------
+
+The minimal CentOS distribution is a specific DVD that installs a minimal
+system. If you use a full system some of these packages may have been
+installed.
+
+Fedora
+~~~~~~
+
+The RTEMS Source Builder has been tested on Fedora 18.
+
+FreeBSD
+~~~~~~~
+
+The RTEMS Source Builder has been tested on FreeBSD 9.1.
+
 MacOS X
 ~~~~~~~
 
 The RTEMS Source Builder has been tested on Mountain Lion. You will need to
 install the Xcode app using the _App Store_ tool, run Xcode and install the
 Developers Tools package within Xcode.
-
-Ubuntu
-~~~~~~
-
-The latest testing was with 12.10. A minimal installation was used and the
-following packages installed.
-
--------------------------------------------------------------
-$ sudo apt-get build-dep binutils gcc g++ gdb unzip git
--------------------------------------------------------------
 
 Raspbian
 ~~~~~~~~
@@ -1573,38 +1610,15 @@ It is recommended you get Model B of the Pi with 512M of memory and to mount a
 remote disk over the network. The tools can be build with a prefix under your
 home directory as recommended and end up on the SD card.
 
-CentOS 6
-~~~~~~~~
+Ubuntu
+~~~~~~
 
-The following packages are required on a minimal CentOS 6.3 installation:
+The latest testing was with 12.10. A minimal installation was used and the
+following packages installed.
 
 -------------------------------------------------------------
-# yum install autoconf automake binutils gcc gcc-c++ gdb make patch \
-bison flex xz unzip ncurses-devel texinfo zlib-devel python-devel git
+$ sudo apt-get build-dep binutils gcc g++ gdb unzip git
 -------------------------------------------------------------
-
-The minimal CentOS distribution is a specific DVD that installs a minimal
-system. If you use a full system some of these packages may have been
-installed.
-
-Archlinux
-~~~~~~~~~
-
-The following packages are required on a fresh Archlinux installation
-
---------------------------------------------------------------
-# pacman -S base-devel gdb xz unzip ncurses git zlib
---------------------------------------------------------------
-
-Archlinux, by default installs `texinfo-5` which is incompatible for building
-GCC 4.7 tree. You will have to obtain `texinfo-legacy` from `AUR` and provide 
-a manual override.
-
---------------------------------------------------------------
-# pacman -R texinfo
-$ yaourt -S texinfo-legacy
-# ln -s /usr/bin/makeinfo-4.13a /usr/bin/makeinfo
---------------------------------------------------------------
 
 History
 -------
