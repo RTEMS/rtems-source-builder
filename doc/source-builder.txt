@@ -1548,7 +1548,7 @@ exists it should unless listed.
 Archlinux
 ~~~~~~~~~
 
-The following packages are required on a fresh Archlinux installation
+The following packages are required on a fresh Archlinux 64bit installation:
 
 --------------------------------------------------------------
 # pacman -S base-devel gdb xz unzip ncurses git zlib
@@ -1567,7 +1567,7 @@ $ yaourt -S texinfo-legacy
 CentOS
 ~~~~~~
 
-The following packages are required on a minimal CentOS 6.3 installation:
+The following packages are required on a minimal CentOS 6.3 64bit installation:
 
 -------------------------------------------------------------
 # yum install autoconf automake binutils gcc gcc-c++ gdb make patch \
@@ -1581,12 +1581,12 @@ installed.
 Fedora
 ~~~~~~
 
-The RTEMS Source Builder has been tested on Fedora 18.
+The RTEMS Source Builder has been tested on Fedora 18 64bit.
 
 FreeBSD
 ~~~~~~~
 
-The RTEMS Source Builder has been tested on FreeBSD 9.1.
+The RTEMS Source Builder has been tested on FreeBSD 9.1 64bit.
 
 MacOS X
 ~~~~~~~
@@ -1613,8 +1613,8 @@ home directory as recommended and end up on the SD card.
 Ubuntu
 ~~~~~~
 
-The latest testing was with 12.10. A minimal installation was used and the
-following packages installed.
+The latest testing was with Ubuntu 12.10 64bit. A minimal installation was used
+and the following packages installed.
 
 -------------------------------------------------------------
 $ sudo apt-get build-dep binutils gcc g++ gdb unzip git
