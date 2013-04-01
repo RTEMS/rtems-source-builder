@@ -58,7 +58,6 @@ defaults = {
 
 # Paths
 '_host_platform':      ('none',    'none',     '%{_host_cpu}-%{_host_vendor}-%{_host_os}%{?_gnu}'),
-'_build':              ('none',    'none',     '%{_host}'),
 '_arch':               ('none',    'none',     '%{_host_arch}'),
 '_sbdir':              ('none',    'none',     ''),
 '_topdir':             ('dir',     'required',  path.shell(os.getcwd())),
@@ -67,10 +66,13 @@ defaults = {
 '_sourcedir':          ('dir',     'optional', '%{_topdir}/sources'),
 '_patchdir':           ('dir',     'optional', '%{_topdir}/patches:%{_sbdir}/patches'),
 '_builddir':           ('dir',     'optional', '%{_topdir}/build/%{name}-%{version}-%{release}'),
+'_buildcxcdir':        ('dir',     'optional', '%{_topdir}/build/%{name}-%{version}-%{release}-cxc'),
 '_docdir':             ('dir',     'none',     '%{_defaultdocdir}'),
 '_tmppath':            ('dir',     'none',     '%{_topdir}/build/tmp'),
 '_tmproot':            ('dir',     'none',     '%{_tmppath}/source-build-%(%{__id_u} -n)/%{_bset}'),
-'buildroot:':          ('dir',     'none',     '%{_tmppath}/%{name}-root-%(%{__id_u} -n)'),
+'_tmpcxcroot':         ('dir',     'none',     '%{_tmppath}/source-build-%(%{__id_u} -n)-cxc/%{_bset}'),
+'buildroot':           ('dir',     'none',     '%{_tmppath}/%{name}-root-%(%{__id_u} -n)'),
+'buildcxcroot':        ('dir',     'none',     '%{_tmppath}/%{name}-root-%(%{__id_u} -n)-cxc'),
 '_datadir':            ('dir',     'none',     '%{_prefix}/share'),
 '_defaultdocdir':      ('dir',     'none',     '%{_prefix}/share/doc'),
 '_exeext':             ('none',    'none',     ''),
@@ -144,11 +146,14 @@ defaults = {
 '__perl':              ('exe',     'optional', 'perl'),
 '__ranlib':            ('exe',     'required', 'ranlib'),
 '__rm':                ('exe',     'required', '/bin/rm'),
+'__rmfile':            ('exe',     'none',     '%{__rm} -f'),
+'__rmdir':             ('exe',     'none',     '%{__rm} -rf'),
 '__sed':               ('exe',     'required', '/usr/bin/sed'),
 '__setup_post':        ('exe',     'none',     '%{__chmod} -R a+rX,g-w,o-w .'),
 '__sh':                ('exe',     'required', '/bin/sh'),
 '__tar':               ('exe',     'required', '/usr/bin/tar'),
 '__tar_extract':       ('exe',     'none',     '%{__tar} -xvvf'),
+'__touch':             ('exe',     'required', '/usr/bin/touch'),
 '__unzip':             ('exe',     'required', '/usr/bin/unzip'),
 '__xz':                ('exe',     'required', '/usr/bin/xz'),
 
@@ -160,9 +165,11 @@ defaults = {
 # Prebuild set up script.
 '___build_pre': ('none', 'none', '''# ___build_pre in as set up in defaults.py
 # Directories
+%{?_prefix:SB_PREFIX="%{_prefix}"}
+%{?_prefix:SB_PREFIX_CLEAN=$(echo "%{_prefix}" | %{__sed} -e \'s/^\///\')}
 SB_SOURCE_DIR="%{_sourcedir}"
 SB_BUILD_DIR="%{_builddir}"
-SB_OPT_FLAGS="%{?_tmproot:-I%{_tmproot}/%{_prefix}/include -L%{_tmproot}/%{_prefix}/lib} %{optflags}"
+SB_OPT_FLAGS="%{?_tmproot:-I%{_tmproot}/${SB_PREFIX_CLEAN}/include -L%{_tmproot}/${SB_PREFIX_CLEAN}/lib} %{optflags}"
 SB_ARCH="%{_arch}"
 SB_OS="%{_os}"
 export SB_SOURCE_DIR SB_BUILD_DIR SB_OPT_FLAGS SB_ARCH SB_OS
@@ -173,15 +180,38 @@ export SB_DOC_DIR
 SB_PACKAGE_NAME="%{name}"
 SB_PACKAGE_VERSION="%{version}"
 SB_PACKAGE_RELEASE="%{release}"
-export SBPACKAGE_NAME SB_PACKAGE_VERSION SB_PACKAGE_RELEASE
-# Build root directory
+export SB_PACKAGE_NAME SB_PACKAGE_VERSION SB_PACKAGE_RELEASE
+# Build directories
+export SB_PREFIX
+%{?_builddir:SB_BUILD_DIR="%{_builddir}"}
 %{?buildroot:SB_BUILD_ROOT="%{buildroot}"}
-export SB_BUILD_ROOT
+%{?buildroot:%{?_prefix:SB_BUILD_ROOT_BINDIR="%{buildroot}/${SB_PREFIX_CLEAN}/bin"}}
+export SB_BUILD_ROOT SB_BUILD_DIR SB_BUILD_ROOT_BINDIR
+%{?_buildcxcdir:SB_BUILD_CXC_DIR="%{_buildcxcdir}"}
+%{?buildcxcroot:SB_BUILD_CXC_ROOT="%{buildcxcroot}"}
+%{?buildcxcroot:%{?_prefix:SB_BUILD_CXC_ROOT_BINDIR="%{buildcxcroot}/${SB_PREFIX_CLEAN}/bin"}}
+export SB_BUILD_CXC_ROOT SB_BUILD_CXC_DIR SB_BUILD_CXC_ROOT_BINDIR
+%{?_tmproot:SB_TMPROOT="%{_tmproot}"}
+%{?_tmproot:%{?_prefix:SB_TMPPREFIX="%{_tmproot}/${SB_PREFIX_CLEAN}"}}
+%{?_tmproot:%{?_prefix:SB_TMPBINDIR="%{_tmproot}/${SB_PREFIX_CLEAN}/bin"}}
+export SB_TMPROOT SB_TMPPREFIX SB_TMPBINDIR
+%{?_tmpcxcroot:SB_TMPCXCROOT="%{_tmproot}"}
+%{?_tmpcxcroot:%{?_prefix:SB_TMPCXCPREFIX="%{_tmpcxcroot}/${SB_PREFIX_CLEAN}"}}
+%{?_tmpcxcroot:%{?_prefix:SB_TMPCXCBINDIR="%{_tmpcxcroot}/${SB_PREFIX_CLEAN}/bin"}}
+export SB_TMPCXCROOT SB_TMPCXCPREFIX SB_TMPCXCBINDIR
 # The compiler flags
 %{?_targetcflags:CFLAGS_FOR_TARGET="%{_targetcflags}"}
 %{?_targetcxxflags:CXXFLAGS_FOR_TARGET="%{_targetcxxflags}"}
 export CFLAGS_FOR_TARGET
 export CXXFLAGS_FOR_TARGET
+# Set up the path. Put the CXC path first.
+if test -n "${SB_TMPBINDIR}" ; then
+ PATH="${SB_TMPBINDIR}:$PATH"
+fi
+if test -n "${SB_TMPCXCBINDIR}" ; then
+ PATH="${SB_TMPCXCBINDIR}:$PATH"
+fi
+export PATH
 # Default environment set up.
 LANG=C
 export LANG
@@ -449,7 +479,8 @@ class command_line:
                     s = s.replace(m, _defaults[name][2])
                     expanded = True
                 else:
-                    raise error.general('cannot process default macro: ' + m)
+                    raise error.general('cannot expand default macro: %s in "%s"' %
+                                        (m, s))
         return s
 
     def command(self):
@@ -555,10 +586,13 @@ def load(args, optargs = None):
     if os.name == 'nt':
         import windows
         overrides = windows.load()
-    else:
+    elif os.name == 'posix':
         uname = os.uname()
         try:
-            if uname[0] == 'Darwin':
+            if uname[0].startswith('CYGWIN_NT'):
+                import windows
+                overrides = windows.load()
+            elif uname[0] == 'Darwin':
                 import darwin
                 overrides = darwin.load()
             elif uname[0] == 'FreeBSD':
@@ -569,6 +603,8 @@ def load(args, optargs = None):
                 overrides = linux.load()
         except:
             pass
+    else:
+        raise error.general('unsupported host type; please add')
     if overrides is None:
         raise error.general('no hosts defaults found; please add')
     for k in overrides:

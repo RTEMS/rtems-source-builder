@@ -21,13 +21,42 @@
 # Windows specific support and overrides.
 #
 
+import error
 import pprint
 import os
 
 import execute
 
 def load():
+    # Default to the native Windows Python.
     uname = 'win32'
+    system = 'mingw32'
+    if os.environ.has_key('HOSTTYPE'):
+        hosttype = os.environ['HOSTTYPE']
+    else:
+        hosttype = 'i686'
+    host_triple = hosttype + '-pc-' + system
+    build_triple = hosttype + '-pc-' + system
+
+    # See if this is actually Cygwin Python
+    if os.name == 'posix':
+        try:
+            uname = os.uname()
+            hosttype = uname[4]
+            uname = uname[0]
+            if uname.startswith('CYGWIN'):
+                if uname.endswith('WOW64'):
+                    uname = 'cygwin'
+                    build_triple = hosttype + '-pc-' + uname
+                    hosttype = 'x86_64'
+                    host_triple = hosttype + '-w64-' + system
+                else:
+                    raise error.general('invalid uname for Windows')
+            else:
+                raise error.general('invalid POSIX python')
+        except:
+            pass
+
     if os.environ.has_key('NUMBER_OF_PROCESSORS'):
         ncpus = int(os.environ['NUMBER_OF_PROCESSORS'])
     else:
@@ -36,14 +65,11 @@ def load():
         smp_mflags = '-j' + str(ncpus)
     else:
         smp_mflags = ''
-    if os.environ.has_key('HOSTTYPE'):
-        hosttype = os.environ['HOSTTYPE']
-    else:
-        hosttype = 'i686'
-    system = 'mingw32'
+
     defines = {
         '_os':            ('none',    'none',     'win32'),
-        '_host':          ('triplet', 'required', hosttype + '-pc-' + system),
+        '_build':         ('triplet', 'required', build_triple),
+        '_host':          ('triplet', 'required', host_triple),
         '_host_vendor':   ('none',    'none',     'microsoft'),
         '_host_os':       ('none',    'none',     'win32'),
         '_host_cpu':      ('none',    'none',     hosttype),

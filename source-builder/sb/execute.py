@@ -102,14 +102,20 @@ class execute:
         def _readthread(fh, out, prefix = ''):
             """Read from a file handle and write to the output handler
             until the file closes."""
+            count = 0
             while True:
                 line = fh.readline()
+                count += 1
                 if len(line) == 0:
                     break
                 if out:
                     out(prefix + line)
                 else:
                     log.output(prefix + line)
+                    if count > 10:
+                        log.flush()
+                        count = 0
+
         def _timerthread(proc, timer):
             """Timer thread calls the timer handler if one
             is present once a second. The user provides a handler

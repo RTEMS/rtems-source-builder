@@ -122,48 +122,58 @@ class buildset:
                 r.make(_config, outname)
                 del r
 
-    def first_package(self, _build):
-        tmproot = path.abspath(_build.config.expand('%{_tmproot}'))
-        _build.rmdir(tmproot)
-        _build.mkdir(tmproot)
-        prefix = _build.config.expand('%{_prefix}')
-        if prefix[0] == os.sep:
-            prefix = prefix[1:]
-        tmpprefix = path.join(tmproot, prefix)
-        tmpbindir = path.join(tmpprefix, 'bin')
-        # exporting to the environment
-        os.environ['SB_TMPPREFIX'] = tmpprefix
-        os.environ['SB_TMPBINDIR'] = tmpbindir
-        os.environ['SB_ORIG_PATH'] = os.environ['PATH']
-        os.environ['PATH'] = path.host(tmpbindir) + os.pathsep + os.environ['PATH']
-        self._output('path: ' + os.environ['PATH'])
-        # shell format
-        return tmproot
+    def root_copy(self, src, dst):
+        what = '%s -> %s' % \
+            (os.path.relpath(path.host(src)), os.path.relpath(path.host(dst)))
+        if self.opts.trace():
+            _notice(self.opts, 'collecting: %s' % (what))
+        if not self.opts.dry_run():
+            self.copy(src, dst)
 
-    def every_package(self, _build, tmproot):
-        src = _build.config.abspath('%{buildroot}')
-        dst = tmproot
-        if self.opts.get_arg('--bset-tar-file'):
-            what = '%s -> %s' % \
-                (os.path.relpath(path.host(src)), os.path.relpath(path.host(dst)))
-            if self.opts.trace():
-                _notice(self.opts, 'collecting: %s' % (what))
-            if not self.opts.dry_run():
-                self.copy(src, dst)
-        if not self.opts.get_arg('--no-install'):
-            dst = _build.config.expand('%{_prefix}')
-            src = path.join(src, dst)
-            _notice(self.opts, 'installing: %s -> %s' % (_build.name(), path.host(dst)))
-            if not self.opts.dry_run():
-                self.copy(src, dst)
+    def install(self, name, buildroot, prefix):
+        dst = prefix
+        src = path.join(buildroot, prefix)
+        _notice(self.opts, 'installing: %s -> %s' % (name, path.host(dst)))
+        if not self.opts.dry_run():
+            self.copy(src, dst)
 
-    def last_package(self, _build, tmproot):
+    def canadian_cross(self, _build):
+        defaults_to_save = ['%{_prefix}', 
+                            '%{_tmproot}',
+                            '%{buildroot}',
+                            '%{_builddir}',
+                            '%{_host}']
+        defaults_to_copy = [('%{_host}',     '%{_build}'),
+                            ('%{_tmproot}',  '%{_tmpcxcroot}'),
+                            ('%{buildroot}', '%{buildcxcroot}'),
+                            ('%{_builddir}', '%{_buildcxcdir}')]
+        orig_defaults = {}
+        for d in defaults_to_save:
+            orig_defaults[d] = _build.config.default(d)
+        for d in defaults_to_copy:
+            _build.config.set_define(d[0], _build.config.default(d[1]))
+        _build.make()
+        for d in defaults_to_save:
+            _build.config.set_define(d, orig_defaults[d])
+        self.root_copy(_build.config.expand('%{buildcxcroot}'), 
+                       _build.config.expand('%{_tmpcxcroot}'))
+
+    def build_package(self, _config, _build):
+        if _build.canadian_cross():
+            self.canadian_cross(_build)
+        _build.make()
+        self.report(_config, _build)
+        self.root_copy(_build.config.expand('%{buildroot}'), 
+                       _build.config.expand('%{_tmproot}'))
+
+    def bset_tar(self, _build):
+        tardir = _build.config.expand('%{_tardir}')
         if self.opts.get_arg('--bset-tar-file'):
-            tardir = _build.config.expand('%{_tardir}')
             path.mkdir(tardir)
             tar = path.join(tardir, _build.config.expand('%s.tar.bz2' % (self.bset_pkg)))
             _notice(self.opts, 'tarball: %s' % (os.path.relpath(path.host(tar))))
             if not self.opts.dry_run():
+                tmproot = _build.config.expand('%{_tmproot}')
                 cmd = _build.config.expand("'cd " + tmproot + \
                                                " && %{__tar} -cf - . | %{__bzip2} > " + tar + "'")
                 _build.run(cmd, shell_opts = '-c', cwd = tmproot)
@@ -265,7 +275,7 @@ class buildset:
         _trace(self.opts, '_bset:%s: configs: %s'  % (self.bset, ','.join(configs)))
 
         current_path = os.environ['PATH']
-
+        
         start = datetime.datetime.now()
 
         try:
@@ -291,14 +301,10 @@ class buildset:
                                         self.opts.get_arg('--pkg-tar-files'),
                                         _defaults = _defaults,
                                         opts = _opts)
-                        if s == 0:
-                            tmproot = self.first_package(b)
                         if deps is None:
-                            b.make()
-                            self.report(configs[s], b)
-                            self.every_package(b, tmproot)
+                            self.build_package(configs[s], b)
                             if s == len(configs) - 1:
-                                self.last_package(b, tmproot)
+                                self.bset_tar(b)
                         else:
                             deps += b.config.includes()
                         builds += [b]
@@ -309,7 +315,13 @@ class buildset:
                         print gerr
                     else:
                         raise
-            if deps is None and (not self.opts.no_clean() or self.opts.get_arg('--keep-going')):
+            if deps is None and not self.opts.get_arg('--no-install'):
+                for b in builds:
+                    self.install(b.name(),
+                                 b.config.expand('%{buildroot}'), 
+                                 b.config.expand('%{_prefix}'))
+            if deps is None and \
+                    (not self.opts.no_clean() or self.opts.get_arg('--keep-going')):
                 for b in builds:
                     _notice(self.opts, 'cleaning: %s' % (b.name()))
                     b.cleanup()

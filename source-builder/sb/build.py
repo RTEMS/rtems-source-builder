@@ -279,6 +279,13 @@ class build:
         patch['script'] += ' | %{__patch} ' + ' '.join(args[1:])
         self.script.append(self.config.expand(patch['script']))
 
+    def canadian_cross(self):
+        _host = self.config.expand('%{_host}')
+        _build = self.config.expand('%{_build}')
+        _target = self.config.expand('%{_target}')
+        return self.config.defined('%{allow_cxc}') and \
+            _host != _build and _host != _target
+
     def setup(self, package, args):
         self._output('prep: %s: %s' % (package.name(), ' '.join(args)))
         opts, args = getopt.getopt(args[1:], 'qDcTn:b:a:')
@@ -367,6 +374,11 @@ class build:
                 self.script.append(' '.join(args))
 
     def build(self, package):
+        self.script.append('echo "==> clean %{buildroot}: ${SB_BUILD_ROOT}"')
+        self.script.append('%s ${SB_BUILD_ROOT}' %
+                           (self.config.expand('%{__rmdir}')))
+        self.script.append('%s ${SB_BUILD_ROOT}' %
+                           (self.config.expand('%{__mkdir_p}')))
         self.script.append('echo "==> %build:"')
         _build = package.build()
         for l in _build:
@@ -389,7 +401,7 @@ class build:
             inpath = path.join('%{buildroot}', prefixbase)
             tardir = path.abspath(self.config.expand('%{_tardir}'))
             self.script.append(self.config.expand('if test -d %s; then' % (inpath)))
-            self.script.append('  mkdir -p %s' % tardir)
+            self.script.append(self.config.expand('  %%{__mkdir_p} %s' % tardir))
             self.script.append(self.config.expand('  cd ' + inpath))
             tar = path.join(tardir, package.long_name() + '.tar.bz2')
             cmd = self.config.expand('  %{__tar} -cf - . ' + '| %{__bzip2} > ' + tar)
@@ -405,10 +417,23 @@ class build:
                 args = l.split()
                 self.script.append(' '.join(args))
 
+    def build_package(self, package):
+        if self.canadian_cross():
+            self.script.append('echo "==> Candian-cross build/target:"')
+            self.script.append('SB_CXC="yes"')
+        else:
+            self.script.append('SB_CXC="no"')
+        self.build(package)
+        self.install(package)
+        self.files(package)
+        if not self.opts.no_clean():
+            self.clean(package)
+
     def cleanup(self):
         if not self.opts.no_clean():
             buildroot = self.config.abspath('buildroot')
             builddir = self.config.abspath('_builddir')
+            buildcxcdir = self.config.abspath('_buildcxcdir')
             tmproot = self.config.abspath('_tmproot')
             if self.opts.trace():
                 _notice(self.opts, 'cleanup: %s' % (buildroot))
@@ -416,6 +441,10 @@ class build:
             if self.opts.trace():
                 _notice(self.opts, 'cleanup: %s' % (builddir))
             self.rmdir(builddir)
+            if self.canadian_cross():
+                if self.opts.trace():
+                    _notice(self.opts, 'cleanup: %s' % (buildcxcdir))
+                self.rmdir(buildcxcdir)
             if self.opts.trace():
                 _notice(self.opts, 'cleanup: %s' % (tmproot))
             self.rmdir(tmproot)
@@ -427,22 +456,24 @@ class build:
     def make(self):
         package = self.main_package()
         name = package.name()
-        _notice(self.opts, 'package: %s' % (name))
+        if self.canadian_cross():
+            _notice(self.opts, 'package: (Cxc) %s' % (name))
+        else:
+            _notice(self.opts, 'package: %s' % (name))
         self.script.reset()
         self.script.append(self.config.expand('%{___build_template}'))
         self.script.append('echo "=> ' + name + ':"')
         self.prep(package)
-        self.build(package)
-        self.install(package)
-        self.files(package)
-        if not self.opts.no_clean():
-            self.clean(package)
+        self.build_package(package)
         if not self.opts.dry_run():
             self.builddir()
             sn = path.join(self.config.expand('%{_builddir}'), 'doit')
             self._output('write script: ' + sn)
             self.script.write(sn)
-            _notice(self.opts, 'building: ' + name)
+            if self.canadian_cross():
+                _notice(self.opts, 'building: (Cxc) %s' % (name))
+            else:
+                _notice(self.opts, 'building: %s' % (name))
             self.run(sn)
 
     def name(self):
@@ -490,7 +521,8 @@ def run(args):
         _notice(opts, 'RTEMS Source Builder, Package Builder v%s' % (version))
         if not check.host_setup(opts, _defaults):
             if not opts.force():
-                raise error.general('host build environment is not set up correctly (use --force to proceed)')
+                raise error.general('host build environment is not set up' + 
+                                    ' correctly (use --force to proceed)')
             _notice(opts, 'warning: forcing build with known host setup problems')
         if opts.get_arg('--list-configs'):
             configs = get_configs(opts, _defaults)

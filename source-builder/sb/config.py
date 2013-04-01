@@ -25,6 +25,7 @@
 # other software modules.
 #
 
+import copy
 import os
 import re
 import sys
@@ -54,9 +55,10 @@ def _check_bool(value):
 
 class package:
 
-    def __init__(self, name, arch):
+    def __init__(self, name, arch, config):
         self._name = name
         self._arch = arch
+        self.config = config
         self.directives = {}
         self.infos = {}
 
@@ -91,12 +93,15 @@ class package:
             self.infos[info] = []
         self.infos[info].append(data)
 
-    def get_info(self, info):
+    def get_info(self, info, expand = True):
         if info in self.infos:
-            return self.infos[info]
+            if expand:
+                return self.config.expand(self.infos[info])
+            else:
+                return self.infos[info]
         return None
 
-    def extract_info(self, label):
+    def extract_info(self, label, expand = True):
         infos = {}
         for i in self.infos:
             il = i.lower()
@@ -105,19 +110,25 @@ class package:
                     il = label + '0'
                 elif not il[len(label):].isdigit():
                     continue
-                infos[il] = self.infos[i]
+                infos[il] = self.config.expand(self.infos[i])
         return infos
 
-    def find_info(self, label):
+    def find_info(self, label, expand = True):
         for i in self.infos:
             if i.lower() == label:
-                return self.infos[i]
+                if expand:
+                    return self.config.expand(self.infos[i])
+                else:
+                    return self.infos[i]
         return None
 
-    def find_directive(self, label):
+    def find_directive(self, label, expand = True):
         for d in self.directives:
             if d.lower() == label:
-                return self.directives[d]
+                if expand:
+                    return self.config.expand(self.directives[d])
+                else:
+                    return self.directives[d]
         return None
 
     def name(self):
@@ -261,6 +272,8 @@ class file:
         '''Split the string (s) up by macros. Only split on the
            outter level. Nested levels will need to split with futher calls.'''
         trace_me = False
+        if trace_me:
+            print '------------------------------------------------------'
         macros = []
         nesting = []
         has_braces = False
@@ -316,6 +329,8 @@ class file:
             c += 1
         if trace_me:
             print 'ms:', macros
+        if trace_me:
+            print '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-='
         return macros
 
     def _shell(self, line):
@@ -331,8 +346,12 @@ class file:
         return line
 
     def _expand(self, s):
+        expand_count = 0
         expanded = True
         while expanded:
+            expand_count += 1
+            if expand_count > 500:
+                raise error.general('macro expand looping: %s' % (s))
             expanded = False
             ms = self._macro_split(s)
             for m in ms:
@@ -580,20 +599,20 @@ class file:
         isos = False
         if isvalid:
             os = self.define('_os')
-            if ls[0].find(os) >= 0 or ls[1].find(os) >= 0:
-                isos = True
-            else:
-                isos = False
+            for l in ls:
+                if l in os:
+                    isos = True
+                    break
         return self._ifs(config, ls, '%ifos', isos, isvalid)
 
     def _ifarch(self, config, positive, ls, isvalid):
         isarch = False
         if isvalid:
             arch = self.define('_arch')
-            if ls[0].find(arch) >= 0 or ls[1].find(arch) >= 0:
-                isarch = True
-            else:
-                isarch = False
+            for l in ls:
+                if l in arch:
+                    isarch = True
+                    break
         if not positive:
             isarch = not isarch
         return self._ifs(config, ls, '%ifarch', isarch, isvalid)
@@ -621,12 +640,14 @@ class file:
                 continue
             if self.opts.trace():
                 print '%03d: %d %s' % (self.lc, isvalid, l)
+            lo = l
             if isvalid:
                 l = self._expand(l)
             if len(l) == 0:
                 continue
             if l[0] == '%':
                 ls = self.wss.split(l, 2)
+                los = self.wss.split(lo, 2)
                 if ls[0] == '%package':
                     if isvalid:
                         if ls[1] == '-n':
@@ -668,11 +689,11 @@ class file:
                         return ('data', d)
                 elif ls[0] == '%endif':
                     if roc:
-                        return ('control', '%endif')
+                        return ('control', '%endif', '%endif')
                     self._warning("unexpected '" + ls[0] + "'")
                 elif ls[0] == '%else':
                     if roc:
-                        return ('control', '%else')
+                        return ('control', '%else', '%else')
                     self._warning("unexpected '" + ls[0] + "'")
                 elif ls[0].startswith('%defattr'):
                     return ('data', [l])
@@ -697,10 +718,10 @@ class file:
                             if ls[0].strip() == d:
                                 return ('directive', ls[0].strip(), ls[1:])
                         self._warning("unknown directive: '" + ls[0] + "'")
-                        return ('data', [l])
+                        return ('data', [lo])
             else:
-                return ('data', [l])
-        return ('control', '%end')
+                return ('data', [lo])
+        return ('control', '%end', '%end')
 
     def _set_package(self, _package):
         if self.package == 'main' and \
@@ -734,12 +755,13 @@ class file:
             self.in_error = False
             self.lc = 0
             self.name = name
-            self.defines = self.default_defines
+            self.defines = copy.deepcopy(self.default_defines)
             self.conditionals = {}
             self._packages = {}
             self.package = 'main'
             self._packages[self.package] = package(self.package,
-                                                   self.define('%{_arch}'))
+                                                   self.define('%{_arch}'),
+                                                   self)
 
         self.load_depth += 1
 
@@ -832,13 +854,15 @@ class file:
                     data = new_data
                 elif r[0] == 'data':
                     for l in r[1]:
-                        l = self._expand(l)
                         if l.startswith('%error'):
+                            l = self._expand(l)
                             raise error.general('config error: %s' % (l[7:]))
                         elif l.startswith('%warning'):
+                            l = self._expand(l)
                             print >> sys.stderr, 'warning: %s' % (l[9:])
                             self._warning(l[9:])
                         if not dir:
+                            l = self._expand(l)
                             ls = self.tags.split(l, 1)
                             if self.opts.trace():
                                 print '_tag: ', l, ls
@@ -873,6 +897,9 @@ class file:
 
         self.load_depth -= 1
 
+    def defined(self, name):
+        return name.lower() in self.defines
+
     def define(self, name):
         if name.lower() in self.defines:
             d = self.defines[name.lower()]
@@ -888,7 +915,17 @@ class file:
         self.defines[name.lower()] = value
 
     def expand(self, line):
+        if type(line) == list:
+            el = []
+            for l in line:
+                el += [self._expand(l)]
+            return el
         return self._expand(line)
+
+    def default(self, name):
+        if name.lower() in self.defines:
+            return self.defines[name.lower()]
+        raise error.general('macro "%s" not found' % (name))
 
     def directive(self, _package, name):
         if _package not in self._packages:
