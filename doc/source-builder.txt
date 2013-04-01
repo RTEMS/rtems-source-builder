@@ -9,7 +9,7 @@ RTEMS Source Builder
 image:images/rtemswhitebg.jpg["RTEMS",width="30%"]
 
 Chris Johns <chrisj@rtems.org>
-1.0, February 2013
+1.0, April 2013
 
 RTEMS Tools From Source
 -----------------------
@@ -40,6 +40,7 @@ from source and taught this tool. The RTEMS Source Builder has been tested on:
 * openSUSE
 * Raspbian
 * Ubuntu
+* Windows
 
 Windows support is being added how-ever there are issues with the Python
 threading used in the RTEMS Source Builder and the MinGW project's MSYS process
@@ -482,6 +483,24 @@ rights to install binary packages, building from source lets you create your
 own tool set that you install under your home directory. Avoiding installing
 any extra packages as a super user is always helpful in maintaining a secure
 computing environment.
+
+Bugs, Crashes, and Build Failures
+---------------------------------
+
+The RTEMS Source Builder is a Python program and every care is taken to test
+the code how-ever bugs, crashes, and build failure can and do happen. If you
+find a bug please report it via the RTEMS Bug tracker tool Bugzilla:
+
+https://www.rtems.org/bugzilla/
+
+or via email on the RTEMS Users list.
+
+Please include the git hash you are running, the host details with the output
+of the +uname -a+ command. If there is a crash please cut and paste the Python
+backtrace into the bug report. If the tools fail to build please locate the
+first error in the log file. This can be difficult to find on hosts with many
+cores so it sometimes pays to run the command with the +--no-smp+ option to get
+a log that is correctly sequenced.
 
 Configuration
 -------------
@@ -1545,8 +1564,14 @@ Host Setups
 The host versions are listed. If a later version of the host operating system
 exists it should unless listed.
 
+Linux
+~~~~~
+
+A number of different Linux distrubutions are known to work. The following have
+been tested and report as working.
+
 Archlinux
-~~~~~~~~~
+^^^^^^^^^
 
 The following packages are required on a fresh Archlinux 64bit installation:
 
@@ -1565,7 +1590,7 @@ $ yaourt -S texinfo-legacy
 --------------------------------------------------------------
 
 CentOS
-~~~~~~
+^^^^^^
 
 The following packages are required on a minimal CentOS 6.3 64bit installation:
 
@@ -1579,24 +1604,12 @@ system. If you use a full system some of these packages may have been
 installed.
 
 Fedora
-~~~~~~
+^^^^^^
 
 The RTEMS Source Builder has been tested on Fedora 18 64bit.
 
-FreeBSD
-~~~~~~~
-
-The RTEMS Source Builder has been tested on FreeBSD 9.1 64bit.
-
-MacOS X
-~~~~~~~
-
-The RTEMS Source Builder has been tested on Mountain Lion. You will need to
-install the Xcode app using the _App Store_ tool, run Xcode and install the
-Developers Tools package within Xcode.
-
 Raspbian
-~~~~~~~~
+^^^^^^^^
 
 The is the Debian distribution for the Raspberry Pi. The following packages are
 required.
@@ -1611,7 +1624,7 @@ remote disk over the network. The tools can be build with a prefix under your
 home directory as recommended and end up on the SD card.
 
 Ubuntu
-~~~~~~
+^^^^^^
 
 The latest testing was with Ubuntu 12.10 64bit. A minimal installation was used
 and the following packages installed.
@@ -1619,6 +1632,129 @@ and the following packages installed.
 -------------------------------------------------------------
 $ sudo apt-get build-dep binutils gcc g++ gdb unzip git
 -------------------------------------------------------------
+
+FreeBSD
+~~~~~~~
+
+The RTEMS Source Builder has been tested on FreeBSD 9.1 64bit.
+
+MacOS X
+~~~~~~~
+
+The RTEMS Source Builder has been tested on Mountain Lion. You will need to
+install the Xcode app using the _App Store_ tool, run Xcode and install the
+Developers Tools package within Xcode.
+
+Windows
+~~~~~~~
+
+Windows tool sets are supported creating native Windows executable. Native
+Windows tools are built using a MinGW compiler and do not need any extra
+libraries or emulation layer to run. The tools understand and use standard
+Windows paths and integrate easly into Windows IDE environments.
+
+Building on Windows is a little more complicated because the Cygwin shell is
+used rather than the MinGW MSYS shell. The MSYS shell is simpler because the
+detected host triple is MinGW so the build is standard cross-compiler build.
+The age of the MSYS code base, its stability and ability to to complete a build
+with limitations such as the length of file names support make using MSYS
+difficult therefore the more complex path of a Canadian cross-build using
+Cygwin is supported.
+
+Install a recent Cygwin version using the Cygwin setup tool. Select the 'Devel'
+group and install:
+
+- +autoconf+
+- +automake+
+- +binutils+
+- +bison+
+- +flex+
+- +gcc+
+- +git+
+- +make+
+- +ming64-x86_64-binutils+
+- +ming64-x86_64-gcc-core+
+- +ming64-x86_64-g+++
+- +ming64-x86_64-headers+
+- +ming64-x86_64-runtime+
+- +python+
+- +win32api-headers+
+- +win32api-runtime+
+-  +zlib-devel+
+
+A Canadian cross-compile (Cxc) is required on Cygwin because the host is Cygwin
+therefore a traditional cross-compile will result in Cygiwn binaries. With a
+Canadian cross-compile a Cygwin cross-compiler is built as well as the MinGW
+RTEMS cross-compiler. The Cygwin cross-compiler is required to build the C
+runtime for the RTEMS target because we are building under Cygiwn. The build
+output for an RTEMS 4.10 ARM tool set is:
+
+-------------------------------------------------------------
+chris@cygthing ~/development/rtems/src/rtems-source-builder/rtems
+$ ../source-builder/sb-set-builder --log=l-arm.txt --prefix=$HOME/development/rtems/4.10 4.10/rtems-arm
+RTEMS Source Builder - Set Builder, v0.2
+Build Set: 4.10/rtems-arm
+config: expat-2.1.0-1.cfg
+package: expat-2.1.0-x86_64-w64-mingw32-1
+building: expat-2.1.0-x86_64-w64-mingw32-1
+reporting: expat-2.1.0-1.cfg -> expat-2.1.0-x86_64-w64-mingw32-1.html
+config: tools/rtems-binutils-2.20.1-1.cfg
+package: arm-rtems4.10-binutils-2.20.1-1 <1>
+building: arm-rtems4.10-binutils-2.20.1-1
+package: (Cxc) arm-rtems4.10-binutils-2.20.1-1 <2>
+building: (Cxc) arm-rtems4.10-binutils-2.20.1-1
+reporting: tools/rtems-binutils-2.20.1-1.cfg ->
+arm-rtems4.10-binutils-2.20.1-1.html
+config: tools/rtems-gcc-4.4.7-newlib-1.18.0-1.cfg
+package: arm-rtems4.10-gcc-4.4.7-newlib-1.18.0-1
+building: arm-rtems4.10-gcc-4.4.7-newlib-1.18.0-1
+package: (Cxc) arm-rtems4.10-gcc-4.4.7-newlib-1.18.0-1
+building: (Cxc) arm-rtems4.10-gcc-4.4.7-newlib-1.18.0-1
+reporting: tools/rtems-gcc-4.4.7-newlib-1.18.0-1.cfg ->
+arm-rtems4.10-gcc-4.4.7-newlib-1.18.0-1.html
+config: tools/rtems-gdb-7.3.1-1.cfg
+package: arm-rtems4.10-gdb-7.3.1-1
+building: arm-rtems4.10-gdb-7.3.1-1
+reporting: tools/rtems-gdb-7.3.1-1.cfg -> arm-rtems4.10-gdb-7.3.1-1.html
+config: tools/rtems-kernel-4.10.2.cfg
+package: arm-rtems4.10-kernel-4.10.2-1
+building: arm-rtems4.10-kernel-4.10.2-1
+reporting: tools/rtems-kernel-4.10.2.cfg -> arm-rtems4.10-kernel-4.10.2-1.html
+installing: expat-2.1.0-x86_64-w64-mingw32-1 -> /cygdrive/c/Users/chris/development/rtems/4.10
+installing: arm-rtems4.10-binutils-2.20.1-1 -> /cygdrive/c/Users/chris/development/rtems/4.10 <3>
+installing: arm-rtems4.10-gcc-4.4.7-newlib-1.18.0-1 -> /cygdrive/c/Users/chris/development/rtems/4.10
+installing: arm-rtems4.10-gdb-7.3.1-1 -> /cygdrive/c/Users/chris/development/rtems/4.10
+installing: arm-rtems4.10-kernel-4.10.2-1 -> /cygdrive/c/Users/chris/development/rtems/4.10
+cleaning: expat-2.1.0-x86_64-w64-mingw32-1
+cleaning: arm-rtems4.10-binutils-2.20.1-1
+cleaning: arm-rtems4.10-gcc-4.4.7-newlib-1.18.0-1
+cleaning: arm-rtems4.10-gdb-7.3.1-1
+cleaning: arm-rtems4.10-kernel-4.10.2-1
+Build Set: Time 10:09:42.810547 <4>
+-------------------------------------------------------------
+
+<1> The Cygwin version of the ARM cross-binutils.
+<2> The +(Cxc)+ indicates this is the MinGW build of the package.
+<3> Only the MinGW version is installed.
+<4> Cygwin is slow so please be patient. This time was on an AMD Athlon 64bit
+    Dual Core 6000+ running at 3GHz with 4G RAM running Windows 7 64bit.
+
+Build Status By Host
+~~~~~~~~~~~~~~~~~~~~
+
+This table lists the current build and testing status for reported hosts:
+
+[grid="rows",format="csv"]
+[options="header",cols="<,<,<,<,<,<"]
+|===========================
+OS,Uname,4.9,4.10,4.11,Comments
+include::host-results.csv[]
+|===========================
+
+[NOTE]
+==================================================================
+Report any unlisted hosts as a patch.
+==================================================================
 
 History
 -------
