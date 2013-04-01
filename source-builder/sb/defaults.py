@@ -164,6 +164,8 @@ defaults = {
 
 # Prebuild set up script.
 '___build_pre': ('none', 'none', '''# ___build_pre in as set up in defaults.py
+# Save the original path away.
+export SB_ORIG_PATH=${PATH}
 # Directories
 %{?_prefix:SB_PREFIX="%{_prefix}"}
 %{?_prefix:SB_PREFIX_CLEAN=$(echo "%{_prefix}" | %{__sed} -e \'s/^\///\')}
