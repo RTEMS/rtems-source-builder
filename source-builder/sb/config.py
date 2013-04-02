@@ -342,7 +342,7 @@ class file:
                 if exit_code == 0:
                     line = line.replace(s, output)
                 else:
-                    raise error.general('shell macro failed: %s: %s' % (s, output))
+                    raise error.general('shell macro failed: %s:%d: %s' % (s, exit_code, output))
         return line
 
     def _expand(self, s):
