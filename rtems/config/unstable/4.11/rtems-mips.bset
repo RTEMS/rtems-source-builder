@@ -2,9 +2,9 @@
 # Tools Set for RTEMS MIPS 4.11 Unstable
 #
 
-%define _target mips-rtems4.11
-
 %define release 1
+
+%define rtems_arch mips
 
 #
 # The RTEMS 4.11 base defines.

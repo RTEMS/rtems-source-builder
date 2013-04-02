@@ -2,9 +2,9 @@
 # Tools Set for RTEMS AVR 4.11 Unstable
 #
 
-%define _target avr-rtems4.11
-
 %define release 1
+
+%define rtems_arch avr
 
 #
 # The RTEMS 4.11 base defines.

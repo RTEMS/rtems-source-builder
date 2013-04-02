@@ -2,9 +2,9 @@
 # Tools Set for RTEMS SH 4.11 Unstable
 #
 
-%define _target sh-rtems4.11
-
 %define release 1
+
+%define rtems_arch sh
 
 #
 # The RTEMS 4.11 base defines.

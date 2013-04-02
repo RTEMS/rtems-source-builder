@@ -2,9 +2,9 @@
 # Tools Set for RTEMS Moxie 4.11 Unstable
 #
 
-%define _target moxie-rtems4.11
-
 %define release 1
+
+%define rtems_arch moxie
 
 #
 # The RTEMS 4.11 base defines.

@@ -2,9 +2,9 @@
 # Tools Set for RTEMS V850 4.11 Unstable
 #
 
-%define _target v850-rtems4.11
-
 %define release 1
+
+%define rtems_arch v850
 
 #
 # The RTEMS 4.11 base defines.

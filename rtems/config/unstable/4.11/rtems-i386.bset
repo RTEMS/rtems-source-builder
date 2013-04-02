@@ -2,9 +2,9 @@
 # Tools Set for RTEMS i386 4.11 Unstable
 #
 
-%define _target i386-rtems4.11
-
 %define release 1
+
+%define rtems_arch i386
 
 #
 # The RTEMS 4.11 base defines.

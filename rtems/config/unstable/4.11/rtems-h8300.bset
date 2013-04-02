@@ -2,9 +2,9 @@
 # Tools Set for RTEMS H8300 4.11 Unstable
 #
 
-%define _target h8300-rtems4.11
-
 %define release 1
+
+%define rtems_arch h8300
 
 #
 # The RTEMS 4.11 base defines.
