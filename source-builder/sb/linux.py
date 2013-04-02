@@ -43,7 +43,7 @@ def load():
                 if count > cpus:
                     cpus = int(count)
             if cpus > 0:
-                smp_mflags = '-j%d' % (cpus)
+                smp_mflags = '-j%d' % (cpus + 1)
         except:
             pass
     if uname[4].startswith('arm'):
