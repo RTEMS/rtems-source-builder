@@ -395,10 +395,7 @@ class build:
     def files(self, package):
         if self.create_tar_files:
             self.script.append('echo "==> %files:"')
-            prefixbase = self.opts.prefixbase()
-            if prefixbase is None:
-                prefixbase = ''
-            inpath = path.join('%{buildroot}', prefixbase)
+            inpath = path.abspath(self.config.expand('%{buildroot}'))
             tardir = path.abspath(self.config.expand('%{_tardir}'))
             self.script.append(self.config.expand('if test -d %s; then' % (inpath)))
             self.script.append(self.config.expand('  %%{__mkdir_p} %s' % tardir))
@@ -521,7 +518,7 @@ def run(args):
         _notice(opts, 'RTEMS Source Builder, Package Builder v%s' % (version))
         if not check.host_setup(opts, _defaults):
             if not opts.force():
-                raise error.general('host build environment is not set up' + 
+                raise error.general('host build environment is not set up' +
                                     ' correctly (use --force to proceed)')
             _notice(opts, 'warning: forcing build with known host setup problems')
         if opts.get_arg('--list-configs'):

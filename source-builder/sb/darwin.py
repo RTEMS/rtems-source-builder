@@ -33,10 +33,11 @@ def load():
     e = execute.capture_execution()
     exit_code, proc, output = e.shell(sysctl + 'hw.ncpu')
     if exit_code == 0:
-        smp_mflags = '-j' + output.split(' ')[1].strip()
+        ncpus = output.split(' ')[1].strip()
     else:
-        smp_mflags = ''
+        ncpus = '1'
     defines = {
+        '_ncpus':       ('none',    'none',     ncpus),
         '_os':          ('none',    'none',     'darwin'),
         '_host':        ('triplet', 'required', uname[4] + '-apple-darwin' + uname[2]),
         '_host_vendor': ('none',    'none',     'apple'),
@@ -48,7 +49,6 @@ def load():
         '_var':         ('dir',     'optional', '/usr/local/var'),
         '_prefix':      ('dir',     'optional', '%{_usr}'),
         'optflags':     ('none',    'none',     '-O2'),
-        '_smp_mflags':  ('none',    'none',     smp_mflags),
         '__ldconfig':   ('exe',     'none',     ''),
         '__xz':         ('exe',     'required', '%{_usr}/bin/xz'),
         'with_zlib':    ('none',    'none',     '--with-zlib=no')

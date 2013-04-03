@@ -138,7 +138,7 @@ class buildset:
             self.copy(src, dst)
 
     def canadian_cross(self, _build):
-        defaults_to_save = ['%{_prefix}', 
+        defaults_to_save = ['%{_prefix}',
                             '%{_tmproot}',
                             '%{buildroot}',
                             '%{_builddir}',
@@ -155,7 +155,7 @@ class buildset:
         _build.make()
         for d in defaults_to_save:
             _build.config.set_define(d, orig_defaults[d])
-        self.root_copy(_build.config.expand('%{buildcxcroot}'), 
+        self.root_copy(_build.config.expand('%{buildcxcroot}'),
                        _build.config.expand('%{_tmpcxcroot}'))
 
     def build_package(self, _config, _build):
@@ -163,7 +163,7 @@ class buildset:
             self.canadian_cross(_build)
         _build.make()
         self.report(_config, _build)
-        self.root_copy(_build.config.expand('%{buildroot}'), 
+        self.root_copy(_build.config.expand('%{buildroot}'),
                        _build.config.expand('%{_tmproot}'))
 
     def bset_tar(self, _build):
@@ -275,7 +275,7 @@ class buildset:
         _trace(self.opts, '_bset:%s: configs: %s'  % (self.bset, ','.join(configs)))
 
         current_path = os.environ['PATH']
-        
+
         start = datetime.datetime.now()
 
         try:
@@ -311,17 +311,19 @@ class buildset:
                     else:
                         raise error.general('invalid config type: %s' % (configs[s]))
                 except error.general, gerr:
-                    if self.opts.get_arg('--keep-going'):
+                    if self.opts.keep_going():
                         print gerr
+                        if self.opts.always_clean():
+                            builds += [b]
                     else:
                         raise
             if deps is None and not self.opts.get_arg('--no-install'):
                 for b in builds:
                     self.install(b.name(),
-                                 b.config.expand('%{buildroot}'), 
+                                 b.config.expand('%{buildroot}'),
                                  b.config.expand('%{_prefix}'))
             if deps is None and \
-                    (not self.opts.no_clean() or self.opts.get_arg('--keep-going')):
+                    (not self.opts.no_clean() or self.opts.always_clean()):
                 for b in builds:
                     _notice(self.opts, 'cleaning: %s' % (b.name()))
                     b.cleanup()
@@ -357,7 +359,6 @@ def run():
         optargs = { '--list-configs':  'List available configurations',
                     '--list-bsets':    'List available build sets',
                     '--list-deps':     'List the dependent files.',
-                    '--keep-going':    'Do not stop on error.',
                     '--no-install':    'Do not install the packages to the prefix.',
                     '--no-report':     'Do not create a package report.',
                     '--report-format': 'The report format (text, html, asciidoc).',

@@ -35,9 +35,9 @@ def load():
     e = execute.capture_execution()
     exit_code, proc, output = e.shell(sysctl + 'hw.ncpu')
     if exit_code == 0:
-        smp_mflags = '-j' + output.split(' ')[1].strip()
+        ncpus = output.split(' ')[1].strip()
     else:
-        smp_mflags = ''
+        ncpus = '1'
     if uname[4] == 'amd64':
         cpu = 'x86_64'
     else:
@@ -46,6 +46,7 @@ def load():
     if version.find('-') > 0:
         version = version.split('-')[0]
     defines = {
+        '_ncpus':       ('none',    'none',     ncpus),
         '_os':          ('none',    'none',     'freebsd'),
         '_host':        ('triplet', 'required', cpu + '-freebsd' + version),
         '_host_vendor': ('none',    'none',     'pc'),
@@ -56,7 +57,6 @@ def load():
         '_usr':         ('dir',     'required', '/usr/local'),
         '_var':         ('dir',     'optional', '/usr/local/var'),
         'optflags':     ('none',    'none',     '-O2 -I/usr/local/include -L/usr/local/lib'),
-        '_smp_mflags':  ('none',    'none',     smp_mflags),
         '__bash':       ('exe',     'optional', '/usr/local/bin/bash'),
         '__bison':      ('exe',     'required', '/usr/local/bin/bison'),
         '__git':        ('exe',     'required', '/usr/local/bin/git'),

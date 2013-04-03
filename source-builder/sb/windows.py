@@ -58,15 +58,12 @@ def load():
             pass
 
     if os.environ.has_key('NUMBER_OF_PROCESSORS'):
-        ncpus = int(os.environ['NUMBER_OF_PROCESSORS'])
+        ncpus = os.environ['NUMBER_OF_PROCESSORS']
     else:
-        ncpus = 0
-    if ncpus > 1:
-        smp_mflags = '-j' + str(ncpus)
-    else:
-        smp_mflags = ''
+        ncpus = '1'
 
     defines = {
+        '_ncpus':         ('none',    'none',     ncpus),
         '_os':            ('none',    'none',     'win32'),
         '_build':         ('triplet', 'required', build_triple),
         '_host':          ('triplet', 'required', host_triple),

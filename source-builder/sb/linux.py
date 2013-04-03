@@ -35,23 +35,23 @@ def load():
     processors = '/bin/grep processor /proc/cpuinfo'
     e = execute.capture_execution()
     exit_code, proc, output = e.shell(processors)
+    ncpus = 0
     if exit_code == 0:
-        cpus = 0
         try:
             for l in output.split('\n'):
                 count = l.split(':')[1].strip()
                 if count > cpus:
-                    cpus = int(count)
-            if cpus > 0:
-                smp_mflags = '-j%d' % (cpus + 1)
+                    ncpus = int(count)
         except:
             pass
+    ncpus = str(ncpus + 1)
     if uname[4].startswith('arm'):
         cpu = 'arm'
     else:
         cpu = uname[4]
 
     defines = {
+        '_ncpus':         ('none',    'none',     ncpus),
         '_os':            ('none',    'none',     'linux'),
         '_host':          ('triplet', 'required', cpu + '-linux-gnu'),
         '_host_vendor':   ('none',    'none',     'gnu'),
@@ -62,7 +62,6 @@ def load():
         '_usr':           ('dir',     'required', '/usr'),
         '_var':           ('dir',     'required', '/var'),
         'optflags':       ('none',    'none',     '-O2 -pipe'),
-        '_smp_mflags':    ('none',    'none',     smp_mflags),
         '__bzip2':        ('exe',     'required', '/usr/bin/bzip2'),
         '__gzip':         ('exe',     'required', '/bin/gzip'),
         '__tar':          ('exe',     'required', '/bin/tar')
