@@ -31,18 +31,21 @@ import sys
 import urllib2
 import urlparse
 
-import check
-import config
-import defaults
-import error
-import execute
-import log
-import path
-
-#
-# Version of Sourcer Builder Build.
-#
-version = '0.1'
+try:
+    import check
+    import config
+    import defaults
+    import error
+    import execute
+    import log
+    import path
+    import version
+except KeyboardInterrupt:
+    print 'abort: user terminated'
+    sys.exit(1)
+except:
+    print 'error: unknown application load error'
+    sys.exit(1)
 
 def _notice(opts, text):
     if not opts.quiet() and not log.default.has_stdout():
@@ -515,7 +518,7 @@ def run(args):
         optargs = { '--list-configs': 'List available configurations' }
         opts, _defaults = defaults.load(args, optargs)
         log.default = log.log(opts.logfiles())
-        _notice(opts, 'RTEMS Source Builder, Package Builder v%s' % (version))
+        _notice(opts, 'RTEMS Source Builder, Package Builder v%s' % (version.str()))
         if not check.host_setup(opts, _defaults):
             if not opts.force():
                 raise error.general('host build environment is not set up' +

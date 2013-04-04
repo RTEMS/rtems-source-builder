@@ -28,11 +28,7 @@ import error
 import execute
 import log
 import path
-
-#
-# Version of Sourcer Builder Check.
-#
-version = '0.1'
+import version
 
 def _notice(opts, text):
     if not opts.quiet() and log.default and not log.default.has_stdout():
@@ -140,10 +136,11 @@ def run():
     import sys
     try:
         _opts, _defaults = defaults.load(args = sys.argv)
+        _notice(_opts, 'RTEMS Source Builder - Check, v%s' % (version.str()))
         if host_setup(_opts, _defaults):
-            print 'RTEMS Source Builder environment is ok'
+            print 'Environment is ok'
         else:
-            print 'RTEMS Source Builder environment is not correctly set up'
+            print 'Environment is not correctly set up'
     except error.general, gerr:
         print gerr
         sys.exit(1)

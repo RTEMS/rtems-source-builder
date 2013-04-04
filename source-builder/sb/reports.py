@@ -37,17 +37,13 @@ try:
     import log
     import path
     import setbuilder
+    import version
 except KeyboardInterrupt:
     print 'user terminated'
     sys.exit(1)
 except:
     print 'error: unknown application load error'
     sys.exit(1)
-
-#
-# Version of Sourcer Builder Build.
-#
-version = '0.1'
 
 def _notice(opts, text):
     if not opts.quiet() and not log.default.has_stdout():
@@ -371,7 +367,7 @@ def run(args):
         log.default = log.log(opts.logfiles())
         if opts.get_arg('--output') and len(opts.params()) > 1:
             raise error.general('--output can only be used with a single config')
-        print 'RTEMS Source Builder, Reporter v%s' % (version)
+        print 'RTEMS Source Builder, Reporter v%s' % (version.str())
         if not check.host_setup(opts, _defaults):
             _notice(opts, 'warning: forcing build with known host setup problems')
         configs = build.get_configs(opts, _defaults)

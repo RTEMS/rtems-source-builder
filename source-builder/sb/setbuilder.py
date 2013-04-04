@@ -38,17 +38,13 @@ try:
     import log
     import path
     import reports
+    import vrrsion
 except KeyboardInterrupt:
     print 'abort: user terminated'
     sys.exit(1)
 except:
     print 'error: unknown application load error'
     sys.exit(1)
-
-#
-# Version of RTEMS Source Builder Set Builder.
-#
-version = '0.1'
 
 def _trace(opts, text):
     if opts.trace():
@@ -366,7 +362,7 @@ def run():
                     '--pkg-tar-files': 'Create package tar files' }
         opts, _defaults = defaults.load(sys.argv, optargs)
         log.default = log.log(opts.logfiles())
-        _notice(opts, 'RTEMS Source Builder - Set Builder, v%s' % (version))
+        _notice(opts, 'RTEMS Source Builder - Set Builder, v%s' % (version.str()))
         if not check.host_setup(opts, _defaults):
             raise error.general('host build environment is not set up correctly')
         configs = build.get_configs(opts, _defaults)
