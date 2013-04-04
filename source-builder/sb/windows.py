@@ -74,7 +74,6 @@ def load():
         '_host_arch':     ('none',    'none',     hosttype),
         '_usr':           ('dir',     'optional', '/opt/local'),
         '_var':           ('dir',     'optional', '/opt/local/var'),
-        '_smp_mflags':    ('none',    'none',     smp_mflags),
         '__bash':         ('exe',     'required', 'bash'),
         '__bzip2':        ('exe',     'required', 'bzip2'),
         '__bison':        ('exe',     'required', 'bison'),
