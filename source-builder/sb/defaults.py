@@ -607,7 +607,7 @@ def load(args, optargs = None):
     command line.
     """
     import copy
-    d = copy.deepcopy(defaults)
+    d = copy.copy(defaults)
     overrides = None
     if os.name == 'nt':
         import windows

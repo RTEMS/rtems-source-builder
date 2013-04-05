@@ -308,8 +308,8 @@ class report:
     def buildset(self, name):
         self.bset_nesting += 1
         self.buildset_start(name)
-        _opts = copy.deepcopy(self.opts)
-        _defaults = copy.deepcopy(self.defaults)
+        _opts = copy.copy(self.opts)
+        _defaults = copy.copy(self.defaults)
         bset = setbuilder.buildset(name,
                                    _configs = self.configs,
                                    _defaults = _defaults,

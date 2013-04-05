@@ -283,8 +283,8 @@ class buildset:
                     # defaults so we do not contaminate one configuration with
                     # another.
                     #
-                    _opts = copy.deepcopy(self.opts)
-                    _defaults = copy.deepcopy(self.defaults)
+                    _opts = copy.copy(self.opts)
+                    _defaults = copy.copy(self.defaults)
                     if configs[s].endswith('.bset'):
                         bs = buildset(configs[s],
                                       _configs = self.configs,
