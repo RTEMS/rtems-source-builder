@@ -38,7 +38,7 @@ try:
     import log
     import path
     import reports
-    import vrrsion
+    import version
 except KeyboardInterrupt:
     print 'abort: user terminated'
     sys.exit(1)
