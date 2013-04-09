@@ -22,8 +22,8 @@ import sys, os
 base = os.path.dirname(sys.argv[0])
 sys.path.insert(0, base + '/sb')
 try:
-    import defaults
-    defaults.run(sys.argv)
+    import options
+    options.run(sys.argv)
 except ImportError:
     print >> sys.stderr, "Incorrect Defaults installation"
     sys.exit(1)

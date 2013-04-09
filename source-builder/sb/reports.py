@@ -31,10 +31,10 @@ try:
     import build
     import check
     import config
-    import defaults
     import error
     import git
     import log
+    import options
     import path
     import setbuilder
     import version
@@ -56,18 +56,21 @@ class report:
 
     line_len = 78
 
-    def __init__(self, format, _configs, _defaults, opts):
+    def __init__(self, format, _configs, opts, macros = None):
         self.format = format
         self.configs = _configs
-        self.defaults = _defaults
         self.opts = opts
+        if macros is None:
+            self.macros = opts.defaults
+        else:
+            self.macros = macros
         self.bset_nesting = 0
         self.configs_active = False
         self.out = ''
         self.asciidoc = None
 
     def _sbpath(self, *args):
-        p = self.opts.expand('%{_sbdir}', self.defaults)
+        p = self.macros.expand('%{_sbdir}')
         for arg in args:
             p = path.join(p, arg)
         return os.path.abspath(path.host(p))
@@ -87,7 +90,7 @@ class report:
                 import asciidocapi
             except:
                 raise error.general('installation error: no asciidocapi found')
-            asciidoc_py = self._sbpath(defaults.basepath, 'asciidoc', 'asciidoc.py')
+            asciidoc_py = self._sbpath(options.basepath, 'asciidoc', 'asciidoc.py')
             try:
                 self.asciidoc = asciidocapi.AsciiDocAPI(asciidoc_py)
             except:
@@ -109,7 +112,7 @@ class report:
         else:
             self.output('-' * self.line_len)
             self.output('%s' % (text))
-        repo = git.repo('.', self.opts, self.defaults)
+        repo = git.repo('.', self.opts, self.macros)
         repo_valid = repo.valid()
         if repo_valid:
             if self.is_asciidoc():
@@ -172,7 +175,7 @@ class report:
             self.output('RTEMS Tools Project <rtems-users@rtems.org>')
             self.output(datetime.datetime.now().ctime())
             self.output('')
-            image = self._sbpath(defaults.basepath, 'images', 'rtemswhitebg.jpg')
+            image = self._sbpath(options.basepath, 'images', 'rtemswhitebg.jpg')
             self.output('image:%s["RTEMS",width="20%%"]' % (image))
             self.output('')
             if intro_text:
@@ -248,9 +251,9 @@ class report:
             if self.is_asciidoc():
                 self.output('--------------------------------------------')
 
-    def config(self, configname, _defaults, _opts):
+    def config(self, configname, opts, macros):
 
-        _config = config.file(configname, _defaults = _defaults, opts = _opts)
+        _config = config.file(configname, opts, macros)
         packages = _config.packages()
         package = packages['main']
         name = package.name()
@@ -308,17 +311,14 @@ class report:
     def buildset(self, name):
         self.bset_nesting += 1
         self.buildset_start(name)
-        _opts = copy.copy(self.opts)
-        _defaults = copy.copy(self.defaults)
-        bset = setbuilder.buildset(name,
-                                   _configs = self.configs,
-                                   _defaults = _defaults,
-                                   opts = _opts)
+        opts = copy.copy(self.opts)
+        macros = copy.copy(self.macros)
+        bset = setbuilder.buildset(name, self.configs, opts, macros)
         for c in bset.load():
             if c.endswith('.bset'):
                 self.buildset(c)
             elif c.endswith('.cfg'):
-                self.config(c, _defaults, _opts)
+                self.config(c, opts, macros)
             else:
                 raise error.general('invalid config type: %s' % (c))
         self.buildset_end(name)
@@ -352,7 +352,7 @@ class report:
         if config.endswith('.bset'):
             self.buildset(config)
         elif config.endswith('.cfg'):
-            self.config(config, self.defaults, self.opts)
+            self.config(config, self.opts, self.macros)
         else:
             raise error.general('invalid config type: %s' % (config))
         self.generate(outname)
@@ -363,14 +363,14 @@ def run(args):
                     '--list-configs': 'List available configurations',
                     '--format':       'Output format (text, html, asciidoc)',
                     '--output':       'File name to output the report' }
-        opts, _defaults = defaults.load(args, optargs)
+        opts = options.load(args, optargs)
         log.default = log.log(opts.logfiles())
         if opts.get_arg('--output') and len(opts.params()) > 1:
             raise error.general('--output can only be used with a single config')
         print 'RTEMS Source Builder, Reporter v%s' % (version.str())
-        if not check.host_setup(opts, _defaults):
+        if not check.host_setup(opts):
             _notice(opts, 'warning: forcing build with known host setup problems')
-        configs = build.get_configs(opts, _defaults)
+        configs = build.get_configs(opts)
         if not setbuilder.list_bset_cfg_files(opts, configs):
             output = opts.get_arg('--output')
             if output is not None:
@@ -391,13 +391,11 @@ def run(args):
                     ext = '.html'
                 else:
                     raise error.general('invalid format: %s' % (format_opt[1]))
-            r = report(format = format,
-                       _configs = configs,
-                       _defaults = _defaults,
-                       opts = opts)
+            r = report(format, configs, opts)
             for _config in opts.params():
                 if output is None:
                     outname = path.splitext(_config)[0] + ext
+                    outname = outname.replace('/', '-')
                 else:
                     outname = output
                 r.make(_config, outname)

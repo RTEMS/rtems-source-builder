@@ -23,10 +23,10 @@
 
 import os
 
-import defaults
 import error
 import execute
 import log
+import options
 import path
 import version
 
@@ -100,7 +100,7 @@ def _check_paths(name, paths):
                 return True
     return False
 
-def host_setup(_opts, _defaults):
+def host_setup(opts):
     """ Basic sanity check. All executables and directories must exist."""
 
     checks = { 'none':    _check_none,
@@ -110,22 +110,22 @@ def host_setup(_opts, _defaults):
 
     sane = True
 
-    for d in sorted(_defaults.iterkeys()):
+    for d in opts.defaults.keys():
         try:
-            (test, constraint, value) = _defaults[d]
+            (test, constraint, value) = opts.defaults.get(d)
         except:
-            raise error.general('invalid default: %s [%r]' % (d, _defaults[d]))
+            raise error.general('invalid default: %s [%r]' % (d, opts.defaults.get(d)))
         if test != 'none':
-            value = _opts.expand(value, _defaults)
+            value = opts.defaults.expand(value)
             if test not in checks:
-                raise error.general('invalid check test: %s [%r]' % (test, _defaults[d]))
-            ok = checks[test](_opts, d, value, constraint)
-            if _opts.trace():
+                raise error.general('invalid check test: %s [%r]' % (test, opts.defaults.get(d)))
+            ok = checks[test](opts, d, value, constraint)
+            if opts.trace():
                 if ok:
                     tag = ' '
                 else:
                     tag = '*'
-                _notice(_opts, '%c %15s: %r -> "%s"' % (tag, d, _defaults[d], value))
+                _notice(opts, '%c %15s: %r -> "%s"' % (tag, d, opts.defaults.get(d), value))
             if sane and not ok:
                 sane = False
 
@@ -135,9 +135,9 @@ def host_setup(_opts, _defaults):
 def run():
     import sys
     try:
-        _opts, _defaults = defaults.load(args = sys.argv)
+        _opts = options.load(args = sys.argv)
         _notice(_opts, 'RTEMS Source Builder - Check, v%s' % (version.str()))
-        if host_setup(_opts, _defaults):
+        if host_setup(_opts):
             print 'Environment is ok'
         else:
             print 'Environment is not correctly set up'

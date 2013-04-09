@@ -1,6 +1,6 @@
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2010-2012 Chris Johns (chrisj@rtems.org)
+# Copyright 2010-2013 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -31,10 +31,10 @@ import re
 import sys
 
 try:
-    import defaults
     import error
     import execute
     import log
+    import options
     import path
 except KeyboardInterrupt:
     print 'user terminated'
@@ -207,8 +207,12 @@ class file:
                 re.compile('%source[0-9]*'),
                 re.compile('%patch[0-9]*') ]
 
-    def __init__(self, name, _defaults, opts):
+    def __init__(self, name, opts, macros = None):
         self.opts = opts
+        if macros is None:
+            self.macros = opts.defaults
+        else:
+            self.macros = macros
         if self.opts.trace():
             print 'config: %s' % (name)
         self.disable_macro_reassign = False
@@ -216,13 +220,10 @@ class file:
         self.wss = re.compile(r'\s+')
         self.tags = re.compile(r':+')
         self.sf = re.compile(r'%\([^\)]+\)')
-        self.default_defines = {}
-        for d in _defaults:
-            self.default_defines[self._label(d)] = _defaults[d][2]
         for arg in self.opts.args:
             if arg.startswith('--with-') or arg.startswith('--without-'):
                 label = arg[2:].lower().replace('-', '_')
-                self.default_defines[self._label(label)] = label
+                self.macros.define(label)
         self._includes = []
         self.load_depth = 0
         self.load(name)
@@ -241,7 +242,7 @@ class file:
             '\n' + str(self.opts) + \
             '\nlines parsed: %d' % (self.lc) + \
             '\nname: ' + self.name + \
-            '\ndefines:\n' + _dict(self.defines)
+            '\nmacros:\n' + str(self.macros)
         for _package in self._packages:
             s += str(self._packages[_package])
         return s
@@ -266,6 +267,8 @@ class file:
             self.opts.set_dry_run()
 
     def _label(self, name):
+        if name.startswith('%{') and name[-1] is '}':
+            return name
         return '%{' + name.lower() + '}'
 
     def _macro_split(self, s):
@@ -383,7 +386,7 @@ class file:
                     # Change the ' ' to '_' because the macros have no spaces.
                     #
                     n = self._label('with_' + m[7:-1].strip())
-                    if n in self.defines:
+                    if n in self.macros:
                         s = s.replace(m, '1')
                     else:
                         s = s.replace(m, '0')
@@ -401,7 +404,7 @@ class file:
                         mn = None
                 elif m.startswith('%{defined'):
                     n = self._label(m[9:-1].strip())
-                    if n in self.defines:
+                    if n in self.macros:
                         s = s.replace(m, '1')
                     else:
                         s = s.replace(m, '0')
@@ -424,9 +427,9 @@ class file:
                     if mn:
                         if m.startswith('%{?'):
                             istrue = False
-                            if mn in self.defines:
+                            if mn in self.macros:
                                 # If defined and 0 then it is false.
-                                istrue = _check_bool(self.defines[mn])
+                                istrue = _check_bool(self.macros[mn])
                                 if istrue is None:
                                     istrue = True
                             if colon >= 0 and istrue:
@@ -437,8 +440,8 @@ class file:
                                 mn = '%{nil}'
                         else:
                             isfalse = True
-                            if mn in self.defines:
-                                istrue = _check_bool(self.defines[mn])
+                            if mn in self.macros:
+                                istrue = _check_bool(self.macros[mn])
                                 if istrue is None or istrue == True:
                                     isfalse = False
                             if colon >= 0 and isfalse:
@@ -448,8 +451,8 @@ class file:
                             else:
                                 mn = '%{nil}'
                 if mn:
-                    if mn.lower() in self.defines:
-                        s = s.replace(m, self.defines[mn.lower()])
+                    if mn.lower() in self.macros:
+                        s = s.replace(m, self.macros[mn.lower()])
                         expanded = True
                     elif show_warning:
                         self._error("macro '%s' not found" % (mn))
@@ -461,27 +464,27 @@ class file:
         else:
             d = self._label(ls[1])
             if self.disable_macro_reassign:
-                if (d not in self.defines) or \
-                        (d in self.defines and len(self.defines[d]) == 0):
+                if (d not in self.macros) or \
+                        (d in self.macros and len(self.macros[d]) == 0):
                     if len(ls) == 2:
-                        self.defines[d] = '1'
+                        self.macros[d] = '1'
                     else:
-                        self.defines[d] = ' '.join([f.strip() for f in ls[2:]])
+                        self.macros[d] = ' '.join([f.strip() for f in ls[2:]])
                 else:
                     self._warning("macro '%s' already defined" % (d))
             else:
                 if len(ls) == 2:
-                    self.defines[d] = '1'
+                    self.macros[d] = '1'
                 else:
-                    self.defines[d] = ' '.join([f.strip() for f in ls[2:]])
+                    self.macros[d] = ' '.join([f.strip() for f in ls[2:]])
 
     def _undefine(self, config, ls):
         if len(ls) <= 1:
             self._warning('invalid macro definition')
         else:
             mn = self._label(ls[1])
-            if mn in self.defines:
-                del self.defines[mn]
+            if mn in self.macros:
+                del self.macros[mn]
             else:
                 self._warning("macro '%s' not defined" % (mn))
 
@@ -703,11 +706,11 @@ class file:
                         # Check if already defined. Would be by the command line or
                         # even a host specific default.
                         #
-                        if self._label('with_' + ls[1]) not in self.defines:
+                        if self._label('with_' + ls[1]) not in self.macros:
                             self._define(config, (ls[0], 'without_' + ls[1]))
                 elif ls[0] == '%bcond_without':
                     if isvalid:
-                        if self._label('without_' + ls[1]) not in self.defines:
+                        if self._label('without_' + ls[1]) not in self.macros:
                             self._define(config, (ls[0], 'with_' + ls[1]))
                 else:
                     for r in self._ignore:
@@ -755,7 +758,6 @@ class file:
             self.in_error = False
             self.lc = 0
             self.name = name
-            self.defines = copy.deepcopy(self.default_defines)
             self.conditionals = {}
             self._packages = {}
             self.package = 'main'
@@ -898,15 +900,15 @@ class file:
         self.load_depth -= 1
 
     def defined(self, name):
-        return name.lower() in self.defines
+        return self.macros.has_key(name)
 
     def define(self, name):
-        if name.lower() in self.defines:
-            d = self.defines[name.lower()]
+        if name in self.macros:
+            d = self.macros[name]
         else:
             n = self._label(name)
-            if n in self.defines:
-                d = self.defines[n]
+            if n in self.macros:
+                d = self.macros[n]
             else:
                 raise error.general('%d: macro "%s" not found' % (self.lc, name))
         return self._expand(d)
@@ -922,7 +924,7 @@ class file:
             return el
         return self._expand(line)
 
-    def default(self, name):
+    def macro(self, name):
         if name.lower() in self.defines:
             return self.defines[name.lower()]
         raise error.general('macro "%s" not found' % (name))
@@ -947,11 +949,14 @@ class file:
 def run():
     import sys
     try:
-        opts, _defaults = defaults.load(sys.argv)
+        #
+        # Run where defaults.mc is located
+        #
+        opts = options.load(sys.argv, defaults = 'defaults.mc')
         if opts.trace():
             print 'config: count %d' % (len(opts.config_files()))
         for config_file in opts.config_files():
-            s = file(config_file, _defaults = _defaults, opts = opts)
+            s = file(config_file, opts)
             print s
             del s
     except error.general, gerr:

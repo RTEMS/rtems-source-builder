@@ -33,9 +33,9 @@ import sys
 try:
     import build
     import check
-    import defaults
     import error
     import log
+    import options
     import path
     import reports
     import version
@@ -59,14 +59,16 @@ def _notice(opts, text):
 class buildset:
     """Build a set builds a set of packages."""
 
-    def __init__(self, bset, _configs, _defaults, opts):
+    def __init__(self, bset, _configs, opts, macros = None):
         _trace(opts, '_bset:%s: init' % (bset))
         self.configs = _configs
         self.opts = opts
-        self.defaults = _defaults
+        if macros is None:
+            self.macros = copy.copy(opts.defaults)
+        else:
+            self.macros = copy.copy(macros)
         self.bset = bset
-        self.bset_pkg = '%s-%s-set' % (self.opts.expand('%{_target}', _defaults),
-                                       self.bset)
+        self.bset_pkg = '%s-%s-set' % (self.macros.expand('%{_target}'), self.bset)
 
     def _output(self, text):
         if not self.opts.quiet():
@@ -87,8 +89,8 @@ class buildset:
                 raise error.general('copying tree: %s' % (str(err)))
 
     def report(self, _config, _build):
-        if not self.opts.get_arg('--no-report'):
-            format = self.opts.get_arg('--report-format')
+        if not _build.opts.get_arg('--no-report'):
+            format = _build.opts.get_arg('--report-format')
             if format is None:
                 format = 'html'
                 ext = '.html'
@@ -107,14 +109,14 @@ class buildset:
                 else:
                     raise error.general('invalid report format: %s' % (format[1]))
             buildroot = _build.config.abspath('%{buildroot}')
-            prefix = self.opts.expand('%{_prefix}', self.defaults)
+            prefix = _build.macros.expand('%{_prefix}')
             name = _build.main_package().name() + ext
             outpath = path.host(path.join(buildroot, prefix, 'share', 'rtems-source-builder'))
             outname = path.host(path.join(outpath, name))
             _notice(self.opts, 'reporting: %s -> %s' % (_config, name))
-            if not self.opts.dry_run():
+            if not _build.opts.dry_run():
                 _build.mkdir(outpath)
-                r = reports.report(format, self.configs, self.defaults, self.opts)
+                r = reports.report(format, self.configs, _build.opts, _build.macros)
                 r.make(_config, outname)
                 del r
 
@@ -134,23 +136,24 @@ class buildset:
             self.copy(src, dst)
 
     def canadian_cross(self, _build):
-        defaults_to_save = ['%{_prefix}',
-                            '%{_tmproot}',
-                            '%{buildroot}',
-                            '%{_builddir}',
-                            '%{_host}']
-        defaults_to_copy = [('%{_host}',     '%{_build}'),
-                            ('%{_tmproot}',  '%{_tmpcxcroot}'),
-                            ('%{buildroot}', '%{buildcxcroot}'),
-                            ('%{_builddir}', '%{_buildcxcdir}')]
-        orig_defaults = {}
-        for d in defaults_to_save:
-            orig_defaults[d] = _build.config.default(d)
-        for d in defaults_to_copy:
-            _build.config.set_define(d[0], _build.config.default(d[1]))
+        # @fixme Switch to using a private macros map.
+        macros_to_save = ['%{_prefix}',
+                          '%{_tmproot}',
+                          '%{buildroot}',
+                          '%{_builddir}',
+                          '%{_host}']
+        macros_to_copy = [('%{_host}',     '%{_build}'),
+                          ('%{_tmproot}',  '%{_tmpcxcroot}'),
+                          ('%{buildroot}', '%{buildcxcroot}'),
+                          ('%{_builddir}', '%{_buildcxcdir}')]
+        orig_macros = {}
+        for m in macros_to_save:
+            orig_macros[m] = _build.config.macro(m)
+        for m in macros_to_copy:
+            _build.config.set_define(m[0], _build.config.macro(m[1]))
         _build.make()
-        for d in defaults_to_save:
-            _build.config.set_define(d, orig_defaults[d])
+        for m in macris_to_save:
+            _build.config.set_define(m, orig_macros[m])
         self.root_copy(_build.config.expand('%{buildcxcroot}'),
                        _build.config.expand('%{_tmpcxcroot}'))
 
@@ -186,7 +189,7 @@ class buildset:
         bsetname = bset
 
         if not path.exists(bsetname):
-            for cp in self.opts.expand('%{_configdir}', self.defaults).split(':'):
+            for cp in self.macros.expand('%{_configdir}').split(':'):
                 configdir = path.abspath(cp)
                 bsetname = path.join(configdir, bset)
                 if path.exists(bsetname):
@@ -214,20 +217,19 @@ class buildset:
                     print '%03d: %s' % (lc, l)
                 ls = l.split()
                 if ls[0][-1] == ':' and ls[0][:-1] == 'package':
-                    self.bset_pkg = self.opts.expand(ls[1].strip(), self.defaults)
-                    self.defaults['package'] = ('none', 'none', self.bset_pkg)
+                    self.bset_pkg = self.macros.expand(ls[1].strip())
+                    self.macros['package'] = self.bset_pkg
                 elif ls[0][0] == '%':
                     if ls[0] == '%define':
                         if len(ls) > 2:
-                            self.opts.define(self.defaults,
-                                             ls[1].strip(),
-                                             ' '.join([f.strip() for f in ls[2:]]))
+                            self.macros.define(ls[1].strip(),
+                                               ' '.join([f.strip() for f in ls[2:]]))
                         else:
-                            self.opts.define(self.defaults, ls[1].strip())
+                            self.macros.define(ls[1].strip())
                     elif ls[0] == '%undefine':
                         if len(ls) > 2:
                             raise error.general('%undefine requires just the name')
-                        self.opts.undefine(self.defaults, ls[1].strip())
+                        self.macros.undefine(ls[1].strip())
                     elif ls[0] == '%include':
                         configs += self.parse(ls[1].strip())
                     else:
@@ -248,9 +250,9 @@ class buildset:
 
     def load(self):
 
-        exbset = self.opts.expand(self.bset, self.defaults)
+        exbset = self.macros.expand(self.bset)
 
-        self.defaults['_bset'] = ('none', 'none', exbset)
+        self.macros['_bset'] = exbset
 
         root, ext = path.splitext(exbset)
 
@@ -280,23 +282,18 @@ class buildset:
                 try:
                     #
                     # Each section of the build set gets a separate set of
-                    # defaults so we do not contaminate one configuration with
+                    # macros so we do not contaminate one configuration with
                     # another.
                     #
-                    _opts = copy.copy(self.opts)
-                    _defaults = copy.copy(self.defaults)
+                    opts = copy.copy(self.opts)
+                    macros = copy.copy(self.macros)
                     if configs[s].endswith('.bset'):
-                        bs = buildset(configs[s],
-                                      _configs = self.configs,
-                                      _defaults = _defaults,
-                                      opts = _opts)
+                        bs = buildset(configs[s], self.configs, opts, macros)
                         bs.build(deps)
                         del bs
                     elif configs[s].endswith('.cfg'):
-                        b = build.build(configs[s],
-                                        self.opts.get_arg('--pkg-tar-files'),
-                                        _defaults = _defaults,
-                                        opts = _opts)
+                        b = build.build(configs[s], self.opts.get_arg('--pkg-tar-files'),
+                                        opts, macros)
                         if deps is None:
                             self.build_package(configs[s], b)
                             if s == len(configs) - 1:
@@ -360,19 +357,19 @@ def run():
                     '--report-format': 'The report format (text, html, asciidoc).',
                     '--bset-tar-file': 'Create a build set tar file',
                     '--pkg-tar-files': 'Create package tar files' }
-        opts, _defaults = defaults.load(sys.argv, optargs)
+        opts = options.load(sys.argv, optargs)
         log.default = log.log(opts.logfiles())
         _notice(opts, 'RTEMS Source Builder - Set Builder, v%s' % (version.str()))
-        if not check.host_setup(opts, _defaults):
+        if not check.host_setup(opts):
             raise error.general('host build environment is not set up correctly')
-        configs = build.get_configs(opts, _defaults)
+        configs = build.get_configs(opts)
         if opts.get_arg('--list-deps'):
             deps = []
         else:
             deps = None
         if not list_bset_cfg_files(opts, configs):
             for bset in opts.params():
-                b = buildset(bset, _configs = configs, _defaults = _defaults, opts = opts)
+                b = buildset(bset, configs, opts)
                 b.build(deps)
                 del b
         if deps is not None:

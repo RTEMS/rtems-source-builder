@@ -23,9 +23,9 @@
 
 import os
 
-import defaults
 import error
 import execute
+import options
 import path
 
 class repo:
@@ -42,11 +42,14 @@ class repo:
             self._git_exit_code(exit_code)
         return exit_code, output
 
-    def __init__(self, _path, _opts, _defaults):
+    def __init__(self, _path, opts, macros = None):
         self.path = _path
-        self.opts = _opts
-        self.default = _defaults
-        self.git = _opts.expand('%{__git}', _defaults)
+        self.opts = opts
+        if macros is None:
+            self.macros = opts.defaults
+        else:
+            self.macros = macros
+        self.git = self.macros.expand('%{__git}')
 
     def git_version(self):
         ec, output = self._run(['--version'], True)
@@ -120,8 +123,8 @@ class repo:
 
 if __name__ == '__main__':
     import sys
-    _opts, _defaults = defaults.load(sys.argv)
-    g = repo('.', _opts, _defaults)
+    opts = options.load(sys.argv)
+    g = repo('.', opts)
     print g.git_version()
     print g.valid()
     print g.status()

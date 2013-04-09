@@ -22,7 +22,6 @@
 # RTEMS project's spec files.
 #
 
-import pprint
 import os
 
 import execute
@@ -56,4 +55,5 @@ def load():
     return defines
 
 if __name__ == '__main__':
+    import pprint
     pprint.pprint(load())
