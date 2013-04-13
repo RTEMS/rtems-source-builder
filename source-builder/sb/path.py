@@ -72,8 +72,13 @@ def splitext(path):
     root, ext = os.path.splitext(host(path))
     return shell(root), ext
 
-def exists(path):
-    return os.path.exists(host(path))
+def exists(paths):
+    if type(paths) == list:
+        results = []
+        for p in paths:
+            results += [os.path.exists(host(p))]
+        return results
+    return os.path.exists(host(paths))
 
 def isdir(path):
     return os.path.isdir(host(path))
@@ -115,6 +120,12 @@ def removeall(path):
     path = host(path)
     shutil.rmtree(path, onerror = _onerror)
     return
+
+def expand(name, paths):
+    l = []
+    for p in paths:
+        l += [join(p, name)]
+    return l
 
 if __name__ == '__main__':
     print host('/a/b/c/d-e-f')
