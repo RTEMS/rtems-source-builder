@@ -52,13 +52,15 @@ class macros:
             return self.keys
 
     def __init__(self, name = None, original = None, sbdir = '.'):
+        self.files = []
         self.macro_filter = re.compile(r'%{[^}]+}')
         if original is None:
             self.macros = {}
-            self.map = 'global'
-            self.macros[self.map] = {}
-            self.macros[self.map]['_cwd'] = ('dir', 'required', path.shell(os.getcwd()))
-            self.macros[self.map]['_sbdir'] = ('dir', 'required', path.shell(sbdir))
+            self.read_map = 'global'
+            self.write_map = 'global'
+            self.macros[self.read_map] = {}
+            self.macros[self.read_map]['_cwd'] = ('dir', 'required', path.shell(os.getcwd()))
+            self.macros[self.read_map]['_sbdir'] = ('dir', 'required', path.shell(sbdir))
         else:
             self.macros = {}
             for m in original.macros:
@@ -66,7 +68,8 @@ class macros:
                     self.macros[m] = {}
                 for k in original.macros[m]:
                     self.macros[m][k] = original.macros[m][k]
-            self.map = original.map
+            self.read_map = original.read_map
+            self.write_map = original.write_map
         if name is not None:
             self.load(name)
 
@@ -76,6 +79,8 @@ class macros:
     def __str__(self):
         text_len = 80
         text = ''
+        for f in self.files:
+            text += '> %s%s' % (f, os.linesep)
         for map in self.macros:
             text += '[%s]%s' % (map, os.linesep)
             for k in sorted(self.macros[map].keys()):
@@ -113,7 +118,7 @@ class macros:
         return text
 
     def __iter__(self):
-        return macros.macro_iterator(self.macros[self.map].keys())
+        return macros.macro_iterator(self.macros[self.read_map].keys())
 
     def __getitem__(self, key):
         macro = self.get(key)
@@ -140,7 +145,7 @@ class macros:
             raise TypeError('bad value tuple (type field): %s' % (value[0]))
         if value[1] not in ['none', 'optional', 'required', 'override']:
             raise TypeError('bad value tuple (attrib field): %s' % (value[1]))
-        self.macros[self.map][self.key_filter(key)] = value
+        self.macros[self.write_map][self.key_filter(key)] = value
 
     def __delitem__(self, key):
         self.undefine(key)
@@ -152,7 +157,7 @@ class macros:
         return len(self.keys())
 
     def keys(self):
-        k = self.macros[self.map].keys()
+        k = self.macros[self.read_map].keys()
         if map is not 'global':
             k += self.macros['global'].keys()
         return sorted(set(k))
@@ -161,10 +166,13 @@ class macros:
         if type(key) is not str:
             raise TypeError('bad key type (want str): %s' % (type(key)))
         key = self.key_filter(key)
-        if key not in self.macros[self.map].keys():
+        if key not in self.macros[self.read_map].keys():
             if key not in self.macros['global'].keys():
                 return False
         return True
+
+    def maps(self):
+        return self.macros.keys()
 
     def key_filter(self, key):
         if key.startswith('%{') and key[-1] is '}':
@@ -210,7 +218,7 @@ class macros:
                         map = token
                         token = ''
                         state = 'key'
-                    elif c in string.ascii_letters or c in string.digits:
+                    elif c in string.printable and c not in string.whitespace:
                         token += c
                     else:
                         raise error.general('invalid macro map:%d: %s' % (lc, l))
@@ -265,7 +273,7 @@ class macros:
                 else:
                     raise error.internal('bad state: %s' % (state))
                 if state is 'macro':
-                    macros[map][macro[0]] = (macro[1], macro[2], macro[3])
+                    macros[map][macro[0].lower()] = (macro[1], macro[2], macro[3])
                     macro = []
                     token = ''
                     state = 'key'
@@ -278,20 +286,38 @@ class macros:
         except IOError, err:
             raise error.general('opening macro file: %s' % (path.host(name)))
         macros = self.parse(mc)
+        mc.close()
         for m in macros:
+            if m not in self.macros:
+                self.macros[m] = {}
             for mm in macros[m]:
                 self.macros[m][mm] = macros[m][mm]
-        mc.close()
+        self.files += [name]
 
     def get(self, key):
         if type(key) is not str:
             raise TypeError('bad key type: %s' % (type(key)))
         key = self.key_filter(key)
-        if self.map is not 'global'and key in self.macros[self.map]:
-            return self.macros[self.map][key]
+        if self.read_map is not 'global'and key in self.macros[self.read_map]:
+            return self.macros[self.read_map][key]
         if key in self.macros['global']:
             return self.macros['global'][key]
         return None
+
+    def get_type(self, key):
+        m = self.get(key)
+        if m is None:
+            return None
+        return m[0]
+
+    def get_attribute(self, key):
+        m = self.get(key)
+        if m is None:
+            return None
+        return m[1]
+
+    def overridden(self, key):
+        return self.get_attribute(key) == 'override'
 
     def define(self, key, value = '1'):
         if type(key) is not str:
@@ -320,6 +346,26 @@ class macros:
                 _str = _str.replace(m, macro[2])
                 expanded = True
         return _str
+
+    def find(self, regex):
+        what = re.compile(regex)
+        keys = []
+        for key in self.keys():
+            if what.match(key):
+                keys += [key]
+        return keys
+
+    def set_read_map(self, map):
+        if map in self.macros:
+            self.read_map = map
+            return True
+        return False
+
+    def set_write_map(self, map):
+        if map in self.macros:
+            self.write_map = map
+            return True
+        return False
 
 if __name__ == "__main__":
     import copy
