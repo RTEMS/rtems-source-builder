@@ -114,7 +114,10 @@ def host_setup(opts):
         try:
             (test, constraint, value) = opts.defaults.get(d)
         except:
-            raise error.general('invalid default: %s [%r]' % (d, opts.defaults.get(d)))
+            if opts.defaults.get(d) is None:
+                raise error.general('invalid default: %s: not found' % (d))
+            else:
+                raise error.general('invalid default: %s [%r]' % (d, opts.defaults.get(d)))
         if test != 'none':
             value = opts.defaults.expand(value)
             if test not in checks:
