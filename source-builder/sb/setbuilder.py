@@ -152,7 +152,7 @@ class buildset:
         for m in macros_to_copy:
             _build.config.set_define(m[0], _build.config.macro(m[1]))
         _build.make()
-        for m in macris_to_save:
+        for m in macros_to_save:
             _build.config.set_define(m, orig_macros[m])
         self.root_copy(_build.config.expand('%{buildcxcroot}'),
                        _build.config.expand('%{_tmpcxcroot}'))
