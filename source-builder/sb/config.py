@@ -81,17 +81,26 @@ class package:
 
         return s
 
+    def _macro_override(self, info, macro):
+        '''See if a macro overrides this setting.'''
+        overridden = self.config.macros.overridden(macro)
+        if overridden:
+            return self.config.macros.expand(macro)
+        return info
+
     def directive_extend(self, dir, data):
         if dir not in self.directives:
             self.directives[dir] = []
         for i in range(0, len(data)):
             data[i] = data[i].strip()
         self.directives[dir].extend(data)
+        self.config.macros[dir] = '\n'.join(self.directives[dir])
 
     def info_append(self, info, data):
         if info not in self.infos:
             self.infos[info] = []
         self.infos[info].append(data)
+        self.config.macros[info] = '\n'.join(self.infos[info])
 
     def get_info(self, info, expand = True):
         if info in self.infos:
@@ -134,8 +143,10 @@ class package:
     def name(self):
         info = self.find_info('name')
         if info:
-            return info[0]
-        return self._name
+            n = info[0]
+        else:
+            n = self._name
+        return self._macro_override(n, 'name')
 
     def summary(self):
         info = self.find_info('summary')
@@ -168,7 +179,7 @@ class package:
         return info[0]
 
     def sources(self):
-        return self.extract_info('source');
+        return self.extract_info('source')
 
     def patches(self):
         return self.extract_info('patch')
@@ -205,7 +216,8 @@ class file:
     _ignore = [ re.compile('%setup'),
                 re.compile('%configure'),
                 re.compile('%source[0-9]*'),
-                re.compile('%patch[0-9]*') ]
+                re.compile('%patch[0-9]*'),
+                re.compile('%select') ]
 
     def __init__(self, name, opts, macros = None):
         self.opts = opts
@@ -458,6 +470,14 @@ class file:
                         self._error("macro '%s' not found" % (mn))
         return self._shell(s)
 
+    def _select(self, config, ls):
+        if len(ls) != 2:
+            self._warning('invalid select statement')
+        else:
+            r = self.macros.set_read_map(ls[1])
+            if self.opts.trace():
+                print '_select: ', r, ls[1], self.macros.maps()
+
     def _define(self, config, ls):
         if len(ls) <= 1:
             self._warning('invalid macro definition')
@@ -658,6 +678,9 @@ class file:
                         else:
                             name = self.name + '-' + ls[1]
                         return ('package', name)
+                elif ls[0] == '%select':
+                    if isvalid:
+                        self._select(config, ls)
                 elif ls[0] == '%error':
                     if isvalid:
                         return ('data', ['%%error %s' % (self._name_line_msg(l[7:]))])
@@ -733,7 +756,8 @@ class file:
                 return
         if _package not in self._packages:
             self._packages[_package] = package(_package,
-                                               self.define('%{_arch}'))
+                                               self.define('%{_arch}'),
+                                               self)
         self.package = _package
 
     def _directive_extend(self, dir, data):
@@ -877,9 +901,6 @@ class file:
                                 info_data = ls[0].strip()
                             if info is not None:
                                 self._info_append(info, info_data)
-                                # It seems like the info's also appear as
-                                # defines or can be accessed via macros.
-                                self._define(None, ('', info, info_data))
                             else:
                                 self._warning("invalid format: '%s'" % (info_data[:-1]))
                         else:
@@ -925,8 +946,8 @@ class file:
         return self._expand(line)
 
     def macro(self, name):
-        if name.lower() in self.defines:
-            return self.defines[name.lower()]
+        if name in self.macros:
+            return self.macros[name]
         raise error.general('macro "%s" not found' % (name))
 
     def directive(self, _package, name):
