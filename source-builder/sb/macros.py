@@ -118,11 +118,11 @@ class macros:
         return text
 
     def __iter__(self):
-        return macros.macro_iterator(self.macros[self.read_map].keys())
+        return macros.macro_iterator(self.keys())
 
     def __getitem__(self, key):
         macro = self.get(key)
-        if macro is None:
+        if macro is None or macro[1] == 'undefine':
             raise IndexError('key: %s' % (key))
         return macro[2]
 
@@ -143,7 +143,7 @@ class macros:
             raise TypeError('bad value tuple value field: %s' % (type(value[2])))
         if value[0] not in ['none', 'triplet', 'dir', 'file', 'exe']:
             raise TypeError('bad value tuple (type field): %s' % (value[0]))
-        if value[1] not in ['none', 'optional', 'required', 'override']:
+        if value[1] not in ['none', 'optional', 'required', 'override', 'undefine']:
             raise TypeError('bad value tuple (attrib field): %s' % (value[1]))
         self.macros[self.write_map][self.key_filter(key)] = value
 
@@ -157,18 +157,31 @@ class macros:
         return len(self.keys())
 
     def keys(self):
-        k = self.macros[self.read_map].keys()
+
+        def _map_keys(_map):
+            u = []
+            k = []
+            for mk in _map:
+                if _map[mk][1] == 'undefine':
+                    u += [mk]
+                else:
+                    k += [mk]
+            return k, u
+
+        keys, undefined = _map_keys(self.macros[self.read_map])
         if map is not 'global':
-            k += self.macros['global'].keys()
-        return sorted(set(k))
+            gk, u = _map_keys(self.macros['global'])
+            undefined = set(undefined + u)
+            for k in gk:
+                if k not in undefined:
+                    keys += [k]
+        return sorted(set(keys))
 
     def has_key(self, key):
         if type(key) is not str:
             raise TypeError('bad key type (want str): %s' % (type(key)))
-        key = self.key_filter(key)
-        if key not in self.macros[self.read_map].keys():
-            if key not in self.macros['global'].keys():
-                return False
+        if self.key_filter(key) not in self.keys():
+            return False
         return True
 
     def maps(self):
@@ -277,7 +290,11 @@ class macros:
                     macro = []
                     token = ''
                     state = 'key'
-        return macros
+        for m in macros:
+            if m not in self.macros:
+                self.macros[m] = {}
+            for mm in macros[m]:
+                self.macros[m][mm] = macros[m][mm]
 
     def load(self, name):
         try:
@@ -287,11 +304,6 @@ class macros:
             raise error.general('opening macro file: %s' % (path.host(name)))
         macros = self.parse(mc)
         mc.close()
-        for m in macros:
-            if m not in self.macros:
-                self.macros[m] = {}
-            for mm in macros[m]:
-                self.macros[m][mm] = macros[m][mm]
         self.files += [name]
 
     def get(self, key):
@@ -376,4 +388,15 @@ if __name__ == "__main__":
     if d.has_key('test1'):
         print 'error: copy failed.'
         sys.exit(1)
+    m.parse("[test]\n" \
+            "test1: none, undefine, ''\n" \
+            "name:  none, override, 'pink'\n")
+    m.set_read_map('test')
+    if m['name'] != 'pink':
+        print 'error: override failed. name is %s' % (m['name'])
+        sys.exit(1)
+    if m.has_key('test1'):
+        print 'error: map undefine failed.'
+        sys.exit(1)
     print m
+    print m.keys()

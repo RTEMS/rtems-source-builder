@@ -103,42 +103,40 @@ class package:
         self.config.macros[info] = '\n'.join(self.infos[info])
 
     def get_info(self, info, expand = True):
-        if info in self.infos:
+        if info in self.config.macros:
+            _info = self.config.macros[info].split('\n')
             if expand:
-                return self.config.expand(self.infos[info])
+                return self.config.expand(_info)
             else:
-                return self.infos[info]
+                return _info
         return None
 
     def extract_info(self, label, expand = True):
+        ll = label.lower()
         infos = {}
-        for i in self.infos:
-            il = i.lower()
-            if il.startswith(label):
-                if il == label:
-                    il = label + '0'
-                elif not il[len(label):].isdigit():
-                    continue
-                infos[il] = self.config.expand(self.infos[i])
+        keys = self.config.macros.find('%s.*' % (ll))
+        for k in keys:
+            if k == ll:
+                k = '%s0' % (ll)
+            elif not k[len(ll):].isdigit():
+                continue
+            infos[k] = [self.config.expand(self.config.macros[k])]
         return infos
 
-    def find_info(self, label, expand = True):
-        for i in self.infos:
-            if i.lower() == label:
-                if expand:
-                    return self.config.expand(self.infos[i])
-                else:
-                    return self.infos[i]
+    def _find_macro(self, label, expand = True):
+        if label in self.config.macros:
+            macro = self.config.macros[label].split('\n')
+            if expand:
+                return self.config.expand(macro)
+            else:
+                return macro
         return None
 
+    def find_info(self, label, expand = True):
+        return self._find_macro(label, expand)
+
     def find_directive(self, label, expand = True):
-        for d in self.directives:
-            if d.lower() == label:
-                if expand:
-                    return self.config.expand(self.directives[d])
-                else:
-                    return self.directives[d]
-        return None
+        return self._find_macro(label, expand)
 
     def name(self):
         info = self.find_info('name')

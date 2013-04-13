@@ -239,8 +239,6 @@ class build:
         # sources as these may be overridden by user loaded macros.
         #
         sources = package.sources()
-        for sm in self.macros.find('source[0-9]*'):
-            sources[sm] = [self.macros[sm]]
         url = None
         for s in sources:
             tag = s[len('source'):]
