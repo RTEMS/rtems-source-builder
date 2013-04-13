@@ -51,6 +51,7 @@ class command_line:
             '--jobs'           : ('_jobs',           self._lo_jobs,     True,  'max', True),
             '--log'            : ('_logfile',        self._lo_string,   True,  None,  False),
             '--url'            : ('_url_base',       self._lo_string,   True,  None,  False),
+            '--macros'         : ('_macros',         self._lo_string,   True,  None,  False),
             '--targetcflags'   : ('_targetcflags',   self._lo_string,   True,  None,  False),
             '--targetcxxflags' : ('_targetcxxflags', self._lo_string,   True,  None,  False),
             '--libstdcxxflags' : ('_libstdcxxflags', self._lo_string,   True,  None,  False),
@@ -196,8 +197,9 @@ class command_line:
         print '--builddir path        : Path to the build directory, default: ./build'
         print '--sourcedir path       : Path to the source directory, default: ./source'
         print '--tmppath path         : Path to the temp directory, default: ./tmp'
+        print '--macros file[,[file]  : Macro format files to load after the defaults'
         print '--log file             : Log file where all build out is written too'
-        print '--url url              : URL to look for source'
+        print '--url url[,url]        : URL to look for source'
         print '--targetcflags flags   : List of C flags for the target code'
         print '--targetcxxflags flags : List of C++ flags for the target code'
         print '--libstdcxxflags flags : List of C++ flags to build the target libstdc++ code'
@@ -244,6 +246,13 @@ class command_line:
             self.defaults['_smp_mflags'] = '-j %d' % (ncpus)
         else:
             self.defaults['_smp_mflags'] = self.defaults['nil']
+        um = self.user_macros()
+        if um:
+            checked = path.exists(um)
+            if False in checked:
+                raise general.error('macro file not found: %s' % (um[um.index(False)]))
+            for m in um:
+                self.defaults.load(m)
 
     def command(self):
         return path.join(self.command_path, self.command_name)
@@ -274,6 +283,28 @@ class command_line:
 
     def always_clean(self):
         return self.opts['always-clean'] != '0'
+
+    def user_macros(self):
+        #
+        # Return something even if it does not exist.
+        #
+        if self.opts['macros'] is None:
+            return None
+        um = []
+        configs = self.defaults.expand('%{_configdir}').split(':')
+        for m in self.opts['macros'].split(','):
+            if path.exists(m):
+                um += [m]
+            else:
+                # Get the expanded config macros then check them.
+                cm = path.expand(m, configs)
+                ccm = path.exists(cm)
+                if True in ccm:
+                    # Pick the first found
+                    um += [cm[ccm.index(True)]]
+                else:
+                    um += [m]
+        return um if len(um) else None
 
     def jobs(self, cpus):
         cpus = int(cpus)
