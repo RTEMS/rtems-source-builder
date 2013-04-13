@@ -235,9 +235,12 @@ class build:
     def source(self, package, source_tag):
         #
         # Scan the sources found in the config file for the one we are
-        # after. Infos or tags are lists.
+        # after. Infos or tags are lists. Merge in any macro defined
+        # sources as these may be overridden by user loaded macros.
         #
         sources = package.sources()
+        for sm in self.macros.find('source[0-9]*'):
+            sources[sm] = [self.macros[sm]]
         url = None
         for s in sources:
             tag = s[len('source'):]
@@ -464,6 +467,10 @@ class build:
             _notice(self.opts, 'package: (Cxc) %s' % (name))
         else:
             _notice(self.opts, 'package: %s' % (name))
+        if self.opts.trace():
+            print '---- macro maps', '-' * 55
+            print self.config.macros
+            print '-' * 70
         self.script.reset()
         self.script.append(self.config.expand('%{___build_template}'))
         self.script.append('echo "=> ' + name + ':"')
