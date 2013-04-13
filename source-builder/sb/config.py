@@ -935,7 +935,7 @@ class file:
         return self._expand(d)
 
     def set_define(self, name, value):
-        self.defines[name.lower()] = value
+        self.macros[name] = value
 
     def expand(self, line):
         if type(line) == list:
