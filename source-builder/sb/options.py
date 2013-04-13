@@ -250,7 +250,7 @@ class command_line:
         if um:
             checked = path.exists(um)
             if False in checked:
-                raise general.error('macro file not found: %s' % (um[um.index(False)]))
+                raise error.general('macro file not found: %s' % (um[checked.index(False)]))
             for m in um:
                 self.defaults.load(m)
 
