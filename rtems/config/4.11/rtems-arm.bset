@@ -17,15 +17,9 @@
 %define enable_obsolete 1
 
 #
-# Patch to enable EABI. Part 2 fixes building on 32bit hosts.
-#
-%define rtems_gcc_patch2 %{rtems_gcc_patches}/arm/gcc-4.7-arm-to-eabi-20130306.diff
-%define rtems_gcc_patch3 %{rtems_gcc_patches}/arm/gcc-4.7-rtems4.11-arm-eabi-libcpp-20130403.diff
-
-#
 # Tools configuration.
 #
 expat-2.1.0-1
 tools/rtems-binutils-2.23.1-1
-tools/rtems-gcc-4.7.2-newlib-2.0.0-1
+tools/rtems-gcc-4.7.3-newlib-2.0.0-1
 tools/rtems-gdb-7.5-1

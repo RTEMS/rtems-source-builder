@@ -18,9 +18,16 @@
 %define enable_cxx 0
 
 #
+# Set the build flags to work around the defaults in the
+# compiler that cause ICE.
+#
+%define _targetcflags -g -O2
+%define _targetcxxflags -g -O2
+
+#
 # Tools configuration.
 #
 expat-2.1.0-1
 tools/rtems-binutils-2.23.1-1
-tools/rtems-gcc-4.7.2-newlib-2.0.0-1
+tools/rtems-gcc-4.7.3-newlib-2.0.0-1
 tools/rtems-gdb-7.5.1-1
