@@ -9,7 +9,7 @@ RTEMS Source Builder
 image:images/rtemswhitebg.jpg["RTEMS",width="30%"]
 
 Chris Johns <chrisj@rtems.org>
-1.0, April 2013
+1.2, April 2013
 
 RTEMS Tools From Source
 -----------------------
@@ -32,19 +32,15 @@ some sort of magic that can take any piece of source code and make it
 build. Someone at some point in time has figured out how to build that package
 from source and taught this tool. The RTEMS Source Builder has been tested on:
 
-* Archlinux
-* Centos
-* Fedora
-* FreeBSD
-* MacOS
-* openSUSE
-* Raspbian
-* Ubuntu
-* Windows
-
-Windows support is being added how-ever there are issues with the Python
-threading used in the RTEMS Source Builder and the MinGW project's MSYS process
-handling of `make`.
+* <<_archlinux,Archlinux>>
+* <<_centos,Centos>>
+* <<_fedora,Fedora>>
+* <<_freebsd,FreeBSD>>
+* <<_macos,MacOS>>
+* <<_opensuse,openSUSE>>
+* <<_raspbian,Raspbian>>
+* <<_ubuntu,Ubuntu>>
+* <<_windows,Windows>>
 
 The RTEMS Source Builder has two types configuration data. The first is the
 'build set'. A _build set_ describes a collection of packages that define a set
@@ -153,14 +149,33 @@ build ask the tool:
 
 -------------------------------------------------------------
 $ ../source-builder/sb-set-builder --list-bsets <1>
-RTEMS Source Builder - Set Builder, v0.1
+RTEMS Source Builder - Set Builder, v0.2.0
 Examining: config <2>
 Examining: ../source-builder/config <2>
-    4.11/rtems-all.bset <3>
-    4.11/rtems-arm.bset <4>
+    4.10/rtems-all.bset <3>
+    4.10/rtems-arm.bset <4>
+    4.10/rtems-autotools.bset
+    4.10/rtems-avr.bset
+    4.10/rtems-bfin.bset
+    4.10/rtems-h8300.bset
+    4.10/rtems-i386.bset
+    4.10/rtems-lm32.bset
+    4.10/rtems-m32c.bset
+    4.10/rtems-m32r.bset
+    4.10/rtems-m68k.bset
+    4.10/rtems-mips.bset
+    4.10/rtems-nios2.bset
+    4.10/rtems-powerpc.bset
+    4.10/rtems-sh.bset
+    4.10/rtems-sparc.bset
+    4.11/rtems-all.bset
+    4.11/rtems-arm.bset
+    4.11/rtems-autotools.bset
     4.11/rtems-avr.bset
     4.11/rtems-bfin.bset
     4.11/rtems-h8300.bset
+    4.11/rtems-i386.bset
+    4.11/rtems-lm32.bset
     4.11/rtems-m32c.bset
     4.11/rtems-m32r.bset
     4.11/rtems-m68k.bset
@@ -171,13 +186,28 @@ Examining: ../source-builder/config <2>
     4.11/rtems-powerpc.bset
     4.11/rtems-sh.bset
     4.11/rtems-sparc.bset
+    4.11/rtems-sparc64.bset
+    4.11/rtems-v850.bset
+    4.9/rtems-all.bset
+    4.9/rtems-arm.bset
+    4.9/rtems-autotools.bset
+    4.9/rtems-i386.bset
+    4.9/rtems-m68k.bset
+    4.9/rtems-mips.bset
+    4.9/rtems-powerpc.bset
+    4.9/rtems-sparc.bset
     gnu-tools-4.6.bset
+    rtems-4.10-base.bset <5>
     rtems-4.11-base.bset
-    unstable/4.11/rtems-all.bset <5>
+    rtems-4.9-base.bset
+    rtems-base.bset <5>
+    unstable/4.11/rtems-all.bset <6>
     unstable/4.11/rtems-arm.bset
     unstable/4.11/rtems-avr.bset
     unstable/4.11/rtems-bfin.bset
     unstable/4.11/rtems-h8300.bset
+    unstable/4.11/rtems-i386.bset
+    unstable/4.11/rtems-lm32.bset
     unstable/4.11/rtems-m32c.bset
     unstable/4.11/rtems-m32r.bset
     unstable/4.11/rtems-m68k.bset
@@ -187,12 +217,16 @@ Examining: ../source-builder/config <2>
     unstable/4.11/rtems-powerpc.bset
     unstable/4.11/rtems-sh.bset
     unstable/4.11/rtems-sparc.bset
+    unstable/4.11/rtems-sparc64.bset
+    unstable/4.11/rtems-v850.bset
 -------------------------------------------------------------
 <1> Only option needed is +--list-bsets+
 <2> The paths inspected. See <<X1,+_configdir+>> variable.
-<3> Build all the architectures.
-<4> The build set for the ARM architecture.
-<5> Unstable tool sets are used by RTEMS developers to test new tool sets. You
+<3> Build all RTEMS 4.10 supported architectures.
+<4> The build set for the ARM architecture on RTEMS 4.10.
+<5> Support build set file with common functionality included by other build
+    set files.
+<6> Unstable tool sets are used by RTEMS developers to test new tool sets. You
     are welcome to try them but you must remember they are unstable, can change
     at point in time and your application may not work. If you have an issue
     with a production tool it may pay to try the unstable tool to see if it has
@@ -206,23 +240,23 @@ In this quick start I will build a SPARC tool set.
 -------------------------------------------------------------
 $ ../source-builder/sb-set-builder --log=l-sparc.txt <1> \
                 --prefix=$HOME/development/rtems/4.11 <2> 4.11/rtems-sparc <3>
-Source Builder - Set Builder, v0.1
+Source Builder - Set Builder, v0.2.0
 Build Set: 4.11/rtems-sparc
 config: expat-2.1.0-1.cfg <4>
 package: expat-2.1.0-x86_64-freebsd9.1-1
 building: expat-2.1.0-x86_64-freebsd9.1-1
-installing: rtems-4.11-sparc-rtems4.11-1 -> /home/chris/development/rtems/4.11 <5>
-config: tools/rtems-binutils-2.22-1.cfg <6>
+config: tools/rtems-binutils-2.22-1.cfg <5>
 package: sparc-rtems4.11-binutils-2.22-1
 building: sparc-rtems4.11-binutils-2.22-1
-installing: rtems-4.11-sparc-rtems4.11-1 -> /home/chris/development/rtems/4.11
-config: tools/rtems-gcc-4.7.2-newlib-1.20.0-1.cfg <7>
+config: tools/rtems-gcc-4.7.2-newlib-1.20.0-1.cfg <6>
 package: sparc-rtems4.11-gcc-4.7.2-newlib-1.20.0-1
 building: sparc-rtems4.11-gcc-4.7.2-newlib-1.20.0-1
-installing: rtems-4.11-sparc-rtems4.11-1 -> /home/chris/development/rtems/4.11
-config: tools/rtems-gdb-7.5.1-1.cfg <8>
+config: tools/rtems-gdb-7.5.1-1.cfg <7>
 package: sparc-rtems4.11-gdb-7.5.1-1
 building: sparc-rtems4.11-gdb-7.5.1-1
+installing: rtems-4.11-sparc-rtems4.11-1 -> /home/chris/development/rtems/4.11 <8>
+installing: rtems-4.11-sparc-rtems4.11-1 -> /home/chris/development/rtems/4.11
+installing: rtems-4.11-sparc-rtems4.11-1 -> /home/chris/development/rtems/4.11
 installing: rtems-4.11-sparc-rtems4.11-1 -> /home/chris/development/rtems/4.11
 cleaning: expat-2.1.0-x86_64-freebsd9.1-1 <9>
 cleaning: sparc-rtems4.11-binutils-2.22-1
@@ -240,10 +274,10 @@ Build Set: Time 0:13:43.616383 <10>
 <3> The build set. This is the SPARC build set.
 <4> The SPARC build set first builds the expat library as is used in GDB. This
     is the expat configuration used.
-<5> Installing the expat package to the install prefix.
-<6> The binutils build configuration.
-<7> The GCC and Newlib build configuration.
-<8> The GDB build configuration.
+<5> The binutils build configuration.
+<6> The GCC and Newlib build configuration.
+<7> The GDB build configuration.
+<8> Installing the built packages to the install prefix.
 <9> All the packages built are cleaned at the end. If the build fails all the
     needed files are present. You may have to clean up by deleting the build
     directory if the build fails.
@@ -282,8 +316,8 @@ Using built-in specs.
 COLLECT_GCC=/home/chris/development/rtems/4.11/bin/sparc-rtems4.11-gcc
 COLLECT_LTO_WRAPPER=/usr/home/chris/development/rtems/4.11/bin/../ \
 libexec/gcc/sparc-rtems4.11/4.7.2/lto-wrapper
-Target: sparc-rtems4.11
-Configured with: ../gcc-4.7.2/configure
+Target: sparc-rtems4.11 <1>
+Configured with: ../gcc-4.7.2/configure <2>
 --prefix=/home/chris/development/rtems/4.11
 --bindir=/home/chris/development/rtems/4.11/bin
 --exec_prefix=/home/chris/development/rtems/4.11
@@ -299,16 +333,26 @@ Configured with: ../gcc-4.7.2/configure
 --disable-win32-registry --enable-version-specific-runtime-libs --disable-lto
 --enable-threads --enable-plugin --enable-newlib-io-c99-formats
 --enable-newlib-iconv --enable-languages=c,c++
-Thread model: rtems
-gcc version 4.7.2 20120920 (RTEMS) (GCC)
+Thread model: rtems <3>
+gcc version 4.7.2 20120920 <4>
+ (RTEMS4.11-RSB(cb12e4875c203f794a5cd4b3de36101ff9a88403)-1,gcc-4.7.2/newlib-2.0.0) (GCC)
 -------------------------------------------------------------
+
+<1> The target the compiler is built for.
+<2> The configure options used to build GCC.
+<3> The threading model is always RTEMS. This makes the RTEMS tools difficult
+    for bare metal development more difficult.
+<4> The version string. It contains the Git hash of the RTEMS Source Builder
+    you are using. If your local clone has been modifed that state is also
+    recorded in the version string. The hash allows you to track from a GCC
+    executable back to the original source used to build it.
 
 Installing and Tar Files
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-The RTEMS Source Builder can install the built packages directly and optionally it can
-create a build set tar file or a tar file per package built. The normal and
-default behaviour is to let the RTEMS Source Builder install the tools. The
+The RTEMS Source Builder can install the built packages directly and optionally
+it can create a build set tar file or a tar file per package built. The normal
+and default behaviour is to let the RTEMS Source Builder install the tools. The
 source will be downloaded, built, installed and cleaned up.
 
 The tar files are created with the full build prefix present. This can cause
@@ -327,23 +371,23 @@ A build set tar file is created by adding `--bset-tar-file` option to the
 $ ../source-builder/sb-set-builder --log=l-sparc.txt \
          --prefix=$HOME/development/rtems/4.11 \
          --bset-tar-file <1> 4.11/rtems-sparc
-Source Builder - Set Builder, v0.1
+Source Builder - Set Builder, v0.2.0
 Build Set: 4.11/rtems-sparc
 config: expat-2.1.0-1.cfg
 package: expat-2.1.0-x86_64-freebsd9.1-1
 building: expat-2.1.0-x86_64-freebsd9.1-1
-installing: rtems-4.11-sparc-rtems4.11-1 -> /home/chris/development/rtems/4.11 <2>
 config: tools/rtems-binutils-2.22-1.cfg
 package: sparc-rtems4.11-binutils-2.22-1
 building: sparc-rtems4.11-binutils-2.22-1
-installing: rtems-4.11-sparc-rtems4.11-1 -> /home/chris/development/rtems/4.11
 config: tools/rtems-gcc-4.7.2-newlib-1.20.0-1.cfg
 package: sparc-rtems4.11-gcc-4.7.2-newlib-1.20.0-1
 building: sparc-rtems4.11-gcc-4.7.2-newlib-1.20.0-1
-installing: rtems-4.11-sparc-rtems4.11-1 -> /home/chris/development/rtems/4.11
 config: tools/rtems-gdb-7.5.1-1.cfg
 package: sparc-rtems4.11-gdb-7.5.1-1
 building: sparc-rtems4.11-gdb-7.5.1-1
+installing: rtems-4.11-sparc-rtems4.11-1 -> /home/chris/development/rtems/4.11 <2>
+installing: rtems-4.11-sparc-rtems4.11-1 -> /home/chris/development/rtems/4.11
+installing: rtems-4.11-sparc-rtems4.11-1 -> /home/chris/development/rtems/4.11
 installing: rtems-4.11-sparc-rtems4.11-1 -> /home/chris/development/rtems/4.11
 tarball: tar/rtems-4.11-sparc-rtems4.11-1.tar.bz2 <3>
 cleaning: expat-2.1.0-x86_64-freebsd9.1-1
@@ -354,7 +398,7 @@ Build Set: Time 0:15:25.92873
 -------------------------------------------------------------
 
 <1> The option to create a build set tar file.
-<2> The installation still happens.
+<2> The installation still happens unless you specify `--no-install`.
 <3> Creating the build set tar file.
 
 You can also suppress installing the files using the `--no-install` option to
@@ -364,7 +408,7 @@ the `sb-set-builder` command.
 $ ../source-builder/sb-set-builder --log=l-sparc.txt \
             --prefix=$HOME/development/rtems/4.11 \
             --bset-tar-file --no-install <1> 4.11/rtems-sparc
-Source Builder - Set Builder, v0.1
+Source Builder - Set Builder, v0.2.0
 Build Set: 4.11/rtems-sparc
 config: expat-2.1.0-1.cfg
 package: expat-2.1.0-x86_64-freebsd9.1-1
@@ -399,7 +443,7 @@ build set.
 $ ../source-builder/sb-set-builder --log=l-sparc.txt \
             --prefix=$HOME/development/rtems/4.11 \
             --bset-tar-file --pkg-tar-files <1> --no-install 4.11/rtems-sparc
-Source Builder - Set Builder, v0.1
+Source Builder - Set Builder, v0.2.0
 Build Set: 4.11/rtems-sparc
 config: expat-2.1.0-1.cfg
 package: expat-2.1.0-x86_64-freebsd9.1-1
@@ -499,8 +543,8 @@ Please include the git hash you are running, the host details with the output
 of the +uname -a+ command. If there is a crash please cut and paste the Python
 backtrace into the bug report. If the tools fail to build please locate the
 first error in the log file. This can be difficult to find on hosts with many
-cores so it sometimes pays to run the command with the +--no-smp+ option to get
-a log that is correctly sequenced.
+cores so it sometimes pays to run the command with the +--jobs=none+ option to
+get a log that is correctly sequenced.
 
 Configuration
 -------------
@@ -541,13 +585,15 @@ block comment.
 Macros and Defaults
 ~~~~~~~~~~~~~~~~~~~
 
-The RTEMS Source Builder uses a table of _macros_ called the _defaults_. The
-values the _defaults_ are initialised to is dependent on your host. This lets
-the Source Builder handle differences in the hosts. Build set and configuration
-files can define new values extending the defaults. For example builds are
-given a release number. This is typically a single number at the end of the
-package name. For RTEMS this is set in the top level build set configuration
-file with:
+The RTEMS Source Builder uses tables of _macros_ read in when the tool
+runs. The initial global set of macros is called the _defaults_. These values
+are read from a file called `defaults.mc` and modified to suite your host. This
+host specific adaption lets the Source Builder handle differences in the build
+hosts.
+
+Build set and configuration files can define new values updating and extending
+the global macro table. For example builds are given a release number. This is
+typically a single number at the end of the package name. For example:
 
 -------------------------------------------------------------
 %define release 1
@@ -567,9 +613,79 @@ the output of this command becauses of its size.
 $ ../source-builder/sb-defaults
 -------------------------------------------------------------
 
-A nested build set is given a separate copy of the defaults. Changes in one
-change set are not seen in other build sets. That same happens with
-configuration files unless inline includes are used.
+A nested build set is given a separate copy of the global macro maps. Changes
+in one change set are not seen in other build sets. That same happens with
+configuration files unless inline includes are used. Inline includes are seen
+as part of the same build set and configuration and changes are global to that
+build set and configuration.
+
+Macro Maps and Files
+^^^^^^^^^^^^^^^^^^^^
+
+Macros are read in from files when the tool starts. The default settings are
+read from the defaults macro file called `defaults.mc` located in the top level
+RTEMS Source Builder command directory. User macros can be read in at start up
+by using the `--macros` command line option.
+
+The format for a macro in macro files is:
+
+[options="header,compact",width="50%",cols="15%,15%,15%,55%"]
+|=================================
+| Name | Type | Attribute | String
+|=================================
+
+where 'Name' is a case insensitive macro name, the 'Type' field is:
+
+[horizontal]
+`none`:: Nothing, ignore.
+`dir`:: A directory path.
+`exe`:: An executable path.
+`triplet`:: A GNU style architecture, platform, operating system string.
+
+the 'Attribute' field is:
+
+[horizontal]
+`none`:: Nothing, ignore
+`required`:: The host check must find the executable or path.
+`optional`:: The host check generates a warning if not found.
+`override`:: Only valid outside of the `global` map to indicate this macro
+             overrides the same one in the `global` map when the map containing
+             it is selected.
+`undefine`:: Only valid outside of the `global` map to undefine the macro if it
+             exists in the `global` map when the map containing it is
+             selected. The `global` map's macro is not visible but still
+             exists.
+
+and the 'String' field is a single or tripled multiline quoted string. The
+'String' can contain references to other macros. Macro that loop are not
+currently detected and will cause the tool to lock up.
+
+Maps are declared anywhere in the map using:
+
+-------------------------------------------------------------
+# Comments
+[my-special-map]
+_host:  none, override, 'abc-xyz'
+multiline: none, override, '''First line,
+second line,
+and finally the last line'''
+-------------------------------------------------------------
+
+Any macro defintions following a map declaration are placed in that map and the
+default map is `global` when loading a file. Maps are selected in configuration
+files by using the `%select` directive.
+
+-------------------------------------------------------------
+%select my-special-map
+-------------------------------------------------------------
+
+Selecting a map means all requests for a macro first check the selected map and
+if present return that value else the `global` map is used. Any new macros or
+changes update only the `global` map. This may change in future releases so
+please make sure you use the `override` attibute.
+
+The macro files are looked for in the `_configdir` paths. See
+<<X1,+_configdir+>> variable for details.
 
 Build Set Files
 ~~~~~~~~~~~~~~~
@@ -669,6 +785,47 @@ and given a +-2+ revision number. Any dependent scripts referencing the earlier
 revision number will not be effected by the change. This locks down a specific
 configuration over time.
 
+Snapshot Testing
+~~~~~~~~~~~~~~~~
+
+Testing of release canidates and snapshots is important to those helping
+maintain tool sets. The RTEMS Source Builder helps by providing a simple and
+flexible way to use existing build sets and configuration without needing to
+change them or creating new temporary build sets and configurations.
+
+The process uses snapshot macro files loaded via the command line option
+`--macros`. These files provide macros that override the standard build set and
+configuration file macros.
+
+Lets consider testing a GCC 4.7 snapshot for RTEMS 4.11. Lets assume the
+current RTEMS 4.11 tools reference GCC 4.7.3 with a patch as the stable tool
+set. We want to use a recent snapshot with no patches. In the
+`rtems/config/snapshots` directoy create a file called `gcc-4.7-snapshot.mc`
+containing:
+
+-------------------------------------------------------------
+[gcc-4.7-snapshot]
+GCC_Version: none, override, '4.7-20130413'
+Source0:     none, override, 'http://mirrors.kernel.org/sources.redhat.com/gcc/
+snapshots/%{gcc_version}/gcc-%{gcc_version}.tar.bz2'
+Patch0:      none, udefine,  ''
+-------------------------------------------------------------
+
+In the standard configuration file `source-builder/config/gcc-4.7-1.cfg` the
+map is selected with:
+
+-------------------------------------------------------------
+#
+# Select the GCC 4.7 Snapshot Macro Map
+#
+%select gcc-4.7-snapshot
+-------------------------------------------------------------
+
+On the command line add `--macros=snapshots/gcc-4.7-snapshot.mc` and this
+snapshot will be built. With careful use of the `--prefix` option you can
+locate the tools in a specific directory and test them without needing to
+effect your production environment.
+
 Scripting
 ~~~~~~~~~
 
@@ -699,6 +856,7 @@ The script language is implemented in terms of macros. The built-in list is:
 +%echo+:: Print the following string as a message.
 +%warning+:: Print the following string as a warning and continue.
 +%error+:: Print the following string as an error and exit.
++%select+:: Select the macro map. If there is no map nothing is reported.
 +%define+:: Define a macro. Macros cannot be redefined, you must first undefine it.
 +%undefine+:: Undefine a macro.
 +%if+:: Start a conditional logic block that ends with a +%endif+.
@@ -1114,6 +1272,28 @@ be used as `%{warning: message}`.
 The +%error+ macro outputs the follow string as an error and exits the RTEMS
 Source Builder. This can also be used as `%{error: message}`.
 
+%select
+^^^^^^^
+
+The +%select+ macro selects the map specified. If there is no map no error or
+warning is generated. Macro maps provide a simple way for a user to override
+the settings is a configuration file without having to edit it. The changes are
+recorded in the build report so can be traced.
+
+Configuration use different maps so macro overrides can target a specific
+package.
+
+The default map is `global'.
+
+-------------------------------------------------------------
+%select gcc-4.8-snapshot <1>
+%define one_plus_one 2 <2>
+-------------------------------------------------------------
+
+<1> The map switches to `gcc-4.8-snapshot`. Any overrides in this map will be
+    used.
+<2> Defining macros only updates the `global` map and not the selected map.
+
 %define
 ^^^^^^^
 
@@ -1325,32 +1505,34 @@ $ ../source-builder/sb-check --help
 sb-check: [options] [args]
 RTEMS Source Builder, an RTEMS Tools Project (c) 2012-2013 Chris Johns
 Options and arguments:
---force                : Create directories that are not present
---trace                : Trace the execution (not current used)
+--force                : Force the build to proceed
+--quiet                : Quiet output (not used)
+--trace                : Trace the execution
 --dry-run              : Do everything but actually run the build
 --warn-all             : Generate warnings
 --no-clean             : Do not clean up the build tree
---no-smp               : Run with 1 job and not as many as CPUs
---rebuild              : Rebuild (not used)
+--always-clean         : Always clean the build tree, even with an error
+--jobs                 : Run with specified number of jobs, default: num CPUs.
 --host                 : Set the host triplet
 --build                : Set the build triplet
 --target               : Set the target triplet
 --prefix path          : Tools build prefix, ie where they are installed
---prefixbase path      :
 --topdir path          : Top of the build tree, default is $PWD
 --configdir path       : Path to the configuration directory, default: ./config
 --builddir path        : Path to the build directory, default: ./build
 --sourcedir path       : Path to the source directory, default: ./source
 --tmppath path         : Path to the temp directory, default: ./tmp
+--macros file[,[file]  : Macro format files to load after the defaults
 --log file             : Log file where all build out is written too
---url url              : URL to look for source
+--url url[,url]        : URL to look for source
 --targetcflags flags   : List of C flags for the target code
 --targetcxxflags flags : List of C++ flags for the target code
 --libstdcxxflags flags : List of C++ flags to build the target libstdc++ code
 --with-<label>         : Add the --with-<label> to the build
 --without-<label>      : Add the --without-<label> to the build
 $ ../source-builder/sb-check
-RTEMS Source Builder environment is ok
+RTEMS Source Builder - Check, v0.2.0
+Environment is ok
 -------------------------------------------------------------
 
 Defaults (sb-defaults)
@@ -1365,24 +1547,25 @@ sb-defaults: [options] [args]
 RTEMS Source Builder, an RTEMS Tools Project (c) 2012-2013 Chris Johns
 Options and arguments:
 --force                : Force the build to proceed
---trace                : Trace the execution (not current used)
+--quiet                : Quiet output (not used)
+--trace                : Trace the execution
 --dry-run              : Do everything but actually run the build
 --warn-all             : Generate warnings
 --no-clean             : Do not clean up the build tree
---no-smp               : Run with 1 job and not as many as CPUs
---rebuild              : Rebuild (not used)
+--always-clean         : Always clean the build tree, even with an error
+--jobs                 : Run with specified number of jobs, default: num CPUs.
 --host                 : Set the host triplet
 --build                : Set the build triplet
 --target               : Set the target triplet
 --prefix path          : Tools build prefix, ie where they are installed
---prefixbase path      :
 --topdir path          : Top of the build tree, default is $PWD
 --configdir path       : Path to the configuration directory, default: ./config
 --builddir path        : Path to the build directory, default: ./build
 --sourcedir path       : Path to the source directory, default: ./source
 --tmppath path         : Path to the temp directory, default: ./tmp
+--macros file[,[file]  : Macro format files to load after the defaults
 --log file             : Log file where all build out is written too
---url url              : URL to look for source
+--url url[,url]        : URL to look for source
 --targetcflags flags   : List of C flags for the target code
 --targetcxxflags flags : List of C++ flags for the target code
 --libstdcxxflags flags : List of C++ flags to build the target libstdc++ code
@@ -1400,24 +1583,25 @@ $ ../source-builder/sb-set-builder --help
 RTEMS Source Builder, an RTEMS Tools Project (c) 2012-2013 Chris Johns
 Options and arguments:
 --force                : Force the build to proceed
---trace                : Trace the execution (not current used)
+--quiet                : Quiet output (not used)
+--trace                : Trace the execution
 --dry-run              : Do everything but actually run the build
 --warn-all             : Generate warnings
 --no-clean             : Do not clean up the build tree
---no-smp               : Run with 1 job and not as many as CPUs
---rebuild              : Rebuild (not used)
+--always-clean         : Always clean the build tree, even with an error
+--jobs                 : Run with specified number of jobs, default: num CPUs.
 --host                 : Set the host triplet
 --build                : Set the build triplet
 --target               : Set the target triplet
 --prefix path          : Tools build prefix, ie where they are installed
---prefixbase path      :
 --topdir path          : Top of the build tree, default is $PWD
 --configdir path       : Path to the configuration directory, default: ./config
 --builddir path        : Path to the build directory, default: ./build
 --sourcedir path       : Path to the source directory, default: ./source
 --tmppath path         : Path to the temp directory, default: ./tmp
+--macros file[,[file]  : Macro format files to load after the defaults
 --log file             : Log file where all build out is written too
---url url              : URL to look for source
+--url url[,url]        : URL to look for source
 --targetcflags flags   : List of C flags for the target code
 --targetcxxflags flags : List of C++ flags for the target code
 --libstdcxxflags flags : List of C++ flags to build the target libstdc++ code
@@ -1425,7 +1609,6 @@ Options and arguments:
 --without-<label>      : Add the --without-<label> to the build
 --bset-tar-file        : Create a build set tar file
 --no-report            : Do not create a package report.
---keep-going           : Do not stop on error.
 --list-configs         : List available configurations
 --report-format        : The report format (text, html, asciidoc).
 --list-bsets           : List available build sets
@@ -1455,10 +1638,16 @@ Do not clean up the build tree during the cleaning phase of the build. This
 leaves the source and the build output on disk so you can make changes, or
 amend or generate new patches. It also allows you to review configure type
 output such as +config.log+.
-+--no-smp+;;
-Run +make+ with 1 job and not as many as there are cores. This option can help
-isolate parallel make type bugs or make the log file output
-sequential. Parallel jobs can make the output confusing.
++--always-clean+;;
+Clean away the results of a build even if the build fails. This is normally
+used with `--keep-going` when regression testing to see which build sets
+fail to build. It keeps the disk usage down.
++--jobs+;;
+Control the number of jobs make is given. The jobs can 'none' for only 1 job,
+'half' so the number of jobs is half the number of detected cores, a fraction
+such as '0.25' so the number of jobs is a quarter of the number of detected
+cores and a number such as '25' which forces the number of jobs to that
+number.
 +--host+;;
 Set the host triplet value. Becareful with this option.
 +--build+;;
@@ -1468,8 +1657,6 @@ Set the target triplet. Becareful with this option. This is useful if you have
 a generic configuration script that can work for a range of architectures.
 +--prefix path+;;
 Tools build prefix, ie where they are installed.
-+--prefixbase path+;;
-The prefix base is appended to the build root path.
 +--topdir path+;;
 Top of the build tree, that is the current directory you are in.
 +--configdir path+;;
@@ -1480,6 +1667,8 @@ Path to the build directory. This overrides the default of +build+.
 Path to the source directory. This overrides the default of +source+.
 +--tmppath path+;;
 Path to the temporary directory. This overrides the default of +tmp+.
++--macros files+;;
+Macro files to load. The configuration directory path is searched.
 +--log file+;;
 Log all the output from the build process. The output is directed to +stdout+
 if no log file is provided.
@@ -1519,6 +1708,8 @@ a build set.
 +--list-deps+;;
 Print a list of dependent files used by a build set. Dependent files have a
 'dep[?]' prefix where '?' is a number. The files are listed alphabetically.
++--report-format format+;;
+The report format can be 'text' or 'html'. The default is 'html'.
 
 Set Builder (sb-builder)
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1531,25 +1722,26 @@ $ ./source-builder/sb-builder --help
 sb-builder: [options] [args]
 RTEMS Source Builder, an RTEMS Tools Project (c) 2012 Chris Johns
 Options and arguments:
---force                : Create directories that are not present
---trace                : Trace the execution (not current used)
+--force                : Force the build to proceed
+--quiet                : Quiet output (not used)
+--trace                : Trace the execution
 --dry-run              : Do everything but actually run the build
 --warn-all             : Generate warnings
 --no-clean             : Do not clean up the build tree
---no-smp               : Run with 1 job and not as many as CPUs
---rebuild              : Rebuild (not used)
+--always-clean         : Always clean the build tree, even with an error
+--jobs                 : Run with specified number of jobs, default: num CPUs.
 --host                 : Set the host triplet
 --build                : Set the build triplet
 --target               : Set the target triplet
 --prefix path          : Tools build prefix, ie where they are installed
---prefixbase path      :
 --topdir path          : Top of the build tree, default is $PWD
 --configdir path       : Path to the configuration directory, default: ./config
 --builddir path        : Path to the build directory, default: ./build
 --sourcedir path       : Path to the source directory, default: ./source
 --tmppath path         : Path to the temp directory, default: ./tmp
+--macros file[,[file]  : Macro format files to load after the defaults
 --log file             : Log file where all build out is written too
---url url              : URL to look for source
+--url url[,url]        : URL to look for source
 --targetcflags flags   : List of C flags for the target code
 --targetcxxflags flags : List of C++ flags for the target code
 --libstdcxxflags flags : List of C++ flags to build the target libstdc++ code
@@ -1650,8 +1842,11 @@ Windows
 
 Windows tool sets are supported creating native Windows executable. Native
 Windows tools are built using a MinGW compiler and do not need any extra
-libraries or emulation layer to run. The tools understand and use standard
-Windows paths and integrate easly into Windows IDE environments.
+libraries or emulation layer to run once built. The tools understand and use
+standard Windows paths and integrate easly into Windows IDE environments. A
+shell maybe needed to build other parts of your system how-ever if your
+development tools are all native Windows tool you can easly integrate these
+tool sets.
 
 Building on Windows is a little more complicated because the Cygwin shell is
 used rather than the MinGW MSYS shell. The MSYS shell is simpler because the
@@ -1661,26 +1856,45 @@ with limitations such as the length of file names support make using MSYS
 difficult therefore the more complex path of a Canadian cross-build using
 Cygwin is supported.
 
-Install a recent Cygwin version using the Cygwin setup tool. Select the 'Devel'
-group and install:
+Install a recent Cygwin version using the Cygwin setup tool. Select and install
+the groups and packages listed:
 
-- +autoconf+
-- +automake+
-- +binutils+
-- +bison+
-- +flex+
-- +gcc+
-- +git+
-- +make+
-- +ming64-x86_64-binutils+
-- +ming64-x86_64-gcc-core+
-- +ming64-x86_64-g+++
-- +ming64-x86_64-headers+
-- +ming64-x86_64-runtime+
-- +python+
-- +win32api-headers+
-- +win32api-runtime+
--  +zlib-devel+
+.Cygwin Packages
+[options="header,compact",width="50%",cols="20%,80%"]
+|================================
+|Group   |Package
+|Archive |bsdtar
+|        |unzip
+|        |xz
+|Devel   |autoconf
+|        |autoconf2.1
+|        |autoconf2.5
+|        |automake
+|        |binutils
+|        |bison
+|        |flex
+|        |gcc4-core
+|        |gcc4-g++
+|        |git
+|        |make
+|        |mingw64-x86_64-binutils
+|        |mingw64-x86_64-gcc-core
+|        |mingw64-x86_64-g++
+|        |mingw64-x86_64-runtime
+|        |mingw64-x86_64-zlib
+|        |zlib-devel
+|MinGW   |mingw-zlib-devel
+|Python  |python
+|================================
+
+The setup tool will add a number of dependent package and it is ok to accept
+them.
+
+I have found turning off Windows Defender improves performance if you have
+another up to date virus detection tool installed and enabled. I used the
+excellent `Process Hacker 2` tool to monitor the performance and I found the
+Windows Defender service contributed a high load. In my case I had a 3rd party
+virus tool installed so the Windows Defender service was not needed.
 
 A Canadian cross-compile (Cxc) is required on Cygwin because the host is Cygwin
 therefore a traditional cross-compile will result in Cygiwn binaries. With a
@@ -1738,6 +1952,19 @@ Build Set: Time 10:09:42.810547 <4>
 <3> Only the MinGW version is installed.
 <4> Cygwin is slow so please be patient. This time was on an AMD Athlon 64bit
     Dual Core 6000+ running at 3GHz with 4G RAM running Windows 7 64bit.
+
+CAUTION: Cygwin documents the 'Big List Of Dodgy Apps' or 'BLODA'. The link is
+http://cygwin.com/faq/faq.using.html#faq.using.bloda and it is worth a
+look. You will see a large number of common pieces of software found on Windows
+systems that can cause problems. My testing has been performed with NOD32
+running and I have seen some failures. The list is for all of Cygwin so I am
+not sure which of the listed programs effect the RTEMS Source Biulder. The
+following FAQ item talks about +fork+ failures and presents some technical
+reasons they cannot be avoided in all cases. Cygwin and it's fork MSYS are
+fantastic pieces of software in a difficult environment. I have found building
+a single tool tends to work, building all at once is harder.
+
+
 
 Build Status By Host
 ~~~~~~~~~~~~~~~~~~~~
