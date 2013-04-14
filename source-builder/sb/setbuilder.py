@@ -84,7 +84,7 @@ class buildset:
                 for f in files:
                     self._output(f)
             except IOError, err:
-                raise error.general('copying tree: %s: %s' % (what, str(err)))
+                raise error.general('copying tree: %s -> %s: %s' % (src, dst, str(err)))
             except distutils.errors.DistutilsFileError, err:
                 raise error.general('copying tree: %s' % (str(err)))
 
