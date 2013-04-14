@@ -128,11 +128,13 @@ class build:
     def get_file(self, url, local):
         if local is None:
             raise error.general('source/patch path invalid')
-        if not path.isdir(path.dirname(local)):
+        if not path.isdir(path.dirname(local)) and not self.opts.download_disabled():
             _notice(self.opts,
                     'Creating source directory: %s' % (os.path.relpath(path.host(path.dirname(local)))))
             self.mkdir(path.host(path.dirname(local)))
         if not path.exists(local):
+            if self.opts.download_disabled():
+                raise error.general('source not found: %s' % (path.host(local)))
             #
             # Not localy found so we need to download it. Check if a URL has
             # been provided on the command line.

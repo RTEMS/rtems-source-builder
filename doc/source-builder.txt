@@ -371,9 +371,9 @@ remove the parts you do not have write access too or you may need to unpack the
 tar file somewhere and copy the file tree from the level you have write access
 from. Embedding the full prefix path in the tar files lets you know what the
 prefix is and is recommended. For example if
-`/home/chris/development/rtems/4.11` is the prefix used you cannot
-change directory to the root (`/`) and install because the `/home` is root
-access only. To install you would:
+`/home/chris/development/rtems/4.11` is the prefix used you cannot change
+directory to the root (`/`) and install because the `/home` is root access
+only. To install you would:
 
 -------------------------------------------------------------
 $ cd
@@ -1541,6 +1541,7 @@ Options and arguments:
 --macros file[,[file]  : Macro format files to load after the defaults
 --log file             : Log file where all build out is written too
 --url url[,url]        : URL to look for source
+--no-download          : Disable the source downloader
 --targetcflags flags   : List of C flags for the target code
 --targetcxxflags flags : List of C++ flags for the target code
 --libstdcxxflags flags : List of C++ flags to build the target libstdc++ code
@@ -1582,6 +1583,7 @@ Options and arguments:
 --macros file[,[file]  : Macro format files to load after the defaults
 --log file             : Log file where all build out is written too
 --url url[,url]        : URL to look for source
+--no-download          : Disable the source downloader
 --targetcflags flags   : List of C flags for the target code
 --targetcxxflags flags : List of C++ flags for the target code
 --libstdcxxflags flags : List of C++ flags to build the target libstdc++ code
@@ -1618,6 +1620,7 @@ Options and arguments:
 --macros file[,[file]  : Macro format files to load after the defaults
 --log file             : Log file where all build out is written too
 --url url[,url]        : URL to look for source
+--no-download          : Disable the source downloader
 --targetcflags flags   : List of C flags for the target code
 --targetcxxflags flags : List of C++ flags for the target code
 --libstdcxxflags flags : List of C++ flags to build the target libstdc++ code
@@ -1690,6 +1693,9 @@ Log all the output from the build process. The output is directed to +stdout+
 if no log file is provided.
 +--url url+;;
 URL to look for source when downloading. This is can be comma separate list.
++--no-download+;;
+Disable downloading of source and patches. If the source is not found an error
+is raised.
 +--targetcflags flags+;;
 List of C flags for the target code. This allows for specific local
 customisation when testing new variations.
