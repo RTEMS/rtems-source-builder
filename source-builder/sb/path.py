@@ -89,6 +89,9 @@ def isfile(path):
 def isabspath(path):
     return path[0] == '/'
 
+def iswritable(path):
+    return os.access(host(path), os.W_OK)
+
 def mkdir(path):
     path = host(path)
     if exists(path):

@@ -64,6 +64,7 @@ class command_line:
             '--no-clean'       : ('_no_clean',         self._lo_bool,     False, '0',   True),
             '--keep-going'     : ('_keep_going',       self._lo_bool,     False, '0',   True),
             '--always-clean'   : ('_always_clean',     self._lo_bool,     False, '0',   True),
+            '--no-install'     : ('_no_install',       self._lo_bool,     False, '0',   True),
             '--host'           : ('_host',             self._lo_triplets, True,  None,  False),
             '--build'          : ('_build',            self._lo_triplets, True,  None,  False),
             '--target'         : ('_target',           self._lo_triplets, True,  None,  False),
@@ -202,6 +203,7 @@ class command_line:
         print '--log file             : Log file where all build out is written too'
         print '--url url[,url]        : URL to look for source'
         print '--no-download          : Disable the source downloader'
+        print '--no-install           : Do not install the packages to the prefix'
         print '--targetcflags flags   : List of C flags for the target code'
         print '--targetcxxflags flags : List of C++ flags for the target code'
         print '--libstdcxxflags flags : List of C++ flags to build the target libstdc++ code'
@@ -239,8 +241,10 @@ class command_line:
             arg += 1
 
     def post_process(self):
+        # Must have a host
         if self.defaults['_host'] == self.defaults['nil']:
             raise error.general('host not set')
+        # Handle the jobs for make
         if '_ncpus' not in self.defaults:
             raise error.general('host number of CPUs not set')
         ncpus = self.jobs(self.defaults['_ncpus'])
@@ -248,6 +252,7 @@ class command_line:
             self.defaults['_smp_mflags'] = '-j %d' % (ncpus)
         else:
             self.defaults['_smp_mflags'] = self.defaults['nil']
+        # Load user macro files
         um = self.user_macros()
         if um:
             checked = path.exists(um)
@@ -255,6 +260,9 @@ class command_line:
                 raise error.general('macro file not found: %s' % (um[checked.index(False)]))
             for m in um:
                 self.defaults.load(m)
+        # Check the prefix permission
+        if not self.no_install() and not path.iswritable(self.defaults['_prefix']):
+            raise error.general('prefix is not writable: %s' % (path.host(self.defaults['_prefix'])))
 
     def command(self):
         return path.join(self.command_path, self.command_name)
@@ -285,6 +293,9 @@ class command_line:
 
     def always_clean(self):
         return self.opts['always-clean'] != '0'
+
+    def no_install(self):
+        return self.opts['no-install'] != '0'
 
     def user_macros(self):
         #

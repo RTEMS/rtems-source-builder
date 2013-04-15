@@ -310,7 +310,7 @@ class buildset:
                             builds += [b]
                     else:
                         raise
-            if deps is None and not self.opts.get_arg('--no-install'):
+            if deps is None and not self.opts.no_install():
                 for b in builds:
                     self.install(b.name(),
                                  b.config.expand('%{buildroot}'),
@@ -352,7 +352,6 @@ def run():
         optargs = { '--list-configs':  'List available configurations',
                     '--list-bsets':    'List available build sets',
                     '--list-deps':     'List the dependent files.',
-                    '--no-install':    'Do not install the packages to the prefix.',
                     '--no-report':     'Do not create a package report.',
                     '--report-format': 'The report format (text, html, asciidoc).',
                     '--bset-tar-file': 'Create a build set tar file',
