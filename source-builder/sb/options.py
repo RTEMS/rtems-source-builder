@@ -260,9 +260,6 @@ class command_line:
                 raise error.general('macro file not found: %s' % (um[checked.index(False)]))
             for m in um:
                 self.defaults.load(m)
-        # Check the prefix permission
-        if not self.no_install() and not path.ispathwritable(self.defaults['_prefix']):
-            raise error.general('prefix is not writable: %s' % (path.host(self.defaults['_prefix'])))
 
     def command(self):
         return path.join(self.command_path, self.command_name)
