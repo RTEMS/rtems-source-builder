@@ -92,6 +92,14 @@ def isabspath(path):
 def iswritable(path):
     return os.access(host(path), os.W_OK)
 
+def ispathwritable(path):
+    path = host(path)
+    while len(path) != 0:
+        if os.path.exists(path):
+            return iswritable(path)
+        path = os.path.dirname(path)
+    return False
+
 def mkdir(path):
     path = host(path)
     if exists(path):

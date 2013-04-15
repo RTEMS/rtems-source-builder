@@ -261,7 +261,7 @@ class command_line:
             for m in um:
                 self.defaults.load(m)
         # Check the prefix permission
-        if not self.no_install() and not path.iswritable(self.defaults['_prefix']):
+        if not self.no_install() and not path.ispathwritable(self.defaults['_prefix']):
             raise error.general('prefix is not writable: %s' % (path.host(self.defaults['_prefix'])))
 
     def command(self):
