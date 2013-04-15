@@ -240,3 +240,7 @@ FFLAGS="${FFLAGS:-%optflags}" ; export FFLAGS ;
       --sharedstatedir=%{_sharedstatedir} \
       --mandir=%{_mandir} \
       --infodir=%{_infodir}'''
+
+# Default package settings
+_forced_static:     none,         none, '-Xlinker -Bstatic ${LIBS_STATIC} -Xlinker -Bdynamic'
+__xz:                exe,     required, '/usr/bin/xz'
