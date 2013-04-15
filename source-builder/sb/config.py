@@ -197,6 +197,9 @@ class package:
     def include(self):
         return self.find_directive('%include')
 
+    def testing(self):
+        return self.find_directive('%testing')
+
     def long_name(self):
         return self.name()
 
@@ -209,7 +212,8 @@ class file:
                    '%clean',
                    '%install',
                    '%include',
-                   '%install' ]
+                   '%install',
+                   '%testing' ]
 
     _ignore = [ re.compile('%setup'),
                 re.compile('%configure'),
