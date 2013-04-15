@@ -227,10 +227,10 @@ class command_line:
                     long_opt = self._long_opts[lo]
                     if len(los) == 1:
                         if long_opt[2]:
-                            if arg == len(args) - 1:
+                            if arg == len(self.args) - 1:
                                 raise error.general('option requires a parameter: %s' % (lo))
                             arg += 1
-                            value = args[arg]
+                            value = self.args[arg]
                         else:
                             value = None
                     else:
