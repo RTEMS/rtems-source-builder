@@ -37,7 +37,11 @@ class repo:
 
     def _run(self, args, check = False):
         e = execute.capture_execution()
-        exit_code, proc, output = e.spawn([self.git] + args)
+        if path.exists(self.path):
+            cwd = self.path
+        else:
+            cwd = None
+        exit_code, proc, output = e.spawn([self.git] + args, cwd = cwd)
         if check:
             self._git_exit_code(exit_code)
         return exit_code, output
@@ -61,28 +65,63 @@ class repo:
             raise error.general('invalid version number from git: %s' % (gvs[2]))
         return (int(vs[0]), int(vs[1]), int(vs[2]), int(vs[3]))
 
+    def clone(self, url, path):
+        ec, output = self._run(['clone', url, path])
+        if ec != 0:
+            raise error.general('clone of %s failed: %s' % (url, output))
+
+    def fetch(self, url, path):
+        ec, output = self._run(['fetch', url])
+        if ec != 0:
+            raise error.general('fetch of %s failed: %s' % (url, output))
+
+    def pull(self):
+        ec, output = self._run(['pull'])
+        if ec != 0:
+            raise error.general('pull of %s failed: %s' % (url, output))
+
+    def reset(self, args):
+        if type(args) == str:
+            args = [args]
+        ec, output = self._run(['reset'] + args)
+        if ec != 0:
+            raise error.general('pull of %s failed: %s' % (url, output))
+
+    def branch(self):
+        ec, output = self._run(['branch'])
+        if ec == 0:
+            for b in output.split('\n'):
+                if b[0] == '*':
+                    return b[2:]
+        return None
+
+    def checkout(self, branch = 'master'):
+        ec, output = self._run(['checkout', branch])
+        return ec == 0
+
     def status(self):
         _status = {}
-        ec, output = self._run(['status'])
-        if ec == 0:
-            state = 'none'
-            for l in output.split('\n'):
-                if l.startswith('# On branch '):
-                    _status['branch'] = l[len('# On branch '):]
-                elif l.startswith('# Changes to be committed:'):
-                    state = 'staged'
-                elif l.startswith('# Changes not staged for commit:'):
-                    state = 'unstaged'
-                elif l.startswith('# Untracked files:'):
-                    state = 'untracked'
-                elif state != 'none' and l[0] == '#':
-                    if l.strip() != '#' and not l.startswith('#   ('):
-                        if state not in _status:
-                            _status[state] = []
-                        l = l[1:]
-                        if ':' in l:
-                            l = l.split(':')[1]
-                        _status[state] += [l.strip()]
+        if path.exists(self.path):
+            ec, output = self._run(['status'])
+            if ec == 0:
+                state = 'none'
+                for l in output.split('\n'):
+                    if l.startswith('# On branch '):
+                        _status['branch'] = l[len('# On branch '):]
+                    elif l.startswith('# Changes to be committed:'):
+                        state = 'staged'
+                    elif l.startswith('# Changes not staged for commit:'):
+                        state = 'unstaged'
+                    elif l.startswith('# Untracked files:'):
+                        state = 'untracked'
+                    elif state != 'none' and l[0] == '#':
+                        if l.strip() != '#' and not l.startswith('#   ('):
+                            if state not in _status:
+                                _status[state] = []
+                            l = l[1:]
+                            if ':' in l:
+                                l = l.split(':')[1]
+                            _status[state] += [l.strip()]
         return _status
 
     def clean(self):
@@ -90,8 +129,10 @@ class repo:
         return len(_status) == 1 and 'branch' in _status
 
     def valid(self):
-        ec, output = self._run(['status'])
-        return ec == 0
+        if path.exists(self.path):
+            ec, output = self._run(['status'])
+            return ec == 0
+        return False
 
     def remotes(self):
         _remotes = {}

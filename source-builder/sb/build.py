@@ -1,6 +1,6 @@
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2010-2012 Chris Johns (chrisj@rtems.org)
+# Copyright 2010-2013 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -34,6 +34,7 @@ import urlparse
 try:
     import check
     import config
+    import download
     import error
     import execute
     import log
@@ -125,115 +126,6 @@ class build:
         if not self.opts.dry_run():
             path.mkdir(mkpath)
 
-    def get_file(self, url, local):
-        if local is None:
-            raise error.general('source/patch path invalid')
-        if not path.isdir(path.dirname(local)) and not self.opts.download_disabled():
-            _notice(self.opts,
-                    'Creating source directory: %s' % (os.path.relpath(path.host(path.dirname(local)))))
-            self.mkdir(path.host(path.dirname(local)))
-        if not path.exists(local):
-            if self.opts.download_disabled():
-                raise error.general('source not found: %s' % (path.host(local)))
-            #
-            # Not localy found so we need to download it. Check if a URL has
-            # been provided on the command line.
-            #
-            url_bases = self.opts.urls()
-            urls = []
-            if url_bases is not None:
-                for base in url_bases:
-                    if base[-1:] != '/':
-                        base += '/'
-                    url_path = urlparse.urlsplit(url)[2]
-                    slash = url_path.rfind('/')
-                    if slash < 0:
-                        url_file = url_path
-                    else:
-                        url_file = url_path[slash + 1:]
-                    urls.append(urlparse.urljoin(base, url_file))
-            urls.append(url)
-            if self.opts.trace():
-                print '_url:', ','.join(urls), '->', local
-            for url in urls:
-                #
-                # Hack for GitHub.
-                #
-                if url.startswith('https://api.github.com'):
-                    url = urlparse.urljoin(url, self.config.expand('tarball/%{version}'))
-                _notice(self.opts, 'download: %s -> %s' % (url, os.path.relpath(path.host(local))))
-                if not self.opts.dry_run():
-                    failed = False
-                    _in = None
-                    _out = None
-                    try:
-                        _in = urllib2.urlopen(url)
-                        _out = open(path.host(local), 'wb')
-                        _out.write(_in.read())
-                    except IOError, err:
-                        msg = 'download: %s: error: %s' % (url, str(err))
-                        _notice(self.opts, msg)
-                        if path.exists(local):
-                            os.remove(path.host(local))
-                        failed = True
-                    except ValueError, err:
-                        msg = 'download: %s: error: %s' % (url, str(err))
-                        _notice(self.opts, msg)
-                        if path.exists(local):
-                            os.remove(path.host(local))
-                        failed = True
-                    except:
-                        msg = 'download: %s: error' % (url)
-                        print >> sys.stderr, msg
-                        if _out is not None:
-                            _out.close()
-                        raise
-                    if _out is not None:
-                        _out.close()
-                    if _in is not None:
-                        del _in
-                    if not failed:
-                        if not path.isfile(local):
-                            raise error.general('source is not a file: %s' % (path.host(local)))
-                        return
-            if not self.opts.dry_run():
-                raise error.general('downloading %s: all paths have failed, giving up' % (url))
-
-    def parse_url(self, url, pathkey):
-        #
-        # Split the source up into the parts we need.
-        #
-        source = {}
-        source['url'] = url
-        source['path'] = path.dirname(url)
-        source['file'] = path.basename(url)
-        source['name'], source['ext'] = path.splitext(source['file'])
-        #
-        # Get the file. Checks the local source directory first.
-        #
-        source['local'] = None
-        for p in self.config.define(pathkey).split(':'):
-            local = path.join(path.abspath(p), source['file'])
-            if source['local'] is None:
-                source['local'] = local
-            if path.exists(local):
-                source['local'] = local
-                break
-        #
-        # Is the file compressed ?
-        #
-        esl = source['ext'].split('.')
-        if esl[-1:][0] == 'gz':
-            source['compressed'] = '%{__gzip} -dc'
-        elif esl[-1:][0] == 'bz2':
-            source['compressed'] = '%{__bzip2} -dc'
-        elif esl[-1:][0] == 'bz2':
-            source['compressed'] = '%{__zip} -u'
-        elif esl[-1:][0] == 'xz':
-            source['compressed'] = '%{__xz} -dc'
-        source['script'] = ''
-        return source
-
     def source(self, package, source_tag):
         #
         # Scan the sources found in the config file for the one we are
@@ -250,9 +142,11 @@ class build:
                     break
         if url is None:
             raise error.general('source tag not found: source%d' % (source_tag))
-        source = self.parse_url(url, '_sourcedir')
-        self.get_file(source['url'], source['local'])
-        if 'compressed' in source:
+        source = download.parse_url(url, '_sourcedir', self.config, self.opts)
+        download.get_file(source['url'], source['local'], self.opts, self.config)
+        if 'symlink' in source:
+            source['script'] = '%%{__ln_s} %s ${source_dir_%d}' % (source['local'], source_tag)
+        elif 'compressed' in source:
             source['script'] = source['compressed'] + ' ' + \
                 source['local'] + ' | %{__tar_extract} -'
         else:
@@ -275,13 +169,13 @@ class build:
         #
         # Parse the URL first in the source builder's patch directory.
         #
-        patch = self.parse_url(url, '_patchdir')
+        patch = download.parse_url(url, '_patchdir', self.config, self.opts)
         #
         # If not in the source builder package check the source directory.
         #
         if not path.exists(patch['local']):
-            patch = self.parse_url(url, '_patchdir')
-        self.get_file(patch['url'], patch['local'])
+            patch = download.parse_url(url, '_patchdir', self.config, self.opts)
+        download.get_file(patch['url'], patch['local'], self.opts, self.config)
         if 'compressed' in patch:
             patch['script'] = patch['compressed'] + ' ' +  patch['local']
         else:
