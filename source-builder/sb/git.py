@@ -66,26 +66,18 @@ class repo:
         return (int(vs[0]), int(vs[1]), int(vs[2]), int(vs[3]))
 
     def clone(self, url, path):
-        ec, output = self._run(['clone', url, path])
-        if ec != 0:
-            raise error.general('clone of %s failed: %s' % (url, output))
+        ec, output = self._run(['clone', url, path], check = True)
 
-    def fetch(self, url, path):
-        ec, output = self._run(['fetch', url])
-        if ec != 0:
-            raise error.general('fetch of %s failed: %s' % (url, output))
+    def fetch(self):
+        ec, output = self._run(['fetch'], check = True)
 
     def pull(self):
-        ec, output = self._run(['pull'])
-        if ec != 0:
-            raise error.general('pull of %s failed: %s' % (url, output))
+        ec, output = self._run(['pull'], check = True)
 
     def reset(self, args):
         if type(args) == str:
             args = [args]
-        ec, output = self._run(['reset'] + args)
-        if ec != 0:
-            raise error.general('pull of %s failed: %s' % (url, output))
+        ec, output = self._run(['reset'] + args, check = True)
 
     def branch(self):
         ec, output = self._run(['branch'])
@@ -96,8 +88,7 @@ class repo:
         return None
 
     def checkout(self, branch = 'master'):
-        ec, output = self._run(['checkout', branch])
-        return ec == 0
+        ec, output = self._run(['checkout', branch], check = True)
 
     def status(self):
         _status = {}
