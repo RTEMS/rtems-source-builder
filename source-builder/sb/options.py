@@ -65,6 +65,7 @@ class command_line:
             '--keep-going'     : ('_keep_going',       self._lo_bool,     False, '0',   True),
             '--always-clean'   : ('_always_clean',     self._lo_bool,     False, '0',   True),
             '--no-install'     : ('_no_install',       self._lo_bool,     False, '0',   True),
+            '--regression'     : ('_regression',       self._lo_bool,     False, '0',   True),
             '--host'           : ('_host',             self._lo_triplets, True,  None,  False),
             '--build'          : ('_build',            self._lo_triplets, True,  None,  False),
             '--target'         : ('_target',           self._lo_triplets, True,  None,  False),
@@ -209,6 +210,7 @@ class command_line:
         print '--libstdcxxflags flags : List of C++ flags to build the target libstdc++ code'
         print '--with-<label>         : Add the --with-<label> to the build'
         print '--without-<label>      : Add the --without-<label> to the build'
+        print '--regression           : Set --no-install, --keep-going and --always-clean'
         if self.optargs:
             for a in self.optargs:
                 print '%-22s : %s' % (a, self.optargs[a])
@@ -244,6 +246,14 @@ class command_line:
         # Must have a host
         if self.defaults['_host'] == self.defaults['nil']:
             raise error.general('host not set')
+        # Manage the regression option
+        if self.opts['regression'] != '0':
+            self.opts['no-install'] = '1'
+            self.defaults['_no_install'] = '1'
+            self.opts['keep-going'] = '1'
+            self.defaults['_keep_going'] = '1'
+            self.opts['always-clean'] = '1'
+            self.defaults['_always_clean'] = '1'
         # Handle the jobs for make
         if '_ncpus' not in self.defaults:
             raise error.general('host number of CPUs not set')

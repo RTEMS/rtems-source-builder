@@ -1547,6 +1547,7 @@ Options and arguments:
 --libstdcxxflags flags : List of C++ flags to build the target libstdc++ code
 --with-<label>         : Add the --with-<label> to the build
 --without-<label>      : Add the --without-<label> to the build
+--regression           : Set --no-install, --keep-going and --always-clean
 $ ../source-builder/sb-check
 RTEMS Source Builder - Check, v0.2.0
 Environment is ok
@@ -1589,6 +1590,7 @@ Options and arguments:
 --libstdcxxflags flags : List of C++ flags to build the target libstdc++ code
 --with-<label>         : Add the --with-<label> to the build
 --without-<label>      : Add the --without-<label> to the build
+--regression           : Set --no-install, --keep-going and --always-clean
 -------------------------------------------------------------
 
 Set Builder (sb-set-builder)
@@ -1634,6 +1636,7 @@ Options and arguments:
 --no-install           : Do not install the packages to the prefix.
 --list-deps            : List the dependent files.
 --pkg-tar-files        : Create package tar files
+--regression           : Set --no-install, --keep-going and --always-clean
 -------------------------------------------------------------
 
 .Arguments
@@ -1732,6 +1735,9 @@ Print a list of dependent files used by a build set. Dependent files have a
 'dep[?]' prefix where '?' is a number. The files are listed alphabetically.
 +--report-format format+;;
 The report format can be 'text' or 'html'. The default is 'html'.
++--regression+;;
+A convenience option which is the same as +--no-install+, +--keep-going+ and
++--always-clean+.
 
 Set Builder (sb-builder)
 ~~~~~~~~~~~~~~~~~~~~~~~~
