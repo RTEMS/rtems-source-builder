@@ -68,7 +68,7 @@ def _git_parser(source, config, opts):
     if len(us) > 1:
         source['args'] = us[1:]
     source['local'] = \
-        path.join(source['local_prefix'], config.expand('git'), source['file'])
+        path.join(source['local_prefix'], 'git', source['file'])
     source['symlink'] = source['local']
 
 
@@ -81,7 +81,7 @@ def _file_parser(source, config, opts):
 parsers = { 'http': _http_parser,
             'ftp':  _http_parser,
             'git':  _git_parser,
-            'file':  _file_parser }
+            'file': _file_parser }
 
 def parse_url(url, pathkey, config, opts):
     #
