@@ -56,11 +56,11 @@ class macros:
         self.macro_filter = re.compile(r'%{[^}]+}')
         if original is None:
             self.macros = {}
-            self.read_map = 'global'
+            self.read_maps = []
             self.write_map = 'global'
-            self.macros[self.read_map] = {}
-            self.macros[self.read_map]['_cwd'] = ('dir', 'required', path.shell(os.getcwd()))
-            self.macros[self.read_map]['_sbdir'] = ('dir', 'required', path.shell(sbdir))
+            self.macros['global'] = {}
+            self.macros['global']['_cwd'] = ('dir', 'required', path.shell(os.getcwd()))
+            self.macros['global']['_sbdir'] = ('dir', 'required', path.shell(sbdir))
         else:
             self.macros = {}
             for m in original.macros:
@@ -68,7 +68,7 @@ class macros:
                     self.macros[m] = {}
                 for k in original.macros[m]:
                     self.macros[m][k] = original.macros[m][k]
-            self.read_map = original.read_map
+            self.read_maps = sorted(original.read_maps)
             self.write_map = original.write_map
         if name is not None:
             self.load(name)
@@ -157,24 +157,14 @@ class macros:
         return len(self.keys())
 
     def keys(self):
-
-        def _map_keys(_map):
-            u = []
-            k = []
-            for mk in _map:
-                if _map[mk][1] == 'undefine':
-                    u += [mk]
+        keys = self.macros['global'].keys()
+        for rm in self.get_read_maps():
+            for mk in self.macros[rm]:
+                if self.macros[rm][mk][1] == 'undefine':
+                    if mk in keys:
+                        keys.remove(mk)
                 else:
-                    k += [mk]
-            return k, u
-
-        keys, undefined = _map_keys(self.macros[self.read_map])
-        if map is not 'global':
-            gk, u = _map_keys(self.macros['global'])
-            undefined = set(undefined + u)
-            for k in gk:
-                if k not in undefined:
-                    keys += [k]
+                    keys.append(mk)
         return sorted(set(keys))
 
     def has_key(self, key):
@@ -186,6 +176,9 @@ class macros:
 
     def maps(self):
         return self.macros.keys()
+
+    def get_read_maps(self):
+        return [rm[5:] for rm in self.read_maps]
 
     def key_filter(self, key):
         if key.startswith('%{') and key[-1] is '}':
@@ -310,8 +303,9 @@ class macros:
         if type(key) is not str:
             raise TypeError('bad key type: %s' % (type(key)))
         key = self.key_filter(key)
-        if self.read_map is not 'global'and key in self.macros[self.read_map]:
-            return self.macros[self.read_map][key]
+        for rm in self.get_read_maps():
+            if key in self.macros[rm]:
+                return self.macros[rm][key]
         if key in self.macros['global']:
             return self.macros['global'][key]
         return None
@@ -367,9 +361,19 @@ class macros:
                 keys += [key]
         return keys
 
-    def set_read_map(self, map):
-        if map in self.macros:
-            self.read_map = map
+    def set_read_map(self, _map):
+        if _map in self.macros:
+            if _map not in self.get_read_maps():
+                rm = '%04d_%s' % (len(self.read_maps), _map)
+                self.read_maps = sorted(self.read_maps + [rm])
+            return True
+        return False
+
+    def unset_read_map(self, _map):
+        if _map in self.get_read_maps():
+            for i in range(0, len(self.read_maps)):
+                if '%04d_%s' % (i, _map) == self.read_maps[i]:
+                    self.read_maps.pop(i)
             return True
         return False
 
@@ -391,12 +395,13 @@ if __name__ == "__main__":
     m.parse("[test]\n" \
             "test1: none, undefine, ''\n" \
             "name:  none, override, 'pink'\n")
-    m.set_read_map('test')
+    print 'set test:', m.set_read_map('test')
     if m['name'] != 'pink':
         print 'error: override failed. name is %s' % (m['name'])
         sys.exit(1)
     if m.has_key('test1'):
         print 'error: map undefine failed.'
         sys.exit(1)
+    print 'unset test:', m.unset_read_map('test')
     print m
     print m.keys()
