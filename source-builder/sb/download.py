@@ -28,6 +28,7 @@ import sys
 import urllib2
 import urlparse
 
+import cvs
 import error
 import git
 import log
@@ -71,6 +72,25 @@ def _git_parser(source, config, opts):
         path.join(source['local_prefix'], 'git', source['file'])
     source['symlink'] = source['local']
 
+def _cvs_parser(source, config, opts):
+    #
+    # Symlink.
+    #
+    if not source['url'].startswith('cvs://'):
+        raise error.general('invalid cvs path: %s' % (source['url']))
+    us = source['url'].split('?')
+    try:
+        url = us[0]
+        source['file'] = \
+            url[url[6:].index(':') + 7:].replace('/', '_').replace('@', '_').replace('.', '_')
+        source['cvsroot'] = ':%s:' % (url[6:url[6:].index('/') + 6:])
+    except:
+        raise error.general('invalid cvs path: %s' % (source['url']))
+    source['local'] = path.join(source['local_prefix'], 'cvs', source['file'])
+    if 'src_prefix' in source:
+        source['symlink'] = path.join(source['local'])
+    else:
+        source['symlink'] = source['local']
 
 def _file_parser(source, config, opts):
     #
@@ -81,6 +101,7 @@ def _file_parser(source, config, opts):
 parsers = { 'http': _http_parser,
             'ftp':  _http_parser,
             'git':  _git_parser,
+            'cvs':  _cvs_parser,
             'file': _file_parser }
 
 def parse_url(url, pathkey, config, opts):
@@ -188,6 +209,48 @@ def _git_downloader(url, local, config, opts):
                 repo.reset(arg)
     return True
 
+def _cvs_downloader(url, local, config, opts):
+    rlp = os.path.relpath(path.host(local))
+    us = url.split('?')
+    module = None
+    tag = None
+    date = None
+    src_prefix = None
+    for a in us[1:]:
+        _as = a.split('=')
+        if _as[0] == 'module':
+            if len(_as) != 2:
+                raise error.general('invalid cvs module: %s' % (a))
+            module = _as[1]
+        elif _as[0] == 'src-prefix':
+            if len(_as) != 2:
+                raise error.general('invalid cvs src-prefix: %s' % (a))
+            src_prefix = _as[1]
+        elif _as[0] == 'tag':
+            if len(_as) != 2:
+                raise error.general('invalid cvs tag: %s' % (a))
+            tag = _as[1]
+        elif _as[0] == 'date':
+            if len(_as) != 2:
+                raise error.general('invalid cvs date: %s' % (a))
+            date = _as[1]
+    repo = cvs.repo(local, opts, config.macros, src_prefix)
+    if not repo.valid():
+        _notice(opts, 'cvs: checkout: %s -> %s' % (us[0], rlp))
+        if not opts.dry_run():
+            repo.checkout(':%s' % (us[0][6:]), module, tag, date)
+    for a in us[1:]:
+        _as = a.split('=')
+        if _as[0] == 'update':
+            _notice(opts, 'cvs: update: %s' % (us[0]))
+            if not opts.dry_run():
+                repo.update()
+        elif _as[0] == 'reset':
+            _notice(opts, 'cvs: reset: %s' % (us[0]))
+            if not opts.dry_run():
+                repo.reset()
+    return True
+
 def _file_downloader(url, local, config, opts):
     if path.exists(local):
         return True
@@ -196,7 +259,8 @@ def _file_downloader(url, local, config, opts):
 downloaders = { 'http': _http_downloader,
                 'ftp':  _http_downloader,
                 'git':  _git_downloader,
-                'file':  _file_downloader }
+                'cvs':  _cvs_downloader,
+                'file': _file_downloader }
 
 def get_file(url, local, opts, config):
     if local is None:
