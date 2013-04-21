@@ -52,7 +52,9 @@ class repo:
 
     def _run(self, args, check = False, cwd = None):
         e = execute.capture_execution()
-        if path.exists(self.path):
+        if cwd is None:
+            if not path.exists(self.path):
+                raise error.general('cvs path needs to exist: %s' % (self.path))
             cwd = self.path
         cmd = [self.cvs, '-q'] + args
         log.output('cmd: (%s) %s' % (str(cwd), ' '.join(cmd)))

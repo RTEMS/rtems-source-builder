@@ -226,7 +226,12 @@ def _cvs_downloader(url, local, config, opts):
     repo = cvs.repo(local, opts, config.macros, src_prefix)
     if not repo.valid():
         log.notice('cvs: checkout: %s -> %s' % (us[0], rlp))
-        if not opts.dry_run():
+        if not path.isdir(local):
+            log.notice('Creating source directory: %s' % \
+                           (os.path.relpath(path.host(local))))
+            log.output('making dir: %s' % (path.host(path.dirname(local))))
+            if not opts.dry_run():
+                path.mkdir(local)
             repo.checkout(':%s' % (us[0][6:]), module, tag, date)
     for a in us[1:]:
         _as = a.split('=')
