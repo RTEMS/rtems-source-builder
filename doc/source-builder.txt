@@ -598,6 +598,109 @@ Both types of configuration files use the \'#' character as a comment
 character. Anything after this character on the line is ignored. There is no
 block comment.
 
+Source and Patches
+~~~~~~~~~~~~~~~~~~
+
+The RTEMS Source Builder provides a flexible way to manage source. Source and
+patches are declare in configurations file using the +source+ and +patch+
+directives. There are a single line containing a Universal Resource Location or
+URL and can contain macros and shell expansions. The <<_prep,%prep>> section
+details the source and patch directives
+
+The URL can reference remote and local source and patch resources. The
+following schemes are provided:
+
+'http':: Remote access using the HTTP protocol.
+'https':: Remote access using the Secure HTTP protocol.
+'ftp:: Remote access using the FTP protocol.
+'git:: Remote access to a GIT repository.
+'cvs:: Remote access to a CVS repository.
+'file:: Local access to an existing source directory.
+
+HTTP, HTTPS, and FTP
+^^^^^^^^^^^^^^^^^^^^
+
+Remote access to TAR files is provided using HTTP, HTTPS and FTP protocols. The
+full URL provided is used to access the remote file including any query
+components. The URL is parsed to extract the file component and the local
+source directory is checked for that file. If the file is located the remote
+file is not downloaded. Currently no other checks are made. If a download fails
+you need to manually remove the file from the source directory and start the
+build process again.
+
+The URL can contain macros. These are expand before issuing the request to
+download the file. The GNU GCC compiler source URL is:
+
+-------------------------------------------------------------
+Source0: ftp://ftp.gnu.org/gnu/gcc/gcc-%{gcc_version}/gcc-%{gcc_version}.tar.bz2
+-------------------------------------------------------------
+
+The type of compression is automatically detected from the file extension. The
+supported compression formats are:
+
+`gz`:: GNU ZIP
+`bzip2`:: BZIP2 ??
+`zip`:: ??
+'xy':: XY ??
+
+The output of the decompression tool is feed to the standard `tar` utility and
+unpacked into the build directory.
+
+If the URL references the GitHub API server 'https://api.github.com/' a tarball
+of the specified version is download. For example the URL for the STLINK
+project on GitHub and version is:
+
+-------------------------------------------------------------
+%define stlink_version 3494c11
+Source0: https://api.github.com/repos/texane/stlink/texane-stlink-%{stlink_version}.tar.gz
+-------------------------------------------------------------
+
+the TAR file is downloaded and used.
+
+GIT
+^^^
+
+A GIT repository can be cloned and used as source. The GIT repository resides
+in the 'source' directory under the `git` directory. You can edit, update and
+use the repository as you normally do and the results will used to build the
+tools. This allows you to prepare and test patches in the build environment the
+tools are built in. The GIT URL only supports the GIT protocol. You can control
+the repository via the URL by appending options and arguments to the GIT
+path. The options are delimited by `?` and option arguments are delimited from
+the options with `=`. The options are:
+
+`branch`:: Checkout the specified branch.
+`pull`:: Perform a pull to update the repository.
+`fetch`:: Perform a fetch to get any remote updates.
+`reset`:: Reset the repository. Useful to remove any local changes. You can
+pass the `hard` argument to force a hard reset.
+
+-------------------------------------------------------------
+Source0: git://gcc.gnu.org/git/gcc.git?branch=gcc-4_7-branch?reset=hard
+-------------------------------------------------------------
+
+This will clone the GCC git repository and checkout the 4.7-branch and perform
+a hard reset.
+
+CVS
+^^^
+
+A CVS repository can be checked out. CVS is more complex than GIT to handle
+because of the modules support. This can effect the paths the source ends up
+in. The CVS URL only supports the CVS protocol. You can control the repository
+via the URL by appending options and arguments to the CVS path. The options are
+delimited by `?` and option arguments are delimited from the options with
+`=`. The options are:
+
+`module`:: The module to checkout.
+`src-prefix`:: The path into the source where the module starts.
+`tag`:: The CVS tag to checkout.
+`date`:: The CVS date to checkout.
+
+-------------------------------------------------------------
+Source0: cvs://pserver:anoncvs@sourceware.org/cvs/src?module=newlib?src-prefix=src
+-------------------------------------------------------------
+
 Macros and Defaults
 ~~~~~~~~~~~~~~~~~~~
 
@@ -968,11 +1071,8 @@ package with local modifications. The following example is taken from the
 -------------------------------------------------------------
 %ifn %{defined Source0}
  Source0: ftp://ftp.gnu.org/gnu/gcc/gcc-%{gcc_version}/gcc-%{gcc_version}.tar.bz2
- VersionContro0: git clone git://gcc.gnu.org/git/gcc.git <1>
 %endif
 -------------------------------------------------------------
-
-<1> The version control macro is currently not implemented.
 
 You could optionally have a few source files that make up the package. For
 example GNU's GCC was a few tar files for a while and it is now a single tar
