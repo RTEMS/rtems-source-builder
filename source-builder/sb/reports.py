@@ -45,12 +45,6 @@ except:
     print 'error: unknown application load error'
     sys.exit(1)
 
-def _notice(opts, text):
-    if not opts.quiet() and not log.default.has_stdout():
-        print text
-    log.output(text)
-    log.flush()
-
 class report:
     """Report the build details about a package given a config file."""
 
@@ -364,12 +358,11 @@ def run(args):
                     '--format':       'Output format (text, html, asciidoc)',
                     '--output':       'File name to output the report' }
         opts = options.load(args, optargs)
-        log.default = log.log(opts.logfiles())
         if opts.get_arg('--output') and len(opts.params()) > 1:
             raise error.general('--output can only be used with a single config')
         print 'RTEMS Source Builder, Reporter v%s' % (version.str())
         if not check.host_setup(opts):
-            _notice(opts, 'warning: forcing build with known host setup problems')
+            log.warning('forcing build with known host setup problems')
         configs = build.get_configs(opts)
         if not setbuilder.list_bset_cfg_files(opts, configs):
             output = opts.get_arg('--output')
@@ -409,7 +402,7 @@ def run(args):
     except error.exit, eerr:
         pass
     except KeyboardInterrupt:
-        _notice(opts, 'abort: user terminated')
+        log.notice('abort: user terminated')
         sys.exit(1)
     sys.exit(0)
 

@@ -227,8 +227,8 @@ class file:
             self.macros = opts.defaults
         else:
             self.macros = macros
-        if self.opts.trace():
-            print 'config: %s' % (name)
+        self.init_name = name
+        log.trace('config: %s' % (name))
         self.disable_macro_reassign = False
         self.configpath = []
         self.wss = re.compile(r'\s+')
@@ -262,22 +262,19 @@ class file:
         return s
 
     def _name_line_msg(self,  msg):
-        return '%s:%d: %s' % (path.basename(self.name), self.lc,  msg)
+        return '%s:%d: %s' % (path.basename(self.init_name), self.lc,  msg)
 
     def _output(self, text):
         if not self.opts.quiet():
             log.output(text)
 
-    def _warning(self, msg):
-        self._output('warning: %s' % (self._name_line_msg(msg)))
-
     def _error(self, msg):
         err = 'error: %s' % (self._name_line_msg(msg))
-        print >> sys.stderr, err
-        self._output(err)
+        log.stderr(err)
+        log.output(err)
         self.in_error = True
         if not self.opts.dry_run():
-            print >> sys.stderr, 'warning: switched to dry run due to errors'
+            log.stderr('warning: switched to dry run due to errors')
             self.opts.set_dry_run()
 
     def _label(self, name):
@@ -389,7 +386,7 @@ class file:
                 elif m.startswith('%{expand'):
                     colon = m.find(':')
                     if colon < 8:
-                        self._warning('malformed expand macro, no colon found')
+                        log.warning('malformed expand macro, no colon found')
                     else:
                         e = self._expand(m[colon + 1:-1].strip())
                         s = s.replace(m, e)
@@ -408,11 +405,11 @@ class file:
                     mn = None
                 elif m.startswith('%{echo'):
                     if not m.endswith('}'):
-                        self._warning("malformed conditional macro '%s'" % (m))
+                        log.warning("malformed conditional macro '%s'" % (m))
                         mn = None
                     else:
                         e = self._expand(m[6:-1].strip())
-                        self._output('%s' % (self._name_line_msg(e)))
+                        log.output('%s' % (self._name_line_msg(e)))
                         s = ''
                         expanded = True
                         mn = None
@@ -432,7 +429,7 @@ class file:
                     colon = m[start:].find(':')
                     if colon < 0:
                         if not m.endswith('}'):
-                            self._warning("malformed conditional macro '%s'" % (m))
+                            log.warning("malformed conditional macro '%s'" % (m))
                             mn = None
                         else:
                             mn = self._label(m[start:-1])
@@ -474,15 +471,15 @@ class file:
 
     def _select(self, config, ls):
         if len(ls) != 2:
-            self._warning('invalid select statement')
+            log.warning('invalid select statement')
         else:
             r = self.macros.set_read_map(ls[1])
-            if self.opts.trace():
-                print '_select: ', r, ls[1], self.macros.maps()
+            log.trace('config: %s: _select: %s %s %r' % \
+                          (self.init_name, r, ls[1], self.macros.maps()))
 
     def _define(self, config, ls):
         if len(ls) <= 1:
-            self._warning('invalid macro definition')
+            log.warning('invalid macro definition')
         else:
             d = self._label(ls[1])
             if self.disable_macro_reassign:
@@ -493,7 +490,7 @@ class file:
                     else:
                         self.macros[d] = ' '.join([f.strip() for f in ls[2:]])
                 else:
-                    self._warning("macro '%s' already defined" % (d))
+                    log.warning("macro '%s' already defined" % (d))
             else:
                 if len(ls) == 2:
                     self.macros[d] = '1'
@@ -502,13 +499,13 @@ class file:
 
     def _undefine(self, config, ls):
         if len(ls) <= 1:
-            self._warning('invalid macro definition')
+            log.warning('invalid macro definition')
         else:
             mn = self._label(ls[1])
             if mn in self.macros:
                 del self.macros[mn]
             else:
-                self._warning("macro '%s' not defined" % (mn))
+                log.warning("macro '%s' not defined" % (mn))
 
     def _ifs(self, config, ls, label, iftrue, isvalid):
         text = []
@@ -616,8 +613,7 @@ class file:
                 self._error('malformed if: ' + reduce(add, ls, ''))
             if invert:
                 istrue = not istrue
-            if self.opts.trace():
-                print '_if:  ', ifls, istrue
+            log.trace('config: %s: _if:  %s %s' % (self.init_name, ifls, str(istrue)))
         return self._ifs(config, ls, '%if', istrue, isvalid)
 
     def _ifos(self, config, ls, isvalid):
@@ -663,8 +659,8 @@ class file:
             l = _clean(l)
             if len(l) == 0:
                 continue
-            if self.opts.trace():
-                print '%03d: %d %s' % (self.lc, isvalid, l)
+            log.trace('config: %s: %03d: %s %s' % \
+                          (self.init_name, self.lc, str(isvalid), l))
             lo = l
             if isvalid:
                 l = self._expand(l)
@@ -718,11 +714,11 @@ class file:
                 elif ls[0] == '%endif':
                     if roc:
                         return ('control', '%endif', '%endif')
-                    self._warning("unexpected '" + ls[0] + "'")
+                    log.warning("unexpected '" + ls[0] + "'")
                 elif ls[0] == '%else':
                     if roc:
                         return ('control', '%else', '%else')
-                    self._warning("unexpected '" + ls[0] + "'")
+                    log.warning("unexpected '" + ls[0] + "'")
                 elif ls[0].startswith('%defattr'):
                     return ('data', [l])
                 elif ls[0] == '%bcond_with':
@@ -745,7 +741,7 @@ class file:
                         for d in self._directive:
                             if ls[0].strip() == d:
                                 return ('directive', ls[0].strip(), ls[1:])
-                        self._warning("unknown directive: '" + ls[0] + "'")
+                        log.warning("unknown directive: '" + ls[0] + "'")
                         return ('data', [lo])
             else:
                 return ('data', [lo])
@@ -837,8 +833,7 @@ class file:
                 raise error.general('no config file found: %s' % (cfgname))
 
         try:
-            if self.opts.trace():
-                print '_open: %s' % (path.host(configname))
+            log.trace('config: %s: _open: %s' % (self.init_name, path.host(configname)))
             config = open(path.host(configname), 'r')
         except IOError, err:
             raise error.general('error opening config file: %s' % (path.host(configname)))
@@ -858,7 +853,7 @@ class file:
                 elif r[0] == 'control':
                     if r[1] == '%end':
                         break
-                    self._warning("unexpected '%s'" % (r[1]))
+                    log.warning("unexpected '%s'" % (r[1]))
                 elif r[0] == 'directive':
                     new_data = []
                     if r[1] == '%description':
@@ -873,7 +868,7 @@ class file:
                             _package = r[2][0]
                         else:
                             if r[2][0].strip() != '-n':
-                                self._warning("unknown directive option: '%s'" % (' '.join(r[2])))
+                                log.warning("unknown directive option: '%s'" % (' '.join(r[2])))
                             _package = r[2][1].strip()
                         self._set_package(_package)
                     if dir and dir != r[1]:
@@ -887,13 +882,12 @@ class file:
                             raise error.general('config error: %s' % (l[7:]))
                         elif l.startswith('%warning'):
                             l = self._expand(l)
-                            print >> sys.stderr, 'warning: %s' % (l[9:])
-                            self._warning(l[9:])
+                            log.stderr('warning: %s' % (l[9:]))
+                            log.warning(l[9:])
                         if not dir:
                             l = self._expand(l)
                             ls = self.tags.split(l, 1)
-                            if self.opts.trace():
-                                print '_tag: ', l, ls
+                            log.trace('config: %s: _tag: %s %s' % (self.init_name, l, ls))
                             if len(ls) > 1:
                                 info = ls[0].lower()
                                 if info[-1] == ':':
@@ -904,7 +898,7 @@ class file:
                             if info is not None:
                                 self._info_append(info, info_data)
                             else:
-                                self._warning("invalid format: '%s'" % (info_data[:-1]))
+                                log.warning("invalid format: '%s'" % (info_data[:-1]))
                         else:
                             data.append(l)
                 else:
@@ -976,8 +970,7 @@ def run():
         # Run where defaults.mc is located
         #
         opts = options.load(sys.argv, defaults = 'defaults.mc')
-        if opts.trace():
-            print 'config: count %d' % (len(opts.config_files()))
+        log.trace('config: count %d' % (len(opts.config_files())))
         for config_file in opts.config_files():
             s = file(config_file, opts)
             print s
@@ -989,7 +982,7 @@ def run():
         print ierr
         sys.exit(1)
     except KeyboardInterrupt:
-        print 'user terminated'
+        log.notice('abort: user terminated')
         sys.exit(1)
     sys.exit(0)
 

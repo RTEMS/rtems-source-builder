@@ -46,21 +46,11 @@ except:
     print 'error: unknown application load error'
     sys.exit(1)
 
-def _trace(opts, text):
-    if opts.trace():
-        print text
-
-def _notice(opts, text):
-    if not opts.quiet() and not log.default.has_stdout():
-        print text
-    log.output(text)
-    log.flush()
-
 class buildset:
     """Build a set builds a set of packages."""
 
     def __init__(self, bset, _configs, opts, macros = None):
-        _trace(opts, '_bset:%s: init' % (bset))
+        log.trace('_bset: %s: init' % (bset))
         self.configs = _configs
         self.opts = opts
         if macros is None:
@@ -70,10 +60,6 @@ class buildset:
         self.bset = bset
         self.bset_pkg = '%s-%s-set' % (self.macros.expand('%{_target}'), self.bset)
 
-    def _output(self, text):
-        if not self.opts.quiet():
-            log.output(text)
-
     def copy(self, src, dst):
         if not os.path.isdir(path.host(src)):
             raise error.general('copying tree: no source directory: %s' % (path.host(src)))
@@ -82,7 +68,7 @@ class buildset:
                 files = distutils.dir_util.copy_tree(path.host(src),
                                                      path.host(dst))
                 for f in files:
-                    self._output(f)
+                    log.output(f)
             except IOError, err:
                 raise error.general('copying tree: %s -> %s: %s' % (src, dst, str(err)))
             except distutils.errors.DistutilsFileError, err:
@@ -113,7 +99,7 @@ class buildset:
             name = _build.main_package().name() + ext
             outpath = path.host(path.join(buildroot, prefix, 'share', 'rtems-source-builder'))
             outname = path.host(path.join(outpath, name))
-            _notice(self.opts, 'reporting: %s -> %s' % (_config, name))
+            log.notice('reporting: %s -> %s' % (_config, name))
             if not _build.opts.dry_run():
                 _build.mkdir(outpath)
                 r = reports.report(format, self.configs, _build.opts, _build.macros)
@@ -123,15 +109,14 @@ class buildset:
     def root_copy(self, src, dst):
         what = '%s -> %s' % \
             (os.path.relpath(path.host(src)), os.path.relpath(path.host(dst)))
-        if self.opts.trace():
-            _notice(self.opts, 'collecting: %s' % (what))
+        log.trace('_bset: %s: collecting: %s' % (self.bset, what))
         if not self.opts.dry_run():
             self.copy(src, dst)
 
     def install(self, name, buildroot, prefix):
         dst = prefix
         src = path.join(buildroot, prefix)
-        _notice(self.opts, 'installing: %s -> %s' % (name, path.host(dst)))
+        log.notice('installing: %s -> %s' % (name, path.host(dst)))
         if not self.opts.dry_run():
             self.copy(src, dst)
 
@@ -170,7 +155,7 @@ class buildset:
         if self.opts.get_arg('--bset-tar-file'):
             path.mkdir(tardir)
             tar = path.join(tardir, _build.config.expand('%s.tar.bz2' % (self.bset_pkg)))
-            _notice(self.opts, 'tarball: %s' % (os.path.relpath(path.host(tar))))
+            log.notice('tarball: %s' % (os.path.relpath(path.host(tar))))
             if not self.opts.dry_run():
                 tmproot = _build.config.expand('%{_tmproot}')
                 cmd = _build.config.expand("'cd " + tmproot + \
@@ -198,8 +183,7 @@ class buildset:
             if bsetname is None:
                 raise error.general('no build set file found: %s' % (bset))
         try:
-            if self.opts.trace():
-                print '_bset:%s: open: %s' % (self.bset, bsetname)
+            log.trace('_bset: %s: open: %s' % (self.bset, bsetname))
             bset = open(path.host(bsetname), 'r')
         except IOError, err:
             raise error.general('error opening bset file: %s' % (bsetname))
@@ -213,8 +197,7 @@ class buildset:
                 l = _clean(l)
                 if len(l) == 0:
                     continue
-                if self.opts.trace():
-                    print '%03d: %s' % (lc, l)
+                log.trace('_bset: %s: %03d: %s' % (self.bset, lc, l))
                 ls = l.split()
                 if ls[0][-1] == ':' and ls[0][:-1] == 'package':
                     self.bset_pkg = self.macros.expand(ls[1].strip())
@@ -265,12 +248,12 @@ class buildset:
 
     def build(self, deps = None):
 
-        _trace(self.opts, '_bset:%s: make' % (self.bset))
-        _notice(self.opts, 'Build Set: %s' % (self.bset))
+        log.trace('_bset: %s: make' % (self.bset))
+        log.notice('Build Set: %s' % (self.bset))
 
         configs = self.load()
 
-        _trace(self.opts, '_bset:%s: configs: %s'  % (self.bset, ','.join(configs)))
+        log.trace('_bset: %s: configs: %s'  % (self.bset, ','.join(configs)))
 
         current_path = os.environ['PATH']
 
@@ -318,7 +301,7 @@ class buildset:
             if deps is None and \
                     (not self.opts.no_clean() or self.opts.always_clean()):
                 for b in builds:
-                    _notice(self.opts, 'cleaning: %s' % (b.name()))
+                    log.notice('cleaning: %s' % (b.name()))
                     b.cleanup()
             for b in builds:
                 del b
@@ -330,7 +313,7 @@ class buildset:
 
         os.environ['PATH'] = current_path
 
-        _notice(self.opts, 'Build Set: Time %s' % (str(end - start)))
+        log.notice('Build Set: Time %s' % (str(end - start)))
 
 def list_bset_cfg_files(opts, configs):
     if opts.get_arg('--list-configs') or opts.get_arg('--list-bsets'):
@@ -357,8 +340,7 @@ def run():
                     '--bset-tar-file': 'Create a build set tar file',
                     '--pkg-tar-files': 'Create package tar files' }
         opts = options.load(sys.argv, optargs)
-        log.default = log.log(opts.logfiles())
-        _notice(opts, 'RTEMS Source Builder - Set Builder, v%s' % (version.str()))
+        log.notice('RTEMS Source Builder - Set Builder, v%s' % (version.str()))
         if not check.host_setup(opts):
             raise error.general('host build environment is not set up correctly')
         configs = build.get_configs(opts)
@@ -390,7 +372,7 @@ def run():
     except error.exit, eerr:
         pass
     except KeyboardInterrupt:
-        _notice(opts, 'abort: user terminated')
+        log.notice('abort: user terminated')
         sys.exit(1)
     sys.exit(0)
 

@@ -34,16 +34,6 @@ import git
 import log
 import path
 
-def _notice(opts, text):
-    if not opts.quiet() and not log.default.has_stdout():
-        print text
-    log.output(text)
-    log.flush()
-
-def _output(opts, text):
-    if not opts.quiet():
-        log.output(text)
-
 def _http_parser(source, config, opts):
     #
     # Is the file compressed ?
@@ -142,7 +132,7 @@ def _http_downloader(url, local, config, opts):
     #
     if url.startswith('https://api.github.com'):
         url = urlparse.urljoin(url, config.expand('tarball/%{version}'))
-    _notice(opts, 'download: %s -> %s' % (url, os.path.relpath(path.host(local))))
+    log.notice('download: %s -> %s' % (url, os.path.relpath(path.host(local))))
     failed = False
     if not opts.dry_run():
         _in = None
@@ -152,20 +142,19 @@ def _http_downloader(url, local, config, opts):
             _out = open(path.host(local), 'wb')
             _out.write(_in.read())
         except IOError, err:
-            msg = 'download: %s: error: %s' % (url, str(err))
-            _notice(opts, msg)
+            log.notice('download: %s: error: %s' % (url, str(err)))
             if path.exists(local):
                 os.remove(path.host(local))
             failed = True
         except ValueError, err:
-            msg = 'download: %s: error: %s' % (url, str(err))
-            _notice(opts, msg)
+            log.notice('download: %s: error: %s' % (url, str(err)))
             if path.exists(local):
                 os.remove(path.host(local))
             failed = True
         except:
             msg = 'download: %s: error' % (url)
-            print >> sys.stderr, msg
+            log.stderr(msd)
+            log.notice(msg)
             if _out is not None:
                 _out.close()
             raise
@@ -183,28 +172,28 @@ def _git_downloader(url, local, config, opts):
     us = url.split('?')
     repo = git.repo(local, opts, config.macros)
     if not repo.valid():
-        _notice(opts, 'git: clone: %s -> %s' % (us[0], rlp))
+        log.notice('git: clone: %s -> %s' % (us[0], rlp))
         if not opts.dry_run():
             repo.clone(us[0], local)
     for a in us[1:]:
         _as = a.split('=')
         if _as[0] == 'branch':
-            _notice(opts, 'git: checkout: %s => %s' % (us[0], _as[1]))
+            log.notice('git: checkout: %s => %s' % (us[0], _as[1]))
             if not opts.dry_run():
                 repo.checkout(_as[1])
         elif _as[0] == 'pull':
-            _notice(opts, 'git: pull: %s' % (us[0]))
+            log.notice('git: pull: %s' % (us[0]))
             if not opts.dry_run():
                 repo.pull()
         elif _as[0] == 'fetch':
-            _notice(opts, 'git: fetch: %s -> %s' % (us[0], rlp))
+            log.notice('git: fetch: %s -> %s' % (us[0], rlp))
             if not opts.dry_run():
                 repo.fetch()
         elif _as[0] == 'reset':
             arg = []
             if len(_as) > 1:
                 arg = ['--%s' % (_as[1])]
-            _notice(opts, 'git: reset: %s' % (us[0]))
+            log.notice('git: reset: %s' % (us[0]))
             if not opts.dry_run():
                 repo.reset(arg)
     return True
@@ -236,17 +225,17 @@ def _cvs_downloader(url, local, config, opts):
             date = _as[1]
     repo = cvs.repo(local, opts, config.macros, src_prefix)
     if not repo.valid():
-        _notice(opts, 'cvs: checkout: %s -> %s' % (us[0], rlp))
+        log.notice('cvs: checkout: %s -> %s' % (us[0], rlp))
         if not opts.dry_run():
             repo.checkout(':%s' % (us[0][6:]), module, tag, date)
     for a in us[1:]:
         _as = a.split('=')
         if _as[0] == 'update':
-            _notice(opts, 'cvs: update: %s' % (us[0]))
+            log.notice('cvs: update: %s' % (us[0]))
             if not opts.dry_run():
                 repo.update()
         elif _as[0] == 'reset':
-            _notice(opts, 'cvs: reset: %s' % (us[0]))
+            log.notice('cvs: reset: %s' % (us[0]))
             if not opts.dry_run():
                 repo.reset()
     return True
@@ -266,9 +255,9 @@ def get_file(url, local, opts, config):
     if local is None:
         raise error.general('source/patch path invalid')
     if not path.isdir(path.dirname(local)) and not opts.download_disabled():
-        _notice(opts,
-                'Creating source directory: %s' % (os.path.relpath(path.host(path.dirname(local)))))
-    _output(opts, 'making dir: %s' % (path.host(path.dirname(local))))
+        log.notice('Creating source directory: %s' % \
+                       (os.path.relpath(path.host(path.dirname(local)))))
+    log.output('making dir: %s' % (path.host(path.dirname(local))))
     if not opts.dry_run():
         path.mkdir(path.dirname(local))
     if not path.exists(local) and opts.download_disabled():
@@ -290,8 +279,7 @@ def get_file(url, local, opts, config):
                 url_file = url_path[slash + 1:]
             urls.append(urlparse.urljoin(base, url_file))
     urls.append(url)
-    if opts.trace():
-        print '_url:', ','.join(urls), '->', local
+    log.trace('_url: %s -> %s' % (','.join(urls), local))
     for url in urls:
         for dl in downloaders:
             if url.startswith(dl):

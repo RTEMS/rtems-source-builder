@@ -30,6 +30,7 @@ import string
 import error
 import execute
 import git
+import log
 import macros
 import path
 import sys
@@ -243,6 +244,12 @@ class command_line:
             arg += 1
 
     def post_process(self):
+        # Handle the log first.
+        log.default = log.log(self.logfiles())
+        if self.trace():
+            log.tracing = True
+        if self.quiet():
+            log.quiet = True
         # Must have a host
         if self.defaults['_host'] == self.defaults['nil']:
             raise error.general('host not set')
@@ -270,6 +277,25 @@ class command_line:
                 raise error.general('macro file not found: %s' % (um[checked.index(False)]))
             for m in um:
                 self.defaults.load(m)
+
+    def sb_git(self):
+        repo = git.repo(self.defaults.expand('%{_sbdir}'), self)
+        if repo.valid():
+            repo_valid = '1'
+            repo_head = repo.head()
+            repo_clean = repo.clean()
+            repo_id = repo_head
+            if not repo_clean:
+                repo_id += '-modified'
+        else:
+            repo_valid = '0'
+            repo_head = '%{nil}'
+            repo_clean = '%{nil}'
+            repo_id = 'no-repo'
+        self.defaults['_sbgit_valid'] = repo_valid
+        self.defaults['_sbgit_head']  = repo_head
+        self.defaults['_sbgit_clean'] = str(repo_clean)
+        self.defaults['_sbgit_id']    = repo_id
 
     def command(self):
         return path.join(self.command_path, self.command_name)
@@ -466,26 +492,10 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc'):
     for k in overrides:
         o.defaults[k] = overrides[k]
 
+    o.sb_git()
     o.process()
     o.post_process()
 
-    repo = git.repo(o.defaults.expand('%{_sbdir}'), o)
-    if repo.valid():
-        repo_valid = '1'
-        repo_head = repo.head()
-        repo_clean = repo.clean()
-        repo_id = repo_head
-        if not repo_clean:
-            repo_id += '-modified'
-    else:
-        repo_valid = '0'
-        repo_head = '%{nil}'
-        repo_clean = '%{nil}'
-        repo_id = 'no-repo'
-    o.defaults['_sbgit_valid'] = repo_valid
-    o.defaults['_sbgit_head']  = repo_head
-    o.defaults['_sbgit_clean'] = str(repo_clean)
-    o.defaults['_sbgit_id']    = repo_id
     return o
 
 def run(args):

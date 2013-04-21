@@ -181,6 +181,7 @@ class execute:
                     r, e = os.path.splitext(command[0])
                     if e not in ['.exe', '.com', '.bat']:
                         command[0] = command[0] + '.exe'
+            log.trace('exe: %s' % (command))
             proc = subprocess.Popen(command, shell = shell,
                                     cwd = cwd, env = env,
                                     stdin = stdin, stdout = stdout,

@@ -25,6 +25,7 @@ import os
 
 import error
 import execute
+import log
 import options
 import path
 
@@ -33,7 +34,7 @@ class repo:
 
     def _cvs_exit_code(self, cmd, ec, output):
         if ec:
-            print output
+            log.output(output)
             raise error.general('cvs command failed (%s): %d' % (cmd, ec))
 
     def _parse_args(self, url):
@@ -54,7 +55,9 @@ class repo:
         if path.exists(self.path):
             cwd = self.path
         cmd = [self.cvs, '-q'] + args
+        log.output('cmd: (%s) %s' % (str(cwd), ' '.join(cmd)))
         exit_code, proc, output = e.spawn(cmd, cwd = cwd)
+        log.trace(output)
         if check:
             self._cvs_exit_code(cmd, exit_code, output)
         return exit_code, output

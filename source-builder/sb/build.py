@@ -48,18 +48,10 @@ except:
     print 'error: unknown application load error'
     sys.exit(1)
 
-def _notice(opts, text):
-    if not opts.quiet() and not log.default.has_stdout():
-        print text
-    log.output(text)
-    log.flush()
-
 class script:
     """Create and manage a shell script."""
 
-    def __init__(self, quiet = True, trace = False):
-        self.quiet = quiet
-        self.trace = trace
+    def __init__(self):
         self.reset()
 
     def reset(self):
@@ -69,13 +61,11 @@ class script:
     def append(self, text):
         if type(text) is str:
             text = text.splitlines()
-        if not self.quiet:
+        if not log.quiet:
             i = 0
             for l in text:
                 i += 1
                 log.output('script:%3d: %s' % (self.lc + i, l))
-                if self.trace:
-                    print '%3d: S %s' % (self.lc + i,  l)
         self.lc += len(text)
         self.body.extend(text)
 
@@ -107,22 +97,18 @@ class build:
         else:
             self.macros = macros
         self.create_tar_files = create_tar_files
-        _notice(opts, 'config: ' + name)
+        log.notice('config: ' + name)
         self.config = config.file(name, opts, self.macros)
-        self.script = script(quiet = opts.quiet(), trace = opts.trace())
-
-    def _output(self, text):
-        if not self.opts.quiet():
-            log.output(text)
+        self.script = script()
 
     def rmdir(self, rmpath):
-        self._output('removing: %s' % (path.host(rmpath)))
+        log.output('removing: %s' % (path.host(rmpath)))
         if not self.opts.dry_run():
             if path.exists(rmpath):
                 path.removeall(rmpath)
 
     def mkdir(self, mkpath):
-        self._output('making dir: %s' % (path.host(mkpath)))
+        log.output('making dir: %s' % (path.host(mkpath)))
         if not self.opts.dry_run():
             path.mkdir(mkpath)
 
@@ -191,7 +177,7 @@ class build:
             _host != _build and _host != _target
 
     def setup(self, package, args):
-        self._output('prep: %s: %s' % (package.name(), ' '.join(args)))
+        log.output('prep: %s: %s' % (package.name(), ' '.join(args)))
         opts, args = getopt.getopt(args[1:], 'qDcTn:b:a:')
         source_tag = 0
         quiet = False
@@ -254,7 +240,7 @@ class build:
     def run(self, command, shell_opts = '', cwd = None):
         e = execute.capture_execution(log = log.default, dump = self.opts.quiet())
         cmd = self.config.expand('%{___build_shell} -ex ' + shell_opts + ' ' + command)
-        self._output('run: ' + cmd)
+        log.output('run: ' + cmd)
         exit_code, proc, output = e.shell(cmd, cwd = path.host(cwd))
         if exit_code != 0:
             raise error.general('shell cmd failed: %s' % (cmd))
@@ -336,18 +322,14 @@ class build:
             builddir = self.config.abspath('_builddir')
             buildcxcdir = self.config.abspath('_buildcxcdir')
             tmproot = self.config.abspath('_tmproot')
-            if self.opts.trace():
-                _notice(self.opts, 'cleanup: %s' % (buildroot))
+            log.trace('cleanup: %s' % (buildroot))
             self.rmdir(buildroot)
-            if self.opts.trace():
-                _notice(self.opts, 'cleanup: %s' % (builddir))
+            log.trace('cleanup: %s' % (builddir))
             self.rmdir(builddir)
             if self.canadian_cross():
-                if self.opts.trace():
-                    _notice(self.opts, 'cleanup: %s' % (buildcxcdir))
+                log.trace('cleanup: %s' % (buildcxcdir))
                 self.rmdir(buildcxcdir)
-            if self.opts.trace():
-                _notice(self.opts, 'cleanup: %s' % (tmproot))
+            log.trace('cleanup: %s' % (tmproot))
             self.rmdir(tmproot)
 
     def main_package(self):
@@ -358,13 +340,12 @@ class build:
         package = self.main_package()
         name = package.name()
         if self.canadian_cross():
-            _notice(self.opts, 'package: (Cxc) %s' % (name))
+            log.notice('package: (Cxc) %s' % (name))
         else:
-            _notice(self.opts, 'package: %s' % (name))
-        if self.opts.trace():
-            print '---- macro maps', '-' * 55
-            print self.config.macros
-            print '-' * 70
+            log.notice('package: %s' % (name))
+        log.trace('---- macro maps %s' % ('-' * 55))
+        log.trace('%s' % (str(self.config.macros)))
+        log.trace('-' * 70)
         self.script.reset()
         self.script.append(self.config.expand('%{___build_template}'))
         self.script.append('echo "=> ' + name + ':"')
@@ -373,12 +354,12 @@ class build:
         if not self.opts.dry_run():
             self.builddir()
             sn = path.join(self.config.expand('%{_builddir}'), 'doit')
-            self._output('write script: ' + sn)
+            log.output('write script: ' + sn)
             self.script.write(sn)
             if self.canadian_cross():
-                _notice(self.opts, 'building: (Cxc) %s' % (name))
+                log.notice('building: (Cxc) %s' % (name))
             else:
-                _notice(self.opts, 'building: %s' % (name))
+                log.notice('building: %s' % (name))
             self.run(sn)
 
     def name(self):
@@ -422,13 +403,12 @@ def run(args):
     try:
         optargs = { '--list-configs': 'List available configurations' }
         opts = options.load(args, optargs)
-        log.default = log.log(opts.logfiles())
-        _notice(opts, 'RTEMS Source Builder, Package Builder v%s' % (version.str()))
+        log.notice('RTEMS Source Builder, Package Builder v%s' % (version.str()))
         if not check.host_setup(opts):
             if not opts.force():
                 raise error.general('host build environment is not set up' +
                                     ' correctly (use --force to proceed)')
-            _notice(opts, 'warning: forcing build with known host setup problems')
+            log.notice('warning: forcing build with known host setup problems')
         if opts.get_arg('--list-configs'):
             configs = get_configs(opts)
             for p in configs['paths']:
@@ -452,7 +432,7 @@ def run(args):
     except error.exit, eerr:
         pass
     except KeyboardInterrupt:
-        _notice(opts, 'abort: user terminated')
+        log.notice('abort: user terminated')
         sys.exit(1)
     sys.exit(0)
 

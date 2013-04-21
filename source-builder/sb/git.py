@@ -25,6 +25,7 @@ import os
 
 import error
 import execute
+import log
 import options
 import path
 
@@ -41,7 +42,10 @@ class repo:
             cwd = self.path
         else:
             cwd = None
-        exit_code, proc, output = e.spawn([self.git] + args, cwd = cwd)
+        cmd = [self.git] + args
+        log.trace('cmd: (%s) %s' % (str(cwd), ' '.join(cmd)))
+        exit_code, proc, output = e.spawn(cmd, cwd = cwd)
+        log.trace(output)
         if check:
             self._git_exit_code(exit_code)
         return exit_code, output

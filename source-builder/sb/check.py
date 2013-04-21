@@ -30,13 +30,6 @@ import options
 import path
 import version
 
-def _notice(opts, text):
-    if not opts.quiet() and log.default and not log.default.has_stdout():
-        print text
-    log.output(text)
-    log.flush()
-
-
 def _check_none(_opts, macro, value, constraint):
     return True
 
@@ -48,10 +41,10 @@ def _check_triplet(_opts, macro, value, constraint):
 def _check_dir(_opts, macro, value, constraint):
     if constraint != 'none' and not path.isdir(value):
         if constraint == 'required':
-            _notice(_opts, 'error: dir: not found: (%s) %s' % (macro, value))
+            log.notice('error: dir: not found: (%s) %s' % (macro, value))
             return False
         if _opts.warn_all():
-            _notice(_opts, 'warning: dir: not found: (%s) %s' % (macro, value))
+            log.notice('warning: dir: not found: (%s) %s' % (macro, value))
     return True
 
 
@@ -77,16 +70,14 @@ def _check_exe(_opts, macro, value, constraint):
 
     if _check_paths(value, paths):
         if absexe:
-            _notice(_opts,
-                    'warning: exe: absolute exe found in path: (%s) %s' % (macro, orig_value))
+            log.notice('warning: exe: absolute exe found in path: (%s) %s' % (macro, orig_value))
         return True
 
     if constraint == 'optional':
-        if _opts.trace():
-            _notice(_opts, 'warning: exe: optional exe not found: (%s) %s' % (macro, orig_value))
+        log.trace('warning: exe: optional exe not found: (%s) %s' % (macro, orig_value))
         return True
 
-    _notice(_opts, 'error: exe: not found: (%s) %s' % (macro, orig_value))
+    log.notice('error: exe: not found: (%s) %s' % (macro, orig_value))
     return False
 
 
@@ -123,12 +114,11 @@ def host_setup(opts):
             if test not in checks:
                 raise error.general('invalid check test: %s [%r]' % (test, opts.defaults.get(d)))
             ok = checks[test](opts, d, value, constraint)
-            if opts.trace():
-                if ok:
-                    tag = ' '
-                else:
-                    tag = '*'
-                _notice(opts, '%c %15s: %r -> "%s"' % (tag, d, opts.defaults.get(d), value))
+            if ok:
+                tag = ' '
+            else:
+                tag = '*'
+            log.trace('%c %15s: %r -> "%s"' % (tag, d, opts.defaults.get(d), value))
             if sane and not ok:
                 sane = False
 
@@ -139,7 +129,7 @@ def run():
     import sys
     try:
         _opts = options.load(args = sys.argv)
-        _notice(_opts, 'RTEMS Source Builder - Check, v%s' % (version.str()))
+        log.notice('RTEMS Source Builder - Check, v%s' % (version.str()))
         if host_setup(_opts):
             print 'Environment is ok'
         else:
@@ -153,7 +143,7 @@ def run():
     except error.exit, eerr:
         pass
     except KeyboardInterrupt:
-        _notice(opts, 'abort: user terminated')
+        log.notice('abort: user terminated')
         sys.exit(1)
     sys.exit(0)
 
