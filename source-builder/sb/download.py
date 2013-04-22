@@ -77,8 +77,14 @@ def _cvs_parser(source, config, opts):
     except:
         raise error.general('invalid cvs path: %s' % (source['url']))
     source['local'] = path.join(source['local_prefix'], 'cvs', source['file'])
+    for a in us[1:]:
+        _as = a.split('=')
+        if  _as[0] == 'src-prefix':
+            if len(_as) != 2:
+                raise error.general('invalid cvs src-prefix: %s' % (a))
+            source['src_prefix'] = _as[1]
     if 'src_prefix' in source:
-        source['symlink'] = path.join(source['local'])
+        source['symlink'] = path.join(source['local'], source['src_prefix'])
     else:
         source['symlink'] = source['local']
 
@@ -225,14 +231,14 @@ def _cvs_downloader(url, local, config, opts):
             date = _as[1]
     repo = cvs.repo(local, opts, config.macros, src_prefix)
     if not repo.valid():
-        log.notice('cvs: checkout: %s -> %s' % (us[0], rlp))
         if not path.isdir(local):
             log.notice('Creating source directory: %s' % \
                            (os.path.relpath(path.host(local))))
-            log.output('making dir: %s' % (path.host(path.dirname(local))))
             if not opts.dry_run():
                 path.mkdir(local)
-            repo.checkout(':%s' % (us[0][6:]), module, tag, date)
+            log.notice('cvs: checkout: %s -> %s' % (us[0], rlp))
+            if not opts.dry_run():
+                repo.checkout(':%s' % (us[0][6:]), module, tag, date)
     for a in us[1:]:
         _as = a.split('=')
         if _as[0] == 'update':

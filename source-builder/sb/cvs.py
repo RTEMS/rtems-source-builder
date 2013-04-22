@@ -32,6 +32,16 @@ import path
 class repo:
     """An object to manage a cvs repo."""
 
+    def __init__(self, _path, opts, macros = None, prefix = None):
+        self.path = _path
+        self.opts = opts
+        self.prefix = prefix
+        if macros is None:
+            self.macros = opts.defaults
+        else:
+            self.macros = macros
+        self.cvs = self.macros.expand('%{__cvs}')
+
     def _cvs_exit_code(self, cmd, ec, output):
         if ec:
             log.output(output)
@@ -53,9 +63,10 @@ class repo:
     def _run(self, args, check = False, cwd = None):
         e = execute.capture_execution()
         if cwd is None:
-            if not path.exists(self.path):
-                raise error.general('cvs path needs to exist: %s' % (self.path))
-            cwd = self.path
+            _path = path.join(self.path, self.prefix)
+            if not path.exists(_path):
+                raise error.general('cvs path needs to exist: %s' % (_path))
+            cwd = _path
         cmd = [self.cvs, '-q'] + args
         log.output('cmd: (%s) %s' % (str(cwd), ' '.join(cmd)))
         exit_code, proc, output = e.spawn(cmd, cwd = cwd)
@@ -63,16 +74,6 @@ class repo:
         if check:
             self._cvs_exit_code(cmd, exit_code, output)
         return exit_code, output
-
-    def __init__(self, _path, opts, macros = None, prefix = None):
-        self.path = _path
-        self.opts = opts
-        self.prefix = prefix
-        if macros is None:
-            self.macros = opts.defaults
-        else:
-            self.macros = macros
-        self.cvs = self.macros.expand('%{__cvs}')
 
     def cvs_version(self):
         ec, output = self._run(['--version'], True)
@@ -98,7 +99,7 @@ class repo:
         ec, output = self._run(cmd, check = True)
 
     def update(self):
-        ec, output = self._run(['up'])
+        ec, output = self._run(['up'], check = True)
 
     def reset(self):
         ec, output = self._run(['up', '-C'], check = True)

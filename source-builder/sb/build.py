@@ -131,7 +131,7 @@ class build:
         source = download.parse_url(url, '_sourcedir', self.config, self.opts)
         download.get_file(source['url'], source['local'], self.opts, self.config)
         if 'symlink' in source:
-            source['script'] = '%%{__ln_s} %s ${source_dir_%d}' % (source['local'], source_tag)
+            source['script'] = '%%{__ln_s} %s ${source_dir_%d}' % (source['symlink'], source_tag)
         elif 'compressed' in source:
             source['script'] = source['compressed'] + ' ' + \
                 source['local'] + ' | %{__tar_extract} -'
