@@ -63,10 +63,9 @@ class repo:
     def _run(self, args, check = False, cwd = None):
         e = execute.capture_execution()
         if cwd is None:
-            _path = path.join(self.path, self.prefix)
-            if not path.exists(_path):
-                raise error.general('cvs path needs to exist: %s' % (_path))
-            cwd = _path
+            cwd = path.join(self.path, self.prefix)
+        if not path.exists(cwd):
+            raise error.general('cvs path needs to exist: %s' % (cwd))
         cmd = [self.cvs, '-q'] + args
         log.output('cmd: (%s) %s' % (str(cwd), ' '.join(cmd)))
         exit_code, proc, output = e.spawn(cmd, cwd = cwd)
@@ -96,7 +95,7 @@ class repo:
             cmd += ['-D', date]
         if module:
             cmd += [module]
-        ec, output = self._run(cmd, check = True)
+        ec, output = self._run(cmd, check = True, cwd = self.path)
 
     def update(self):
         ec, output = self._run(['up'], check = True)
