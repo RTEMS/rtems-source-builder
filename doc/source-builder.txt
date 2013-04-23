@@ -1592,7 +1592,7 @@ RTEMS Configurations
 The RTEMS Configurations are grouped by RTEMS version. In RTEMS the tools are
 specific to a specific version because of variations between Newlib and
 RTEMS. Restructuring in RTEMS and Newlib sometimes moves _libc_ functionality
-between them and this makes existing tool incompatible with RTEMS.
+between these two parts and this makes existing tools incompatible with RTEMS.
 
 RTEMS allows architectures to have different tool versions and patches. The
 large number of architectures RTEMS supports can make it difficult to get a
@@ -1604,9 +1604,42 @@ effect architecture however it could introduce a problem in another
 architecture. Limit exposure limits any possible crosstalk between
 architectures.
 
-RTEMS supports _stable_ and _unstable_ configuration of tools. The stable build
-sets are referenced as +<version>/rtems-<arch>+ and the unstable build sets are
-references as +<version>/unstable/rtems-<arch>+.
+RTEMS supports _stable_ and _unstable_. Stable configurations are fixed while
+unstable configurations are supporting using snapshots of user macros and
+reference release candidates or source extracted directly from version
+control. The stable build sets are referenced as +<version>/rtems-<arch>+ and
+include `autoconf` and `automake`.
+
+If you are building a released version of RTEMS the release RTEMS tar file will
+be downloaded and built as part of the build process. If you are building a
+tool set for use with the development branch of RTEMS, the development branch
+will be cloned directly from the RTEMS GIT repository and built.
+
+When building RTEMS within the RTEMS Source Builder it needs a suitable working
+`autoconf` and `automake`. These packages need to built and installed in their
+prefix in order for them to work. The RTEMS Source Builder installs all
+packages only after they have been built so if you host does not have a
+recent enough version of `autoconf` and `automake` you first need to build them
+and install them then build your tool set. The commands are:
+
+-------------------------------------------------------------
+$ ../source-builder/sb-set-builder --log=l-4.11-at.txt \
+   --prefix=$HOME/development/rtems/4.11-at 4.11/rtems-autotools
+$ export PATH=~/development/rtems/4.11/bin:$PATH
+$ ../source-builder/sb-set-builder --log=l-4.11-sparc.txt \
+   --prefix=$HOME/development/rtems/4.11 4.11/rtems-sparc
+-------------------------------------------------------------
+
+To build snapshots for testing purposes you use the available macro maps
+passing them on the command line using the `--macros` option. For RTEMS these
+are held in `config/snapshots` directory. The following build _newlib_ from
+CVS:
+
+-------------------------------------------------------------
+$ ../source-builder/sb-set-builder --log=l-4.11-sparc.txt \
+   --prefix=$HOME/development/rtems/4.11 --macros=snapshots/newlib-head.mc
+   4.11/rtems-sparc
+-------------------------------------------------------------
 
 Commands
 --------
