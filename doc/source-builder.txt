@@ -1624,7 +1624,7 @@ and install them then build your tool set. The commands are:
 
 -------------------------------------------------------------
 $ ../source-builder/sb-set-builder --log=l-4.11-at.txt \
-   --prefix=$HOME/development/rtems/4.11-at 4.11/rtems-autotools
+   --prefix=$HOME/development/rtems/4.11 4.11/rtems-autotools
 $ export PATH=~/development/rtems/4.11/bin:$PATH
 $ ../source-builder/sb-set-builder --log=l-4.11-sparc.txt \
    --prefix=$HOME/development/rtems/4.11 4.11/rtems-sparc
