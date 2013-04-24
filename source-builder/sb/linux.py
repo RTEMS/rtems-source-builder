@@ -95,9 +95,10 @@ def load():
         'redhat' : { '__bzip2':        ('exe',     'required', '/bin/bzip2'),
                      '__chgrp':        ('exe',     'required', '/bin/chgrp'),
                      '__chown':        ('exe',     'required', '/bin/chown'),
+                     '__install_info': ('exe',     'required', '/sbin/install-info'),
                      '__grep':         ('exe',     'required', '/bin/grep'),
                      '__sed':          ('exe',     'required', '/bin/sed'),
-                     '__install_info': ('exe',     'required', '/sbin/install-info') },
+                     '__touch':        ('exe',     'required', '/bin/touch') },
         'arch'   : { '__gzip':         ('exe',     'required', '/usr/bin/gzip'),
                      '__chown':        ('exe',     'required', '/usr/bin/chown') },
         }
