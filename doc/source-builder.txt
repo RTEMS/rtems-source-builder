@@ -1625,10 +1625,16 @@ and install them then build your tool set. The commands are:
 -------------------------------------------------------------
 $ ../source-builder/sb-set-builder --log=l-4.11-at.txt \
    --prefix=$HOME/development/rtems/4.11 4.11/rtems-autotools
-$ export PATH=~/development/rtems/4.11/bin:$PATH
+$ export PATH=~/development/rtems/4.11/bin:$PATH <1>
 $ ../source-builder/sb-set-builder --log=l-4.11-sparc.txt \
    --prefix=$HOME/development/rtems/4.11 4.11/rtems-sparc
 -------------------------------------------------------------
+<1> Setting the path.
+
+TIP: If this is your first time building the tools and RTEMS it pays to add the
+`--dry-run` option. This will run through all the configuration files and if
+any checks fail you will see this quickly rather than waiting for until the
+build fails a check.
 
 To build snapshots for testing purposes you use the available macro maps
 passing them on the command line using the `--macros` option. For RTEMS these
