@@ -71,18 +71,40 @@ def _cvs_parser(source, config, opts):
     us = source['url'].split('?')
     try:
         url = us[0]
-        source['file'] = \
-            url[url[6:].index(':') + 7:].replace('/', '_').replace('@', '_').replace('.', '_')
+        source['file'] = url[url[6:].index(':') + 7:]
         source['cvsroot'] = ':%s:' % (url[6:url[6:].index('/') + 6:])
     except:
         raise error.general('invalid cvs path: %s' % (source['url']))
-    source['local'] = path.join(source['local_prefix'], 'cvs', source['file'])
     for a in us[1:]:
         _as = a.split('=')
-        if  _as[0] == 'src-prefix':
+        if _as[0] == 'module':
+            if len(_as) != 2:
+                raise error.general('invalid cvs module: %s' % (a))
+            source['module'] = _as[1]
+        elif _as[0] == 'src-prefix':
             if len(_as) != 2:
                 raise error.general('invalid cvs src-prefix: %s' % (a))
             source['src_prefix'] = _as[1]
+        elif _as[0] == 'tag':
+            if len(_as) != 2:
+                raise error.general('invalid cvs tag: %s' % (a))
+            source['tag'] = _as[1]
+        elif _as[0] == 'date':
+            if len(_as) != 2:
+                raise error.general('invalid cvs date: %s' % (a))
+            source['date'] = _as[1]
+    if 'date' in source and 'tag' in source:
+        raise error.general('cvs URL cannot have a date and tag: %s' % (source['url']))
+    # Do here to ensure an ordered path, the URL can include options in any order
+    if 'module' in source:
+        source['file'] += '_%s' % (source['module'])
+    if 'tag' in source:
+        source['file'] += '_%s' % (source['tag'])
+    if 'date' in source:
+        source['file'] += '_%s' % (source['date'])
+    for c in '/@#%.-':
+        source['file'] = source['file'].replace(c, '_')
+    source['local'] = path.join(source['local_prefix'], 'cvs', source['file'])
     if 'src_prefix' in source:
         source['symlink'] = path.join(source['local'], source['src_prefix'])
     else:
