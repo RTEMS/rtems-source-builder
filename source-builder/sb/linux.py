@@ -92,6 +92,8 @@ def load():
         distro = 'debian'
     elif distro in ['Arch']:
         distro = 'arch'
+    elif distro in ['SuSE']:
+        distro = 'suse'
 
     variations = {
         'debian' : { '__bzip2':        ('exe',     'required', '/bin/bzip2'),
@@ -110,6 +112,8 @@ def load():
                      '__install_info': ('exe',     'required', '/usr/sbin/install-info') },
         'arch'   : { '__gzip':         ('exe',     'required', '/usr/bin/gzip'),
                      '__chown':        ('exe',     'required', '/usr/bin/chown') },
+        'suse'   : { '__chgrp':        ('exe',     'required', '/usr/bin/chgrp'),
+                     '__chown':        ('exe',     'required', '/usr/sbin/chown') },
         }
 
     if variations.has_key(distro):
