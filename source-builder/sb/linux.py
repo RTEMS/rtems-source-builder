@@ -69,21 +69,28 @@ def load():
 
     # Works for LSB distros
     distro = platform.dist()[0]
+    distro_ver = platform.dist()[2]
 
     # Non LSB - fail over to issue
     if distro == '':
         try:
             issue = open('/etc/issue').read()
             distro = issue.split(' ')[0]
+            distro_ver = issue.split(' ')[2]
         except:
             pass
 
     # Manage distro aliases
-    if distro in ['centos', 'fedora']:
+    if distro in ['centos']:
         distro = 'redhat'
-    if distro in ['Ubuntu', 'ubuntu']:
+    elif distro in ['fedora']:
+        if distro_ver < 17:
+            distro = 'redhat'
+    elif distro in ['centos', 'fedora']:
+        distro = 'redhat'
+    elif distro in ['Ubuntu', 'ubuntu']:
         distro = 'debian'
-    if distro in ['Arch']:
+    elif distro in ['Arch']:
         distro = 'arch'
 
     variations = {
@@ -99,6 +106,8 @@ def load():
                      '__grep':         ('exe',     'required', '/bin/grep'),
                      '__sed':          ('exe',     'required', '/bin/sed'),
                      '__touch':        ('exe',     'required', '/bin/touch') },
+        'fedora' : { '__chown':        ('exe',     'required', '/usr/bin/chown'),
+                     '__install_info': ('exe',     'required', '/usr/sbin/install-info') },
         'arch'   : { '__gzip':         ('exe',     'required', '/usr/bin/gzip'),
                      '__chown':        ('exe',     'required', '/usr/bin/chown') },
         }
