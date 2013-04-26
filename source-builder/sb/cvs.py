@@ -66,7 +66,7 @@ class repo:
             cwd = path.join(self.path, self.prefix)
         if not path.exists(cwd):
             raise error.general('cvs path needs to exist: %s' % (cwd))
-        cmd = [self.cvs, '-q'] + args
+        cmd = [self.cvs, '-z', '9', '-q'] + args
         log.output('cmd: (%s) %s' % (str(cwd), ' '.join(cmd)))
         exit_code, proc, output = e.spawn(cmd, cwd = cwd)
         log.trace(output)
