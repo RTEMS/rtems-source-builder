@@ -1,0 +1,13 @@
+[binutils-snapshot]
+Binutils_Version: none, override, 'cvs-head'
+Source0:          none, override, 'cvs://pserver:anoncvs@sourceware.org/cvs/src?module=binutils?src-prefix=src?update'
+Patch0:           none, undefine, ''
+Patch1:           none, undefine, ''
+Patch2:           none, undefine, ''
+Patch3:           none, undefine, ''
+Patch4:           none, undefine, ''
+Patch5:           none, undefine, ''
+Patch6:           none, undefine, ''
+Patch7:           none, undefine, ''
+Patch8:           none, undefine, ''
+Patch9:           none, undefine, ''

@@ -186,6 +186,19 @@ class macros:
         return key.lower()
 
     def parse(self, lines):
+
+        def _clean(l):
+            if '#' in l:
+                l = l[:l.index('#')]
+            if '\r' in l:
+                l = l[:l.index('r')]
+            if '\n' in l:
+                l = l[:l.index('\n')]
+            return l.strip()
+
+        trace_me = False
+        if trace_me:
+            print '[[[[]]]] parsing macros'
         macros = { 'global': {} }
         map = 'global'
         lc = 0
@@ -197,8 +210,12 @@ class macros:
             #print 'l:%s' % (l[:-1])
             if len(l) == 0:
                 continue
+            l_remaining = l
             for c in l:
-                #print ']]]]]]]] c:%s(%d) s:%s t:"%s" m:%r M:%s' % (c, ord(c), state, token, macro, map)
+                if trace_me:
+                    print ']]]]]]]] c:%s(%d) s:%s t:"%s" m:%r M:%s' % \
+                        (c, ord(c), state, token, macro, map)
+                l_remaining = l_remaining[1:]
                 if c is '#' and not state.startswith('value'):
                     break
                 if c == '\n' or c == '\r':
@@ -209,6 +226,8 @@ class macros:
                     if c not in string.whitespace:
                         if c is '[':
                             state = 'map'
+                        elif c is '%':
+                            state = 'directive'
                         elif c is ':':
                             macro += [token]
                             token = ''
@@ -228,6 +247,25 @@ class macros:
                         token += c
                     else:
                         raise error.general('invalid macro map:%d: %s' % (lc, l))
+                elif state is 'directive':
+                    if c in string.whitespace:
+                        if token == 'include':
+                            self.load(_clean(l_remaining))
+                            token = ''
+                            state = 'key'
+                            break
+                    elif c in string.printable and c not in string.whitespace:
+                        token += c
+                    else:
+                        raise error.general('invalid macro directive:%d: %s' % (lc, l))
+                elif state is 'include':
+                    if c is string.whitespace:
+                        if token == 'include':
+                            state = 'include'
+                    elif c in string.printable and c not in string.whitespace:
+                        token += c
+                    else:
+                        raise error.general('invalid macro directive:%d: %s' % (lc, l))
                 elif state is 'attribs':
                     if c not in string.whitespace:
                         if c is ',':
@@ -290,14 +328,18 @@ class macros:
                 self.macros[m][mm] = macros[m][mm]
 
     def load(self, name):
-        try:
-            name = self.expand(name)
-            mc = open(name, 'r')
-        except IOError, err:
-            raise error.general('opening macro file: %s' % (path.host(name)))
-        macros = self.parse(mc)
-        mc.close()
-        self.files += [name]
+        names = self.expand(name).split(':')
+        for n in names:
+            if path.exists(n):
+                try:
+                    mc = open(n, 'r')
+                    macros = self.parse(mc)
+                    mc.close()
+                    self.files += [n]
+                    return
+                except IOError, err:
+                    pass
+        raise error.general('opening macro file: %s' % (path.host(name)))
 
     def get(self, key):
         if type(key) is not str:

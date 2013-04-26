@@ -1,6 +1,6 @@
-[gdb-snapshot]
-GDB_Version: none, override, 'cvs-head'
-Source0:     none, override, 'cvs://pserver:anoncvs@sourceware.org/cvs/src?module=gdb?src-prefix=src?update'
+[gcc-snapshot]
+GCC_Version: none, override, 'git-head'
+Source0:     none, override, 'git://gcc.gnu.org/git/gcc.git?branch=master?pull'
 Patch0:      none, undefine, ''
 Patch1:      none, undefine, ''
 Patch2:      none, undefine, ''

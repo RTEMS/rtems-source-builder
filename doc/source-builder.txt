@@ -779,16 +779,17 @@ and the 'String' field is a single or tripled multiline quoted string. The
 'String' can contain references to other macros. Macro that loop are not
 currently detected and will cause the tool to lock up.
 
-Maps are declared anywhere in the map using:
+Maps are declared anywhere in the map using the map directive:
 
 -------------------------------------------------------------
 # Comments
-[my-special-map]
+[my-special-map] <1>
 _host:  none, override, 'abc-xyz'
 multiline: none, override, '''First line,
 second line,
 and finally the last line'''
 -------------------------------------------------------------
+<1> The map is set to `my-special-map`.
 
 Any macro defintions following a map declaration are placed in that map and the
 default map is `global` when loading a file. Maps are selected in configuration
@@ -803,8 +804,27 @@ if present return that value else the `global` map is used. Any new macros or
 changes update only the `global` map. This may change in future releases so
 please make sure you use the `override` attibute.
 
-The macro files are looked for in the `_configdir` paths. See
-<<X1,+_configdir+>> variable for details.
+The macro files specificed on the command line are looked for in the
+`_configdir` paths. See <<X1,+_configdir+>> variable for details. Included
+files need to add the `%{_configdir}` macro to the start of the file.
+
+Macro map files can include other macro map files using the `%include`
+directive. The macro map to build _binutils_, _gcc_, _newlib_, _gdb_ and
+_RTEMS_ from version control heads is:
+
+-------------------------------------------------------------
+# <1>
+# Build all tool parts from version control head.
+#
+%include %{_configdir}/snapshots/binutils-head.mc
+%include %{_configdir}/snapshots/gcc-head.mc
+%include %{_configdir}/snapshots/newlib-head.mc
+%include %{_configdir}/snapshots/gdb-head.mc
+-------------------------------------------------------------
+<1> The file is `config/snapshots/binutils-gcc-newlib-gdb-head.mc`.
+
+The macro map defaults to `global` at the start of each included file and the
+map setting of the macro file including the other macro files does not change.
 
 Build Set Files
 ~~~~~~~~~~~~~~~
@@ -1638,12 +1658,23 @@ build fails a check.
 
 To build snapshots for testing purposes you use the available macro maps
 passing them on the command line using the `--macros` option. For RTEMS these
-are held in `config/snapshots` directory. The following build _newlib_ from
+are held in `config/snapshots` directory. The following builds _newlib_ from
 CVS:
 
 -------------------------------------------------------------
 $ ../source-builder/sb-set-builder --log=l-4.11-sparc.txt \
-   --prefix=$HOME/development/rtems/4.11 --macros=snapshots/newlib-head.mc
+   --prefix=$HOME/development/rtems/4.11 \
+   --macros=snapshots/newlib-head.mc \
+   4.11/rtems-sparc
+-------------------------------------------------------------
+
+and the following uses the version control heads for _binutils_, _gcc_,
+_newlib_, _gdb_ and _RTEMS_:
+
+-------------------------------------------------------------
+$ ../source-builder/sb-set-builder --log=l-heads-sparc.txt \
+   --prefix=$HOME/development/rtems/4.11-head \
+   --macros=snapshots/binutils-gcc-newlib-gdb-head.mc \
    4.11/rtems-sparc
 -------------------------------------------------------------
 
