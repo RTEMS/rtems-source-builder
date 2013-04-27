@@ -219,7 +219,8 @@ class file:
                 re.compile('%configure'),
                 re.compile('%source[0-9]*'),
                 re.compile('%patch[0-9]*'),
-                re.compile('%select') ]
+                re.compile('%select'),
+                re.compile('%disable') ]
 
     def __init__(self, name, opts, macros = None):
         self.opts = opts
@@ -469,6 +470,16 @@ class file:
                         self._error("macro '%s' not found" % (mn))
         return self._shell(s)
 
+    def _disable(self, config, ls):
+        if len(ls) != 2:
+            log.warning('invalid disable statement')
+        else:
+            if ls[1] == 'select':
+                self.macros.lock_read_map()
+                log.trace('config: %s: _disable_select: %s %s' % (self.init_name, r, ls[1]))
+            else:
+                log.warning('invalid disable statement: %s' % (ls[1]))
+
     def _select(self, config, ls):
         if len(ls) != 2:
             log.warning('invalid select statement')
@@ -676,6 +687,9 @@ class file:
                         else:
                             name = self.name + '-' + ls[1]
                         return ('package', name)
+                elif ls[0] == '%disable':
+                    if isvalid:
+                        self._disable(config, ls)
                 elif ls[0] == '%select':
                     if isvalid:
                         self._select(config, ls)
