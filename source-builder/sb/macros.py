@@ -57,10 +57,11 @@ class macros:
         if original is None:
             self.macros = {}
             self.read_maps = []
+            self.read_map_locked = False
             self.write_map = 'global'
             self.macros['global'] = {}
-            self.macros['global']['_cwd'] = ('dir', 'required', path.shell(os.getcwd()))
-            self.macros['global']['_sbdir'] = ('dir', 'required', path.shell(sbdir))
+            self.macros['global']['_cwd'] = ('dir', 'required', path.abspath(os.getcwd()))
+            self.macros['global']['_sbdir'] = ('dir', 'required', path.abspath(sbdir))
         else:
             self.macros = {}
             for m in original.macros:
@@ -69,6 +70,7 @@ class macros:
                 for k in original.macros[m]:
                     self.macros[m][k] = original.macros[m][k]
             self.read_maps = sorted(original.read_maps)
+            self.read_map_locked = original.read_map_locked
             self.write_map = original.write_map
         if name is not None:
             self.load(name)
@@ -404,19 +406,21 @@ class macros:
         return keys
 
     def set_read_map(self, _map):
-        if _map in self.macros:
-            if _map not in self.get_read_maps():
-                rm = '%04d_%s' % (len(self.read_maps), _map)
-                self.read_maps = sorted(self.read_maps + [rm])
-            return True
+        if not self.read_map_locked:
+            if _map in self.macros:
+                if _map not in self.get_read_maps():
+                    rm = '%04d_%s' % (len(self.read_maps), _map)
+                    self.read_maps = sorted(self.read_maps + [rm])
+                return True
         return False
 
     def unset_read_map(self, _map):
-        if _map in self.get_read_maps():
-            for i in range(0, len(self.read_maps)):
-                if '%04d_%s' % (i, _map) == self.read_maps[i]:
-                    self.read_maps.pop(i)
-            return True
+        if not self.read_map_locked:
+            if _map in self.get_read_maps():
+                for i in range(0, len(self.read_maps)):
+                    if '%04d_%s' % (i, _map) == self.read_maps[i]:
+                        self.read_maps.pop(i)
+                return True
         return False
 
     def set_write_map(self, map):
@@ -424,6 +428,12 @@ class macros:
             self.write_map = map
             return True
         return False
+
+    def lock_read_map(self, _map):
+        self.read_map_locked = True
+
+    def unlock_read_map(self, _map):
+        self.read_map_locked = False
 
 if __name__ == "__main__":
     import copy
