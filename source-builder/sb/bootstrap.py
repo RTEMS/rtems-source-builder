@@ -41,6 +41,16 @@ def _collect(path_, file):
                 confs += [path.shell(path.join(root, f))]
     return confs
 
+def _grep(file, pattern):
+    rege = re.compile(pattern)
+    try:
+        f = open(file, 'r')
+        matches = [rege.match(l) != None for l in f.readlines()]
+        f.close()
+    except IOError, err:
+        raise error.general('error reading: %s' % (file))
+    return True in matches
+
 class command:
 
     def __init__(self, cmd, cwd):
@@ -69,7 +79,8 @@ class command:
 
 class autoreconf:
 
-    def __init__(self, configure):
+    def __init__(self, topdir, configure):
+        self.topdir = topdir
         self.configure = configure
         self.cwd = path.dirname(self.configure)
         self.bspopts()
@@ -77,28 +88,23 @@ class autoreconf:
         self.command.run()
 
     def bspopts(self):
-        try:
-            c = open(self.configure, 'r')
-            c_lines = c.readlines()
-            c.close()
-        except IOError, err:
-            raise error.general('error reading: %s' % (configure))
-        if 'RTEMS_CHECK_BSPDIR' in c_lines:
+        if _grep(self.configure, 'RTEMS_CHECK_BSPDIR'):
             bsp_specs = _collect(self.cwd, 'bsp_specs')
             try:
-                acinclude = path.join(self.cwd, acinclude.m4)
+                acinclude = path.join(self.cwd, 'acinclude.m4')
                 b = open(acinclude, 'w')
-                b.write('# RTEMS_CHECK_BSPDIR(RTEMS_BSP_FAMILY) ')
-                b.write('AC_DEFUN([RTEMS_CHECK_BSPDIR],')
-                b.write('[')
-                b.write(' case "$1" in')
+                b.write('# RTEMS_CHECK_BSPDIR(RTEMS_BSP_FAMILY) ' + os.linesep)
+                b.write('AC_DEFUN([RTEMS_CHECK_BSPDIR],' + os.linesep)
+                b.write('[' + os.linesep)
+                b.write(' case "$1" in' + os.linesep)
                 for bs in bsp_specs:
-                    b.write('   %s )' % (path.dirname(bs)))
-                    b.write('     AC_CONFIG_SUBDIRS([%s]);;' % (path.dirname(bs)))
-                b.write('  *)')
-                b.write('    AC_MSG_ERROR([Invalid BSP]);;')
-                b.write('  esac')
-                b.write('])')
+                    dir = path.dirname(bs)[len(self.cwd) + 1:]
+                    b.write('   %s )%s' % (dir, os.linesep))
+                    b.write('     AC_CONFIG_SUBDIRS([%s]);;%s' % (dir, os.linesep))
+                b.write('  *)' + os.linesep)
+                b.write('    AC_MSG_ERROR([Invalid BSP]);;' + os.linesep)
+                b.write('  esac' + os.linesep)
+                b.write('])' + os.linesep)
                 b.close()
             except IOError, err:
                 raise error.general('error writing: %s' % (acinclude))
@@ -110,6 +116,16 @@ class autoreconf:
         if self.command is not None:
             if self.command.exit_code != 0:
                 raise error.general('error: autoreconf: %s' % (' '.join(self.command.cmd)))
+            makefile = path.join(self.cwd, 'Makefile.am')
+            if path.exists(makefile):
+                if _grep(makefile, 'stamp-h\.in'):
+                    stamp_h = path.join(self.cwd, 'stamp-h.in')
+                    try:
+                        t = open(stamp_h, 'w')
+                        t.write('timestamp')
+                        t.close()
+                    except IOError, err:
+                        raise error.general('error writing: %s' % (stamp_h))
 
 def generate(topdir, jobs):
     if type(jobs) is str:
@@ -122,7 +138,7 @@ def generate(topdir, jobs):
         if next < len(confs) and len(autoreconfs) < jobs:
             log.notice('%3d/%3d: autoreconf: %s' % \
                            (next + 1, len(confs), confs[next][len(topdir) + 1:]))
-            autoreconfs += [autoreconf(confs[next])]
+            autoreconfs += [autoreconf(topdir, confs[next])]
             next += 1
         else:
             for ac in autoreconfs:
@@ -138,8 +154,8 @@ def generate(topdir, jobs):
 class ampolish3:
 
     def __init__(self, topdir, makefile):
-        self.makefile = makefile
         self.topdir = topdir
+        self.makefile = makefile
         self.preinstall = path.join(path.dirname(makefile), 'preinstall.am')
         self.command = command([path.join(topdir, 'ampolish3'), makefile], self.topdir)
         self.command.run()
@@ -164,16 +180,8 @@ def preinstall(topdir, jobs):
         jobs = int(jobs)
     start_time = datetime.datetime.now()
     makes = []
-    pre = re.compile('include .*/preinstall\.am')
     for am in _collect(topdir, 'Makefile.am'):
-        try:
-            m = open(am, 'r')
-            am_lines = m.readlines()
-            m.close()
-        except IOError, err:
-            raise error.general('error reading: %s' % (am))
-        ml = [pre.match(l) != None for l in am_lines]
-        if True in ml:
+        if _grep(am, 'include .*/preinstall\.am'):
             makes += [am]
     next = 0
     ampolish3s = []
