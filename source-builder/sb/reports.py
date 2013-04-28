@@ -154,7 +154,7 @@ class report:
             self.output("'''")
             self.output('')
 
-    def introduction(self, name, intro_text):
+    def introduction(self, name, intro_text = None):
         if self.is_asciidoc():
             h = 'RTEMS Source Builder Report'
             self.output(h)
@@ -245,21 +245,20 @@ class report:
             if self.is_asciidoc():
                 self.output('--------------------------------------------')
 
-    def config(self, configname, opts, macros):
+    def config(self, _config, opts, macros):
 
-        _config = config.file(configname, opts, macros)
         packages = _config.packages()
         package = packages['main']
         name = package.name()
         self.config_start(name)
         if self.is_asciidoc():
             self.output('*Package*: _%s_ +' % (name))
-            self.output('*Config*: %s' % (configname))
+            self.output('*Config*: %s' % (_config.file_name()))
             self.output('')
         else:
             self.output('-' * self.line_len)
             self.output('Package: %s' % (name))
-            self.output(' Config: %s' % (configname))
+            self.output(' Config: %s' % (_config.file_name()))
         self.output_info('Summary', package.get_info('summary'), True)
         self.output_info('URL', package.get_info('url'))
         self.output_info('Version', package.get_info('version'))
@@ -302,25 +301,7 @@ class report:
         self.output_directive('Clean', package.clean())
         self.config_end(name)
 
-    def buildset(self, name, opts = None, macros = None):
-        self.bset_nesting += 1
-        self.buildset_start(name)
-        if opts is None:
-            opts = self.opts
-        if macros is None:
-            macros = self.macros
-        bset = setbuilder.buildset(name, self.configs, opts, macros)
-        for c in bset.load():
-            if c.endswith('.bset'):
-                self.buildset(c, bset.opts, bset.macros)
-            elif c.endswith('.cfg'):
-                self.config(c, bset.opts, bset.macros)
-            else:
-                raise error.general('invalid config type: %s' % (c))
-        self.buildset_end(name)
-        self.bset_nesting -= 1
-
-    def generate(self, name):
+    def write(self, name):
         if self.format == 'html':
             if self.asciidoc is None:
                 raise error.general('asciidoc not initialised')
@@ -340,19 +321,30 @@ class report:
             except IOError, err:
                 raise error.general('writing output file: %s: %s' % (name, err))
 
-    def make(self, inname, outname = None, intro_text = None):
+    def generate(self, name, opts = None, macros = None):
+        self.bset_nesting += 1
+        self.buildset_start(name)
+        if opts is None:
+            opts = self.opts
+        if macros is None:
+            macros = self.macros
+        bset = setbuilder.buildset(name, self.configs, opts, macros)
+        for c in bset.load():
+            if c.endswith('.bset'):
+                self.buildset(c, bset.opts, bset.macros)
+            elif c.endswith('.cfg'):
+                self.config(config.file(c, bset.opts, bset.macros),
+                            bset.opts, bset.macros)
+            else:
+                raise error.general('invalid config type: %s' % (c))
+        self.buildset_end(name)
+        self.bset_nesting -= 1
+
+    def create(self, inname, outname = None, intro_text = None):
         self.setup()
         self.introduction(inname, intro_text)
-        config = build.find_config(inname, self.configs)
-        if config is None:
-            raise error.general('config file not found: %s' % (inname))
-        if config.endswith('.bset'):
-            self.buildset(config)
-        elif config.endswith('.cfg'):
-            self.config(config, self.opts, self.macros)
-        else:
-            raise error.general('invalid config type: %s' % (config))
-        self.generate(outname)
+        self.generate(inname)
+        self.write(outname)
 
 def run(args):
     try:
@@ -394,8 +386,13 @@ def run(args):
                     outname = outname.replace('/', '-')
                 else:
                     outname = output
-                r.make(_config, outname)
+                config = build.find_config(_config, configs)
+                if config is None:
+                    raise error.general('config file not found: %s' % (inname))
+                r.create(config, outname)
             del r
+        else:
+            raise error.general('invalid config type: %s' % (config))
     except error.general, gerr:
         print gerr
         sys.exit(1)
