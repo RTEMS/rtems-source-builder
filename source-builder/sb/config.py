@@ -977,6 +977,9 @@ class file:
     def includes(self):
         return self._includes
 
+    def file_name(self):
+        return self.init_name
+
 def run():
     import sys
     try:
