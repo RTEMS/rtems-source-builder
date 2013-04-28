@@ -476,7 +476,7 @@ class file:
         else:
             if ls[1] == 'select':
                 self.macros.lock_read_map()
-                log.trace('config: %s: _disable_select: %s %s' % (self.init_name, r, ls[1]))
+                log.trace('config: %s: _disable_select: %s' % (self.init_name, ls[1]))
             else:
                 log.warning('invalid disable statement: %s' % (ls[1]))
 
