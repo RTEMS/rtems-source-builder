@@ -429,10 +429,10 @@ class macros:
             return True
         return False
 
-    def lock_read_map(self, _map):
+    def lock_read_map(self):
         self.read_map_locked = True
 
-    def unlock_read_map(self, _map):
+    def unlock_read_map(self):
         self.read_map_locked = False
 
 if __name__ == "__main__":
