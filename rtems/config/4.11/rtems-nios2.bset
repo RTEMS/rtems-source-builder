@@ -26,4 +26,4 @@ expat-2.1.0-1
 tools/rtems-nios2-binutils-2.20-1
 tools/rtems-nios2-gcc-4.1-newlib-1.19.0-1
 tools/rtems-nios2-gdb-7.0-1
-tools/rtems-kernel-4.11.cfg
+tools/rtems-kernel-4.11
