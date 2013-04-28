@@ -7,6 +7,12 @@
 %define rtems_arch sh
 
 #
+# The RTEMS 4.11 BSP to build and test
+#
+%define rtems_bsps      all
+%define rtems_test_bsps none
+
+#
 # The RTEMS 4.11 base defines.
 #
 %include rtems-4.11-base.bset
@@ -18,3 +24,4 @@ expat-2.1.0-1
 tools/rtems-binutils-2.23.1-1
 tools/rtems-gcc-4.7.3-newlib-2.0.0-1
 tools/rtems-gdb-7.5.1-1
+tools/rtems-kernel-4.11.cfg
