@@ -302,17 +302,19 @@ class report:
         self.output_directive('Clean', package.clean())
         self.config_end(name)
 
-    def buildset(self, name):
+    def buildset(self, name, opts = None, macros = None):
         self.bset_nesting += 1
         self.buildset_start(name)
-        opts = copy.copy(self.opts)
-        macros = copy.copy(self.macros)
+        if opts is None:
+            opts = self.opts
+        if macros is None:
+            macros = self.macros
         bset = setbuilder.buildset(name, self.configs, opts, macros)
         for c in bset.load():
             if c.endswith('.bset'):
-                self.buildset(c)
+                self.buildset(c, bset.opts, bset.macros)
             elif c.endswith('.cfg'):
-                self.config(c, opts, macros)
+                self.config(c, bset.opts, bset.macros)
             else:
                 raise error.general('invalid config type: %s' % (c))
         self.buildset_end(name)
@@ -329,15 +331,16 @@ class report:
             self.out = outfile.getvalue()
             infile.close()
             outfile.close()
-        try:
-            o = open(name, "w")
-            o.write(self.out)
-            o.close()
-            del o
-        except IOError, err:
-            raise error.general('writing output file: %s: %s' % (name, err))
+        if name is not None:
+            try:
+                o = open(name, "w")
+                o.write(self.out)
+                o.close()
+                del o
+            except IOError, err:
+                raise error.general('writing output file: %s: %s' % (name, err))
 
-    def make(self, inname, outname, intro_text = None):
+    def make(self, inname, outname = None, intro_text = None):
         self.setup()
         self.introduction(inname, intro_text)
         config = build.find_config(inname, self.configs)
