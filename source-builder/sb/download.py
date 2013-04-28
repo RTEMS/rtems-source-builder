@@ -313,10 +313,10 @@ def get_file(url, local, opts, config):
             urls.append(urlparse.urljoin(base, url_file))
     urls.append(url)
     log.trace('_url: %s -> %s' % (','.join(urls), local))
-    for url in urls:
-        for dl in downloaders:
-            if url.startswith(dl):
-                if downloaders[dl](url, local, config, opts):
-                    return
     if not opts.dry_run():
+        for url in urls:
+            for dl in downloaders:
+                if url.startswith(dl):
+                    if downloaders[dl](url, local, config, opts):
+                        return
         raise error.general('downloading %s: all paths have failed, giving up' % (url))
