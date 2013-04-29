@@ -9,6 +9,11 @@
 #
 # The RTEMS 4.11 BSP to build and test
 #
+%define rtems_bsps      avrtest
+%define rtems_test_bsps avrtest
+
+#
+# The RTEMS 4.11 base defines.
 %define rtems_bsps      all
 %define rtems_test_bsps none
 

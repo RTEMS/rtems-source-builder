@@ -10,7 +10,7 @@
 # The RTEMS 4.11 BSP to build and test
 #
 %define rtems_bsps      all
-%define rtems_test_bsps none
+%define rtems_test_bsps m32csim
 
 #
 # The RTEMS 4.11 base defines.

@@ -9,6 +9,7 @@
 #
 # The RTEMS 4.11 BSP to build and test
 #
+# uC5282 requires a patched special version of Qemu
 %define rtems_bsps      all
 %define rtems_test_bsps none
 
