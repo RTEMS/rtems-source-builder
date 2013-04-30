@@ -247,3 +247,7 @@ FFLAGS="${FFLAGS:-%optflags}" ; export FFLAGS ;
 # Default package settings
 _forced_static:     none,         none, '-Xlinker -Bstatic ${LIBS_STATIC} -Xlinker -Bdynamic'
 __xz:                exe,     required, '/usr/bin/xz'
+
+# Mail Support
+_mail_smtp_host:   none,         none, 'localhost'
+_mail_tools_to:    none,         none, 'rtems-tooltestresults@rtems.org'

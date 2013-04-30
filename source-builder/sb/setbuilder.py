@@ -35,6 +35,7 @@ try:
     import check
     import error
     import log
+    import mailer
     import options
     import path
     import reports
@@ -59,15 +60,15 @@ class buildset:
             self.macros = copy.copy(macros)
         self.bset = bset
         self.bset_pkg = '%s-%s-set' % (self.macros.expand('%{_target}'), self.bset)
-        self.email_report = ''
+        self.mail_report = ''
 
-    def write_email_report(self, text, prepend = False):
+    def write_mail_report(self, text, prepend = False):
         if len(text) == 0 or text[-1] != '\n' or text[-1] != '\r':
             text += os.linesep
         if prepend:
-            self.email_report = text + self.email_report
+            self.mail_report = text + self.mail_report
         else:
-            self.email_report += text
+            self.mail_report += text
 
     def copy(self, src, dst):
         if not os.path.isdir(path.host(src)):
@@ -84,7 +85,7 @@ class buildset:
                 raise error.general('copying tree: %s' % (str(err)))
 
     def report(self, _config, _build):
-        if not _build.opts.get_arg('--no-report') and not _build.opts.get_arg('--no-email'):
+        if not _build.opts.get_arg('--no-report') and _build.opts.get_arg('--mail'):
             format = _build.opts.get_arg('--report-format')
             if format is None:
                 format = 'html'
@@ -118,12 +119,12 @@ class buildset:
                     _build.mkdir(outpath)
                     r.write(outname)
                 del r
-            if not _build.opts.get_arg('--no-email'):
+            if _build.opts.get_arg('--mail'):
                 r = reports.report('text', self.configs, _build.opts, _build.macros)
                 r.setup()
                 r.introduction(_build.config.file_name())
                 r.config(_build.config, _build.opts, _build.macros)
-                self.email_report += r.out
+                self.mail_report += r.out
                 del r
 
     def root_copy(self, src, dst):
@@ -275,9 +276,11 @@ class buildset:
         log.trace('_bset: %s: make' % (self.bset))
         log.notice('Build Set: %s' % (self.bset))
 
-        if not self.opts.get_arg('--no-email'):
-            email_report_header = \
-                'Build Set: %s (%s)' % (self.bset, datetime.datetime.now().ctime())
+        if self.opts.get_arg('--mail'):
+            mail_report_subject = \
+                'Build Set: %s %s (%s)' % (self.bset,
+                                           self.macros.expand('%{_host}'),
+                                           datetime.datetime.now().ctime())
 
         configs = self.load()
 
@@ -317,7 +320,7 @@ class buildset:
                     else:
                         raise error.general('invalid config type: %s' % (configs[s]))
                 except error.general, gerr:
-                    self.write_email_report(str(gerr))
+                    self.write_mail_report(str(gerr))
                     if self.opts.keep_going():
                         print gerr
                         if self.opts.always_clean():
@@ -344,12 +347,21 @@ class buildset:
 
         os.environ['PATH'] = current_path
 
-        log.notice('Build Set: Time %s' % (str(end - start)))
+        build_time = str(end - start)
 
-        if not self.opts.get_arg('--no-email'):
-            self.write_email_report('', True)
-            self.write_email_report('  Build Time %s' % (str(end - start)), True)
-            self.write_email_report(email_report_header, True)
+        if self.opts.get_arg('--mail'):
+            to_addr = self.opts.get_arg('--mail-to')
+            if to_addr is not None:
+                to_addr = to_addr[1]
+            else:
+                to_addr = self.macros.expand('%{_mail_tools_to}')
+            log.notice('Mailing report: %s' % (to_addr))
+            self.write_mail_report('Build Time %s' % (build_time), True)
+            m = mailer.mail(self.opts)
+            if not self.opts.dry_run():
+                m.send(to_addr, mail_report_subject, self.mail_report)
+
+        log.notice('Build Set: Time %s' % (build_time))
 
 def list_bset_cfg_files(opts, configs):
     if opts.get_arg('--list-configs') or opts.get_arg('--list-bsets'):
@@ -374,11 +386,8 @@ def run():
                     '--bset-tar-file': 'Create a build set tar file',
                     '--pkg-tar-files': 'Create package tar files',
                     '--no-report':     'Do not create a package report.',
-                    '--report-format': 'The report format (text, html, asciidoc).',
-                    '--no-email':      'Do not send an email report.',
-                    '--smtp-host':     'SMTP host to send via.',
-                    '--email-to':      'Email address to send the email too.',
-                    '--email-from':    'Email address the report is from.' }
+                    '--report-format': 'The report format (text, html, asciidoc).' }
+        mailer.append_options(optargs)
         opts = options.load(sys.argv, optargs)
         log.notice('RTEMS Source Builder - Set Builder, v%s' % (version.str()))
         if not check.host_setup(opts):

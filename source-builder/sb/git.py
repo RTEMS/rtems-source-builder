@@ -148,6 +148,26 @@ class repo:
                             _remotes[r_name][r_type] = '='.join(ls[1:])
         return _remotes
 
+    def email(self):
+        _email = None
+        _name = None
+        ec, output = self._run(['config', '--list'])
+        if ec == 0:
+            for l in output.split('\n'):
+                if l.startswith('user.email'):
+                    ls = l.split('=')
+                    if len(ls) >= 2:
+                        _email = ls[1]
+                elif l.startswith('user.name'):
+                    ls = l.split('=')
+                    if len(ls) >= 2:
+                        _name = ls[1]
+        if _email is not None:
+            if _name is not None:
+                _email = '%s <%s>' % (_name, _email)
+            return _email
+        return None
+
     def head(self):
         hash = ''
         ec, output = self._run(['log', '-n', '1'])
@@ -166,4 +186,5 @@ if __name__ == '__main__':
     print g.status()
     print g.clean()
     print g.remotes()
+    print g.email()
     print g.head()
