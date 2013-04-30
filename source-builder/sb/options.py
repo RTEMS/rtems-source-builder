@@ -277,6 +277,14 @@ class command_line:
                 raise error.general('macro file not found: %s' % (um[checked.index(False)]))
             for m in um:
                 self.defaults.load(m)
+        # Check if the user has a private set of macros to load
+        if 'RSB_MACROS' in os.environ:
+            if path.exists(os.environ['RSB_MACROS']):
+                self.defaults.load(os.environ['RSB_MACROS'])
+        if 'HOME' in os.environ:
+            rsb_macros = path.join(os.environ['HOME'], '.rsb_macros')
+            if path.exists(rsb_macros):
+                self.defaults.load(rsb_macros)
 
     def sb_git(self):
         repo = git.repo(self.defaults.expand('%{_sbdir}'), self)
@@ -287,15 +295,19 @@ class command_line:
             repo_id = repo_head
             if not repo_clean:
                 repo_id += '-modified'
+            repo_mail = repo.email()
         else:
             repo_valid = '0'
             repo_head = '%{nil}'
             repo_clean = '%{nil}'
             repo_id = 'no-repo'
+            repo_mail = None
         self.defaults['_sbgit_valid'] = repo_valid
         self.defaults['_sbgit_head']  = repo_head
         self.defaults['_sbgit_clean'] = str(repo_clean)
         self.defaults['_sbgit_id']    = repo_id
+        if repo_mail is not None:
+            self.defaults['_sbgit_mail'] = repo_mail
 
     def command(self):
         return path.join(self.command_path, self.command_name)
@@ -385,7 +397,7 @@ class command_line:
         return self.opts['params']
 
     def get_arg(self, arg):
-        if not arg in self.optargs:
+        if self.optargs is None or arg not in self.optargs:
             raise error.internal('bad arg: %s' % (arg))
         for a in self.args:
             sa = a.split('=')
