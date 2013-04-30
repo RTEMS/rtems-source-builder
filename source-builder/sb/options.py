@@ -479,8 +479,11 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc'):
 
     overrides = None
     if os.name == 'nt':
-        import windows
-        overrides = windows.load()
+        try:
+            import windows
+            overrides = windows.load()
+        except:
+            raise error.general('failed to load Windows host support')
     elif os.name == 'posix':
         uname = os.uname()
         try:
@@ -497,7 +500,7 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc'):
                 import linux
                 overrides = linux.load()
         except:
-            pass
+            raise error.general('failed to load %s host support' % (uname))
     else:
         raise error.general('unsupported host type; please add')
     if overrides is None:
