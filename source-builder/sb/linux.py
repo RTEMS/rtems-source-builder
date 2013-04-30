@@ -69,7 +69,7 @@ def load():
 
     # Works for LSB distros
     distro = platform.dist()[0]
-    distro_ver = int(platform.dist()[2])
+    distro_ver = int(platform.dist()[1])
 
     # Non LSB - fail over to issue
     if distro == '':
