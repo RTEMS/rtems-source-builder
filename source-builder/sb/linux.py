@@ -69,14 +69,14 @@ def load():
 
     # Works for LSB distros
     distro = platform.dist()[0]
-    distro_ver = platform.dist()[2]
+    distro_ver = int(platform.dist()[2])
 
     # Non LSB - fail over to issue
     if distro == '':
         try:
             issue = open('/etc/issue').read()
             distro = issue.split(' ')[0]
-            distro_ver = issue.split(' ')[2]
+            distro_ver = int(issue.split(' ')[2])
         except:
             pass
 
