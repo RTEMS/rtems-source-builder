@@ -366,6 +366,12 @@ class macros:
             return None
         return m[1]
 
+    def get_value(self, key):
+        m = self.get(key)
+        if m is None:
+            return None
+        return m[2]
+
     def overridden(self, key):
         return self.get_attribute(key) == 'override'
 
