@@ -191,6 +191,8 @@ class command_line:
         print '--warn-all             : Generate warnings'
         print '--no-clean             : Do not clean up the build tree'
         print '--always-clean         : Always clean the build tree, even with an error'
+        print '--keep-going           : Do not stop on an error.'
+        print '--regression           : Set --no-install, --keep-going and --always-clean'
         print '--jobs                 : Run with specified number of jobs, default: num CPUs.'
         print '--host                 : Set the host triplet'
         print '--build                : Set the build triplet'
@@ -211,7 +213,6 @@ class command_line:
         print '--libstdcxxflags flags : List of C++ flags to build the target libstdc++ code'
         print '--with-<label>         : Add the --with-<label> to the build'
         print '--without-<label>      : Add the --without-<label> to the build'
-        print '--regression           : Set --no-install, --keep-going and --always-clean'
         if self.optargs:
             for a in self.optargs:
                 print '%-22s : %s' % (a, self.optargs[a])
