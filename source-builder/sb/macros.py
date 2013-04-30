@@ -334,14 +334,15 @@ class macros:
         for n in names:
             if path.exists(n):
                 try:
-                    mc = open(n, 'r')
+                    mc = open(path.host(n), 'r')
                     macros = self.parse(mc)
                     mc.close()
                     self.files += [n]
                     return
                 except IOError, err:
                     pass
-        raise error.general('opening macro file: %s' % (path.host(name)))
+        raise error.general('opening macro file: %s' % \
+                                (path.host(self.expand(name))))
 
     def get(self, key):
         if type(key) is not str:

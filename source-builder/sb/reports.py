@@ -314,7 +314,7 @@ class report:
             outfile.close()
         if name is not None:
             try:
-                o = open(name, "w")
+                o = open(path.host(name), "w")
                 o.write(self.out)
                 o.close()
                 del o

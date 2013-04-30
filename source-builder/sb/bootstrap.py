@@ -44,7 +44,7 @@ def _collect(path_, file):
 def _grep(file, pattern):
     rege = re.compile(pattern)
     try:
-        f = open(file, 'r')
+        f = open(path.host(file), 'r')
         matches = [rege.match(l) != None for l in f.readlines()]
         f.close()
     except IOError, err:
@@ -92,7 +92,7 @@ class autoreconf:
             bsp_specs = _collect(self.cwd, 'bsp_specs')
             try:
                 acinclude = path.join(self.cwd, 'acinclude.m4')
-                b = open(acinclude, 'w')
+                b = open(path.host(acinclude), 'w')
                 b.write('# RTEMS_CHECK_BSPDIR(RTEMS_BSP_FAMILY) ' + os.linesep)
                 b.write('AC_DEFUN([RTEMS_CHECK_BSPDIR],' + os.linesep)
                 b.write('[' + os.linesep)
@@ -121,7 +121,7 @@ class autoreconf:
                 if _grep(makefile, 'stamp-h\.in'):
                     stamp_h = path.join(self.cwd, 'stamp-h.in')
                     try:
-                        t = open(stamp_h, 'w')
+                        t = open(path.host(stamp_h), 'w')
                         t.write('timestamp')
                         t.close()
                     except IOError, err:
@@ -168,7 +168,7 @@ class ampolish3:
             if self.command.exit_code != 0:
                 raise error.general('error: ampolish3: %s' % (' '.join(self.command.cmd)))
             try:
-                p = open(self.preinstall, 'w')
+                p = open(path.host(self.preinstall), 'w')
                 for l in self.command.output:
                     p.write(l)
                 p.close()
