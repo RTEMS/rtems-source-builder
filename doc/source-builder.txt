@@ -826,6 +826,57 @@ _RTEMS_ from version control heads is:
 The macro map defaults to `global` at the start of each included file and the
 map setting of the macro file including the other macro files does not change.
 
+Personal Macros
+^^^^^^^^^^^^^^^
+
+When the tools start to run they will load personal macros. Personal macros are
+in the standard format for macros in a file. There are two places personal
+macros can be configured. The first is the environment variable
+`RSB_MACROS`. If presentthe macros from the file the environment variable
+points to are loaded. The second is a file called `.rsb_macros` in your home
+directory. You need to have the environment variable `HOME` defined for this
+work.
+
+Report Mailing
+~~~~~~~~~~~~~~
+
+The build reports can be mailed to a specific email address to logging and
+monitoring. Mailing requires a number of parameters to function. These are:
+
+. To mail address
+. From mail address
+. SMTP host
+
+.To Mail Address
+
+The +to+ mail address is taken from the macro `%{_mail_tools_to}` and the
+default is _rtems-tooltestresults at rtems.org_. You can override the default
+with a personal or user macro file or via the command line option _--mail-to_.
+
+.From Mail Address
+
+The +from+ mail address is taken from:
+
+. GIT configuration
+. User `.mailrc` file
+. Command line
+
+If you have configured an email and name in git it will be used used. If you do
+not a check is made for a `.mailrc` file. The environment variable _MAILRC_ is
+used if present else your home directory is check. If found the file is scanned
+for the `from` setting:
+
+  set from="Foo Bar <foo@bar>"
+
+You can also support a from address on the command line with the _--mail-from_
+option.
+
+.SMTP Host
+
+The SMTP host is taken from the macro `%{_mail_smtp_host}` and the default is
+`localhost`. You can override the default with a personal or user macro file or
+via the command line option _--smtp-host_.
+
 Build Set Files
 ~~~~~~~~~~~~~~~
 
@@ -1779,7 +1830,8 @@ Options and arguments:
 --warn-all             : Generate warnings
 --no-clean             : Do not clean up the build tree
 --always-clean         : Always clean the build tree, even with an error
---jobs                 : Run with specified number of jobs, default: num CPUs.
+--regression           : Set --no-install, --keep-going and --always-clean
+---jobs                 : Run with specified number of jobs, default: num CPUs.
 --host                 : Set the host triplet
 --build                : Set the build triplet
 --target               : Set the target triplet
@@ -1793,20 +1845,23 @@ Options and arguments:
 --log file             : Log file where all build out is written too
 --url url[,url]        : URL to look for source
 --no-download          : Disable the source downloader
+--no-install           : Do not install the packages to the prefix
 --targetcflags flags   : List of C flags for the target code
 --targetcxxflags flags : List of C++ flags for the target code
 --libstdcxxflags flags : List of C++ flags to build the target libstdc++ code
 --with-<label>         : Add the --with-<label> to the build
 --without-<label>      : Add the --without-<label> to the build
---bset-tar-file        : Create a build set tar file
+--mail-from            : Email address the report is from.
+--mail-to              : Email address to send the email too.
+--mail                 : Send email report or results.
+--smtp-host            : SMTP host to send via.
 --no-report            : Do not create a package report.
---list-configs         : List available configurations
 --report-format        : The report format (text, html, asciidoc).
---list-bsets           : List available build sets
---no-install           : Do not install the packages to the prefix.
---list-deps            : List the dependent files.
+--bset-tar-file        : Create a build set tar file
 --pkg-tar-files        : Create package tar files
---regression           : Set --no-install, --keep-going and --always-clean
+--list-bsets           : List available build sets
+--list-configs         : List available configurations
+--list-deps            : List the dependent files.
 -------------------------------------------------------------
 
 .Arguments
@@ -1884,30 +1939,42 @@ the +%bconf_with+ macro.
 +--without-<label>+;;
 Add the --without-<label> to the build. This can be tested for in a script with
 the +%bconf_without+ macro.
-+--list-bsets+;;
-List available build sets.
-+--list-configs+;;
-List available configurations.
++--mail-from+;;
+Set the from mail address if report mailing is enabled.
++--mail-to+;;
+Set the to mail address if report mailing is enabled. The report is mailed to
+this address.
++--mail+;;
+Mail the build report to the mail to address.
++--smtp-host+;;
+The SMTP host to use to send the email. The default is +localhost+.
++--no-report+;;
+Do not create a report format.
++--report-format format+;;
+The report format can be 'text' or 'html'. The default is 'html'.
 +--keep-going+;;
 Do not stop on error. This is useful if your build sets performs a large number
 of testing related builds and there are errors.
++--always-clean+.
+Always clean the build tree even with a failure.
 +--no-install+;;
 Do not install the packages to the prefix. Use this if you are only after the
 tar files.
++--regression+;;
+A convenience option which is the same as +--no-install+, +--keep-going+ and
 +--bset-tar-file+;;
 Create a build set tar file. This is a single tar file of all the packages in
 the build set.
 +--pkg-tar-files+;;
 Create package tar files. A tar file will be created for each package built in
 a build set.
++--list-bsets+;;
+List available build sets.
++--list-configs+;;
+List available configurations.
 +--list-deps+;;
 Print a list of dependent files used by a build set. Dependent files have a
 'dep[?]' prefix where '?' is a number. The files are listed alphabetically.
-+--report-format format+;;
-The report format can be 'text' or 'html'. The default is 'html'.
-+--regression+;;
-A convenience option which is the same as +--no-install+, +--keep-going+ and
-+--always-clean+.
 
 Set Builder (sb-builder)
 ~~~~~~~~~~~~~~~~~~~~~~~~
