@@ -62,7 +62,7 @@ class buildset:
         self.bset_pkg = '%s-%s-set' % (self.macros.expand('%{_target}'), self.bset)
         self.mail_header = ''
         self.mail_report = ''
-        self.build_failed = False
+        self.build_failure = None
 
     def write_mail_header(self, text, prepend = False):
         if len(text) == 0 or text[-1] != '\n' or text[-1] != '\r':
@@ -287,10 +287,7 @@ class buildset:
         log.notice('Build Set: %s' % (self.bset))
 
         if self.opts.get_arg('--mail'):
-            mail_report_subject = \
-                '%s %s (%s)' % (self.bset,
-                                self.macros.expand('%{_host}'),
-                                datetime.datetime.now().ctime())
+            mail_report_subject = '%s %s' % (self.bset, self.macros.expand('%{_host}'))
 
         configs = self.load()
 
@@ -299,6 +296,8 @@ class buildset:
         current_path = os.environ['PATH']
 
         start = datetime.datetime.now()
+
+        mail_report = False
 
         try:
             builds = []
@@ -317,6 +316,7 @@ class buildset:
                         bs.build(deps)
                         del bs
                     elif configs[s].endswith('.cfg'):
+                        mail_report = self.opts.get_arg('--mail')
                         log.trace('_bset: %s' % ('-' * 80))
                         b = build.build(configs[s], self.opts.get_arg('--pkg-tar-files'),
                                         opts, macros)
@@ -330,7 +330,8 @@ class buildset:
                     else:
                         raise error.general('invalid config type: %s' % (configs[s]))
                 except error.general, gerr:
-                    self.build_failed = True
+                    if self.build_failure is None:
+                        self.build_failure = b.name()
                     self.write_mail_header('')
                     self.write_mail_header('= ' * 40)
                     self.write_mail_header('Build FAILED: %s' % (b.name()))
@@ -355,14 +356,19 @@ class buildset:
                     b.cleanup()
             for b in builds:
                 del b
+        except error.general, gerr:
+            raise
+        except KeyboardInterrupt:
+            mail_report = False
+            raise
         except:
-            self.build_failed = True
+            self.build_failure = 'RSB general failure'
             raise
         finally:
             end = datetime.datetime.now()
             os.environ['PATH'] = current_path
             build_time = str(end - start)
-            if self.opts.get_arg('--mail'):
+            if mail_report:
                 to_addr = self.opts.get_arg('--mail-to')
                 if to_addr is not None:
                     to_addr = to_addr[1]
@@ -372,13 +378,15 @@ class buildset:
                 self.write_mail_header('Build Time %s' % (build_time), True)
                 self.write_mail_header('')
                 m = mailer.mail(self.opts)
-                if self.build_failed:
-                    pass_fail = 'FAILED '
+                if self.build_failure is not None:
+                    mail_report_subject = 'Build: FAILED %s (%s)' %\
+                        (mail_report_subject, self.build_failure)
+                    pass_fail = 'FAILED'
                 else:
-                    pass_fail = ''
-                mail_report_subject = 'Build: %s%s' % (pass_fail, mail_report_subject)
+                    mail_report_subject = 'Build: PASSED %s' % (mail_report_subject)
                 if not self.opts.dry_run():
-                    m.send(to_addr, mail_report_subject, self.mail_header + self.mail_report)
+                    m.send(to_addr, mail_report_subject,
+                           self.mail_header + self.mail_report)
             log.notice('Build Set: Time %s' % (build_time))
 
 def list_bset_cfg_files(opts, configs):
