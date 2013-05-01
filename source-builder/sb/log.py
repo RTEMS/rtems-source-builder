@@ -88,7 +88,9 @@ def flush(log = None):
 
 class log:
     """Log output to stdout or a file."""
-    def __init__(self, streams = None):
+    def __init__(self, streams = None, tail_size = 100):
+        self.tail = []
+        self.tail_size = tail_size
         self.fhs = [None, None]
         if streams:
             for s in streams:
@@ -107,6 +109,19 @@ class log:
         for f in range(2, len(self.fhs)):
             self.fhs[f].close()
 
+    def __str__(self):
+        t = ''
+        for tl in self.tail:
+            t += tl + os.linesep
+        return t[:-len(os.linesep)]
+
+    def _tail(self, text):
+        if type(text) is not list:
+            text = text.splitlines()
+        self.tail += text
+        if len(self.tail) > self.tail_size:
+            self.tail = self.tail[-self.tail_size:]
+
     def has_stdout(self):
         return self.fhs[0] is not None
 
@@ -116,8 +131,10 @@ class log:
     def output(self, text):
         """Output the text message to all the logs."""
         # Reformat the text to have local line types.
+        text = text.replace(chr(13), '').splitlines()
+        self._tail(text)
         out = ''
-        for l in text.replace(chr(13), '').splitlines():
+        for l in text:
             out += l + os.linesep
         for f in range(0, len(self.fhs)):
             if self.fhs[f] is not None:
@@ -131,12 +148,23 @@ class log:
                 self.fhs[f].flush()
 
 if __name__ == "__main__":
-    l = log(['stdout', 'log.txt'])
+    l = log(['stdout', 'log.txt'], tail_size = 20)
     for i in range(0, 10):
         l.output('log: hello world: %d\n' % (i))
     l.output('log: hello world CRLF\r\n')
     l.output('log: hello world NONE')
     l.flush()
+    print '=-' * 40
+    print 'tail: %d' % (len(l.tail))
+    print l
+    print '=-' * 40
+    for i in range(0, 10):
+        l.output('log: hello world 2: %d\n' % (i))
+    l.flush()
+    print '=-' * 40
+    print 'tail: %d' % (len(l.tail))
+    print l
+    print '=-' * 40
     for i in [0, 1]:
         quiet = False
         tracing = False
@@ -159,4 +187,8 @@ if __name__ == "__main__":
         trace('trace with quiet on and trace on')
         notice('notice with quiet on and trace on')
         default = l
+    print '=-' * 40
+    print 'tail: %d' % (len(l.tail))
+    print l
+    print '=-' * 40
     del l

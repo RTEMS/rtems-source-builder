@@ -60,7 +60,17 @@ class buildset:
             self.macros = copy.copy(macros)
         self.bset = bset
         self.bset_pkg = '%s-%s-set' % (self.macros.expand('%{_target}'), self.bset)
+        self.mail_header = ''
         self.mail_report = ''
+        self.build_failed = False
+
+    def write_mail_header(self, text, prepend = False):
+        if len(text) == 0 or text[-1] != '\n' or text[-1] != '\r':
+            text += os.linesep
+        if prepend:
+            self.mail_header = text + self.mail_header
+        else:
+            self.mail_header += text
 
     def write_mail_report(self, text, prepend = False):
         if len(text) == 0 or text[-1] != '\n' or text[-1] != '\r':
@@ -124,7 +134,7 @@ class buildset:
                 r.setup()
                 r.introduction(_build.config.file_name())
                 r.config(_build.config, _build.opts, _build.macros)
-                self.mail_report += r.out
+                self.write_mail_report(r.out)
                 del r
 
     def root_copy(self, src, dst):
@@ -278,9 +288,9 @@ class buildset:
 
         if self.opts.get_arg('--mail'):
             mail_report_subject = \
-                'Build Set: %s %s (%s)' % (self.bset,
-                                           self.macros.expand('%{_host}'),
-                                           datetime.datetime.now().ctime())
+                '%s %s (%s)' % (self.bset,
+                                self.macros.expand('%{_host}'),
+                                datetime.datetime.now().ctime())
 
         configs = self.load()
 
@@ -320,7 +330,13 @@ class buildset:
                     else:
                         raise error.general('invalid config type: %s' % (configs[s]))
                 except error.general, gerr:
-                    self.write_mail_report(str(gerr))
+                    self.build_failed = True
+                    self.write_mail_header('')
+                    self.write_mail_header('= ' * 40)
+                    self.write_mail_header('Build FAILED: %s' % (b.name()))
+                    self.write_mail_header('- ' * 40)
+                    self.write_mail_header(str(log.default))
+                    self.write_mail_header('- ' * 40)
                     if self.opts.keep_going():
                         print gerr
                         if self.opts.always_clean():
@@ -340,28 +356,30 @@ class buildset:
             for b in builds:
                 del b
         except:
-            os.environ['PATH'] = current_path
+            self.build_failed = True
             raise
-
-        end = datetime.datetime.now()
-
-        os.environ['PATH'] = current_path
-
-        build_time = str(end - start)
-
-        if self.opts.get_arg('--mail'):
-            to_addr = self.opts.get_arg('--mail-to')
-            if to_addr is not None:
-                to_addr = to_addr[1]
-            else:
-                to_addr = self.macros.expand('%{_mail_tools_to}')
-            log.notice('Mailing report: %s' % (to_addr))
-            self.write_mail_report('Build Time %s' % (build_time), True)
-            m = mailer.mail(self.opts)
-            if not self.opts.dry_run():
-                m.send(to_addr, mail_report_subject, self.mail_report)
-
-        log.notice('Build Set: Time %s' % (build_time))
+        finally:
+            end = datetime.datetime.now()
+            os.environ['PATH'] = current_path
+            build_time = str(end - start)
+            if self.opts.get_arg('--mail'):
+                to_addr = self.opts.get_arg('--mail-to')
+                if to_addr is not None:
+                    to_addr = to_addr[1]
+                else:
+                    to_addr = self.macros.expand('%{_mail_tools_to}')
+                log.notice('Mailing report: %s' % (to_addr))
+                self.write_mail_header('Build Time %s' % (build_time), True)
+                self.write_mail_header('')
+                m = mailer.mail(self.opts)
+                if self.build_failed:
+                    pass_fail = 'FAILED '
+                else:
+                    pass_fail = ''
+                mail_report_subject = 'Build: %s%s' % (pass_fail, mail_report_subject)
+                if not self.opts.dry_run():
+                    m.send(to_addr, mail_report_subject, self.mail_header + self.mail_report)
+            log.notice('Build Set: Time %s' % (build_time))
 
 def list_bset_cfg_files(opts, configs):
     if opts.get_arg('--list-configs') or opts.get_arg('--list-bsets'):
