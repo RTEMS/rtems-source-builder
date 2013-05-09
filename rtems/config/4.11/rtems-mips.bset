@@ -18,12 +18,6 @@
 %include rtems-4.11-base.bset
 
 #
-# Newlib 2.0.0 Patches
-#
-%define rtems_gcc_patch12 %{rtems_newlib_patches}/mips/newlib-2.0.0-mips-memcpy-20130107.diff
-%define rtems_gcc_patch13 %{rtems_newlib_patches}/mips/newlib-2.0.0-mips-memcpy-20130219.diff
-
-#
 # Tools configuration.
 #
 expat-2.1.0-1
