@@ -22,7 +22,6 @@ import datetime
 import operator
 import os
 import re
-import subprocess
 import sys
 import threading
 import time
@@ -61,6 +60,27 @@ class command:
         self.cwd = cwd
 
     def runner(self):
+
+        import subprocess
+
+        #
+        # Support Python 2.6
+        #
+        if "check_output" not in dir(subprocess):
+            def f(*popenargs, **kwargs):
+                if 'stdout' in kwargs:
+                    raise ValueError('stdout argument not allowed, it will be overridden.')
+                process = subprocess.Popen(stdout=subprocess.PIPE, *popenargs, **kwargs)
+                output, unused_err = process.communicate()
+                retcode = process.poll()
+                if retcode:
+                    cmd = kwargs.get("args")
+                    if cmd is None:
+                        cmd = popenargs[0]
+                    raise CalledProcessError(retcode, cmd)
+                return output
+            subprocess.check_output = f
+
         self.start_time = datetime.datetime.now()
         self.exit_code = 0
         try:
