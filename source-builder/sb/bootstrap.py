@@ -113,14 +113,14 @@ class autoreconf:
             try:
                 acinclude = path.join(self.cwd, 'acinclude.m4')
                 b = open(path.host(acinclude), 'w')
-                b.write('# RTEMS_CHECK_BSPDIR(RTEMS_BSP_FAMILY) ' + os.linesep)
+                b.write('# RTEMS_CHECK_BSPDIR(RTEMS_BSP_FAMILY)' + os.linesep)
                 b.write('AC_DEFUN([RTEMS_CHECK_BSPDIR],' + os.linesep)
                 b.write('[' + os.linesep)
-                b.write(' case "$1" in' + os.linesep)
-                for bs in bsp_specs:
+                b.write('  case "$1" in' + os.linesep)
+                for bs in sorted(bsp_specs):
                     dir = path.dirname(bs)[len(self.cwd) + 1:]
-                    b.write('   %s )%s' % (dir, os.linesep))
-                    b.write('     AC_CONFIG_SUBDIRS([%s]);;%s' % (dir, os.linesep))
+                    b.write('  %s )%s' % (dir, os.linesep))
+                    b.write('    AC_CONFIG_SUBDIRS([%s]);;%s' % (dir, os.linesep))
                 b.write('  *)' + os.linesep)
                 b.write('    AC_MSG_ERROR([Invalid BSP]);;' + os.linesep)
                 b.write('  esac' + os.linesep)
