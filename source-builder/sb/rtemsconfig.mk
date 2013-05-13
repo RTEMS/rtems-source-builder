@@ -1,0 +1,43 @@
+#
+# Makefile to extract the contents of the Makefile.inc
+#
+# Use with 'gmake -f rtems-config.mk makefile_inc=/path/Makefile.inc
+#
+
+MAKEFLAGS=-n
+
+VARS_OLD := $(.VARIABLES)
+
+include $(makefile_inc)
+include $(RTEMS_CUSTOM)
+
+out = $(info $(1)=$(2))
+
+all:
+	RTEMS_BSP=$(RTEMS_BSP)
+	RTEMS_CPU=$(RTEMS_CPU)
+	RTEMS_CPU_MODEL=$(RTEMS_CPU_MODEL)
+	RTEMS_API=$(RTEMS_API)
+	prefix=$(prefix)
+	exec_prefix=$(exec_prefix)
+	RTEMS_ROOT=$(prefix)
+	PROJECT_ROOT=$(RTEMS_ROOT)
+	RTEMS_CUSTOM=$(RTEMS_ROOT)/make/custom/$(RTEMS_BSP).cfg
+	RTEMS_SHARE=$(RTEMS_ROOT)/share/rtems$(RTEMS_API)
+	CC_FOR_TARGET=$(CC_FOR_TARGET)
+	CXX_FOR_TARGET=$(CXX_FOR_TARGET)
+	AS_FOR_TARGET=$(AS_FOR_TARGET)
+	AR_FOR_TARGET=$(AR_FOR_TARGET)
+	NM_FOR_TARGET=$(NM_FOR_TARGET)
+	LD_FOR_TARGET=$(LD_FOR_TARGET)
+	SIZE_FOR_TARGET=$(SIZE_FOR_TARGET)
+	OBJCOPY_FOR_TARGET=$(OBJCOPY_FOR_TARGET)
+	RTEMS_HAS_MP=$(RTEMS_HAS_MULTIPROCESSING)
+	RTEMS_HAS_POSIX_API=$(RTEMS_HAS_POSIX_API)
+	RTEMS_HAS_ITRON_API=$(RTEMS_HAS_ITRON_API)
+	RTEMS_HAS_CPLUSPLUS=$(RTEMS_HAS_CPLUSPLUS)
+	RTEMS_HAS_NETWORKING=$(RTEMS_HAS_NETWORKING)
+	RTEMS_CPU_CFLAGS=$(CPU_CFLAGS)
+	RTEMS_CFLAGS=$(CFLAGS)
+	BSP_POST_LINK=$(bsp-post-link)
+	Y=$(foreach V, $(sort $(filter-out $(VARS_OLD), $(.VARIABLES))), $(call out, $(V), $($(V))))
