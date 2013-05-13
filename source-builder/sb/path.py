@@ -126,7 +126,7 @@ def mkdir(path):
 def removeall(path):
 
     def _onerror(function, path, excinfo):
-        print 'removeall error: (%r) %s' % (function, path)
+        print 'removeall error: (%s) %s' % (excinfo, path)
 
     path = host(path)
     shutil.rmtree(path, onerror = _onerror)
