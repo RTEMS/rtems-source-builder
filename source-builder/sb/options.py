@@ -37,6 +37,11 @@ import sys
 
 basepath = 'sb'
 
+#
+# Save the host state.
+#
+host_windows = False
+
 class command_line:
     """Process the command line in a common way for all Tool Builder commands."""
 
@@ -460,6 +465,8 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc'):
     command line.
     """
 
+    global host_windows
+
     #
     # The path to this command.
     #
@@ -482,6 +489,7 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc'):
         try:
             import windows
             overrides = windows.load()
+            host_windows = True
         except:
             raise error.general('failed to load Windows host support')
     elif os.name == 'posix':

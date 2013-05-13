@@ -68,7 +68,7 @@ class repo:
             raise error.general('cvs path needs to exist: %s' % (cwd))
         cmd = [self.cvs, '-z', '9', '-q'] + args
         log.output('cmd: (%s) %s' % (str(cwd), ' '.join(cmd)))
-        exit_code, proc, output = e.spawn(cmd, cwd = cwd)
+        exit_code, proc, output = e.spawn(cmd, cwd = path.host(cwd))
         log.trace(output)
         if check:
             self._cvs_exit_code(cmd, exit_code, output)

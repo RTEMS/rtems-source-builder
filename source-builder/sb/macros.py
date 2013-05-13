@@ -145,8 +145,11 @@ class macros:
             raise TypeError('bad value tuple value field: %s' % (type(value[2])))
         if value[0] not in ['none', 'triplet', 'dir', 'file', 'exe']:
             raise TypeError('bad value tuple (type field): %s' % (value[0]))
-        if value[1] not in ['none', 'optional', 'required', 'override', 'undefine']:
+        if value[1] not in ['none', 'optional', 'required', 
+                            'override', 'undefine', 'convert']:
             raise TypeError('bad value tuple (attrib field): %s' % (value[1]))
+        if value[1] == 'convert':
+            value = self.expand(value)
         self.macros[self.write_map][self.key_filter(key)] = value
 
     def __delitem__(self, key):

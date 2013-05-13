@@ -44,7 +44,7 @@ class repo:
             cwd = None
         cmd = [self.git] + args
         log.trace('cmd: (%s) %s' % (str(cwd), ' '.join(cmd)))
-        exit_code, proc, output = e.spawn(cmd, cwd = cwd)
+        exit_code, proc, output = e.spawn(cmd, cwd = path.host(cwd))
         log.trace(output)
         if check:
             self._git_exit_code(exit_code)
@@ -69,8 +69,8 @@ class repo:
             raise error.general('invalid version number from git: %s' % (gvs[2]))
         return (int(vs[0]), int(vs[1]), int(vs[2]), int(vs[3]))
 
-    def clone(self, url, path):
-        ec, output = self._run(['clone', url, path], check = True)
+    def clone(self, url, _path):
+        ec, output = self._run(['clone', url, path.host(_path)], check = True)
 
     def fetch(self):
         ec, output = self._run(['fetch'], check = True)

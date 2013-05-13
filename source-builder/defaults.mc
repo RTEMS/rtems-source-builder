@@ -43,11 +43,15 @@ _bset:               none,    none,     ''
 name:                none,    none,     ''
 version:             none,    none,     ''
 release:             none,    none,     ''
+buildname:           none,    none,     '%{name}'
 
 # GNU triples needed to build packages
 _host:               triplet, required, ''
 _build:              triplet, required, '%{_host}'
 _target:             none,    optional, ''
+
+# The user
+_uid:                none,    convert,  '%(%{__id_u} -n)'
 
 # Paths
 _host_platform:      none,    none,     '%{_host_cpu}-%{_host_vendor}-%{_host_os}%{?_gnu}'
@@ -57,14 +61,14 @@ _configdir:          dir,     optional, '%{_topdir}/config:%{_sbdir}/config'
 _tardir:             dir,     optional, '%{_topdir}/tar'
 _sourcedir:          dir,     optional, '%{_topdir}/sources'
 _patchdir:           dir,     optional, '%{_topdir}/patches:%{_sbdir}/patches'
-_builddir:           dir,     optional, '%{_topdir}/build/%{name}-%{version}-%{release}'
-_buildcxcdir:        dir,     optional, '%{_topdir}/build/%{name}-%{version}-%{release}-cxc'
+_builddir:           dir,     optional, '%{_topdir}/build/%{buildname}'
+_buildcxcdir:        dir,     optional, '%{_topdir}/build/%{buildname}-cxc'
 _docdir:             dir,     none,     '%{_defaultdocdir}'
 _tmppath:            dir,     none,     '%{_topdir}/build/tmp'
-_tmproot:            dir,     none,     '%{_tmppath}/source-build-%(%{__id_u} -n)/%{_bset}'
-_tmpcxcroot:         dir,     none,     '%{_tmppath}/source-build-%(%{__id_u} -n)-cxc/%{_bset}'
-buildroot:           dir,     none,     '%{_tmppath}/%{name}-root-%(%{__id_u} -n)'
-buildcxcroot:        dir,     none,     '%{_tmppath}/%{name}-root-%(%{__id_u} -n)-cxc'
+_tmproot:            dir,     none,     '%{_tmppath}/sb-%{_uid}/%{_bset}'
+_tmpcxcroot:         dir,     none,     '%{_tmppath}/sb-%{_uid}-cxc/%{_bset}'
+buildroot:           dir,     none,     '%{_tmppath}/%{buildname}-%{_uid}'
+buildcxcroot:        dir,     none,     '%{_tmppath}/%{buildname}-%{_uid}-cxc'
 _datadir:            dir,     none,     '%{_prefix}/share'
 _defaultdocdir:      dir,     none,     '%{_prefix}/share/doc'
 _exeext:             none,    none,     ''
@@ -175,6 +179,7 @@ SB_DOC_DIR="%{_docdir}"
 export SB_DOC_DIR
 # Packages
 SB_PACKAGE_NAME="%{name}"
+SB_PACKAGE_BUILDNAME="%{buildname}"
 SB_PACKAGE_VERSION="%{version}"
 SB_PACKAGE_RELEASE="%{release}"
 export SB_PACKAGE_NAME SB_PACKAGE_VERSION SB_PACKAGE_RELEASE

@@ -353,7 +353,11 @@ class file:
         if len(sl):
             e = execute.capture_execution()
             for s in sl:
-                exit_code, proc, output = e.shell(s[2:-1])
+                if options.host_windows:
+                    cmd = '%s -c "%s"' % (self.macros.expand('%{__sh}'), s[2:-1])
+                else:
+                    cmd = s[2:-1]
+                exit_code, proc, output = e.shell(cmd)
                 if exit_code == 0:
                     line = line.replace(s, output)
                 else:

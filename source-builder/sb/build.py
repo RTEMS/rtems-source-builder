@@ -90,6 +90,23 @@ class script:
 class build:
     """Build a package given a config file."""
 
+    def _name_(self, name):
+        #
+        # If on Windows use shorter names to keep the build paths.
+        #
+        if options.host_windows:
+            buildname = ''
+            add = True
+            for c in name:
+                if c == '-':
+                    add = True
+                elif add:
+                    buildname += c
+                    add = False
+            return buildname
+        else:
+            return name
+
     def __init__(self, name, create_tar_files, opts, macros = None):
         self.opts = opts
         if macros is None:
@@ -100,6 +117,7 @@ class build:
         log.notice('config: ' + name)
         self.config = config.file(name, opts, self.macros)
         self.script = script()
+        self.macros['buildname'] = self._name_(self.macros['name'])
 
     def rmdir(self, rmpath):
         log.output('removing: %s' % (path.host(rmpath)))
@@ -214,6 +232,7 @@ class build:
                 name = source['name']
             else:
                 raise error.general('setup source tag not found: %d' % (source_tag))
+        name = self._name_(name)
         self.script.append(self.config.expand('cd %{_builddir}'))
         if delete_before_unpack:
             self.script.append(self.config.expand('%{__rm} -rf ' + name))
