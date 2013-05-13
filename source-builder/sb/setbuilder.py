@@ -81,18 +81,22 @@ class buildset:
             self.mail_report += text
 
     def copy(self, src, dst):
-        if not os.path.isdir(path.host(src)):
-            raise error.general('copying tree: no source directory: %s' % (path.host(src)))
-        if not self.opts.dry_run():
-            try:
-                files = distutils.dir_util.copy_tree(path.host(src),
-                                                     path.host(dst))
-                for f in files:
-                    log.output(f)
-            except IOError, err:
-                raise error.general('copying tree: %s -> %s: %s' % (src, dst, str(err)))
-            except distutils.errors.DistutilsFileError, err:
-                raise error.general('copying tree: %s' % (str(err)))
+        if self.opts.dry_run():
+            log.output('copy: %s => %s' % (path.host(src), path.host(dst)))
+        else:
+            if not os.path.isdir(path.host(src)):
+                raise error.general('copying tree: no source directory: %s' % \
+                                        (path.host(src)))
+            if not self.opts.dry_run():
+                try:
+                    files = distutils.dir_util.copy_tree(path.host(src),
+                                                         path.host(dst))
+                    for f in files:
+                        log.output(f)
+                except IOError, err:
+                    raise error.general('copying tree: %s -> %s: %s' % (src, dst, str(err)))
+                except distutils.errors.DistutilsFileError, err:
+                    raise error.general('copying tree: %s' % (str(err)))
 
     def report(self, _config, _build):
         if not _build.opts.get_arg('--no-report') and _build.opts.get_arg('--mail'):
@@ -141,15 +145,13 @@ class buildset:
         what = '%s -> %s' % \
             (os.path.relpath(path.host(src)), os.path.relpath(path.host(dst)))
         log.trace('_bset: %s: collecting: %s' % (self.bset, what))
-        if not self.opts.dry_run():
-            self.copy(src, dst)
+        self.copy(src, dst)
 
     def install(self, name, buildroot, prefix):
         dst = prefix
         src = path.join(buildroot, prefix)
         log.notice('installing: %s -> %s' % (name, path.host(dst)))
-        if not self.opts.dry_run():
-            self.copy(src, dst)
+        self.copy(src, dst)
 
     def canadian_cross(self, _build):
         # @fixme Switch to using a private macros map.
