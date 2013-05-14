@@ -244,17 +244,19 @@ class buildset:
                             self.macros.define(ls[1].strip())
                     elif ls[0] == '%undefine':
                         if len(ls) > 2:
-                            raise error.general('%undefine requires just the name')
+                            raise error.general('%s:%d: %undefine requires just the name' % \
+                                                    (self.bset, lc))
                         self.macros.undefine(ls[1].strip())
                     elif ls[0] == '%include':
                         configs += self.parse(ls[1].strip())
                     else:
-                        raise error.general('invalid directive in build set files: %s' % (l))
+                        raise error.general('%s:%d: invalid directive in build set files: %s' % \
+                                                (self.bset, lc, l))
                 else:
                     l = l.strip()
                     c = build.find_config(l, self.configs)
                     if c is None:
-                        raise error.general('cannot find file: %s' % (l))
+                        raise error.general('%s:%d: cannot find file: %s' % (self.bset, lc, l))
                     configs += [c]
         except:
             bset.close()
