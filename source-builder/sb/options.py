@@ -258,7 +258,10 @@ class command_line:
             log.quiet = True
         # Must have a host
         if self.defaults['_host'] == self.defaults['nil']:
-            raise error.general('host not set')
+            raise error.general('--host not set')
+        # Must have a host
+        if self.defaults['_build'] == self.defaults['nil']:
+            raise error.general('--build not set')
         # Manage the regression option
         if self.opts['regression'] != '0':
             self.opts['no-install'] = '1'
@@ -508,7 +511,7 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc'):
                 import linux
                 overrides = linux.load()
         except:
-            raise error.general('failed to load %s host support' % (uname))
+            raise error.general('failed to load %s host support' % (uname[0]))
     else:
         raise error.general('unsupported host type; please add')
     if overrides is None:
@@ -524,7 +527,7 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc'):
 
 def run(args):
     try:
-        _opts = load(args = args)
+        _opts = load(args = args, defaults = 'defaults.mc')
         print 'Options:'
         print _opts
         print 'Defaults:'

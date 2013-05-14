@@ -47,7 +47,7 @@ buildname:           none,    none,     '%{name}'
 
 # GNU triples needed to build packages
 _host:               triplet, required, ''
-_build:              triplet, required, '%{_host}'
+_build:              triplet, required, ''
 _target:             none,    optional, ''
 
 # The user
@@ -57,7 +57,7 @@ _uid:                none,    convert,  '%(%{__id_u} -n)'
 _host_platform:      none,    none,     '%{_host_cpu}-%{_host_vendor}-%{_host_os}%{?_gnu}'
 _arch:               none,    none,     '%{_host_arch}'
 _topdir:             dir,     required, '%{_cwd}'
-_configdir:          dir,     optional, '%{_topdir}/config:%{_sbdir}/config'
+_configdir:          dir,     optional, '%{_topdir}/config:%{_sbdir}/config:%{_sbtop}/bare/config'
 _tardir:             dir,     optional, '%{_topdir}/tar'
 _sourcedir:          dir,     optional, '%{_topdir}/sources'
 _patchdir:           dir,     optional, '%{_topdir}/patches:%{_sbdir}/patches'

@@ -62,6 +62,7 @@ class macros:
             self.macros['global'] = {}
             self.macros['global']['_cwd'] = ('dir', 'required', path.abspath(os.getcwd()))
             self.macros['global']['_sbdir'] = ('dir', 'required', path.abspath(sbdir))
+            self.macros['global']['_sbtop'] = ('dir', 'required', path.abspath(path.dirname(sbdir)))
         else:
             self.macros = {}
             for m in original.macros:
@@ -145,7 +146,7 @@ class macros:
             raise TypeError('bad value tuple value field: %s' % (type(value[2])))
         if value[0] not in ['none', 'triplet', 'dir', 'file', 'exe']:
             raise TypeError('bad value tuple (type field): %s' % (value[0]))
-        if value[1] not in ['none', 'optional', 'required', 
+        if value[1] not in ['none', 'optional', 'required',
                             'override', 'undefine', 'convert']:
             raise TypeError('bad value tuple (attrib field): %s' % (value[1]))
         if value[1] == 'convert':
