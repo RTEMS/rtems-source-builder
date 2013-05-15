@@ -66,6 +66,11 @@ def load():
         '_ncpus':         ('none',    'none',     ncpus),
         '_os':            ('none',    'none',     'win32'),
         '_build':         ('triplet', 'required', build_triple),
+        '_build_vendor':  ('none',    'none',     'microsoft'),
+        '_build_os':      ('none',    'none',     'win32'),
+        '_build_cpu':     ('none',    'none',     hosttype),
+        '_build_alias':   ('none',    'none',     '%{nil}'),
+        '_build_arch':    ('none',    'none',     hosttype),
         '_host':          ('triplet', 'required', host_triple),
         '_host_vendor':   ('none',    'none',     'microsoft'),
         '_host_os':       ('none',    'none',     'win32'),
@@ -111,8 +116,7 @@ def load():
         '__unzip':        ('exe',     'required', 'unzip'),
         '__xz':           ('exe',     'required', 'xz'),
         '_buildshell':    ('exe',     'required', '%{__sh}'),
-        '___setup_shell': ('exe',     'required', '%{__sh}'),
-        'optflags':       ('none',    'none',     '-O2 -pipe'),
+        '___setup_shell': ('exe',     'required', '%{__sh}')
         }
     return defines
 

@@ -91,6 +91,7 @@ def _check_paths(name, paths):
                 return True
     return False
 
+
 def host_setup(opts):
     """ Basic sanity check. All executables and directories must exist."""
 
@@ -123,6 +124,10 @@ def host_setup(opts):
                 sane = False
 
     return sane
+
+
+def check_exe(label, exe):
+    return _check_exe(None, label, exe, None)
 
 
 def run():

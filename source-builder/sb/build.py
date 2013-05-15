@@ -291,8 +291,7 @@ class build:
         self.script.append('echo "==> %build:"')
         _build = package.build()
         for l in _build:
-            args = l.split()
-            self.script.append(' '.join(args))
+            self.script.append(l)
 
     def install(self, package):
         self.script.append('echo "==> %install:"')

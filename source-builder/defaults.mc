@@ -53,6 +53,10 @@ _target:             none,    optional, ''
 # The user
 _uid:                none,    convert,  '%(%{__id_u} -n)'
 
+# Default flags
+optflags:            none,    convert,  '-O2 -pipe'
+optincludes:         none,    convert,  ''
+
 # Paths
 _host_platform:      none,    none,     '%{_host_cpu}-%{_host_vendor}-%{_host_os}%{?_gnu}'
 _arch:               none,    none,     '%{_host_arch}'
@@ -170,10 +174,12 @@ export SB_ORIG_PATH=${PATH}
 %{?_prefix:SB_PREFIX_CLEAN=$(echo "%{_prefix}" | %{__sed} -e 's/^\///')}
 SB_SOURCE_DIR="%{_sourcedir}"
 SB_BUILD_DIR="%{_builddir}"
-SB_OPT_FLAGS="%{?_tmproot:-I%{_tmproot}/${SB_PREFIX_CLEAN}/include -L%{_tmproot}/${SB_PREFIX_CLEAN}/lib} %{optflags}"
+SB_OPT_HOST_FLAGS="%{optflags} %{?_tmproot:-I%{_tmproot}/${SB_PREFIX_CLEAN}/include -L%{_tmproot}/${SB_PREFIX_CLEAN}/lib}"
+SB_OPT_BUILD_FLAGS="%{optflags} %{optincludes}"
+SB_OPT_FLAGS="${SB_OPT_HOST_FLAGS} %{optincludes}"
 SB_ARCH="%{_arch}"
 SB_OS="%{_os}"
-export SB_SOURCE_DIR SB_BUILD_DIR SB_OPT_FLAGS SB_ARCH SB_OS
+export SB_SOURCE_DIR SB_BUILD_DIR SB_OPT_HOST_FLAGS SB_OPT_BUILD_FLAGS SB_OPT_FLAGS SB_ARCH SB_OS
 # Documentation
 SB_DOC_DIR="%{_docdir}"
 export SB_DOC_DIR
@@ -229,9 +235,9 @@ ___build_template:   none,    none,     '''#!%{___build_shell}
 
 # Configure command
 configure:           none,    none,     '''
-CFLAGS="${CFLAGS:-%optflags}" ; export CFLAGS ;
-CXXFLAGS="${CXXFLAGS:-%optflags}" ; export CXXFLAGS ;
-FFLAGS="${FFLAGS:-%optflags}" ; export FFLAGS ;
+CFLAGS="${CFLAGS:-${SB_OPT_FLAGS}" ; export CFLAGS ;
+CXXFLAGS="${CXXFLAGS:-${SB_OPT_FLAGS}}" ; export CXXFLAGS ;
+FFLAGS="${FFLAGS:-${SB_OPT_FLAGS}}" ; export FFLAGS ;
 ./configure --build=%{_build} --host=%{_host} \
       --target=%{_target_platform} \
       --program-prefix=%{?_program_prefix} \
@@ -248,6 +254,32 @@ FFLAGS="${FFLAGS:-%optflags}" ; export FFLAGS ;
       --sharedstatedir=%{_sharedstatedir} \
       --mandir=%{_mandir} \
       --infodir=%{_infodir}'''
+
+# Build script support.
+build_directory:     none,    none,     '''
+if test "%{_build}" != "%{_host}" ; then
+  build_dir="build-cxc"
+else
+  build_dir="build"
+fi'''
+
+host_build_flags:    none,    none,     '''
+# Host and build flags
+if test "%{_build}" != "%{_host}" ; then
+  CFLAGS_FOR_BUILD="${SB_OPT_HOST_FLAGS}"
+  CC=$(echo "%{_host}-gcc ${SB_OPT_HOST_FLAGS}" | sed -e 's,-std=gnu99 ,,')
+  CXXFLAGS_FOR_BUILD="${SB_OPT_HOST_FLAGS}"
+  CXX=$(echo "%{_host}-g++ ${SB_OPT_HOST_FLAGS}" | sed -e 's,-std=gnu99 ,,')
+  CC_FOR_BUILD=$(echo "%{__cc} ${SB_OPT_FLAGS}" | sed -e 's,-std=gnu99 ,,')
+  CXX_FOR_BUILD=$(echo "%{__cxx} ${SB_OPT_FLAGS}" | sed -e 's,-std=gnu99 ,,')
+else
+  # gcc is not ready to be compiled with -std=gnu99
+  CC=$(echo "%{__cc} ${SB_OPT_FLAGS}" | sed -e 's,-std=gnu99 ,,')
+  CXX=$(echo "%{__cxx} ${SB_OPT_FLAGS}" | sed -e 's,-std=gnu99 ,,')
+  CC_FOR_BUILD=${CC}
+  CXX_FOR_BUILD=${CXX}
+fi
+export CC CXX CC_FOR_BUILD CXX_FOR_BUILD CFLAGS CFLAGS_FOR_BUILD CXXFLAGS_FOR_BUILD'''
 
 # Default package settings
 _forced_static:     none,         none, '-Xlinker -Bstatic ${LIBS_STATIC} -Xlinker -Bdynamic'

@@ -61,7 +61,6 @@ def load():
         '_host_arch':     ('none',    'none',     cpu),
         '_usr':           ('dir',     'required', '/usr'),
         '_var':           ('dir',     'required', '/var'),
-        'optflags':       ('none',    'none',     '-O2 -pipe'),
         '__bzip2':        ('exe',     'required', '/usr/bin/bzip2'),
         '__gzip':         ('exe',     'required', '/bin/gzip'),
         '__tar':          ('exe',     'required', '/bin/tar')
@@ -120,6 +119,14 @@ def load():
         for v in variations[distro]:
             if path.exists(variations[distro][v][2]):
                 defines[v] = variations[distro][v]
+
+    defines['_build']        = defines['_host']
+    defines['_build_vendor'] = defines['_host_vendor']
+    defines['_build_os']     = defines['_host_os']
+    defines['_build_cpu']    = defines['_host_cpu']
+    defines['_build_alias']  = defines['_host_alias']
+    defines['_build_arch']   = defines['_host_arch']
+
     return defines
 
 if __name__ == '__main__':

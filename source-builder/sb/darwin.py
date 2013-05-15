@@ -47,12 +47,19 @@ def load():
         '_usr':           ('dir',     'optional', '/usr/local'),
         '_var':           ('dir',     'optional', '/usr/local/var'),
         '_prefix':        ('dir',     'optional', '%{_usr}'),
-        'optflags':       ('none',    'none',     '-O2'),
         '__ldconfig':     ('exe',     'none',     ''),
         '__xz':           ('exe',     'required', '%{_usr}/bin/xz'),
         'with_zlib':      ('none',    'none',     '--with-zlib=no'),
         '_forced_static': ('none',    'none',     '')
         }
+
+    defines['_build']        = defines['_host']
+    defines['_build_vendor'] = defines['_host_vendor']
+    defines['_build_os']     = defines['_host_os']
+    defines['_build_cpu']    = defines['_host_cpu']
+    defines['_build_alias']  = defines['_host_alias']
+    defines['_build_arch']   = defines['_host_arch']
+
     return defines
 
 if __name__ == '__main__':

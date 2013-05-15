@@ -27,6 +27,7 @@
 import pprint
 import os
 
+import check
 import execute
 
 def load():
@@ -46,25 +47,44 @@ def load():
     if version.find('-') > 0:
         version = version.split('-')[0]
     defines = {
-        '_ncpus':       ('none',    'none',     ncpus),
-        '_os':          ('none',    'none',     'freebsd'),
-        '_host':        ('triplet', 'required', cpu + '-freebsd' + version),
-        '_host_vendor': ('none',    'none',     'pc'),
-        '_host_os':     ('none',    'none',     'freebsd'),
-        '_host_cpu':    ('none',    'none',     cpu),
-        '_host_alias':  ('none',    'none',     '%{nil}'),
-        '_host_arch':   ('none',    'none',     cpu),
-        '_usr':         ('dir',     'required', '/usr/local'),
-        '_var':         ('dir',     'optional', '/usr/local/var'),
-        'optflags':     ('none',    'none',     '-O2 -I/usr/local/include -L/usr/local/lib'),
-        '__bash':       ('exe',     'optional', '/usr/local/bin/bash'),
-        '__bison':      ('exe',     'required', '/usr/local/bin/bison'),
-        '__git':        ('exe',     'required', '/usr/local/bin/git'),
-        '__svn':        ('exe',     'required', '/usr/local/bin/svn'),
-        '__xz':         ('exe',     'optional', '/usr/bin/xz'),
-        '__make':       ('exe',     'required', 'gmake'),
-        '__patch_opts': ('none',     'none',    '-E')
+        '_ncpus':        ('none',    'none',     ncpus),
+        '_os':           ('none',    'none',     'freebsd'),
+        '_host':         ('triplet', 'required', cpu + '-freebsd' + version),
+        '_host_vendor':  ('none',    'none',     'pc'),
+        '_host_os':      ('none',    'none',     'freebsd'),
+        '_host_cpu':     ('none',    'none',     cpu),
+        '_host_alias':   ('none',    'none',     '%{nil}'),
+        '_host_arch':    ('none',    'none',     cpu),
+        '_usr':          ('dir',     'required', '/usr/local'),
+        '_var':          ('dir',     'optional', '/usr/local/var'),
+        'optincludes':   ('none',    'none',     '-I/usr/local/include -L/usr/local/lib'),
+        '__bash':        ('exe',     'optional', '/usr/local/bin/bash'),
+        '__bison':       ('exe',     'required', '/usr/local/bin/bison'),
+        '__git':         ('exe',     'required', '/usr/local/bin/git'),
+        '__svn':         ('exe',     'required', '/usr/local/bin/svn'),
+        '__xz':          ('exe',     'optional', '/usr/bin/xz'),
+        '__make':        ('exe',     'required', 'gmake'),
+        '__patch_opts':  ('none',     'none',    '-E')
         }
+
+    defines['_build']        = defines['_host']
+    defines['_build_vendor'] = defines['_host_vendor']
+    defines['_build_os']     = defines['_host_os']
+    defines['_build_cpu']    = defines['_host_cpu']
+    defines['_build_alias']  = defines['_host_alias']
+    defines['_build_arch']   = defines['_host_arch']
+
+    for gv in ['47', '48', '49']:
+        gcc = '%s-portbld-freebsd%s-gcc%s' % (cpu, version, gv)
+        if check.check_exe(gcc, gcc):
+            defines['__cc'] = gcc
+            break
+    for gv in ['47', '48', '49']:
+        gxx = '%s-portbld-freebsd%s-g++%s' % (cpu, version, gv)
+        if check.check_exe(gxx, gxx):
+            defines['__cxx'] = gxx
+            break
+
     return defines
 
 if __name__ == '__main__':
