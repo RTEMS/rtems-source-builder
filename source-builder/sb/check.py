@@ -38,17 +38,18 @@ def _check_triplet(_opts, macro, value, constraint):
     return True
 
 
-def _check_dir(_opts, macro, value, constraint):
+def _check_dir(_opts, macro, value, constraint, silent = False):
     if constraint != 'none' and not path.isdir(value):
         if constraint == 'required':
-            log.notice('error: dir: not found: (%s) %s' % (macro, value))
+            if not silent:
+                log.notice('error: dir: not found: (%s) %s' % (macro, value))
             return False
-        if _opts.warn_all():
+        if not silent and _opts.warn_all():
             log.notice('warning: dir: not found: (%s) %s' % (macro, value))
     return True
 
 
-def _check_exe(_opts, macro, value, constraint):
+def _check_exe(_opts, macro, value, constraint, silent = False):
 
     if len(value) == 0 or constraint == 'none':
         return True
@@ -70,14 +71,17 @@ def _check_exe(_opts, macro, value, constraint):
 
     if _check_paths(value, paths):
         if absexe:
-            log.notice('warning: exe: absolute exe found in path: (%s) %s' % (macro, orig_value))
+            if not silent:
+                log.notice('warning: exe: absolute exe found in path: (%s) %s' % (macro, orig_value))
         return True
 
     if constraint == 'optional':
-        log.trace('warning: exe: optional exe not found: (%s) %s' % (macro, orig_value))
+        if not silent:
+            log.trace('warning: exe: optional exe not found: (%s) %s' % (macro, orig_value))
         return True
 
-    log.notice('error: exe: not found: (%s) %s' % (macro, orig_value))
+    if not silent:
+        log.notice('error: exe: not found: (%s) %s' % (macro, orig_value))
     return False
 
 
@@ -127,7 +131,7 @@ def host_setup(opts):
 
 
 def check_exe(label, exe):
-    return _check_exe(None, label, exe, None)
+    return _check_exe(None, label, exe, None, True)
 
 
 def run():
