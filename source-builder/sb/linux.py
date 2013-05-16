@@ -40,7 +40,7 @@ def load():
         try:
             for l in output.split('\n'):
                 count = l.split(':')[1].strip()
-                if count > cpus:
+                if int(count) > ncpus:
                     ncpus = int(count)
         except:
             pass
