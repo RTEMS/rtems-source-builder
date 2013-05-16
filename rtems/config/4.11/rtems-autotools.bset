@@ -20,4 +20,4 @@ package: rtems-%{rtems_version}-autotools-%{release}
 # Tools configuration.
 #
 devel/autoconf-2.69-1
-devel/automake-1.12.2-1
+devel/automake-1.12.6-1
