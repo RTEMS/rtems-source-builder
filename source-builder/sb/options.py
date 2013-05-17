@@ -114,7 +114,7 @@ class command_line:
     def _lo_path(self, opt, macro, value):
         if value is None:
             raise error.general('option requires a path: %s' % (opt))
-        value = path.shell(value)
+        value = path.abspath(value)
         self.opts[opt[2:]] = value
         self.defaults[macro] = value
 
