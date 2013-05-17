@@ -97,7 +97,7 @@ need to do is head over to the RTEMS GIT repository and clone the code directly
 from git:
 
 -------------------------------------------------------------
-$ git clone git://git.rtems.org/chrisj/rtems-source-builder.git
+$ git clone git://git.rtems.org/rtems-source-builder.git
 $ cd rtems-source-builder
 -------------------------------------------------------------
 
