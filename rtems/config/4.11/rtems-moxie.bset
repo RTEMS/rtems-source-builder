@@ -21,7 +21,7 @@
 # Moxie Binutil and GDB patches
 #
 %define rtems_binutils_patch1 %{rtems_binutils_patches}/moxie/binutils-2.22-rtems4.11-moxie-20130214.diff
-%define rtems_binutils_patch2 %{rtems_binutils_patches}/binutils-2.22-rtems4.11-moxie-20130516.diff
+%define rtems_binutils_patch2 %{rtems_binutils_patches}/moxie/binutils-2.22-rtems4.11-moxie-20130516.diff
 
 #
 # Tools configuration.
