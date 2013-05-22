@@ -12,6 +12,14 @@
 %include rtems-4.9-base.bset
 
 #
+# The RTEMS 4.9 BSP to build and test
+#
+# uC5282 requires a patched special version of Qemu
+%define rtems_bsps      all
+%define rtems_test_bsps none
+
+
+#
 # Disable the tests because the samples do not build.
 #
 %define rtems_tests disable
@@ -19,7 +27,7 @@
 #
 # Tools configuration.
 #
-expat-2.1.0-1
+devel/expat-2.1.0-1
 tools/rtems-binutils-2.19.1-1
 tools/rtems-gcc-4.3.2-newlib-1.16.0-1
 tools/rtems-gdb-6.8-1

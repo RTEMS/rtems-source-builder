@@ -7,6 +7,15 @@
 %define rtems_arch i386
 
 #
+# The RTEMS 4.9 BSP to build and test
+#
+# For automated testing on Qemu, pc386 should be configured with:
+#    - USE_COM1_AS_CONSOLE=1
+#    - BSP_PRESS_KEY_FOR_RESET=0
+#    - BSP_RESET_BOARD_AT_EXIT=1
+%define rtems_bsps      all
+%define rtems_test_bsps none
+#
 # The RTEMS 4.9 base defines.
 #
 %include rtems-4.9-base.bset
@@ -14,7 +23,7 @@
 #
 # Tools configuration.
 #
-expat-2.1.0-1
+devel/expat-2.1.0-1
 tools/rtems-binutils-2.19.1-1
 tools/rtems-gcc-4.3.2-newlib-1.16.0-1
 tools/rtems-gdb-6.8-1

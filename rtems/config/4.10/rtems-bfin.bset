@@ -12,6 +12,12 @@
 %include rtems-4.10-base.bset
 
 #
+# The RTEMS 4.11 BSP to build and test
+#
+%define rtems_bsps      all
+%define rtems_test_bsps none
+
+#
 # GDB simulator fix for the sed command.
 #
 %define rtems_gdb_patch2 %{rtems_gdb_patches}/bfin/gdb-7.3.1-bfin-sim-fix-sed-20130319.diff
@@ -19,7 +25,7 @@
 #
 # Tools configuration.
 #
-expat-2.1.0-1
+devel/expat-2.1.0-1
 tools/rtems-binutils-2.20.1-1
 tools/rtems-gcc-4.4.7-newlib-1.18.0-1
 tools/rtems-gdb-7.3.1-1

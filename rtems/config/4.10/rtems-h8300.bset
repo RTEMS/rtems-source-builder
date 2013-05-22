@@ -12,9 +12,15 @@
 %include rtems-4.10-base.bset
 
 #
+# The RTEMS 4.11 BSP to build and test
+#
+%define rtems_bsps      all
+%define rtems_test_bsps none
+
+#
 # Tools configuration.
 #
-expat-2.1.0-1
+devel/expat-2.1.0-1
 tools/rtems-binutils-2.20.1-1
 tools/rtems-gcc-4.4.7-newlib-1.18.0-1
 tools/rtems-gdb-7.3.1-1
