@@ -17,6 +17,13 @@
 #
 %include rtems-4.11-base.bset
 
+
+#
+# PowerPC newlib patches
+#
+%define rtems_gcc_patch11 %{rtems_newlib_patches}/powerpc/newlib-remove-machine-powerpc-times_c.diff
+
+
 #
 # Tools configuration.
 #
