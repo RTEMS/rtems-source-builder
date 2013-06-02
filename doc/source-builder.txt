@@ -273,8 +273,8 @@ Build Set: Time 0:13:43.616383 <10>
     use the path to the tools you want to use when building RTEMS.
 <3> The build set. This is the SPARC build set. First a specifically referenced
     file is checked for and if not found the '%{_configdir} path is
-    searched. The set builder will first look for files with a '.bset'
-    extension and then for a configuration file with a '.cfg' extension.
+    searched. The set builder will first look for files with a +.bset+
+    extension and then for a configuration file with a +.cfg+ extension.
 <4> The SPARC build set first builds the expat library as is used in GDB. This
     is the expat configuration used.
 <5> The binutils build configuration.
