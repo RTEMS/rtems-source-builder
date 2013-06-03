@@ -67,8 +67,12 @@ def load():
         }
 
     # Works for LSB distros
-    distro = platform.dist()[0]
-    distro_ver = float(platform.dist()[1])
+    try:
+        distro = platform.dist()[0]
+        distro_ver = float(platform.dist()[1])
+    except ValueError:
+        # Non LSB distro found, use failover"
+        pass
 
     # Non LSB - fail over to issue
     if distro == '':
