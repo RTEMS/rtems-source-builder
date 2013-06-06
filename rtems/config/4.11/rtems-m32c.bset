@@ -28,8 +28,8 @@
 # Set the build flags to work around the defaults in the
 # compiler that cause ICE.
 #
-%define _targetcflags -g -O2
-%define _targetcxxflags -g -O2
+%define _targetcflags -g -O0
+%define _targetcxxflags -g -O0
 
 #
 # Tools configuration.
