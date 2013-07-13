@@ -263,6 +263,7 @@ else
   build_dir="build"
 fi'''
 
+# Host/build flags.
 host_build_flags:    none,    none,     '''
 # Host and build flags
 if test "%{_build}" != "%{_host}" ; then
@@ -280,6 +281,16 @@ else
   CXX_FOR_BUILD=${CXX}
 fi
 export CC CXX CC_FOR_BUILD CXX_FOR_BUILD CFLAGS CFLAGS_FOR_BUILD CXXFLAGS_FOR_BUILD'''
+
+# Build/build flags.
+build_build_flags:    none,    none,     '''
+# Build and build flags means force build == host
+# gcc is not ready to be compiled with -std=gnu99
+CC=$(echo "%{__cc} ${SB_OPT_FLAGS}" | sed -e 's,-std=gnu99 ,,')
+CXX=$(echo "%{__cxx} ${SB_OPT_FLAGS}" | sed -e 's,-std=gnu99 ,,')
+CC_FOR_BUILD=${CC}
+CXX_FOR_BUILD=${CXX}
+export CC CXX CC_FOR_BUILD CXX_FOR_BUILD CFLAGS'''
 
 # Default package settings
 _forced_static:     none,         none, '-Xlinker -Bstatic ${LIBS_STATIC} -Xlinker -Bdynamic'
