@@ -2222,7 +2222,7 @@ Build Set: Time 10:09:42.810547 <4>
     Dual Core 6000+ running at 3GHz with 4G RAM running Windows 7 64bit.
 
 CAUTION: Cygwin documents the 'Big List Of Dodgy Apps' or 'BLODA'. The link is
-http://cygwin.com/faq/faq.using.html#faq.using.bloda and it is worth a
+http://cygwin.com/faq/faq.html#faq.using.bloda and it is worth a
 look. You will see a large number of common pieces of software found on Windows
 systems that can cause problems. My testing has been performed with NOD32
 running and I have seen some failures. The list is for all of Cygwin so I am
