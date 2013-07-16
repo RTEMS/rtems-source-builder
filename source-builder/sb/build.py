@@ -273,14 +273,15 @@ class build:
     def prep(self, package):
         self.script.append('echo "==> %prep:"')
         _prep = package.prep()
-        for l in _prep:
-            args = l.split()
-            if args[0] == '%setup':
-                self.setup(package, args)
-            elif args[0].startswith('%patch'):
-                self.patch(package, args)
-            else:
-                self.script.append(' '.join(args))
+        if _prep:
+            for l in _prep:
+                args = l.split()
+                if args[0] == '%setup':
+                    self.setup(package, args)
+                elif args[0].startswith('%patch'):
+                    self.patch(package, args)
+                else:
+                    self.script.append(' '.join(args))
 
     def build(self, package):
         self.script.append('echo "==> clean %{buildroot}: ${SB_BUILD_ROOT}"')
@@ -290,18 +291,21 @@ class build:
                            (self.config.expand('%{__mkdir_p}')))
         self.script.append('echo "==> %build:"')
         _build = package.build()
-        for l in _build:
-            self.script.append(l)
+        if _build:
+            for l in _build:
+                self.script.append(l)
 
     def install(self, package):
         self.script.append('echo "==> %install:"')
         _install = package.install()
-        for l in _install:
-            args = l.split()
-            self.script.append(' '.join(args))
+        if _install:
+            for l in _install:
+                args = l.split()
+                self.script.append(' '.join(args))
 
     def files(self, package):
-        if self.create_tar_files:
+        if self.create_tar_files \
+           and not self.macros.get('%{_disable_packaging'):
             self.script.append('echo "==> %files:"')
             inpath = path.abspath(self.config.expand('%{buildroot}'))
             tardir = path.abspath(self.config.expand('%{_tardir}'))
@@ -335,7 +339,8 @@ class build:
             self.clean(package)
 
     def cleanup(self):
-        if not self.opts.no_clean():
+        package = self.main_package()
+        if not package.disabled() and not self.opts.no_clean():
             buildroot = self.config.abspath('buildroot')
             builddir = self.config.abspath('_builddir')
             buildcxcdir = self.config.abspath('_buildcxcdir')
@@ -356,34 +361,42 @@ class build:
 
     def make(self):
         package = self.main_package()
-        name = package.name()
-        if self.canadian_cross():
-            log.notice('package: (Cxc) %s' % (name))
+        if package.disabled():
+            log.notice('package: nothing to build')
         else:
-            log.notice('package: %s' % (name))
-        log.trace('---- macro maps %s' % ('-' * 55))
-        log.trace('%s' % (str(self.config.macros)))
-        log.trace('-' * 70)
-        self.script.reset()
-        self.script.append(self.config.expand('%{___build_template}'))
-        self.script.append('echo "=> ' + name + ':"')
-        self.prep(package)
-        self.build_package(package)
-        if not self.opts.dry_run():
-            self.builddir()
-            sn = path.join(self.config.expand('%{_builddir}'), 'doit')
-            log.output('write script: ' + sn)
-            self.script.write(sn)
+            name = package.name()
             if self.canadian_cross():
-                log.notice('building: (Cxc) %s' % (name))
+                log.notice('package: (Cxc) %s' % (name))
             else:
-                log.notice('building: %s' % (name))
-            self.run(sn)
+                log.notice('package: %s' % (name))
+                log.trace('---- macro maps %s' % ('-' * 55))
+                log.trace('%s' % (str(self.config.macros)))
+                log.trace('-' * 70)
+            self.script.reset()
+            self.script.append(self.config.expand('%{___build_template}'))
+            self.script.append('echo "=> ' + name + ':"')
+            self.prep(package)
+            self.build_package(package)
+            if not self.opts.dry_run():
+                self.builddir()
+                sn = path.join(self.config.expand('%{_builddir}'), 'doit')
+                log.output('write script: ' + sn)
+                self.script.write(sn)
+                if self.canadian_cross():
+                    log.notice('building: (Cxc) %s' % (name))
+                else:
+                    log.notice('building: %s' % (name))
+                self.run(sn)
 
     def name(self):
         packages = self.config.packages()
         package = packages['main']
         return package.name()
+
+    def disabled(self):
+        packages = self.config.packages()
+        package = packages['main']
+        return package.disabled()
 
 def get_configs(opts):
 

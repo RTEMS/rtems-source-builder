@@ -38,6 +38,7 @@
 #
 # Tools configuration.
 #
+4.11/rtems-autotools
 devel/expat-2.1.0-1
 tools/rtems-binutils-2.23.2-1
 tools/rtems-gcc-4.8.1-newlib-cvs-1

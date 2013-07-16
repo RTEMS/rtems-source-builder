@@ -523,6 +523,8 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc'):
     o.process()
     o.post_process()
 
+    log.notice(' '.join(args))
+
     return o
 
 def run(args):

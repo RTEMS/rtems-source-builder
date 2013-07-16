@@ -203,6 +203,9 @@ class package:
     def long_name(self):
         return self.name()
 
+    def disabled(self):
+        return len(self.name()) == 0
+
 class file:
     """Parse a config file."""
 
@@ -540,6 +543,11 @@ class file:
                     return text
                 if r[1] == '%else':
                     in_iftrue = False
+            elif r[0] == 'directive':
+                if r[1] == '%include':
+                    self.load(r[2][0])
+                else:
+                    log.warning("directive not supported in if: '%s'" % (' '.join(r[2])))
             elif r[0] == 'data':
                 if this_isvalid:
                     text.extend(r[1])

@@ -99,7 +99,9 @@ class buildset:
                     raise error.general('copying tree: %s' % (str(err)))
 
     def report(self, _config, _build):
-        if not _build.opts.get_arg('--no-report') and _build.opts.get_arg('--mail'):
+        if not _build.opts.get_arg('--no-report') \
+           and not _build.macros.get('%{_disable_reporting}') \
+           and _build.opts.get_arg('--mail'):
             format = _build.opts.get_arg('--report-format')
             if format is None:
                 format = 'html'
@@ -172,20 +174,24 @@ class buildset:
         _build.make()
         for m in macros_to_save:
             _build.config.set_define(m, orig_macros[m])
-        self.root_copy(_build.config.expand('%{buildcxcroot}'),
-                       _build.config.expand('%{_tmpcxcroot}'))
+        if not _build.macros.get('%{_disable_collecting}'):
+            self.root_copy(_build.config.expand('%{buildcxcroot}'),
+                           _build.config.expand('%{_tmpcxcroot}'))
 
     def build_package(self, _config, _build):
-        if _build.canadian_cross():
-            self.canadian_cross(_build)
-        _build.make()
-        self.report(_config, _build)
-        self.root_copy(_build.config.expand('%{buildroot}'),
-                       _build.config.expand('%{_tmproot}'))
+        if not _build.disabled():
+            if _build.canadian_cross():
+                self.canadian_cross(_build)
+            _build.make()
+            self.report(_config, _build)
+            if not _build.macros.get('%{_disable_collecting}'):
+                self.root_copy(_build.config.expand('%{buildroot}'),
+                               _build.config.expand('%{_tmproot}'))
 
     def bset_tar(self, _build):
         tardir = _build.config.expand('%{_tardir}')
-        if self.opts.get_arg('--bset-tar-file'):
+        if self.opts.get_arg('--bset-tar-file') \
+           and not _build.macros.get('%{_disable_packaging}'):
             path.mkdir(tardir)
             tar = path.join(tardir, _build.config.expand('%s.tar.bz2' % (self.bset_pkg)))
             log.notice('tarball: %s' % (os.path.relpath(path.host(tar))))
@@ -306,6 +312,7 @@ class buildset:
         try:
             builds = []
             for s in range(0, len(configs)):
+                b = None
                 try:
                     #
                     # Each section of the build set gets a separate set of
@@ -334,30 +341,36 @@ class buildset:
                     else:
                         raise error.general('invalid config type: %s' % (configs[s]))
                 except error.general, gerr:
-                    if self.build_failure is None:
-                        self.build_failure = b.name()
-                    self.write_mail_header('')
-                    self.write_mail_header('= ' * 40)
-                    self.write_mail_header('Build FAILED: %s' % (b.name()))
-                    self.write_mail_header('- ' * 40)
-                    self.write_mail_header(str(log.default))
-                    self.write_mail_header('- ' * 40)
-                    if self.opts.keep_going():
-                        print gerr
-                        if self.opts.always_clean():
-                            builds += [b]
+                    if b is not None:
+                        if self.build_failure is None:
+                            self.build_failure = b.name()
+                        self.write_mail_header('')
+                        self.write_mail_header('= ' * 40)
+                        self.write_mail_header('Build FAILED: %s' % (b.name()))
+                        self.write_mail_header('- ' * 40)
+                        self.write_mail_header(str(log.default))
+                        self.write_mail_header('- ' * 40)
+                        if self.opts.keep_going():
+                            print gerr
+                            if self.opts.always_clean():
+                                builds += [b]
+                        else:
+                            raise
                     else:
                         raise
             if deps is None and not self.opts.no_install():
                 for b in builds:
-                    self.install(b.name(),
-                                 b.config.expand('%{buildroot}'),
-                                 b.config.expand('%{_prefix}'))
+                    if not b.disabled() \
+                       and not b.macros.get('%{_disable_installing}'):
+                        self.install(b.name(),
+                                     b.config.expand('%{buildroot}'),
+                                     b.config.expand('%{_prefix}'))
             if deps is None and \
                     (not self.opts.no_clean() or self.opts.always_clean()):
                 for b in builds:
-                    log.notice('cleaning: %s' % (b.name()))
-                    b.cleanup()
+                    if not b.disabled():
+                        log.notice('cleaning: %s' % (b.name()))
+                        b.cleanup()
             for b in builds:
                 del b
         except error.general, gerr:
