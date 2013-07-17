@@ -64,7 +64,11 @@ Quick Start
 -----------
 
 The quick start will show you how to build a set of RTEMS tools for a supported
-architecture.
+architecture. The tools are installed into a build _prefix_ and this is top of
+a group of directories containing all the files needed to develop RTEMS
+applications. Building an RTEMS build set will build all that you need. This
+includes autoconf, automake, assemblers, linkers, compilers, debuggers,
+standard libraries and RTEMS itself.
 
 There is no need to become root or the administrator and we recommend you avoid
 doing this. You can build and install the tools anywhere on the host's file
@@ -80,6 +84,13 @@ working rebuild with the 'production' prefix switching your development to them.
 I also suggest you keep your environment to the bare minimum, particularly the
 path variable. Using environment variables has been proven over the years to be
 difficult to manage in production systems.
+
+To use the tools once finished just set your path to the 'bin' directory under
+the _prefix_. For example:
+
+-------------------------------------------------------------
+$ export PATH=$HOME/development/rtems/4.11/bin:$PATH
+-------------------------------------------------------------
 
 Setup
 ~~~~~
