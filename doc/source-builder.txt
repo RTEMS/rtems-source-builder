@@ -85,12 +85,21 @@ I also suggest you keep your environment to the bare minimum, particularly the
 path variable. Using environment variables has been proven over the years to be
 difficult to manage in production systems.
 
+.Path to use when building applications
+*************************************************************
 To use the tools once finished just set your path to the 'bin' directory under
-the _prefix_. For example:
-
+the _prefix_ you use. In the examples that follow the _prefix_ is
+`$HOME/development/rtems/4.11` and is set using the `--prefix` option so the
+path you need to configure to build applications can be set with the following
+in a BASH shell:
 -------------------------------------------------------------
 $ export PATH=$HOME/development/rtems/4.11/bin:$PATH
 -------------------------------------------------------------
+Make sure you place the RTEMS tool path at the front of your path so they are
+searched first. RTEMS can provide newer versions of some tools your operating
+system provides and placing the RTEMS tools path at the front means it is
+searched first and the RTEMS needed versions of the tools are used.
+*************************************************************
 
 Setup
 ~~~~~
