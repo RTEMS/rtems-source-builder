@@ -81,9 +81,8 @@ class buildset:
             self.mail_report += text
 
     def copy(self, src, dst):
-        if self.opts.dry_run():
-            log.output('copy: %s => %s' % (path.host(src), path.host(dst)))
-        else:
+        log.output('copy: %s => %s' % (path.host(src), path.host(dst)))
+        if not self.opts.dry_run():
             if not os.path.isdir(path.host(src)):
                 raise error.general('copying tree: no source directory: %s' % \
                                         (path.host(src)))
@@ -135,7 +134,8 @@ class buildset:
                     _build.mkdir(outpath)
                     r.write(outname)
                 del r
-            if _build.opts.get_arg('--mail'):
+            if not _build.macros.get('%{_disable_reporting}') \
+               and _build.opts.get_arg('--mail'):
                 r = reports.report('text', self.configs, _build.opts, _build.macros)
                 r.setup()
                 r.introduction(_build.config.file_name())
@@ -331,6 +331,8 @@ class buildset:
                         log.trace('_bset: %s' % ('-' * 80))
                         b = build.build(configs[s], self.opts.get_arg('--pkg-tar-files'),
                                         opts, macros)
+                        if b.macros.get('%{_disable_reporting}'):
+                            mail_report = False
                         if deps is None:
                             self.build_package(configs[s], b)
                             if s == len(configs) - 1:
@@ -351,7 +353,7 @@ class buildset:
                         self.write_mail_header(str(log.default))
                         self.write_mail_header('- ' * 40)
                         if self.opts.keep_going():
-                            print gerr
+                            log.notice(str(gerr))
                             if self.opts.always_clean():
                                 builds += [b]
                         else:
@@ -455,11 +457,11 @@ def run():
                 c += 1
                 print 'dep[%d]: %s' % (c, d)
     except error.general, gerr:
-        print gerr
+        log.notice(str(gerr))
         print >> sys.stderr, 'Build FAILED'
         sys.exit(1)
     except error.internal, ierr:
-        print ierr
+        log.notice(str(ierr))
         sys.exit(1)
     except error.exit, eerr:
         pass
