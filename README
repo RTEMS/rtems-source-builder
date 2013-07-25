@@ -1,0 +1,24 @@
+RTEMS Tools From Source
+-----------------------
+
+The RTEMS Source Builder is a tool to aid building packages from source used by
+the RTEMS project. It helps consolidate the details you need to build a package
+from source in a controlled and verifiable way. The tool is aimed at developers
+of software who use tool sets for embedded type development and is not limited
+to building just for RTEMS. Embedded development typically uses cross-compiling
+tool chains, debuggers, and debugging aids. Together we call these a 'tool
+set'. The RTEMS Source Builder is not limited to this role but designed to fit
+with-in this specific niche. It can be used outside of the RTEMS project and we
+welcome this happening in other open source or commercial projects.
+
+The project is part of the RTEMS Project. See http://www.rtems.org/ for
+details. The master repositiory is
+http://git.rtems.org/rtems-source-builder.git/.
+
+Documentation is in the 'doc' directory and available as HTML at
+http://www.rtems.org/ftp/pub/rtems/people/chrisj/source-builder/source-builder.html.
+
+Contributions, suggestions, and bug reports are welcome.
+
+Chris Johns
+chrisj@rtems.org
