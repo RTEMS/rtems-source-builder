@@ -2170,6 +2170,7 @@ the groups and packages listed:
 |        |mingw64-x86_64-g++
 |        |mingw64-x86_64-runtime
 |        |mingw64-x86_64-zlib
+|        |patch
 |        |zlib-devel
 |MinGW   |mingw-zlib-devel
 |Python  |python
