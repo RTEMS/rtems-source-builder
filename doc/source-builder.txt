@@ -9,7 +9,7 @@ RTEMS Source Builder
 image:images/rtemswhitebg.jpg["RTEMS",width="30%"]
 
 Chris Johns <chrisj@rtems.org>
-1.2, April 2013
+1.4, August 2013
 
 RTEMS Tools From Source
 -----------------------
@@ -511,6 +511,22 @@ sparc-rtems4.11-gcc-4.7.2-newlib-1.20.0-1.tar.bz2
 <1> The option to create packages tar files.
 <2> The GDB package tar file.
 <3> The build set tar file. All the others in a single tar file.
+
+Controlling the Build
+~~~~~~~~~~~~~~~~~~~~~
+
+Build sets can be controlled via the command line to enable and disable various
+features. There is no definitive list of build options that can be listed
+because they are implemented with the configuration scripts. The best way to
+find what is available is to grep the configuration files. for +with+ and
++without+.
+
+Following are currentlt available:
+
+'--without-rtems':: Do not build RTEMS when building an RTEMS build set.
+'--without-cxx':: Do not build a C++ compiler.
+'--with-objc':: Attempt to build a C++ compiler.
+'--with-fortran':: Attempt to build a Fortran compiler.
 
 Why Build from Source ?
 -----------------------
