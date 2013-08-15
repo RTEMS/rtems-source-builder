@@ -138,6 +138,38 @@ def expand(name, paths):
         l += [join(p, name)]
     return l
 
+def copy_tree(src, dst):
+    hsrc = host(src)
+    hdst = host(dst)
+
+    names = os.listdir(src)
+
+    if not os.path.isdir(dst):
+        os.makedirs(dst)
+
+    for name in names:
+        srcname = os.path.join(src, name)
+        dstname = os.path.join(dst, name)
+        try:
+            if os.path.islink(srcname):
+                linkto = os.readlink(srcname)
+                os.symlink(linkto, dstname)
+            elif os.path.isdir(srcname):
+                copy_tree(srcname, dstname)
+            else:
+                shutil.copy2(srcname, dstname)
+        except shutil.Error, err:
+            raise error.general('copying tree: %s -> %s: %s' % (src, dst, str(err)))
+        except EnvironmentError, why:
+            raise error.general('copying tree: %s -> %s: %s' % (srcname, dstname, str(why)))
+    try:
+        shutil.copystat(src, dst)
+    except OSError, why:
+        if WindowsError is not None and isinstance(why, WindowsError):
+            pass
+        else:
+            raise error.general('copying tree: %s -> %s: %s' % (src, dst, str(why)))
+
 if __name__ == '__main__':
     print host('/a/b/c/d-e-f')
     print host('//a/b//c/d-e-f')

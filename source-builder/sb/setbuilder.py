@@ -24,7 +24,6 @@
 
 import copy
 import datetime
-import distutils.dir_util
 import glob
 import operator
 import os
@@ -83,19 +82,7 @@ class buildset:
     def copy(self, src, dst):
         log.output('copy: %s => %s' % (path.host(src), path.host(dst)))
         if not self.opts.dry_run():
-            if not os.path.isdir(path.host(src)):
-                raise error.general('copying tree: no source directory: %s' % \
-                                        (path.host(src)))
-            if not self.opts.dry_run():
-                try:
-                    files = distutils.dir_util.copy_tree(path.host(src),
-                                                         path.host(dst))
-                    for f in files:
-                        log.output(f)
-                except IOError, err:
-                    raise error.general('copying tree: %s -> %s: %s' % (src, dst, str(err)))
-                except distutils.errors.DistutilsFileError, err:
-                    raise error.general('copying tree: %s' % (str(err)))
+            path.copy_tree(src, dst)
 
     def report(self, _config, _build):
         if not _build.opts.get_arg('--no-report') \
