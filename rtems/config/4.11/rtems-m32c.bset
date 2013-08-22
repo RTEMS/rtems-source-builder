@@ -25,6 +25,11 @@
 %define enable_cxx 0
 
 #
+# Disable building ICONV support
+#
+%define with_iconv 0
+
+#
 # Set the build flags to work around the defaults in the
 # compiler that cause ICE.
 #
