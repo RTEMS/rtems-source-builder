@@ -60,6 +60,9 @@ assume the build sets and configuration files you are using have been created
 by developers who do. If you have a problem please ask on the RTEMS Users
 mailing list.
 
+IMPORTANT: If you have a problem please see <<_bugs,the reporting bugs>>
+           section.
+
 Quick Start
 -----------
 
@@ -583,6 +586,7 @@ own tool set that you install under your home directory. Avoiding installing
 any extra packages as a super user is always helpful in maintaining a secure
 computing environment.
 
+[[_bugs]]
 Bugs, Crashes, and Build Failures
 ---------------------------------
 
@@ -594,12 +598,19 @@ https://www.rtems.org/bugzilla/
 
 or via email on the RTEMS Users list.
 
-Please include the git hash you are running, the host details with the output
-of the +uname -a+ command. If there is a crash please cut and paste the Python
-backtrace into the bug report. If the tools fail to build please locate the
-first error in the log file. This can be difficult to find on hosts with many
-cores so it sometimes pays to run the command with the +--jobs=none+ option to
-get a log that is correctly sequenced.
+Please include the:
+
+. Command line,
+. The git hash,
+. Host details with the output of the +uname -a+ command,
+. If you have made any modifications.
+
+If there is a crash please cut and paste the Python backtrace into the bug
+report. If the tools fail to build please locate the first error in the log
+file. This can be difficult to find on hosts with many cores so it sometimes
+pays to run the command with the +--jobs=none+ option to get a log that is
+correctly sequenced. If searching the log file seach for +error:+ and the error
+should be just above it.
 
 Configuration
 -------------
