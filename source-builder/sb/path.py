@@ -23,6 +23,7 @@
 # level. This allows macro expansion to work.
 #
 
+import log
 import os
 import shutil
 import string
