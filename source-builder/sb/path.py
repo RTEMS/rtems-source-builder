@@ -158,12 +158,12 @@ def copy_tree(src, dst):
                     if os.path.islink(dstname):
                         dstlinkto = os.readlink(dstname)
                         if linkto != dstlinkto:
-                            log.warning('copying tree: update of link does not match: %s -> %s: %s' % \
+                            log.warning('copying tree: update of link does not match: %s -> %s' % \
                                             (dstname, dstlinkto))
                             os.remove(dstname)
                     else:
-                        log.warning('copying tree: destination is not a link: %s -> %s: %s' % \
-                                        (dstname, dstlinkto))
+                        log.warning('copying tree: destination is not a link: %s' % \
+                                        (dstname))
                         os.remove(dstname)
                 else:
                     os.symlink(linkto, dstname)
