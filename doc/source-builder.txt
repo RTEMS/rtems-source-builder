@@ -612,6 +612,169 @@ pays to run the command with the +--jobs=none+ option to get a log that is
 correctly sequenced. If searching the log file seach for +error:+ and the error
 should be just above it.
 
+Project Sets
+------------
+
+The RTEMS Source Builder supports project configurations. Project
+configurations can be public or private and can be contained in the RTEMS
+Source Builder project if suitable, other projects they use the RTEM Source
+Builder or privately on your local file system.
+
+The configuration file loader searches the macro +_configdir+ and by default
+this is set to +%{\_topdir}/config:%{\_sbdir}/config+ where +_topdir+ is the
+your current working direct, in other words the directory you invoke the RTEMS
+Source Builder command in, and +_sbdir+ is the directory where the RTEMS Source
+Builder command resides. Therefore the +config+ directory under each of these
+is searched so all you need to do is create a +config+ in your project and add
+your configuration files. They do not need to be under the RTEMS Source Builder
+source tree. Public projects are included in the main RTEMS Source Builder such
+as RTEMS.
+
+You can also add your own +patches+ directory next to your +config+ directory
+as the +%patch+ command searches the +_patchdir+ macro variable and it is
+by default set to +%{\_topdir}/patches:%{\_sbdir}/patches+.
+
+The +source-builder/config+ directory provides generic scripts for building
+various tools. You can specialise these in your private configurations to make
+use of them. If you add new generic configurations please contribute them back
+to the project
+
+RTEMS Configurations
+~~~~~~~~~~~~~~~~~~~~
+
+The RTEMS Configurations are grouped by RTEMS version. In RTEMS the tools are
+specific to a specific version because of variations between Newlib and
+RTEMS. Restructuring in RTEMS and Newlib sometimes moves _libc_ functionality
+between these two parts and this makes existing tools incompatible with RTEMS.
+
+RTEMS allows architectures to have different tool versions and patches. The
+large number of architectures RTEMS supports can make it difficult to get a
+common stable version of all the packages. An architecture may require a recent
+GCC because an existing bug has been fixed, however the more recent version may
+have a bug in other architecture. Architecture specific patches should be
+limited to the architecture it relates to. The patch may fix a problem on the
+effect architecture however it could introduce a problem in another
+architecture. Limit exposure limits any possible crosstalk between
+architectures.
+
+RTEMS supports _stable_ and _unstable_. Stable configurations are fixed while
+unstable configurations are supporting using snapshots of user macros and
+reference release candidates or source extracted directly from version
+control. The stable build sets are referenced as +<version>/rtems-<arch>+ and
+include `autoconf` and `automake`.
+
+If you are building a released version of RTEMS the release RTEMS tar file will
+be downloaded and built as part of the build process. If you are building a
+tool set for use with the development branch of RTEMS, the development branch
+will be cloned directly from the RTEMS GIT repository and built.
+
+When building RTEMS within the RTEMS Source Builder it needs a suitable working
+`autoconf` and `automake`. These packages need to built and installed in their
+prefix in order for them to work. The RTEMS Source Builder installs all
+packages only after they have been built so if you host does not have a
+recent enough version of `autoconf` and `automake` you first need to build them
+and install them then build your tool set. The commands are:
+
+-------------------------------------------------------------
+$ ../source-builder/sb-set-builder --log=l-4.11-at.txt \
+   --prefix=$HOME/development/rtems/4.11 4.11/rtems-autotools
+$ export PATH=~/development/rtems/4.11/bin:$PATH <1>
+$ ../source-builder/sb-set-builder --log=l-4.11-sparc.txt \
+   --prefix=$HOME/development/rtems/4.11 4.11/rtems-sparc
+-------------------------------------------------------------
+<1> Setting the path.
+
+TIP: If this is your first time building the tools and RTEMS it pays to add the
+`--dry-run` option. This will run through all the configuration files and if
+any checks fail you will see this quickly rather than waiting for until the
+build fails a check.
+
+To build snapshots for testing purposes you use the available macro maps
+passing them on the command line using the `--macros` option. For RTEMS these
+are held in `config/snapshots` directory. The following builds _newlib_ from
+CVS:
+
+-------------------------------------------------------------
+$ ../source-builder/sb-set-builder --log=l-4.11-sparc.txt \
+   --prefix=$HOME/development/rtems/4.11 \
+   --macros=snapshots/newlib-head.mc \
+   4.11/rtems-sparc
+-------------------------------------------------------------
+
+and the following uses the version control heads for _binutils_, _gcc_,
+_newlib_, _gdb_ and _RTEMS_:
+
+-------------------------------------------------------------
+$ ../source-builder/sb-set-builder --log=l-heads-sparc.txt \
+   --prefix=$HOME/development/rtems/4.11-head \
+   --macros=snapshots/binutils-gcc-newlib-gdb-head.mc \
+   4.11/rtems-sparc
+-------------------------------------------------------------
+
+Cross Building
+--------------
+
+Cross building or Canadian cross compiling is the process of building a set of
+RTEMS tools for one type of host on another host. The RSB is a source builder
+so the need for this is not often called on because you can just build the
+tools for the host you wish to run on. There are however a few special cases
+where this is needed. The host may not have a stable reliable means of building
+the tools, such as Windows, or you wish to manage the configuration of tools on
+different hosts from a single environment because of auditing or verfication
+reasons.
+
+Canadian Cross Building
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The process of building cross compilers on one host for another host is
+commonly referred to as a Canadian cross build. The process is controlled by
+setting the build triplet to the host you are building, the host triplet to the
+host the tools will run on and the target to the RTEMS architecture you
+require. The tools needed by the RSB are:
+
+. Build host C and C++ compiler
+. Host C and C++ cross compiler
+
+The RTEMS Source Builder requires you provide the build host C and C\++
+compiler and the final host C and C\++ cross-compiler. The RSB will build the
+build host RTEMS compiler and the final host RTEMS C and C++ compiler, the
+output of this process.
+
+The Host C and C++ compiler is a cross-compiler that builds executables for
+the host you want the tools for. You need to provide these tools. For Windows a
+number of Unix operating systems provide MinGW tool sets as packages.
+
+The RSB will build an RTEMS tool set for the build host. This is needed when
+building the final host's RTEMS compiler as it needs to build RTEMS runtime
+code such as _libc_ on the build host.
+
+TIP: Make sure the host's cross-compiler tools are in your path before run the
+RSB build command.
+
+Command Line
+~~~~~~~~~~~~
+
+To perform a cross build add +--host=+ to the command line. For example to
+build a MinGW tool set on FreeBSD for Windows add +--host=mingw32+ if the cross
+compiler is +mingw32-gcc+:
+
+-------------------------------------------------------------
+$ ../source-builder/sb-set-builder --host=mingw32 \
+   --log=l-mingw32-4.11-sparc.txt \
+   --prefix=$HOME/development/rtems/4.11 \
+   4.11/rtems-sparc
+-------------------------------------------------------------
+
+If you are on a Linux Fedora build host with the MinGW packages installed the
+command line is:
+
+-------------------------------------------------------------
+$ ../source-builder/sb-set-builder --host=i686-w64-mingw32 \
+   --log=l-mingw32-4.11-sparc.txt \
+   --prefix=$HOME/development/rtems/4.11 \
+   4.11/rtems-sparc
+-------------------------------------------------------------
+
 Configuration
 -------------
 
@@ -1680,105 +1843,6 @@ specific option on the command line with the +--without-<label>+ option. This
 option is only available with the +sb-builder+ command.
 
 
-Project Sets
-------------
-
-The RTEMS Source Builder supports project configurations. Project
-configurations can be public or private and can be contained in the RTEMS
-Source Builder project if suitable, other projects they use the RTEM Source
-Builder or privately on your local file system.
-
-The configuration file loader searches the macro +_configdir+ and by default
-this is set to +%{\_topdir}/config:%{\_sbdir}/config+ where +_topdir+ is the
-your current working direct, in other words the directory you invoke the RTEMS
-Source Builder command in, and +_sbdir+ is the directory where the RTEMS Source
-Builder command resides. Therefore the +config+ directory under each of these
-is searched so all you need to do is create a +config+ in your project and add
-your configuration files. They do not need to be under the RTEMS Source Builder
-source tree. Public projects are included in the main RTEMS Source Builder such
-as RTEMS.
-
-You can also add your own +patches+ directory next to your +config+ directory
-as the +%patch+ command searches the +_patchdir+ macro variable and it is
-by default set to +%{\_topdir}/patches:%{\_sbdir}/patches+.
-
-The +source-builder/config+ directory provides generic scripts for building
-various tools. You can specialise these in your private configurations to make
-use of them. If you add new generic configurations please contribute them back
-to the project
-
-RTEMS Configurations
-~~~~~~~~~~~~~~~~~~~~
-
-The RTEMS Configurations are grouped by RTEMS version. In RTEMS the tools are
-specific to a specific version because of variations between Newlib and
-RTEMS. Restructuring in RTEMS and Newlib sometimes moves _libc_ functionality
-between these two parts and this makes existing tools incompatible with RTEMS.
-
-RTEMS allows architectures to have different tool versions and patches. The
-large number of architectures RTEMS supports can make it difficult to get a
-common stable version of all the packages. An architecture may require a recent
-GCC because an existing bug has been fixed, however the more recent version may
-have a bug in other architecture. Architecture specific patches should be
-limited to the architecture it relates to. The patch may fix a problem on the
-effect architecture however it could introduce a problem in another
-architecture. Limit exposure limits any possible crosstalk between
-architectures.
-
-RTEMS supports _stable_ and _unstable_. Stable configurations are fixed while
-unstable configurations are supporting using snapshots of user macros and
-reference release candidates or source extracted directly from version
-control. The stable build sets are referenced as +<version>/rtems-<arch>+ and
-include `autoconf` and `automake`.
-
-If you are building a released version of RTEMS the release RTEMS tar file will
-be downloaded and built as part of the build process. If you are building a
-tool set for use with the development branch of RTEMS, the development branch
-will be cloned directly from the RTEMS GIT repository and built.
-
-When building RTEMS within the RTEMS Source Builder it needs a suitable working
-`autoconf` and `automake`. These packages need to built and installed in their
-prefix in order for them to work. The RTEMS Source Builder installs all
-packages only after they have been built so if you host does not have a
-recent enough version of `autoconf` and `automake` you first need to build them
-and install them then build your tool set. The commands are:
-
--------------------------------------------------------------
-$ ../source-builder/sb-set-builder --log=l-4.11-at.txt \
-   --prefix=$HOME/development/rtems/4.11 4.11/rtems-autotools
-$ export PATH=~/development/rtems/4.11/bin:$PATH <1>
-$ ../source-builder/sb-set-builder --log=l-4.11-sparc.txt \
-   --prefix=$HOME/development/rtems/4.11 4.11/rtems-sparc
--------------------------------------------------------------
-<1> Setting the path.
-
-TIP: If this is your first time building the tools and RTEMS it pays to add the
-`--dry-run` option. This will run through all the configuration files and if
-any checks fail you will see this quickly rather than waiting for until the
-build fails a check.
-
-To build snapshots for testing purposes you use the available macro maps
-passing them on the command line using the `--macros` option. For RTEMS these
-are held in `config/snapshots` directory. The following builds _newlib_ from
-CVS:
-
--------------------------------------------------------------
-$ ../source-builder/sb-set-builder --log=l-4.11-sparc.txt \
-   --prefix=$HOME/development/rtems/4.11 \
-   --macros=snapshots/newlib-head.mc \
-   4.11/rtems-sparc
--------------------------------------------------------------
-
-and the following uses the version control heads for _binutils_, _gcc_,
-_newlib_, _gdb_ and _RTEMS_:
-
--------------------------------------------------------------
-$ ../source-builder/sb-set-builder --log=l-heads-sparc.txt \
-   --prefix=$HOME/development/rtems/4.11-head \
-   --macros=snapshots/binutils-gcc-newlib-gdb-head.mc \
-   4.11/rtems-sparc
--------------------------------------------------------------
-
 Commands
 --------
 
@@ -2163,6 +2227,10 @@ shell maybe needed to build other parts of your system however if your
 development tools are all native Windows tool you can easly integrate these
 tool sets.
 
+.Ready To Go Windows Tools
+NOTE: I provide tools for Windows at
+http://www.rtems.org/ftp/pub/rtems/people/chrisj/source-builder/4.11/mingw32/
+
 Building on Windows is a little more complicated because the Cygwin shell is
 used rather than the MinGW MSYS shell. The MSYS shell is simpler because the
 detected host triple is MinGW so the build is standard cross-compiler build.
@@ -2279,7 +2347,6 @@ following FAQ item talks about +fork+ failures and presents some technical
 reasons they cannot be avoided in all cases. Cygwin and it's fork MSYS are
 fantastic pieces of software in a difficult environment. I have found building
 a single tool tends to work, building all at once is harder.
-
 
 
 Build Status By Host
