@@ -507,6 +507,9 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc'):
             elif uname[0] == 'FreeBSD':
                 import freebsd
                 overrides = freebsd.load()
+            elif uname[0] == 'NetBSD':
+                import netbsd
+                overrides = netbsd.load()
             elif uname[0] == 'Linux':
                 import linux
                 overrides = linux.load()
