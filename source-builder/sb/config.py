@@ -534,7 +534,7 @@ class file:
                 this_isvalid = True
             else:
                 this_isvalid = False
-            r = self._parse(config, dir, info, data, roc = True, isvalid = this_isvalid)
+            r = self._parse(config, dir, info, roc = True, isvalid = this_isvalid)
             if r[0] == 'package':
                 if this_isvalid:
                     dir, info, data = self._process_package(r, dir, info, data)
