@@ -192,6 +192,7 @@ def run(args):
 
         if opts.get_arg('--list'):
             log.notice('RTEMS Source Builder - RTEMS Configuration, v%s' % (version.str()))
+            opts.log_info()
             configs = bsp.keys()
             for c in sorted(configs.keys()):
                 print c

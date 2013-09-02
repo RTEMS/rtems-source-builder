@@ -278,7 +278,9 @@ class buildset:
             configs = self.parse(bset)
         return configs
 
-    def build(self, deps = None):
+    def build(self, deps = None, nesting_count = 0):
+
+        nesting_count += 1
 
         log.trace('_bset: %s: make' % (self.bset))
         log.notice('Build Set: %s' % (self.bset))
@@ -309,13 +311,13 @@ class buildset:
                     opts = copy.copy(self.opts)
                     macros = copy.copy(self.macros)
                     if configs[s].endswith('.bset'):
-                        log.trace('_bset: %s' % ('=' * 80))
+                        log.trace('_bset: == %2d %s' % (nesting_count + 1, '=' * 75))
                         bs = buildset(configs[s], self.configs, opts, macros)
-                        bs.build(deps)
+                        bs.build(deps, nesting_count)
                         del bs
                     elif configs[s].endswith('.cfg'):
                         mail_report = self.opts.get_arg('--mail')
-                        log.trace('_bset: %s' % ('-' * 80))
+                        log.trace('_bset: -- %2d %s' % (nesting_count + 1, '-' * 75))
                         b = build.build(configs[s], self.opts.get_arg('--pkg-tar-files'),
                                         opts, macros)
                         if b.macros.get('%{_disable_reporting}'):
@@ -422,6 +424,7 @@ def run():
         mailer.append_options(optargs)
         opts = options.load(sys.argv, optargs)
         log.notice('RTEMS Source Builder - Set Builder, v%s' % (version.str()))
+        opts.log_info()
         if not check.host_setup(opts):
             raise error.general('host build environment is not set up correctly')
         configs = build.get_configs(opts)

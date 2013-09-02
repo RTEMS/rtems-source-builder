@@ -356,6 +356,7 @@ def run(args):
         if opts.get_arg('--output') and len(opts.params()) > 1:
             raise error.general('--output can only be used with a single config')
         print 'RTEMS Source Builder, Reporter v%s' % (version.str())
+        opts.log_info()
         if not check.host_setup(opts):
             log.warning('forcing build with known host setup problems')
         configs = build.get_configs(opts)
