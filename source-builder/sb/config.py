@@ -525,34 +525,40 @@ class file:
             else:
                 log.warning("macro '%s' not defined" % (mn))
 
-    def _ifs(self, config, ls, label, iftrue, isvalid):
-        text = []
+    def _ifs(self, config, ls, label, iftrue, isvalid, dir, info):
         in_iftrue = True
+        data = []
         while True:
             if isvalid and \
                     ((iftrue and in_iftrue) or (not iftrue and not in_iftrue)):
                 this_isvalid = True
             else:
                 this_isvalid = False
-            r = self._parse(config, roc = True, isvalid = this_isvalid)
-            if r[0] == 'control':
+            r = self._parse(config, dir, info, data, roc = True, isvalid = this_isvalid)
+            if r[0] == 'package':
+                if this_isvalid:
+                    dir, info, data = self._process_package(r, dir, info, data)
+            elif r[0] == 'control':
                 if r[1] == '%end':
                     self._error(label + ' without %endif')
                     raise error.general('terminating build')
                 if r[1] == '%endif':
-                    return text
+                    log.trace('config: %s: _ifs: %s %s' % (self.init_name, r[1], this_isvalid))
+                    return data
                 if r[1] == '%else':
                     in_iftrue = False
             elif r[0] == 'directive':
-                if r[1] == '%include':
-                    self.load(r[2][0])
-                else:
-                    log.warning("directive not supported in if: '%s'" % (' '.join(r[2])))
+                if this_isvalid:
+                    if r[1] == '%include':
+                        self.load(r[2][0])
+                        continue
+                    dir, info, data = self._process_directive(r, dir, info, data)
             elif r[0] == 'data':
                 if this_isvalid:
-                    text.extend(r[1])
+                    dir, info, data = self._process_data(r, dir, info, data)
+        # @note is a directive extend missing
 
-    def _if(self, config, ls, isvalid, invert = False):
+    def _if(self, config, ls, isvalid, dir, info, invert = False):
 
         def add(x, y):
             return x + ' ' + str(y)
@@ -637,9 +643,9 @@ class file:
             if invert:
                 istrue = not istrue
             log.trace('config: %s: _if:  %s %s' % (self.init_name, ifls, str(istrue)))
-        return self._ifs(config, ls, '%if', istrue, isvalid)
+        return self._ifs(config, ls, '%if', istrue, isvalid, dir, info)
 
-    def _ifos(self, config, ls, isvalid):
+    def _ifos(self, config, ls, isvalid, dir, info):
         isos = False
         if isvalid:
             os = self.define('_os')
@@ -647,9 +653,9 @@ class file:
                 if l in os:
                     isos = True
                     break
-        return self._ifs(config, ls, '%ifos', isos, isvalid)
+        return self._ifs(config, ls, '%ifos', isos, isvalid, dir, info)
 
-    def _ifarch(self, config, positive, ls, isvalid):
+    def _ifarch(self, config, positive, ls, isvalid, dir, info):
         isarch = False
         if isvalid:
             arch = self.define('_arch')
@@ -659,9 +665,9 @@ class file:
                     break
         if not positive:
             isarch = not isarch
-        return self._ifs(config, ls, '%ifarch', isarch, isvalid)
+        return self._ifs(config, ls, '%ifarch', isarch, isvalid, dir, info)
 
-    def _parse(self, config, roc = False, isvalid = True):
+    def _parse(self, config, dir, info, roc = False, isvalid = True):
         # roc = return on control
 
         def _clean(line):
@@ -718,23 +724,25 @@ class file:
                     if isvalid:
                         self._undefine(config, ls)
                 elif ls[0] == '%if':
-                    d = self._if(config, ls, isvalid)
+                    d = self._if(config, ls, isvalid, dir, info)
                     if len(d):
+                        log.trace('config: %s: %%if: %s' % (self.init_name, d))
                         return ('data', d)
                 elif ls[0] == '%ifn':
-                    d = self._if(config, ls, isvalid, True)
+                    d = self._if(config, ls, isvalid, dir, info, True)
                     if len(d):
+                        log.trace('config: %s: %%ifn: %s' % (self.init_name, d))
                         return ('data', d)
                 elif ls[0] == '%ifos':
-                    d = self._ifos(config, ls, isvalid)
+                    d = self._ifos(config, ls, isvalid, dir, info)
                     if len(d):
                         return ('data', d)
                 elif ls[0] == '%ifarch':
-                    d = self._ifarch(config, True, ls, isvalid)
+                    d = self._ifarch(config, True, ls, isvalid, dir, info)
                     if len(d):
                         return ('data', d)
                 elif ls[0] == '%ifnarch':
-                    d = self._ifarch(config, False, ls, isvalid)
+                    d = self._ifarch(config, False, ls, isvalid, dir, info)
                     if len(d):
                         return ('data', d)
                 elif ls[0] == '%endif':
@@ -772,6 +780,60 @@ class file:
             else:
                 return ('data', [lo])
         return ('control', '%end', '%end')
+
+    def _process_package(self, results, directive, info, data):
+        self._set_package(results[1])
+        directive = None
+        return (directive, info, data)
+
+    def _process_directive(self, results, directive, info, data):
+        new_data = []
+        if results[1] == '%description':
+            new_data = [' '.join(results[2])]
+            if len(results[2]) == 0:
+                _package = 'main'
+            elif len(results[2]) == 1:
+                _package = results[2][0]
+            else:
+                if results[2][0].strip() != '-n':
+                    log.warning("unknown directive option: '%s'" % (' '.join(results[2])))
+                _package = results[2][1].strip()
+            self._set_package(_package)
+        if directive and directive != results[1]:
+            self._directive_extend(directive, data)
+        directive = results[1]
+        data = new_data
+        return (directive, info, data)
+
+    def _process_data(self, results, directive, info, data):
+        new_data = []
+        for l in results[1]:
+            if l.startswith('%error'):
+                l = self._expand(l)
+                raise error.general('config error: %s' % (l[7:]))
+            elif l.startswith('%warning'):
+                l = self._expand(l)
+                log.stderr('warning: %s' % (l[9:]))
+                log.warning(l[9:])
+            if not directive:
+                l = self._expand(l)
+                ls = self.tags.split(l, 1)
+                log.trace('config: %s: _tag: %s %s' % (self.init_name, l, ls))
+                if len(ls) > 1:
+                    info = ls[0].lower()
+                    if info[-1] == ':':
+                        info = info[:-1]
+                    info_data = ls[1].strip()
+                else:
+                    info_data = ls[0].strip()
+                if info is not None:
+                    self._info_append(info, info_data)
+                else:
+                    log.warning("invalid format: '%s'" % (info_data[:-1]))
+            else:
+                log.trace('config: %s: _data: %s %s' % (self.init_name, l, new_data))
+                new_data.append(l)
+        return (directive, info, data + new_data)
 
     def _set_package(self, _package):
         if self.package == 'main' and \
@@ -872,61 +934,20 @@ class file:
             info = None
             data = []
             while True:
-                r = self._parse(config)
+                r = self._parse(config, dir, info)
                 if r[0] == 'package':
-                    self._set_package(r[1])
-                    dir = None
+                    dir, info, data = self._process_package(r, dir, info, data)
                 elif r[0] == 'control':
                     if r[1] == '%end':
                         break
                     log.warning("unexpected '%s'" % (r[1]))
                 elif r[0] == 'directive':
-                    new_data = []
-                    if r[1] == '%description':
-                        new_data = [' '.join(r[2])]
-                    elif r[1] == '%include':
+                    if r[1] == '%include':
                         self.load(r[2][0])
                         continue
-                    else:
-                        if len(r[2]) == 0:
-                            _package = 'main'
-                        elif len(r[2]) == 1:
-                            _package = r[2][0]
-                        else:
-                            if r[2][0].strip() != '-n':
-                                log.warning("unknown directive option: '%s'" % (' '.join(r[2])))
-                            _package = r[2][1].strip()
-                        self._set_package(_package)
-                    if dir and dir != r[1]:
-                        self._directive_extend(dir, data)
-                    dir = r[1]
-                    data = new_data
+                    dir, info, data = self._process_directive(r, dir, info, data)
                 elif r[0] == 'data':
-                    for l in r[1]:
-                        if l.startswith('%error'):
-                            l = self._expand(l)
-                            raise error.general('config error: %s' % (l[7:]))
-                        elif l.startswith('%warning'):
-                            l = self._expand(l)
-                            log.stderr('warning: %s' % (l[9:]))
-                            log.warning(l[9:])
-                        if not dir:
-                            l = self._expand(l)
-                            ls = self.tags.split(l, 1)
-                            log.trace('config: %s: _tag: %s %s' % (self.init_name, l, ls))
-                            if len(ls) > 1:
-                                info = ls[0].lower()
-                                if info[-1] == ':':
-                                    info = info[:-1]
-                                info_data = ls[1].strip()
-                            else:
-                                info_data = ls[0].strip()
-                            if info is not None:
-                                self._info_append(info, info_data)
-                            else:
-                                log.warning("invalid format: '%s'" % (info_data[:-1]))
-                        else:
-                            data.append(l)
+                    dir, info, data = self._process_data(r, dir, info, data)
                 else:
                     self._error("%d: invalid parse state: '%s" % (self.lc, r[0]))
             if dir is not None:
