@@ -35,6 +35,8 @@ import macros
 import path
 import sys
 
+import version
+
 basepath = 'sb'
 
 #
@@ -460,6 +462,10 @@ class command_line:
     def download_disabled(self):
         return self.opts['no-download'] != '0'
 
+    def log_info(self):
+        log.output(' Command Line: %s' % (' '.join(self.argv)))
+        log.output(' Python: %s' % (sys.version.replace('\n', '')))
+
 def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc'):
     """
     Copy the defaults, get the host specific values and merge them overriding
@@ -526,17 +532,17 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc'):
     o.process()
     o.post_process()
 
-    log.notice(' '.join(args))
-
     return o
 
 def run(args):
     try:
         _opts = load(args = args, defaults = 'defaults.mc')
-        print 'Options:'
-        print _opts
-        print 'Defaults:'
-        print _opts.defaults
+        log.notice('RTEMS Source Builder - Defaults, v%s' % (version.str()))
+        _opts.log_info()
+        log.notice('Options:')
+        log.notice(str(_opts))
+        log.notice('Defaults:')
+        log.notice(str(_opts.defaults))
     except error.general, gerr:
         print gerr
         sys.exit(1)
