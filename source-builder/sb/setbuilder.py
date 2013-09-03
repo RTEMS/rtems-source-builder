@@ -297,6 +297,7 @@ class buildset:
         start = datetime.datetime.now()
 
         mail_report = False
+        have_errors = False
 
         try:
             builds = []
@@ -324,7 +325,7 @@ class buildset:
                             mail_report = False
                         if deps is None:
                             self.build_package(configs[s], b)
-                            if s == len(configs) - 1:
+                            if s == len(configs) - 1 and not have_errors:
                                 self.bset_tar(b)
                         else:
                             deps += b.config.includes()
@@ -332,6 +333,7 @@ class buildset:
                     else:
                         raise error.general('invalid config type: %s' % (configs[s]))
                 except error.general, gerr:
+                    have_errors = True
                     if b is not None:
                         if self.build_failure is None:
                             self.build_failure = b.name()
