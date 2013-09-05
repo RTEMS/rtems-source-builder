@@ -351,9 +351,12 @@ class buildset:
                             raise
                     else:
                         raise
-            if deps is None and not self.opts.no_install():
+            if deps is None \
+               and not self.opts.no_install() \
+               and not have_errors:
                 for b in builds:
-                    if not b.disabled() \
+                    if not b.canadian_cross() \
+                       and not b.disabled() \
                        and not b.macros.get('%{_disable_installing}'):
                         self.install(b.name(),
                                      b.config.expand('%{buildroot}'),
