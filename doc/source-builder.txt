@@ -36,6 +36,7 @@ from source and taught this tool. The RTEMS Source Builder has been tested on:
 * <<_centos,Centos>>
 * <<_fedora,Fedora>>
 * <<_freebsd,FreeBSD>>
+* <<_netbsd,NetBSD>>
 * <<_macos,MacOS>>
 * <<_opensuse,openSUSE>>
 * <<_raspbian,Raspbian>>
@@ -2208,6 +2209,18 @@ FreeBSD
 ~~~~~~~
 
 The RTEMS Source Builder has been tested on FreeBSD 9.1 64bit.
+
+NetBSD
+~~~~~~
+
+The RTEMS Source Builder has been tested on NetBSD 6.1 i386. Packages to add
+are:
+
+-------------------------------------------------------------
+# pkg_add ftp://ftp.netbsd.org/pub/pkgsrc/packages/NetBSD/i386/6.1/devel/gmake-3.82nb7.tgz
+# pkg_add ftp://ftp.netbsd.org/pub/pkgsrc/packages/NetBSD/i386/6.1/devel/bison-2.7.1.tgz
+# pkg_add ftp://ftp.netbsd.org/pub/pkgsrc/packages/NetBSD/i386/6.1/archivers/xz-5.0.4.tgz
+-------------------------------------------------------------
 
 MacOS X
 ~~~~~~~
