@@ -57,6 +57,7 @@ def load():
         '_host_arch':    ('none',    'none',     cpu),
         '_usr':          ('dir',     'required', '/usr'),
         '_var':          ('dir',     'optional', '/var'),
+        'optincludes':   ('none',    'none',     '-I/usr/pkg/include -L/usr/pkg/lib'),
         '__bash':        ('exe',     'optional', '/usr/pkg/bin/bash'),
         '__bison':       ('exe',     'required', '/usr/pkg/bin/bison'),
         '__git':         ('exe',     'required', '/usr/pkg/bin/git'),
