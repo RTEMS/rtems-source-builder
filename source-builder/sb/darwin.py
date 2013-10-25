@@ -48,6 +48,7 @@ def load():
         '_var':           ('dir',     'optional', '/usr/local/var'),
         '_prefix':        ('dir',     'optional', '%{_usr}'),
         '__ldconfig':     ('exe',     'none',     ''),
+        '__cvs':          ('exe',     'required', 'cvs'),
         '__xz':           ('exe',     'required', '%{_usr}/bin/xz'),
         'with_zlib':      ('none',    'none',     '--with-zlib=no'),
         '_forced_static': ('none',    'none',     '')
