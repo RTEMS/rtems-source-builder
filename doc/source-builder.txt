@@ -2180,6 +2180,11 @@ Fedora
 
 The RTEMS Source Builder has been tested on Fedora 18 64bit.
 
+-------------------------------------------------------------
+# yum install ncurses-devel
+-------------------------------------------------------------
+
+
 Raspbian
 ^^^^^^^^
 
