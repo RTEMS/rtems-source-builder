@@ -1,0 +1,10 @@
+*~
+sources
+patches
+tar
+build
+*.txt
+*.html
+#*#
+.*
+log_*
