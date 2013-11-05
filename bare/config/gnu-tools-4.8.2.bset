@@ -1,0 +1,25 @@
+#
+# GNU Tools Set
+#
+
+%define release 1
+
+package: gnu-tools-%{_target}-%{release}
+
+#
+# Project custom message
+#
+%define gcc_version_message SB-%{release},gcc-%{gcc_version}/newlib-%{newlib_version}
+
+#
+# Enable G++
+#
+%define enable_cxx 1
+
+#
+# Tool configuration.
+#
+devel/expat-2.1.0-1
+devel/binutils-2.23.2-1
+devel/gcc-4.8.2-newlib-cvs-1
+devel/gdb-7.6.1-1
