@@ -58,7 +58,12 @@ class buildset:
         else:
             self.macros = copy.copy(macros)
         self.bset = bset
-        self.bset_pkg = '%s-%s-set' % (self.macros.expand('%{_target}'), self.bset)
+        _target = self.macros.expand('%{_target}')
+        if len(_target):
+            pkg_prefix = _target
+        else:
+            pkg_prefix = self.macros.expand('%{_host}')
+        self.bset_pkg = '%s-%s-set' % (pkg_prefix, self.bset)
         self.mail_header = ''
         self.mail_report = ''
         self.build_failure = None
