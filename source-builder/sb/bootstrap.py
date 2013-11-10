@@ -88,6 +88,9 @@ class command:
         except subprocess.CalledProcessError, cpe:
             self.exit_code = cpe.returncode
             self.output = cpe.output
+        except OSError, ose:
+            raise error.general('bootstrap failed: %s in %s: %s' % \
+                                (' '.join(self.cmd), self.cwd, (str(ose))))
         self.end_time = datetime.datetime.now()
 
     def run(self):
