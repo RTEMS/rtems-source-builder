@@ -2566,6 +2566,21 @@ The RTEMS Source Builder has been tested on Mountain Lion. You will need to
 install the Xcode app using the _App Store_ tool, run Xcode and install the
 Developers Tools package within Xcode.
 
+Maverick
+^^^^^^^^
+
+The RSB works on Maverick and the GNU tools can be built for RTEMS using the
+Maverick clang LLVM tool chain. You will need to build and install a couple of
+packages to make the RSB pass the +sb-check+. These are CVS and XZ. You can get
+these tools from a packaging tool for MacOS such as _MacPorts_ or _HomeBrew_.
+
+I do not use 3rd party packaging on MacOS and prefer to build the packages from
+source using a prefix of '/usr/local'. The XZ package's home page is
+http://tukaani.org/xz/ and it builds without change. CVS can be found at
+http://cvs.nongnu.org/ and it requires this patch
+http://www.rtems.org/ftp/pub/rtems/people/chrisj/source-builder/cvs-1.11.23-osx-maverick.diff
+to build.
+
 Windows
 ~~~~~~~
 
