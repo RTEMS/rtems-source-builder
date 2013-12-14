@@ -236,9 +236,9 @@ def run(args):
         else:
             topdir = os.getcwd()
         if opts.get_arg('--preinstall'):
-            preinstall(topdir, opts.defaults['_ncpus'])
+            preinstall(topdir, opts.jobs(opts.defaults['_ncpus']))
         else:
-            generate(topdir, opts.defaults['_ncpus'])
+            generate(topdir, opts.jobs(opts.defaults['_ncpus']))
     except error.general, gerr:
         print gerr
         print >> sys.stderr, 'Bootstrap FAILED'
