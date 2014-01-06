@@ -1,6 +1,6 @@
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2010-2012 Chris Johns (chrisj@rtems.org)
+# Copyright 2010-2014 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -72,6 +72,12 @@ def load():
     defines['_build_cpu']    = defines['_host_cpu']
     defines['_build_alias']  = defines['_host_alias']
     defines['_build_arch']   = defines['_host_arch']
+
+    # FreeBSD 10 and above no longer have /usr/bin/cvs, but it can (e.g.) be installed to /usr/local/bin/cvs through the devel/cvs port
+    if int(float(version)) >= 10:
+        cvs = 'cvs'
+        if check.check_exe(cvs, cvs):
+            defines['__cvs'] = cvs
 
     for gv in ['47', '48', '49']:
         gcc = '%s-portbld-freebsd%s-gcc%s' % (cpu, version, gv)
