@@ -271,9 +271,9 @@ host_build_flags:    none,    none,     '''
 if test "%{_build}" != "%{_host}" ; then
   CFLAGS_FOR_BUILD="${SB_OPT_HOST_CFLAGS}"
   LDFLAGS_FOR_BUILD="${SB_OPT_HOST_LDFLAGS}"
-  CC=$(echo "%{_host}-gcc ${SB_OPT_HOST_CFLAGS}" | sed -e 's,-std=gnu99 ,,')
+  CC=$(echo "%{_host}-gcc ${SB_OPT_HOST_CFLAGS} ${SB_OPT_HOST_LDFLAGS}" | sed -e 's,-std=gnu99 ,,')
   CXXFLAGS_FOR_BUILD="${SB_OPT_HOST_CFLAGS}"
-  CXX=$(echo "%{_host}-g++ ${SB_OPT_HOST_CFLAGS}" | sed -e 's,-std=gnu99 ,,')
+  CXX=$(echo "%{_host}-g++ ${SB_OPT_HOST_CFLAGS} ${SB_OPT_HOST_LDFLAGS}" | sed -e 's,-std=gnu99 ,,')
   CC_FOR_BUILD=$(echo "%{__cc} ${SB_OPT_CFLAGS}" | sed -e 's,-std=gnu99 ,,')
   CXX_FOR_BUILD=$(echo "%{__cxx} ${SB_OPT_CFLAGS}" | sed -e 's,-std=gnu99 ,,')
 else
