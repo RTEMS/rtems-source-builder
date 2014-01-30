@@ -96,8 +96,32 @@ def _check_paths(name, paths):
     return False
 
 
+def path_check(opts, silent = False):
+    if 'PATH' in os.environ:
+        paths = os.environ['PATH'].split(os.pathsep)
+        for p in paths:
+            if len(p.strip()) == 0:
+                if not silent:
+                    log.notice('error: environment PATH contains an empty path')
+                return False
+            elif p.strip() == '.' or p.strip() == '..':
+                if not silent:
+                    log.notice('error: environment PATH invalid path: %s' % (p))
+                return False
+            elif not path.exists(p):
+                if not silent and opts.warn_all():
+                    log.notice('warning: environment PATH not found: %s' % (p))
+            elif not path.isdir(p):
+                if not silent and opts.warn_all():
+                    log.notice('warning: environment PATH not a directory: %s' % (p))
+    return True
+
+
 def host_setup(opts):
     """ Basic sanity check. All executables and directories must exist."""
+
+    if not path_check(opts):
+        return False
 
     checks = { 'none':    _check_none,
                'triplet': _check_triplet,
