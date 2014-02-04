@@ -36,23 +36,32 @@ def load():
     else:
         ncpus = '1'
     defines = {
-        '_ncpus':         ('none',    'none',     ncpus),
-        '_os':            ('none',    'none',     'darwin'),
-        '_host':          ('triplet', 'required', uname[4] + '-apple-darwin' + uname[2]),
-        '_host_vendor':   ('none',    'none',     'apple'),
-        '_host_os':       ('none',    'none',     'darwin'),
-        '_host_cpu':      ('none',    'none',     uname[4]),
-        '_host_alias':    ('none',    'none',     '%{nil}'),
-        '_host_arch':     ('none',    'none',     uname[4]),
-        '_usr':           ('dir',     'optional', '/usr/local'),
-        '_var':           ('dir',     'optional', '/usr/local/var'),
-        '_prefix':        ('dir',     'optional', '%{_usr}'),
-        '__ldconfig':     ('exe',     'none',     ''),
-        '__cvs':          ('exe',     'required', 'cvs'),
-        '__xz':           ('exe',     'required', '%{_usr}/bin/xz'),
-        'with_zlib':      ('none',    'none',     '--with-zlib=no'),
-        '_forced_static': ('none',    'none',     '')
+        '_ncpus':           ('none',    'none',     ncpus),
+        '_os':              ('none',    'none',     'darwin'),
+        '_host':            ('triplet', 'required', uname[4] + '-apple-darwin' + uname[2]),
+        '_host_vendor':     ('none',    'none',     'apple'),
+        '_host_os':         ('none',    'none',     'darwin'),
+        '_host_cpu':        ('none',    'none',     uname[4]),
+        '_host_alias':      ('none',    'none',     '%{nil}'),
+        '_host_arch':       ('none',    'none',     uname[4]),
+        '_usr':             ('dir',     'optional', '/usr/local'),
+        '_var':             ('dir',     'optional', '/usr/local/var'),
+        '_prefix':          ('dir',     'optional', '%{_usr}'),
+        '__ldconfig':       ('exe',     'none',     ''),
+        '__cvs':            ('exe',     'required', 'cvs'),
+        '__xz':             ('exe',     'required', '%{_usr}/bin/xz'),
+        'with_zlib':        ('none',    'none',     '--with-zlib=no'),
+        '_forced_static':   ('none',    'none',     ''),
+        '_extra_path':      ('none',    'none',     '%{_sbdir}/bin'),
+        '_ld_library_path': ('none',    'none',     'DYLD_LIBRARY_PATH')
         }
+
+    version = uname[2]
+    if version.find('.'):
+        version = version.split('.')[0]
+        if int(version) >= 13:
+            defines['__cc'] = ('exe',     'required', '/usr/bin/cc')
+            defines['__cxx'] = ('exe',     'required', '/usr/bin/c++')
 
     defines['_build']        = defines['_host']
     defines['_build_vendor'] = defines['_host_vendor']
