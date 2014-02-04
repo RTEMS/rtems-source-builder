@@ -57,6 +57,10 @@ _uid:                none,    convert,  '%(%{__id_u} -n)'
 optflags:            none,    convert,  '-O2 -pipe'
 optincludes:         none,    convert,  ''
 
+# Extra path a platform can override.
+_extra_path:         none,    none,     ''
+_ld_library_path:    none,    none,     'LD_LIBRARY_PATH'
+
 # Paths
 _host_platform:      none,    none,     '%{_host_cpu}-%{_host_vendor}-%{_host_os}%{?_gnu}'
 _arch:               none,    none,     '%{_host_arch}'
@@ -209,6 +213,8 @@ export SB_TMPROOT SB_TMPPREFIX SB_TMPBINDIR
 %{?_tmpcxcroot:%{?_prefix:SB_TMPCXCPREFIX="%{_tmpcxcroot}/${SB_PREFIX_CLEAN}"}}
 %{?_tmpcxcroot:%{?_prefix:SB_TMPCXCBINDIR="%{_tmpcxcroot}/${SB_PREFIX_CLEAN}/bin"}}
 export SB_TMPCXCROOT SB_TMPCXCPREFIX SB_TMPCXCBINDIR
+# Extra path support
+%{?_extra_path:SB_EXTRAPATH="%{_extra_path}"}
 # The compiler flags
 %{?_targetcflags:CFLAGS_FOR_TARGET="%{_targetcflags}"}
 %{?_targetcxxflags:CXXFLAGS_FOR_TARGET="%{_targetcxxflags}"}
@@ -220,6 +226,9 @@ if test -n "${SB_TMPBINDIR}" ; then
 fi
 if test -n "${SB_TMPCXCBINDIR}" ; then
  PATH="${SB_TMPCXCBINDIR}:$PATH"
+fi
+if test -n "${SB_EXTRAPATH}" ; then
+ PATH="${SB_EXTRAPATH}:$PATH"
 fi
 export PATH
 # Default environment set up.

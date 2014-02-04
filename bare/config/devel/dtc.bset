@@ -1,0 +1,7 @@
+#
+# Build set for the Device Tree Compiler
+#
+
+%define release 1
+
+devel/dtc-1.2.0

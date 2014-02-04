@@ -1,0 +1,14 @@
+#
+# Build set for autoconf, automake, and libtools.
+#
+
+%define release 1
+
+#
+# A magic internal path that would break if changes in the defaults.mc
+# macro file are made.
+#
+%define _internal_autotools_path %{_tmppath}/sb-%{_uid}/${SB_PREFIX_CLEAN}
+
+devel/autotools-internal.bset
+devel/autotools-base.bset

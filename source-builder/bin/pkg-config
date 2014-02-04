@@ -1,0 +1,356 @@
+#! /usr/bin/env python
+#
+# RTEMS Tools Project (http://www.rtems.org/)
+# Copyright 2014 Chris Johns (chrisj@rtems.org)
+# All rights reserved.
+#
+# This file is part of the RTEMS Tools package in 'rtems-tools'.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+# this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation
+# and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+#
+# Pkg-config in python. It attempts to provide a few simple features
+# provided by the full pkg-config so packages can configure and build.
+#
+# Pkg-config as a tool is a good idea how-ever the implementation creates a
+# range of problems. If it was implemented with all parts included it would be
+# portable and I suspect useful to others on platforms other than Linux and
+# Unix equivs that come with packaging systems..
+#
+# Note: This is used on platforms where pkg-config is not easy to get
+#       working.
+#
+
+import argparse
+import os
+import os.path
+import re
+import sys
+
+#
+# Make trace true to get a file of what happens and what is being asked.
+#
+trace = True
+logfile = 'pc.log'
+out = None
+
+pkg_aliases = {
+    # Use to add package name aliases eg
+    #   'package': ['pkg_alias'],
+}
+
+def log(s, lf = True):
+    global trace, logfile, out
+    if trace:
+        if out is None:
+            if logfile:
+                out = open(logfile, 'a')
+            else:
+                out = sys.stdout
+        if lf:
+            print >> out, s
+        else:
+            print >> out, s,
+
+def default_prefix():
+    paths = ['/usr', '/usr/local']
+    if 'PKG_CONFIG_PATH' in os.environ:
+        paths += os.environ['PKG_CONFIG_PATH'].split(':')
+    return paths
+
+class error(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+
+    def __str__(self):
+        return self.msg
+
+class package:
+    def __init__(self, file = None):
+        self.defines = {}
+        self.fields = {}
+        if file:
+            self.load(file)
+
+    def __str__(self):
+        s = ''
+        for d in sorted(self.defines):
+            s += 'd: %s: %s%s' % (d, self.defines[d], os.linesep)
+        for f in sorted(self.fields):
+            s += 'f: %s: %s%s' % (f, self.fields[f], os.linesep)
+        return s
+
+    def _sysroot(self, s):
+        if 'PKG_CONFIG_SYSROOT_DIR' in os.environ:
+            sysroot = os.environ['PKG_CONFIG_SYSROOT_DIR']
+            offset = 0
+            while True:
+                dash = s[offset:].find('-')
+                if dash < 0:
+                    break
+                if offset + dash + 2 < len(s) and s[offset + dash + 1] in 'LI':
+                    s = s[:offset + dash + 2] + sysroot + s[offset + dash + 2:]
+                offset += dash + 1
+        return s
+
+    def load(self, file):
+        f = open(file)
+        tm = False
+        for l in f.readlines():
+            l = l[:-1]
+            hash = l.find('#')
+            if hash >= 0:
+                l = l[:hash]
+            if len(l):
+                d = 0
+                define = False
+                eq = l.find('=')
+                dd = l.find(':')
+                if eq > 0 and dd > 0:
+                    if eq < dd:
+                        define = True
+                        d = eq
+                    else:
+                        define = False
+                        d = dd
+                elif eq >= 0:
+                    define = True
+                    d = eq
+                elif dd >= 0:
+                    define = False
+                    d = dd
+                if d > 0:
+                    lhs = l[:d].lower()
+                    rhs = l[d + 1:]
+
+                    if tm:
+                        print('define: ' + str(define) + ', lhs: ' + lhs + ', ' + rhs)
+
+                    if define:
+                        self.defines[lhs] = rhs
+                    else:
+                        self.fields[lhs] = rhs
+
+    def get(self, label):
+        if label.lower()  not in self.fields:
+            None
+        mre = re.compile('\$\{[^\}]+\}')
+        s = self.fields[label.lower()]
+        expanded = True
+        tm = False
+        while expanded:
+            expanded = False
+            if tm:
+                log('pc:get: "' + s + '"')
+            ms = mre.findall(s)
+            for m in ms:
+                mn = m[2:-1]
+                if mn.lower() in self.defines:
+                    s = s.replace(m, self.defines[mn.lower()])
+                    expanded = True
+        return self._sysroot(s)
+
+def _check_package(lib_check, args, pc_paths):
+    ec = 1
+    pkg = None
+    ls = lib_check.split()
+    lib = ls[0]
+    if len(pc_paths):
+        for path in pc_paths:
+            pc = os.path.join(path, '%s.pc' % (lib))
+            if os.path.isfile(pc):
+                pkg = package(file = pc)
+                if args.dump:
+                    log(pkg)
+                ec = 0
+                break
+    if ec > 0:
+        versions = []
+        for prefix in args.prefix:
+            prefix = os.path.join(prefix, 'lib')
+            if os.path.exists(prefix):
+                for l in os.listdir(prefix):
+                    if l.startswith(lib + '.'):
+                        versions += [l]
+                        break
+                if len(versions) > 0:
+                    if len(ls) > 1:
+                        ec = 0
+                    elif args.exists:
+                        ec = 0
+                    elif args.exact_version:
+                        ec = 0
+                    elif args.atleast_version:
+                        ec = 0
+                    elif args.atleast_version:
+                        ec = 0
+    return ec, pkg
+
+def run(argv):
+
+    class version_action(argparse.Action):
+        def __call__(self, parser, namespace, values, option_string = None):
+            parts = values.strip().split('.')
+            for p in parts:
+                if not p.isdigit():
+                    raise error('invalid version value: %s' % (values))
+            setattr(namespace, self.dest, '.'.join(parts))
+
+    ec = 0
+
+    opts = argparse.ArgumentParser(prog = 'pkg-config',
+                                   description = 'Package Configuration.')
+    opts.add_argument('libraries', metavar='lib', type = str, nargs = '+',
+                        help = 'a library')
+    opts.add_argument('--modversion', dest = 'modversion', action = 'store', default = None,
+                        help = 'Requests that the version information of the libraries.')
+    opts.add_argument('--print-errors', dest = 'print_errors', action = 'store_true',
+                        default = False,
+                        help = 'Print any errors.')
+    opts.add_argument('--short-errors', dest = 'short_errors', action = 'store_true',
+                        default = False,
+                        help = 'Make error messages short.')
+    opts.add_argument('--silence-errors', dest = 'silence_errors', action = 'store_true',
+                        default = False,
+                        help = 'Do not print any errors.')
+    opts.add_argument('--errors-to-stdout', dest = 'errors_to_stdout', action = 'store_true',
+                        default = False,
+                        help = 'Print errors to stdout rather than stderr.')
+    opts.add_argument('--cflags', dest = 'cflags', action = 'store_true',
+                        default = False,
+                        help = 'This prints pre-processor and compile flags required to' \
+                            ' compile the package(s)')
+    opts.add_argument('--libs', dest = 'libs', action = 'store_true',
+                        default = False,
+                        help = 'This option is identical to "--cflags", only it prints the' \
+                            ' link flags.')
+    opts.add_argument('--libs-only-L', dest = 'libs_only_L', action = 'store_true',
+                        default = False,
+                        help = 'This prints the -L/-R part of "--libs".')
+    opts.add_argument('--libs-only-l', dest = 'libs_only_l', action = 'store_true',
+                        default = False,
+                        help = 'This prints the -l part of "--libs".')
+    opts.add_argument('--variable', dest = 'variable', action = 'store',
+                        default = None,
+                        help = 'This returns the value of a variable.')
+    opts.add_argument('--define-variable', dest = 'define_variable', action = 'store',
+                        default = None,
+                        help = 'This sets a global value for a variable')
+    opts.add_argument('--uninstalled', dest = 'uninstalled', action = 'store_true',
+                        default = False,
+                        help = 'Ignored')
+    opts.add_argument('--atleast-pkgconfig-version', dest = 'atleast_pkgconfig_version', action = 'store_true',
+                        default = False,
+                        help = 'Check the version of package config. Always ok.')
+    opts.add_argument('--exists', dest = 'exists', action = 'store_true',
+                        default = False,
+                        help = 'Test if a library is present')
+    opts.add_argument('--atleast-version', dest = 'atleast_version', action = version_action,
+                        default = None,
+                        help = 'The package is at least this version.')
+    opts.add_argument('--exact-version', dest = 'exact_version', action = version_action,
+                        default = None,
+                        help = 'The package is the exact version.')
+    opts.add_argument('--max-version', dest = 'max_version', action = version_action,
+                        default = None,
+                        help = 'The package is no later than this version.')
+    opts.add_argument('--msvc-syntax', dest = 'msvc_syntax', action = 'store_true',
+                        default = False,
+                        help = 'Ignored')
+    opts.add_argument('--dont-define-prefix', dest = 'dont_define_prefix', action = 'store_true',
+                        default = False,
+                        help = 'Ignored')
+    opts.add_argument('--prefix-variable', dest = 'prefix', action = 'store',
+                        default = default_prefix(),
+                        help = 'Define the prefix.')
+    opts.add_argument('--static', dest = 'static', action = 'store_true',
+                        default = False,
+                        help = 'Output libraries suitable for static linking')
+    opts.add_argument('--dump', dest = 'dump', action = 'store_true',
+                        default = False,
+                        help = 'Dump the package if one is found.')
+
+    args = opts.parse_args(argv[1:])
+
+    if (args.exists and (args.exact_version or args.max_version)) or \
+            (args.exact_version and (args.exists or args.max_version)) or \
+            (args.max_version and (args.exists or args.exact_version)):
+        raise error('only one of --exists, --exact-version, or --max-version')
+
+    pc_paths = []
+
+    if args.prefix:
+        for prefix in args.prefix:
+            prefix = os.path.join(prefix, 'lib', 'pkgconfig')
+            if os.path.exists(prefix):
+                pc_paths += [prefix]
+
+    if len(pc_paths):
+        log('pc_paths = %s' % (', '.join(pc_paths)))
+    else:
+        log('pc_paths = None')
+
+    exists = False
+
+    ec = 1
+
+    if args.atleast_pkgconfig_version:
+        ec = 0
+    else:
+        for lib in args.libraries:
+            ec, pkg = _check_package(lib, args, pc_paths)
+            if ec > 0:
+                for pa in pkg_aliases:
+                    if lib.startswith(pa):
+                        for a in pkg_aliases[pa]:
+                            ec, pkg = _check_package(a, args, pc_paths)
+                            if ec == 0:
+                                break
+            if ec == 0:
+                if pkg:
+                    if args.cflags:
+                        cflags = pkg.get('cflags')
+                        print cflags
+                        log('cflags: %s' % (cflags))
+                    if args.libs:
+                        libs = pkg.get('libs')
+                        print libs
+                        log('libs: %s' % (libs))
+    return ec
+
+try:
+    log('-' * 40)
+    log('pkg-config', lf = False)
+    for a in sys.argv[1:]:
+        log(' "%s"' % (a), lf = False)
+    log('')
+    ec = run(sys.argv)
+    log('ec = %d' % (ec))
+except ImportError:
+    print >> sys.stderr, "incorrect package config installation"
+    sys.exit(1)
+except error, e:
+    print >> sys.stderr, 'error: %s' % (e)
+    sys.exit(1)
+sys.exit(ec)
