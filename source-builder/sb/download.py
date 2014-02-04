@@ -203,9 +203,14 @@ def _git_downloader(url, local, config, opts):
         log.notice('git: clone: %s -> %s' % (us[0], rlp))
         if not opts.dry_run():
             repo.clone(us[0], local)
+    else:
+        repo.reset('--hard')
+        repo.checkout('master')
     for a in us[1:]:
         _as = a.split('=')
-        if _as[0] == 'branch':
+        if _as[0] == 'branch' or _as[0] == 'checkout':
+            if len(_as) != 2:
+                raise error.general('invalid git branch/checkout: %s' % (_as))
             log.notice('git: checkout: %s => %s' % (us[0], _as[1]))
             if not opts.dry_run():
                 repo.checkout(_as[1])
@@ -213,6 +218,12 @@ def _git_downloader(url, local, config, opts):
             log.notice('git: pull: %s' % (us[0]))
             if not opts.dry_run():
                 repo.pull()
+        elif _as[0] == 'submodule':
+            if len(_as) != 2:
+                raise error.general('invalid git submodule: %s' % (_as))
+            log.notice('git: submodule: %s <= %s' % (us[0], _as[1]))
+            if not opts.dry_run():
+                repo.submodule(_as[1])
         elif _as[0] == 'fetch':
             log.notice('git: fetch: %s -> %s' % (us[0], rlp))
             if not opts.dry_run():
@@ -296,7 +307,7 @@ def get_file(url, local, opts, config):
     if not path.exists(local) and opts.download_disabled():
         raise error.general('source not found: %s' % (path.host(local)))
     #
-    # Check if a URL hasbeen provided on the command line.
+    # Check if a URL has been provided on the command line.
     #
     url_bases = opts.urls()
     urls = []
@@ -311,12 +322,12 @@ def get_file(url, local, opts, config):
             else:
                 url_file = url_path[slash + 1:]
             urls.append(urlparse.urljoin(base, url_file))
-    urls.append(url)
+    urls += url.split()
     log.trace('_url: %s -> %s' % (','.join(urls), local))
+    for url in urls:
+        for dl in downloaders:
+            if url.startswith(dl):
+                if downloaders[dl](url, local, config, opts):
+                    return
     if not opts.dry_run():
-        for url in urls:
-            for dl in downloaders:
-                if url.startswith(dl):
-                    if downloaders[dl](url, local, config, opts):
-                        return
         raise error.general('downloading %s: all paths have failed, giving up' % (url))
