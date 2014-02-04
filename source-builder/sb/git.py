@@ -94,6 +94,9 @@ class repo:
     def checkout(self, branch = 'master'):
         ec, output = self._run(['checkout', branch], check = True)
 
+    def submodule(self, module):
+        ec, output = self._run(['submodule', 'update', '--init', module], check = True)
+
     def status(self):
         _status = {}
         if path.exists(self.path):
@@ -109,6 +112,8 @@ class repo:
                         state = 'unstaged'
                     elif l.startswith('# Untracked files:'):
                         state = 'untracked'
+                    elif l.startswith('# HEAD detached'):
+                        state = 'detached'
                     elif state != 'none' and l[0] == '#':
                         if l.strip() != '#' and not l.startswith('#   ('):
                             if state not in _status:
