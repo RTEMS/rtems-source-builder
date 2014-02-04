@@ -143,7 +143,10 @@ def copy_tree(src, dst):
     hsrc = host(src)
     hdst = host(dst)
 
-    names = os.listdir(src)
+    if os.path.exists(src):
+        names = os.listdir(src)
+    else:
+        names = []
 
     if not os.path.isdir(dst):
         os.makedirs(dst)
@@ -178,8 +181,9 @@ def copy_tree(src, dst):
     try:
         shutil.copystat(src, dst)
     except OSError, why:
-        if WindowsError is not None and isinstance(why, WindowsError):
-            pass
+        if windows:
+            if WindowsError is not None and isinstance(why, WindowsError):
+                pass
         else:
             raise error.general('copying tree: %s -> %s: %s' % (src, dst, str(why)))
 
