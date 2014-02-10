@@ -52,7 +52,6 @@ def load():
         '__xz':             ('exe',     'required', '%{_usr}/bin/xz'),
         'with_zlib':        ('none',    'none',     '--with-zlib=no'),
         '_forced_static':   ('none',    'none',     ''),
-        '_extra_path':      ('none',    'none',     '%{_sbdir}/bin'),
         '_ld_library_path': ('none',    'none',     'DYLD_LIBRARY_PATH')
         }
 
