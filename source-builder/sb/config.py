@@ -36,6 +36,7 @@ try:
     import log
     import options
     import path
+    import pkgconfig
 except KeyboardInterrupt:
     print 'user terminated'
     sys.exit(1)
@@ -367,6 +368,26 @@ class file:
                     raise error.general('shell macro failed: %s:%d: %s' % (s, exit_code, output))
         return line
 
+    def _pkgconfig(self, test):
+        ts = test.split()
+        ok = False
+        pkg = pkgconfig.package(ts[0], output = log.output)
+        if len(ts) > 1 and len(ts) != 3:
+            self._error('malformed pkgconfig check')
+        else:
+            op = '>='
+            ver = '0'
+            if len(ts) == 3:
+                op = ts[1]
+                ver = self.macros.expand(ts[2])
+            try:
+                ok = pkg.check(op, ver)
+            except pkgconfig.error, pe:
+                self._error('pkgconfig: %s' % (pe))
+            except:
+                raise error.interal('pkgconfig failure')
+        return ok
+
     def _expand(self, s):
         expand_count = 0
         expanded = True
@@ -424,6 +445,13 @@ class file:
                 elif m.startswith('%{defined'):
                     n = self._label(m[9:-1].strip())
                     if n in self.macros:
+                        s = s.replace(m, '1')
+                    else:
+                        s = s.replace(m, '0')
+                    expanded = True
+                    mn = None
+                elif m.startswith('%{pkgconfig'):
+                    if self._pkgconfig(m[11:-1].strip()):
                         s = s.replace(m, '1')
                     else:
                         s = s.replace(m, '0')

@@ -58,7 +58,7 @@ optflags:            none,    convert,  '-O2 -pipe'
 optincludes:         none,    convert,  ''
 
 # Extra path a platform can override.
-_extra_path:         none,    none,     ''
+_extra_path:         none,    none,     '%{_sbdir}'
 _ld_library_path:    none,    none,     'LD_LIBRARY_PATH'
 
 # Paths
