@@ -160,9 +160,10 @@ class package(object):
         for n in sorted(package.loaded):
             print package.loaded[n]._str()
 
-    def __init__(self, name = None, prefix = None, output = None, src = None):
+    def __init__(self, name = None, prefix = None, libs_scan = False, output = None, src = None):
         self._clean()
         self.name_ = name
+        self.libs_scan = libs_scan
         self.output = output
         self.src = src
         self.prefix = None
@@ -175,7 +176,7 @@ class package(object):
             elif type(prefix) is list:
                 self.prefix = prefix
             else:
-                raise error('invalid type of prefix')
+                raise error('invalid type of prefix: %s' % (type(prefix)))
             for p in self.prefix:
                 for d in package.config_prefixes:
                     prefix = os.path.join(p, d, 'pkgconfig')
@@ -251,7 +252,8 @@ class package(object):
 
     def _find_libraries(self, name):
         libraries = []
-        for prefix in self.prefix:
+        if self.libs_scan:
+            for prefix in self.prefix:
                 prefix = os.path.join(prefix, 'lib')
                 if os.path.exists(prefix):
                     for l in os.listdir(prefix):
@@ -374,8 +376,8 @@ class package(object):
             self._clean()
         self.name_ = name
         file = self._find_package(name)
-        self._log('load: %s (%s)' % (name, file))
         if file:
+            self._log('load: %s (%s)' % (name, file))
             if self.src:
                 self.src.writelines('==%s%s' % ('=' * 80, os.linesep))
                 self.src.writelines(' %s %s%s' % (file, '=' * (80 - len(file)), os.linesep))
@@ -418,6 +420,7 @@ class package(object):
                             self.fields[lhs] = rhs
             self.file_ = file
         else:
+            self._log('load: %s (libraries)' % (name))
             self.libraries = self._find_libraries(name)
         for nt in package.node_types:
             requires = self.get(nt, private = False)
@@ -436,6 +439,7 @@ class package(object):
                             self._log('failed: %s (%s %s %s)' % (r[0], ver, r[1], r[2]))
                             self.nodes['failed'][r[0]] = pkg
         if self.exists():
+            self._log('load: exists')
             package.loaded[name] = self
 
     def get(self, label, private = True):
