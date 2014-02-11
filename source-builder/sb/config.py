@@ -368,12 +368,12 @@ class file:
                     raise error.general('shell macro failed: %s:%d: %s' % (s, exit_code, output))
         return line
 
-    def _pkgconfig(self, test):
+    def _pkgconfig_check(self, test):
         ts = test.split()
         ok = False
         pkg = pkgconfig.package(ts[0], output = log.output)
-        if len(ts) > 1 and len(ts) != 3:
-            self._error('malformed pkgconfig check')
+        if len(ts) != 1 and len(ts) != 3:
+            self._error('malformed check')
         else:
             op = '>='
             ver = '0'
@@ -383,10 +383,21 @@ class file:
             try:
                 ok = pkg.check(op, ver)
             except pkgconfig.error, pe:
-                self._error('pkgconfig: %s' % (pe))
+                self._error('check: %s' % (pe))
             except:
                 raise error.interal('pkgconfig failure')
         return ok
+
+    def _pkgconfig_flags(self, package, flags):
+        pkg_flags = None
+        pkg = pkgconfig.package(package, output = log.output)
+        try:
+            pkg_flags = pkg.get(flags)
+        except pkgconfig.error, pe:
+            self._error('flags:%s: %s' % (flags, pe))
+        except:
+            raise error.interal('pkgconfig failure')
+        return pkg_flags
 
     def _expand(self, s):
         expand_count = 0
@@ -450,11 +461,43 @@ class file:
                         s = s.replace(m, '0')
                     expanded = True
                     mn = None
-                elif m.startswith('%{pkgconfig'):
-                    if self._pkgconfig(m[11:-1].strip()):
+                elif m.startswith('%{check'):
+                    if self._pkgconfig_check(m[7:-1].strip()):
                         s = s.replace(m, '1')
                     else:
                         s = s.replace(m, '0')
+                    expanded = True
+                    mn = None
+                elif m.startswith('%{ccflags'):
+                    flags = self._pkgconfig_flags(m[9:-1].strip(), 'ccflags')
+                    if flags:
+                        s = s.replace(m, flags)
+                    else:
+                        self._error('ccflags error: %s' % (m[9:-1].strip()))
+                    expanded = True
+                    mn = None
+                elif m.startswith('%{cflags'):
+                    flags = self._pkgconfig_flags(m[8:-1].strip(), 'cflags')
+                    if flags:
+                        s = s.replace(m, flags)
+                    else:
+                        self._error('cflags error: %s' % (m[8:-1].strip()))
+                    expanded = True
+                    mn = None
+                elif m.startswith('%{ldflags'):
+                    flags = self._pkgconfig_flags(m[9:-1].strip(), 'ldflags')
+                    if flags:
+                        s = s.replace(m, flags)
+                    else:
+                        self._error('ldflags error: %s' % (m[9:-1].strip()))
+                    expanded = True
+                    mn = None
+                elif m.startswith('%{libs'):
+                    flags = self._pkgconfig_flags(m[6:-1].strip(), 'libs')
+                    if flags:
+                        s = s.replace(m, flags)
+                    else:
+                        self._error('libs error: %s' % (m[6:-1].strip()))
                     expanded = True
                     mn = None
                 elif m.startswith('%{?') or m.startswith('%{!?'):
