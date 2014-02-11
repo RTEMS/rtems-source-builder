@@ -104,8 +104,12 @@ def _check_package(lib_check, args):
                 if pkg.check(lib[1], lib[2]):
                     ec = 0
             if ec == 0:
-                flags['cflags'] += pkg.get('cflags')
-                flags['libs'] += pkg.get('libs', private = False)
+                cflags = pkg.get('cflags')
+                if cflags:
+                    flags['cflags'] += cflags
+                libs = pkg.get('libs', private = False)
+                if libs:
+                    flags['libs'] += libs
                 break
         if ec > 0:
             break
