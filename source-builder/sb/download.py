@@ -48,6 +48,9 @@ def _http_parser(source, config, opts):
     elif esl[-1:][0] == 'xz':
         source['compressed'] = '%{__xz} -dc'
 
+def _patchworks_parser(source, config, opts):
+    source['url'] = 'http%s' % (source['path'][2:])
+
 def _git_parser(source, config, opts):
     #
     # Symlink.
@@ -118,6 +121,7 @@ def _file_parser(source, config, opts):
 
 parsers = { 'http': _http_parser,
             'ftp':  _http_parser,
+            'pw':   _patchworks_parser,
             'git':  _git_parser,
             'cvs':  _cvs_parser,
             'file': _file_parser }
@@ -128,7 +132,10 @@ def parse_url(url, pathkey, config, opts):
     #
     source = {}
     source['url'] = url
-    source['path'] = path.dirname(url)
+    colon = url.find(':')
+    if url[colon + 1:colon + 3] != '//':
+        raise error.general('malforned URL: %s' % (url))
+    source['path'] = url[:colon + 3] + path.dirname(url[colon + 3:])
     source['file'] = path.basename(url)
     source['name'], source['ext'] = path.splitext(source['file'])
     #
@@ -291,6 +298,7 @@ def _file_downloader(url, local, config, opts):
 
 downloaders = { 'http': _http_downloader,
                 'ftp':  _http_downloader,
+                'pw':   _http_downloader,
                 'git':  _git_downloader,
                 'cvs':  _cvs_downloader,
                 'file': _file_downloader }
