@@ -42,7 +42,11 @@ import shlex
 import sys
 
 def default_prefix():
-    paths = ['/usr', '/usr/local']
+    paths = []
+    defaults = ['/usr', '/usr/share', '/lib', '/lib64', '/usr/lib', '/usr/lib64', '/usr/local']
+    for d in defaults:
+        if os.path.exists(d):
+            paths += [d]
     if 'PKG_CONFIG_PATH' in os.environ:
         paths += os.environ['PKG_CONFIG_PATH'].split(':')
     return paths
@@ -183,11 +187,9 @@ class package(object):
                     if os.path.exists(prefix):
                         self.paths += [prefix]
             self._log('paths: %s' % (', '.join(self.paths)))
-        if 'PKG_CONFIG_SYSROOT_DIR' in os.environ:
-            self.defines['sysroot'] = os.environ['PKG_CONFIG_SYSROOT_DIR']
+        if 'sysroot' in self.defines:
             self._log('sysroot: %s' % (self.defines['sysroot']))
-        if 'PKG_CONFIG_BUILD_TOP_DIR' in os.environ:
-            self.defines['top_builddir'] = os.environ['PKG_CONFIG_BUILD_TOP_DIR']
+        if 'top_builddir' in self.defines:
             self._log('top_builddir: %s' % (self.defines['top_builddir']))
         if self.name_:
             self.load(self.name_)
@@ -237,6 +239,10 @@ class package(object):
         for nt in package.node_types:
             self.nodes[nt] = {}
         self.libraries = []
+        if 'PKG_CONFIG_SYSROOT_DIR' in os.environ:
+            self.defines['sysroot'] = os.environ['PKG_CONFIG_SYSROOT_DIR']
+        if 'PKG_CONFIG_BUILD_TOP_DIR' in os.environ:
+            self.defines['top_builddir'] = os.environ['PKG_CONFIG_BUILD_TOP_DIR']
 
     def _log(self, s):
         if self.output:
@@ -278,14 +284,16 @@ class package(object):
     def _filter_top_builddir(self, s):
         if 'top_builddir' in self.defines:
             top_builddir = self.defines['top_builddir']
-            if self.file.startswith(top_builddir) and not s.startswith(top_builddir):
+            if self.file_.startswith(top_builddir):
                 offset = 0
                 while True:
                     dash = s[offset:].find('-')
                     if dash < 0:
                         break
                     if offset + dash + 2 < len(s) and s[offset + dash + 1] in 'LI':
-                        s = s[:offset + dash + 2] + top_builddir + s[offset + dash + 2:]
+                        path = s[offset + dash + 2:]
+                        if not path.startswith(top_builddir):
+                            s = s[:offset + dash + 2] + top_builddir + path
                     offset += dash + 1
         return s
 
@@ -347,7 +355,7 @@ class package(object):
 
     def name_from_file(self, file = None):
         if file is None:
-            file = self.file
+            file = self.file_
         if file is None:
             return None
         name = os.path.basename(file)
@@ -420,7 +428,6 @@ class package(object):
                             self.fields[lhs] = rhs
             self.file_ = file
         else:
-            self._log('load: %s (libraries)' % (name))
             self.libraries = self._find_libraries(name)
         for nt in package.node_types:
             requires = self.get(nt, private = False)
