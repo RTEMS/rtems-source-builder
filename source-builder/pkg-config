@@ -29,12 +29,21 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-import argparse
 import os
 import sys
 
 base = os.path.dirname(sys.argv[0])
 sys.path.insert(0, base + '/sb')
+
+try:
+    import argparse
+except:
+    sys.path.insert(0, base + '/sb/imports')
+    try:
+        import argparse
+    except:
+        print >> sys.stderr, "Incorrect Source Builder installation"
+        sys.exit(1)
 
 try:
     import pkgconfig

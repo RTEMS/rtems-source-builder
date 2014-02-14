@@ -34,7 +34,6 @@
 # provided by the full pkg-config so packages can configure and build.
 #
 
-import argparse
 import os
 import os.path
 import re
