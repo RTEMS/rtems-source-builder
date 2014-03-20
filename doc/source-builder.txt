@@ -2545,7 +2545,28 @@ $ sudo apt-get build-dep binutils gcc g++ gdb unzip git
 FreeBSD
 ~~~~~~~
 
-The RTEMS Source Builder has been tested on FreeBSD 9.1 64bit.
+The RTEMS Source Builder has been tested on FreeBSD 9.1 and 10.0 64bit. You
+need to install some ports. They are:
+
+-------------------------------------------------------------
+# cd /usr/ports
+# portinstall --batch lang/python27
+-------------------------------------------------------------
+
+If you wish to build Windows (mingw32) tools please install the following
+ports:
+
+-------------------------------------------------------------
+# cd /usr/ports
+# portinstall --batch devel/mingw32-binutils devel/mingw32-gcc
+# portinstall --batch devel/mingw32-zlib devel/mingw32-pthreads
+-------------------------------------------------------------
+
+The +zlip+ and +pthreads+ ports for MinGW32 are used for builiding a Windows
+QEMU.
+
+If you are on FreeBSD 10.0 and you have pkgng installed you can use 'pkg
+install' rather than 'portinstall'.
 
 NetBSD
 ~~~~~~
