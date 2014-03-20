@@ -624,6 +624,14 @@ core Python code, configuration changes or new configurations.
 Pleease email me patches via git so I can maintain your commit messages so you
 are acknowledged as the contributor.
 
+Packages
+~~~~~~~~
+
+We welcome users adding, fixing, updating and upgrading packages and their
+configurations. The RSB contains the 'bare' configuration tree and you can use
+this to add packages you use on the hosts. For example 'qemu' is support on a
+range of hosts. RTEMS tools live in the +rtems/config+ directory tree.
+
 Project Sets
 ------------
 
@@ -722,6 +730,73 @@ $ ../source-builder/sb-set-builder --log=l-heads-sparc.txt \
    --macros=snapshots/binutils-gcc-newlib-gdb-head.mc \
    4.11/rtems-sparc
 -------------------------------------------------------------
+
+Patches
+~~~~~~~
+
+Packages being built by the RSB need patches from time to time and the RSB
+supports patching upstream packages. The patches are held in a seperate
+directory called +patches+ relative to the configuration directory you are
+building. For example +%{\_topdir}/patches:%{\_sbdir}/patches+. Patches are
+declared in the configuraiton files in a similar manner to the package's source
+so please refer to the +%source+ documentation. Patches, like the source, are
+to be made publically available for configurations that live in the RSB package
+and are downloaded on demand.
+
+If a package has a patch management tool it is recommended you reference the
+package's patch management tools directly. If the RSB does not support the
+specific patch manage tool please contact the mailing list to see if support
+can be added.
+
+Patches for packages developed by the RTEMS project can be placed in the RTEMS
+Tools Git repository. The +tools+ directory in the repository has various
+places a patch can live. The tree is broken down in RTEMS releases and then
+tools within that release. If the package is not specific to any release the
+patch can be added closer to the top under the package's name. Patches to fix
+specific tool related issues for a specific architecture should be grouped
+under the specific architecture and only applied when building that
+architecture avoiding a patch breaking an uneffected architecture.
+
+Patches in the RTEMS Tools repository need to be submitted to the upstream
+project. It should not be a clearing house for patches that will not be
+accepted upstream.
+
+Patches are numbered and the number of available slots depends on the package's
+configuration file. For example +source-builder/config/gcc-common-1.cfg+ has 2
+groups of patch numbers, 0 to 9 for GCC and 10 to 19 for newlib. An example is:
+
+-------------------------------------------------------------
+%{?patch0:%patch0 %{?patch0_opts:%{patch0_opts}}%{!?patch0_opts:-p1}}
+-------------------------------------------------------------
+
+The +patch0+ is applied if defined and the option can also be optionally
+defined and passed to patch. An example is a patch to the moxie binutils:
+
+-------------------------------------------------------------
+#
+# Moxie Binutil and GDB patches
+#
+%define rtems_binutils_patch1 %{rtems_binutils_patches}/moxie/binutils-2.22-rtems4.11-moxie-20130214.diff
+%define rtems_binutils_patch2 %{rtems_binutils_patches}/moxie/binutils-2.22-rtems4.11-moxie-20130516.diff
+-------------------------------------------------------------
+
+These patches use the default +-p1+ option to patch. Note the patch file name
+includes all the details so it is easy to track and locate when in the +patches+
+directory after download.
+
+The +rtems-4.11-base.bset+ provides paths to the RTEMS Tools repository for
+each common tools package the RSB builds. It is recommended you use
+them. Please check the file for details.
+
+Architecture specific patches live in the architecture build set file isolating
+the patch to that specific architecture. If a patch is common to a tool it
+resides in the RTEMS tools configuration file. Do not place patches for tools
+in the +source-builder/config+ template configuration files.
+
+To test a patch simply copy it to your local +patches+ directory. The RSB will
+see the patch is present and will not attempt to download it. Once you are
+happy with the patch submit it to the project and a core developer will review
+it and add it to the RTEMS Tools git repository.
 
 Cross Building
 --------------
