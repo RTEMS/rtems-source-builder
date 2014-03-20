@@ -621,7 +621,7 @@ The RSB is open source and open to contributions. These can be bug fixes, new
 features or new configurations. Please break patches down into changes to the
 core Python code, configuration changes or new configurations.
 
-Pleease email me patches via git so I can maintain your commit messages so you
+Please email me patches via git so I can maintain your commit messages so you
 are acknowledged as the contributor.
 
 Packages
@@ -1026,7 +1026,7 @@ with:
 -------------------------------------------------------------
 
 The +sb-defaults+ command lists the defaults for your host. I will not include
-the output of this command becauses of its size.
+the output of this command because of its size.
 
 -------------------------------------------------------------
 $ ../source-builder/sb-defaults
@@ -1102,7 +1102,7 @@ files by using the `%select` directive.
 Selecting a map means all requests for a macro first check the selected map and
 if present return that value else the `global` map is used. Any new macros or
 changes update only the `global` map. This may change in future releases so
-please make sure you use the `override` attibute.
+please make sure you use the `override` attribute.
 
 The macro files specificed on the command line are looked for in the
 `_configdir` paths. See <<X1,+_configdir+>> variable for details. Included
@@ -1132,7 +1132,7 @@ Personal Macros
 When the tools start to run they will load personal macros. Personal macros are
 in the standard format for macros in a file. There are two places personal
 macros can be configured. The first is the environment variable
-`RSB_MACROS`. If presentthe macros from the file the environment variable
+`RSB_MACROS`. If present the macros from the file the environment variable
 points to are loaded. The second is a file called `.rsb_macros` in your home
 directory. You need to have the environment variable `HOME` defined for this
 work.
@@ -1313,8 +1313,8 @@ Layering by Including
 ^^^^^^^^^^^^^^^^^^^^^
 
 Configurations can be layered using the +%include+ directive. The user invokes
-the outter layers which include inner layers until all the required
-configuration is present and the package can be built. The outter layers can
+the outer layers which include inner layers until all the required
+configuration is present and the package can be built. The outer layers can
 provide high level details such as the version and the release and the inner
 layers provide generic configuration details that do not change from one
 release to another. Macro variables are used to provide the specific
@@ -1324,7 +1324,7 @@ Configuration File Numbering
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Configuration files have a number at the end. This is a release number for that
-configuraiton and it gives us the ability to track a specific configuration for
+configuration and it gives us the ability to track a specific configuration for
 a specific version. For example lets say the developers of the DTC package
 change the build system from a single makefile to autoconf and automake between
 version 1.3.0 and version 1.4.0. The configuration file used to build the
@@ -1340,10 +1340,10 @@ Common Configuration Scripts
 
 Common configuration scripts that are independent of version, platform and
 architecture are useful to everyone. These live in the Source Builder's
-configuration directory. Currrently there are scripts to build binutils, expat,
+configuration directory. Currently there are scripts to build binutils, expat,
 DTC, GCC, GDB and libusb. These files contain the recipes to build these
 package without the specific details of the versions or patches being
-built. They expect to be wrapped by a confguration file that ties the package
+built. They expect to be wrapped by a configuration file that ties the package
 to a specific version and optionally specific patches.
 
 DTC Example
@@ -1357,7 +1357,7 @@ configuration file. The first *1* says this is for the major release 1 of the
 package and the last *1* is the build configuration version.
 
 The file starts with some comments that detail the configuration. If there is
-anything unsual about the configuration it is a good idea to add something in
+anything unusual about the configuration it is a good idea to add something in
 the comments here. The comments are followed by a check for the release. In
 this case if a release is not provided a default of 1 is used.
 
@@ -1391,7 +1391,7 @@ single source package and it can be downloaded using the HTTP protocol. The RSB
 knows this is GZip'ped tar file. If more than one package package is needed add
 them increasing the index. The +gcc-4.8-1.cfg+ configuration contains examples
 of more than one source package as well as conditionally including source
-packages based on the outter configuration options.
+packages based on the outer configuration options.
 
 -------------------------------------------------------------
 #
@@ -1408,9 +1408,9 @@ are:
 . Installing, and
 . Cleaning
 
-Preperation is the unpacking of the source, applying any patches as well as any
+Preparation is the unpacking of the source, applying any patches as well as any
 package specific set ups. This part of the script is a standard Unix shell
-script. Becareful with the the use of '%' and '$'. The RSB uses '%' while the
+script. Be careful with the use of '%' and '$'. The RSB uses '%' while the
 shell scripts use '$'.
 
 A standard pattern you will observe is the saving of the build's top
@@ -1423,7 +1423,7 @@ script's are a collection of various subtle issues so please ask if you are
 unsure why something is being done a particular way.
 
 The preparation phase will often include a number of conditional patch
-commands. Outter layers can provide patches as needed while being able to use a
+commands. Outer layers can provide patches as needed while being able to use a
 common recipe. Users can override the standard build and supply a custom patch
 for testing using the user macro command line interface.
 
@@ -1460,7 +1460,7 @@ running +make+. Note the use of the RSB macros for commands. In the case of
 systems we need to use the GNU make and not the GNU make.
 
 If your package requires a configuration stage you need to run this before the
-make stage. Again the GCC common confguration file provides a detailed example.
+make stage. Again the GCC common configuration file provides a detailed example.
 
 -------------------------------------------------------------
 %build
@@ -1478,8 +1478,8 @@ make stage. Again the GCC common confguration file provides a detailed example.
 You can invoke make with the macro '%{?_smp_flags}' as a command line
 argument. This macro is controlled by the '--jobs' command line option and the
 host CPU detection support in the RSB. If you are on a multicore host you can
-increase the build speed using this macro. It also lets you disabled bulding on
-multicores to aid debugging when tetsing.
+increase the build speed using this macro. It also lets you disabled building on
+multicores to aid debugging when testing.
 
 Next is the install phase. This phase is a little more complex because you may
 be building a tar file and the end result of the build is never actually
@@ -1490,7 +1490,7 @@ package's default is used. The default can vary depending on the host's
 operating system. To install to a path that is not the prefix the +DESTDIR+
 make variable is used. Most packages should honour the +DISTDIR+ make variables
 and you can typically specify it on the command line to make when invoking the
-install target. This results in the package being installed to a loction that
+install target. This results in the package being installed to a location that
 is not the prefix but one you can control. The RSB provides a shell variable
 called +SB_BUILD_ROOT+ you can use. In a build set where you are building a
 number of packages you can collect all the built packages in a single tree that
