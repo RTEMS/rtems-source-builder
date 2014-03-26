@@ -97,6 +97,11 @@ class repo:
     def submodule(self, module):
         ec, output = self._run(['submodule', 'update', '--init', module], check = True)
 
+    def clean(self, args):
+        if type(args) == str:
+            args = [args]
+        ec, output = self._run(['clean'] + args, check = True)
+
     def status(self):
         _status = {}
         if path.exists(self.path):
@@ -124,7 +129,7 @@ class repo:
                             _status[state] += [l.strip()]
         return _status
 
-    def clean(self):
+    def dirty(self):
         _status = self.status()
         return len(_status) == 1 and 'branch' in _status
 

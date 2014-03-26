@@ -302,7 +302,7 @@ class command_line:
         if repo.valid():
             repo_valid = '1'
             repo_head = repo.head()
-            repo_clean = repo.clean()
+            repo_clean = not repo.dirty()
             repo_id = repo_head
             if not repo_clean:
                 repo_id += '-modified'

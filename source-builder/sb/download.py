@@ -211,6 +211,7 @@ def _git_downloader(url, local, config, opts):
         if not opts.dry_run():
             repo.clone(us[0], local)
     else:
+        repo.clean(['-f', '-d'])
         repo.reset('--hard')
         repo.checkout('master')
     for a in us[1:]:
