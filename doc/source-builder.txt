@@ -9,7 +9,7 @@ RTEMS Source Builder
 image:images/rtemswhitebg.jpg["RTEMS",width="30%"]
 
 Chris Johns <chrisj@rtems.org>
-1.5, March 2014
+1.6, April 2014
 
 RTEMS Tools From Source
 -----------------------
@@ -32,16 +32,19 @@ some sort of magic that can take any piece of source code and make it
 build. Someone at some point in time has figured out how to build that package
 from source and taught this tool. The RTEMS Source Builder has been tested on:
 
+[[platform_links]]
 * <<_archlinux,Archlinux>>
 * <<_centos,Centos>>
 * <<_fedora,Fedora>>
 * <<_freebsd,FreeBSD>>
 * <<_netbsd,NetBSD>>
 * <<_macos,MacOS>>
+* <<_mint,Linux Mint>>
 * <<_opensuse,openSUSE>>
 * <<_raspbian,Raspbian>>
 * <<_ubuntu,Ubuntu>>
 * <<_windows,Windows>>
+* <<_ubuntu,Xubuntu>>
 
 The RTEMS Source Builder has two types configuration data. The first is the
 'build set'. A _build set_ describes a collection of packages that define a set
@@ -61,8 +64,10 @@ assume the build sets and configuration files you are using have been created
 by developers who do. If you have a problem please ask on the RTEMS Users
 mailing list.
 
+*************************************************************
 IMPORTANT: If you have a problem please see <<_bugs,the reporting bugs>>
            section.
+*************************************************************
 
 Quick Start
 -----------
@@ -89,13 +94,24 @@ I also suggest you keep your environment to the bare minimum, particularly the
 path variable. Using environment variables has been proven over the years to be
 difficult to manage in production systems.
 
+.Host Setup
+*************************************************************
+IMPORTANT: Before proceeding to the next section please refer to the
+<<_host_setups,host specific setup>> for your host and install any extra
+packages. The RSB assumes the needed packages are installed and work.
+*************************************************************
+
 .Path to use when building applications
 *************************************************************
-To use the tools once finished just set your path to the 'bin' directory under
-the _prefix_ you use. In the examples that follow the _prefix_ is
-`$HOME/development/rtems/4.11` and is set using the `--prefix` option so the
+TIP: Do not forget to do this before you use the tools such as build RTEMS.
+
+The RSB by default will install (copy) the executables under the prefix you
+supply. To use the tools once finished just set your path to the 'bin'
+directory under the _prefix_ you use. In the examples that follow the _prefix_
+is `$HOME/development/rtems/4.11` and is set using the `--prefix` option so the
 path you need to configure to build applications can be set with the following
 in a BASH shell:
+
 -------------------------------------------------------------
 $ export PATH=$HOME/development/rtems/4.11/bin:$PATH
 -------------------------------------------------------------
@@ -2541,7 +2557,10 @@ Host Setups
 -----------
 
 The host versions are listed. If a later version of the host operating system
-exists it should unless listed.
+exists it should work unless listed.
+
+Please provide patches to update these sections if they are wrong or need
+updating. I cannot install and test each one and rely on getting your feedback.
 
 Linux
 ~~~~~
@@ -2588,9 +2607,8 @@ Fedora
 The RTEMS Source Builder has been tested on Fedora 18 64bit.
 
 -------------------------------------------------------------
-# yum install ncurses-devel
+# yum install ncurses-devel python4.7-devel
 -------------------------------------------------------------
-
 
 Raspbian
 ^^^^^^^^
@@ -2610,11 +2628,11 @@ home directory as recommended and end up on the SD card.
 Ubuntu
 ^^^^^^
 
-The latest testing was with Ubuntu 12.10 64bit. A minimal installation was used
-and the following packages installed.
+The latest testing was with Ubuntu 13.10 64bit. This section also includes Xubuntu. A
+minimal installation was used and the following packages installed.
 
 -------------------------------------------------------------
-$ sudo apt-get build-dep binutils gcc g++ gdb unzip git
+$ sudo apt-get build-dep binutils gcc g++ gdb unzip git python2.7-dev
 -------------------------------------------------------------
 
 FreeBSD
