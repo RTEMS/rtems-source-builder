@@ -83,7 +83,9 @@ class package(object):
     def splitter(pkg_list):
         pkgs = []
         if type(pkg_list) == list:
-            pls = pkg_list
+            pls = []
+            for p in pkg_list:
+                pls += package.lib_list_splitter.split(p)
         else:
             pls = package.lib_list_splitter.split(pkg_list)
         i = 0
