@@ -287,6 +287,18 @@ class file:
             return name
         return '%{' + name.lower() + '}'
 
+    def _cross_compile(self):
+        _host = self.expand('%{_host}')
+        _build = self.expand('%{_build}')
+        return _host != _build
+
+    def _candian_cross_compile(self):
+        _host = self.expand('%{_host}')
+        _build = self.expand('%{_build}')
+        _target = self.expand('%{_target}')
+        _alloc_cxc = self.defined('%{allow_cxc}')
+        return _alloc_cxc and _host != _build and _host != _target
+
     def _macro_split(self, s):
         '''Split the string (s) up by macros. Only split on the
            outter level. Nested levels will need to split with futher calls.'''
@@ -369,34 +381,36 @@ class file:
         return line
 
     def _pkgconfig_check(self, test):
-        ts = test.split()
         ok = False
-        pkg = pkgconfig.package(ts[0], output = log.output)
-        if len(ts) != 1 and len(ts) != 3:
-            self._error('malformed check')
-        else:
-            op = '>='
-            ver = '0'
-            if len(ts) == 3:
-                op = ts[1]
-                ver = self.macros.expand(ts[2])
-            try:
-                ok = pkg.check(op, ver)
-            except pkgconfig.error, pe:
-                self._error('check: %s' % (pe))
-            except:
-                raise error.interal('pkgconfig failure')
+        if not self._cross_compile():
+            ts = test.split()
+            pkg = pkgconfig.package(ts[0], output = log.output)
+            if len(ts) != 1 and len(ts) != 3:
+                self._error('malformed check')
+            else:
+                op = '>='
+                ver = '0'
+                if len(ts) == 3:
+                    op = ts[1]
+                    ver = self.macros.expand(ts[2])
+                try:
+                    ok = pkg.check(op, ver)
+                except pkgconfig.error, pe:
+                    self._error('check: %s' % (pe))
+                except:
+                    raise error.interal('pkgconfig failure')
         return ok
 
     def _pkgconfig_flags(self, package, flags):
         pkg_flags = None
-        pkg = pkgconfig.package(package, output = log.output)
-        try:
-            pkg_flags = pkg.get(flags)
-        except pkgconfig.error, pe:
-            self._error('flags:%s: %s' % (flags, pe))
-        except:
-            raise error.interal('pkgconfig failure')
+        if not self._cross_compile():
+            pkg = pkgconfig.package(package, output = log.output)
+            try:
+                pkg_flags = pkg.get(flags)
+            except pkgconfig.error, pe:
+                self._error('flags:%s: %s' % (flags, pe))
+            except:
+                raise error.interal('pkgconfig failure')
         return pkg_flags
 
     def _expand(self, s):

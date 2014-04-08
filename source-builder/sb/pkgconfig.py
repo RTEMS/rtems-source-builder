@@ -40,14 +40,17 @@ import re
 import shlex
 import sys
 
-def default_prefix():
+def default_prefix(common = True):
     paths = []
-    defaults = ['/usr', '/usr/share', '/lib', '/lib64', '/usr/lib', '/usr/lib64', '/usr/local']
-    for d in defaults:
-        if os.path.exists(d):
-            paths += [d]
     if 'PKG_CONFIG_PATH' in os.environ:
         paths += os.environ['PKG_CONFIG_PATH'].split(':')
+    if common:
+        defaults = ['/usr', '/usr/share', '/lib', '/lib64', '/usr/lib', '/usr/lib64', '/usr/local']
+        for d in defaults:
+            for cp in package.config_prefixes:
+                prefix = os.path.join(d, cp, 'pkgconfig')
+                if os.path.exists(prefix):
+                    paths += [prefix]
     return paths
 
 class error(Exception):
@@ -79,7 +82,10 @@ class package(object):
     @staticmethod
     def splitter(pkg_list):
         pkgs = []
-        pls = package.lib_list_splitter.split(pkg_list)
+        if type(pkg_list) == list:
+            pls = pkg_list
+        else:
+            pls = package.lib_list_splitter.split(pkg_list)
         i = 0
         while i < len(pls):
             pkg = [pls[i]]
@@ -181,10 +187,8 @@ class package(object):
             else:
                 raise error('invalid type of prefix: %s' % (type(prefix)))
             for p in self.prefix:
-                for d in package.config_prefixes:
-                    prefix = os.path.join(p, d, 'pkgconfig')
-                    if os.path.exists(prefix):
-                        self.paths += [prefix]
+                if os.path.exists(p):
+                    self.paths += [p]
             self._log('paths: %s' % (', '.join(self.paths)))
         if 'sysroot' in self.defines:
             self._log('sysroot: %s' % (self.defines['sysroot']))

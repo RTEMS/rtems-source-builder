@@ -83,12 +83,12 @@ def log(s, lf = True):
                 print s,
             print >> out, s,
 
-def _check_package(lib_check, args):
+def _check_package(libraries, args):
     ec = 1
     pkg = None
     flags = { 'cflags': '',
               'libs': '' }
-    libs = pkgconfig.package.splitter(lib_check)
+    libs = pkgconfig.package.splitter(libraries)
     for lib in libs:
         log('pkg: %s' % (lib))
         pkg = pkgconfig.package(lib[0], prefix = args.prefix, output = log, src = src)
@@ -213,6 +213,9 @@ def run(argv):
             (args.max_version and (args.exists or args.exact_version)):
         raise error('only one of --exists, --exact-version, or --max-version')
 
+    if args.dont_define_prefix:
+        args.prefix = pkgconfig.default_prefix(False)
+
     exists = False
 
     ec = 1
@@ -220,21 +223,20 @@ def run(argv):
     if args.atleast_pkgconfig_version:
         ec = 0
     else:
-        for lib in args.libraries:
-            ec, pkg, flags = _check_package(lib, args)
-            if ec == 0:
-                if args.cflags:
-                    if len(flags['cflags']):
-                        print flags['cflags']
-                        log('cflags: %s' % (flags['cflags']))
-                    else:
-                        log('cflags: empty')
-                if args.libs:
-                    if len(flags['libs']):
-                        print flags['libs']
-                        log('libs: %s' % (flags['libs']))
-                    else:
-                        log('libs: empty')
+        ec, pkg, flags = _check_package(args.libraries, args)
+        if ec == 0:
+            if args.cflags:
+                if len(flags['cflags']):
+                    print flags['cflags']
+                    log('cflags: %s' % (flags['cflags']))
+                else:
+                    log('cflags: empty')
+            if args.libs:
+                if len(flags['libs']):
+                    print flags['libs']
+                    log('libs: %s' % (flags['libs']))
+                else:
+                    log('libs: empty')
 
     #pkgconfig.package.dump_loaded()
 

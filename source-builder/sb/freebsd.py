@@ -73,11 +73,16 @@ def load():
     defines['_build_alias']  = defines['_host_alias']
     defines['_build_arch']   = defines['_host_arch']
 
-    # FreeBSD 10 and above no longer have /usr/bin/cvs, but it can (e.g.) be installed to /usr/local/bin/cvs through the devel/cvs port
+    # FreeBSD 10 and above no longer have /usr/bin/cvs, but it can (e.g.) be
+    # installed to /usr/local/bin/cvs through the devel/cvs port
     if int(float(version)) >= 10:
         cvs = 'cvs'
         if check.check_exe(cvs, cvs):
             defines['__cvs'] = cvs
+        #
+        # Fix the mess iconv is on FreeBSD 10.0.
+        #
+        defines['iconv_optincludes'] = ('none', 'none', '-I/usr/local/include -L/usr/local/lib')
 
     for gv in ['47', '48', '49']:
         gcc = '%s-portbld-freebsd%s-gcc%s' % (cpu, version, gv)
