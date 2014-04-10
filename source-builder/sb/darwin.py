@@ -35,12 +35,16 @@ def load():
         ncpus = output.split(' ')[1].strip()
     else:
         ncpus = '1'
+    version = uname[2]
+    if version.find('.'):
+        version = version.split('.')[0]
     defines = {
         '_ncpus':           ('none',    'none',     ncpus),
         '_os':              ('none',    'none',     'darwin'),
         '_host':            ('triplet', 'required', uname[4] + '-apple-darwin' + uname[2]),
         '_host_vendor':     ('none',    'none',     'apple'),
         '_host_os':         ('none',    'none',     'darwin'),
+        '_host_os_version': ('none',    'none',     version),
         '_host_cpu':        ('none',    'none',     uname[4]),
         '_host_alias':      ('none',    'none',     '%{nil}'),
         '_host_arch':       ('none',    'none',     uname[4]),
@@ -55,7 +59,6 @@ def load():
         '_ld_library_path': ('none',    'none',     'DYLD_LIBRARY_PATH')
         }
 
-    version = uname[2]
     if version.find('.'):
         version = version.split('.')[0]
         if int(version) >= 13:

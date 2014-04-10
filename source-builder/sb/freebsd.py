@@ -47,23 +47,24 @@ def load():
     if version.find('-') > 0:
         version = version.split('-')[0]
     defines = {
-        '_ncpus':        ('none',    'none',     ncpus),
-        '_os':           ('none',    'none',     'freebsd'),
-        '_host':         ('triplet', 'required', cpu + '-freebsd' + version),
-        '_host_vendor':  ('none',    'none',     'pc'),
-        '_host_os':      ('none',    'none',     'freebsd'),
-        '_host_cpu':     ('none',    'none',     cpu),
-        '_host_alias':   ('none',    'none',     '%{nil}'),
-        '_host_arch':    ('none',    'none',     cpu),
-        '_usr':          ('dir',     'required', '/usr/local'),
-        '_var':          ('dir',     'optional', '/usr/local/var'),
-        '__bash':        ('exe',     'optional', '/usr/local/bin/bash'),
-        '__bison':       ('exe',     'required', '/usr/local/bin/bison'),
-        '__git':         ('exe',     'required', '/usr/local/bin/git'),
-        '__svn':         ('exe',     'required', '/usr/local/bin/svn'),
-        '__xz':          ('exe',     'optional', '/usr/bin/xz'),
-        '__make':        ('exe',     'required', 'gmake'),
-        '__patch_opts':  ('none',     'none',    '-E')
+        '_ncpus':           ('none',    'none',     ncpus),
+        '_os':              ('none',    'none',     'freebsd'),
+        '_host':            ('triplet', 'required', cpu + '-freebsd' + version),
+        '_host_vendor':     ('none',    'none',     'pc'),
+        '_host_os':         ('none',    'none',     'freebsd'),
+        '_host_os_version': ('none',    'none',     version),
+        '_host_cpu':        ('none',    'none',     cpu),
+        '_host_alias':      ('none',    'none',     '%{nil}'),
+        '_host_arch':       ('none',    'none',     cpu),
+        '_usr':             ('dir',     'required', '/usr/local'),
+        '_var':             ('dir',     'optional', '/usr/local/var'),
+        '__bash':           ('exe',     'optional', '/usr/local/bin/bash'),
+        '__bison':          ('exe',     'required', '/usr/local/bin/bison'),
+        '__git':            ('exe',     'required', '/usr/local/bin/git'),
+        '__svn':            ('exe',     'required', '/usr/local/bin/svn'),
+        '__xz':             ('exe',     'optional', '/usr/bin/xz'),
+        '__make':           ('exe',     'required', 'gmake'),
+        '__patch_opts':     ('none',     'none',    '-E')
         }
 
     defines['_build']        = defines['_host']

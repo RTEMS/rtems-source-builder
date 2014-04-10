@@ -50,20 +50,22 @@ def load():
     else:
         cpu = uname[4]
 
+    version = uname[2]
     defines = {
-        '_ncpus':         ('none',    'none',     ncpus),
-        '_os':            ('none',    'none',     'linux'),
-        '_host':          ('triplet', 'required', cpu + '-linux-gnu'),
-        '_host_vendor':   ('none',    'none',     'gnu'),
-        '_host_os':       ('none',    'none',     'linux'),
-        '_host_cpu':      ('none',    'none',     cpu),
-        '_host_alias':    ('none',    'none',     '%{nil}'),
-        '_host_arch':     ('none',    'none',     cpu),
-        '_usr':           ('dir',     'required', '/usr'),
-        '_var':           ('dir',     'required', '/var'),
-        '__bzip2':        ('exe',     'required', '/usr/bin/bzip2'),
-        '__gzip':         ('exe',     'required', '/bin/gzip'),
-        '__tar':          ('exe',     'required', '/bin/tar')
+        '_ncpus':           ('none',    'none',     ncpus),
+        '_os':              ('none',    'none',     'linux'),
+        '_host':            ('triplet', 'required', cpu + '-linux-gnu'),
+        '_host_vendor':     ('none',    'none',     'gnu'),
+        '_host_os':         ('none',    'none',     'linux'),
+        '_host_os_version': ('none',    'none',     version),
+        '_host_cpu':        ('none',    'none',     cpu),
+        '_host_alias':      ('none',    'none',     '%{nil}'),
+        '_host_arch':       ('none',    'none',     cpu),
+        '_usr':             ('dir',     'required', '/usr'),
+        '_var':             ('dir',     'required', '/var'),
+        '__bzip2':          ('exe',     'required', '/usr/bin/bzip2'),
+        '__gzip':           ('exe',     'required', '/bin/gzip'),
+        '__tar':            ('exe',     'required', '/bin/tar')
         }
 
     # Works for LSB distros

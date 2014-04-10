@@ -47,24 +47,25 @@ def load():
     if version.find('-') > 0:
         version = version.split('-')[0]
     defines = {
-        '_ncpus':        ('none',    'none',    '1'),
-        '_os':           ('none',    'none',     'netbsd'),
-        '_host':         ('triplet', 'required', cpu + '-netbsd' + version),
-        '_host_vendor':  ('none',    'none',     'pc'),
-        '_host_os':      ('none',    'none',     'netbsd'),
-        '_host_cpu':     ('none',    'none',     cpu),
-        '_host_alias':   ('none',    'none',     '%{nil}'),
-        '_host_arch':    ('none',    'none',     cpu),
-        '_usr':          ('dir',     'required', '/usr'),
-        '_var':          ('dir',     'optional', '/var'),
-        'optincludes':   ('none',    'none',     '-I/usr/pkg/include -L/usr/pkg/lib'),
-        '__bash':        ('exe',     'optional', '/usr/pkg/bin/bash'),
-        '__bison':       ('exe',     'required', '/usr/pkg/bin/bison'),
-        '__git':         ('exe',     'required', '/usr/pkg/bin/git'),
-        '__svn':         ('exe',     'required', '/usr/pkg/bin/svn'),
-        '__xz':          ('exe',     'optional', '/usr/pkg/bin/xz'),
-        '__make':        ('exe',     'required', 'gmake'),
-        '__patch_opts':  ('none',     'none',    '-E')
+        '_ncpus':           ('none',    'none',    '1'),
+        '_os':              ('none',    'none',     'netbsd'),
+        '_host':            ('triplet', 'required', cpu + '-netbsd' + version),
+        '_host_vendor':     ('none',    'none',     'pc'),
+        '_host_os':         ('none',    'none',     'netbsd'),
+        '_host_os_version': ('none',    'none',     version),
+        '_host_cpu':        ('none',    'none',     cpu),
+        '_host_alias':      ('none',    'none',     '%{nil}'),
+        '_host_arch':       ('none',    'none',     cpu),
+        '_usr':             ('dir',     'required', '/usr'),
+        '_var':             ('dir',     'optional', '/var'),
+        'optincludes':      ('none',    'none',     '-I/usr/pkg/include -L/usr/pkg/lib'),
+        '__bash':           ('exe',     'optional', '/usr/pkg/bin/bash'),
+        '__bison':          ('exe',     'required', '/usr/pkg/bin/bison'),
+        '__git':            ('exe',     'required', '/usr/pkg/bin/git'),
+        '__svn':            ('exe',     'required', '/usr/pkg/bin/svn'),
+        '__xz':             ('exe',     'optional', '/usr/pkg/bin/xz'),
+        '__make':           ('exe',     'required', 'gmake'),
+        '__patch_opts':     ('none',     'none',    '-E')
         }
 
     defines['_build']        = defines['_host']
