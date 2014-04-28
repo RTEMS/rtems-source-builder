@@ -77,6 +77,12 @@ def load():
     # FreeBSD 10 and above no longer have /usr/bin/cvs, but it can (e.g.) be
     # installed to /usr/local/bin/cvs through the devel/cvs port
     if int(float(version)) >= 10:
+        cc = '/usr/bin/cc'
+        if check.check_exe(cc, cc):
+            defines['__cc'] = cc
+        cxx = '/usr/bin/c++'
+        if check.check_exe(cxx, cxx):
+            defines['__cxx'] = cxx
         cvs = 'cvs'
         if check.check_exe(cvs, cvs):
             defines['__cvs'] = cvs
