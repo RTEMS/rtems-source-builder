@@ -53,9 +53,13 @@ _target:             none,    optional, ''
 # The user
 _uid:                none,    convert,  '%(%{__id_u} -n)'
 
-# Default flags
-optflags:            none,    convert,  '-O2 -pipe'
-optincludes:         none,    convert,  ''
+# Default flags that can be overridded to supply specific host or build
+# flags and include paths to the tools. The host is the final platform
+# the tools will run on and build is the host building the tools.
+optflags_host:       none,    convert,  '-O2 -pipe'
+optincludes_host:    none,    convert,  ''
+optflags_build:      none,    convert,  '-O2 -pipe'
+optincludes_build:   none,    convert,  ''
 
 # Extra path a platform can override.
 _extra_path:         none,    none,     '%{_sbdir}'
@@ -179,13 +183,16 @@ export SB_ORIG_PATH=${PATH}
 %{?_prefix:SB_PREFIX_CLEAN=$(echo "%{_prefix}" | %{__sed} -e 's/^\///')}
 SB_SOURCE_DIR="%{_sourcedir}"
 SB_BUILD_DIR="%{_builddir}"
-SB_OPT_HOST_CFLAGS="%{optflags} %{?_tmproot:-I%{_tmproot}/${SB_PREFIX_CLEAN}/include}"
+# host == build, use build; host != build , host uses host and build uses build
+SB_OPT_HOST_CFLAGS="%{optflags_host} %{optincludes_host}"
 SB_OPT_HOST_LDFLAGS="%{?_tmproot:-L%{_tmproot}/${SB_PREFIX_CLEAN}/lib}"
-SB_OPT_BUILD_CFLAGS="%{optflags} %{optincludes}"
-SB_OPT_CFLAGS="${SB_OPT_HOST_CFLAGS} %{optincludes}"
+SB_OPT_BUILD_CFLAGS="%{optflags_build} %{?_tmproot:-I%{_tmproot}/${SB_PREFIX_CLEAN}/include}"
+SB_OPT_BUILD_LDFLAGS="%{?_tmproot:-L%{_tmproot}/${SB_PREFIX_CLEAN}/lib}"
+SB_OPT_CFLAGS="${SB_OPT_BUILD_CFLAGS} %{optincludes_build}"
 SB_ARCH="%{_arch}"
 SB_OS="%{_os}"
-export SB_SOURCE_DIR SB_BUILD_DIR SB_OPT_HOST_CFLAGS SB_OPT_BUILD_CFLAGS SB_OPT_CFLAGS SB_ARCH SB_OS
+export SB_SOURCE_DIR SB_BUILD_DIR SB_ARCH SB_OS
+export SB_OPT_HOST_CFLAGS SB_OPT_HOST_LDFLAGS SB_OPT_BUILD_CFLAGS SB_OPT_BUILD_LDFLAGS SB_OPT_CFLAGS
 # Documentation
 SB_DOC_DIR="%{_docdir}"
 export SB_DOC_DIR
@@ -276,20 +283,23 @@ fi'''
 
 # Host/build flags.
 host_build_flags:    none,    none,     '''
-# Host and build flags
+# Host and build flags, Cxc build if host and build are different.
+# Note, gcc is not ready to be compiled with -std=gnu99 (this needs to be checked).
 if test "%{_build}" != "%{_host}" ; then
-  CFLAGS_FOR_BUILD="${SB_OPT_HOST_CFLAGS}"
-  LDFLAGS_FOR_BUILD="${SB_OPT_HOST_LDFLAGS}"
+  # Canadian cross build
   CC=$(echo "%{_host}-gcc ${SB_OPT_HOST_CFLAGS} ${SB_OPT_HOST_LDFLAGS}" | sed -e 's,-std=gnu99 ,,')
-  CXXFLAGS_FOR_BUILD="${SB_OPT_HOST_CFLAGS}"
   CXX=$(echo "%{_host}-g++ ${SB_OPT_HOST_CFLAGS} ${SB_OPT_HOST_LDFLAGS}" | sed -e 's,-std=gnu99 ,,')
-  CC_FOR_BUILD=$(echo "%{__cc} ${SB_OPT_CFLAGS}" | sed -e 's,-std=gnu99 ,,')
-  CXX_FOR_BUILD=$(echo "%{__cxx} ${SB_OPT_CFLAGS}" | sed -e 's,-std=gnu99 ,,')
-else
-  # gcc is not ready to be compiled with -std=gnu99
+  CFLAGS="${SB_OPT_HOST_CFLAGS}"
   LDFLAGS="${SB_OPT_HOST_LDFLAGS}"
-  CC=$(echo "%{__cc} ${SB_OPT_CFLAGS}" | sed -e 's,-std=gnu99 ,,')
-  CXX=$(echo "%{__cxx} ${SB_OPT_CFLAGS}" | sed -e 's,-std=gnu99 ,,')
+  CFLAGS_FOR_BUILD="${SB_OPT_BUILD_CFLAGS}"
+  LDFLAGS_FOR_BUILD="${SB_OPT_BUILD_LDFLAGS}"
+  CXXFLAGS_FOR_BUILD="${SB_OPT_BUILD_CFLAGS}"
+  CC_FOR_BUILD=$(echo "%{__cc} ${SB_OPT_BUILD_CFLAGS}" | sed -e 's,-std=gnu99 ,,')
+  CXX_FOR_BUILD=$(echo "%{__cxx} ${SB_OPT_BUILD_CFLAGS}" | sed -e 's,-std=gnu99 ,,')
+else
+   LDFLAGS="${SB_OPT_BUILD_LDFLAGS}"
+  CC=$(echo "%{__cc} ${SB_OPT_BUILD_CFLAGS}" | sed -e 's,-std=gnu99 ,,')
+  CXX=$(echo "%{__cxx} ${SB_OPT_BUILD_CFLAGS}" | sed -e 's,-std=gnu99 ,,')
   CC_FOR_BUILD=${CC}
   CXX_FOR_BUILD=${CXX}
 fi
