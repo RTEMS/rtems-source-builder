@@ -36,6 +36,7 @@ try:
     import config
     import download
     import error
+    import ereport
     import execute
     import log
     import options
@@ -262,7 +263,8 @@ class build:
         log.output('run: ' + cmd)
         exit_code, proc, output = e.shell(cmd, cwd = path.host(cwd))
         if exit_code != 0:
-            raise error.general('shell cmd failed: %s' % (cmd))
+            log.output('shell cmd failed: %s' % (cmd))
+            raise error.general('building %s' % (self.macros['buildname']))
 
     def builddir(self):
         builddir = self.config.abspath('_builddir')
@@ -431,6 +433,10 @@ def find_config(config, configs):
     return None
 
 def run(args):
+    ec = 0
+    opts = None
+    b = None
+    erheader = None
     try:
         optargs = { '--list-configs': 'List available configurations' }
         opts = options.load(args, optargs)
@@ -451,21 +457,29 @@ def run(args):
             for config_file in opts.config_files():
                 b = build(config_file, True, opts)
                 b.make()
-                del b
+                b = None
     except error.general, gerr:
-        print gerr
-        print >> sys.stderr, 'Build FAILED'
-        sys.exit(1)
+        erheader = 'Build: %s' % (gerr)
+        log.notice(str(gerr))
+        log.stderr('Build FAILED')
+        ec = 1
     except error.internal, ierr:
-        print ierr
-        print >> sys.stderr, 'Build FAILED'
-        sys.exit(1)
+        erheader = 'Build: %s' % (ierr)
+        log.notice(str(ierr))
+        log.stderr('Internal Build FAILED')
+        ec = 1
     except error.exit, eerr:
         pass
     except KeyboardInterrupt:
         log.notice('abort: user terminated')
-        sys.exit(1)
-    sys.exit(0)
+        ec = 1
+    if (ec != 0 and erheader and opts and b) or (opts and opts.dry_run()):
+        if opts.dry_run():
+            bname = 'dry-run'
+        else:
+            bname = b.name()
+        ereport.generate('rsb-report-%s.txt' % (bname), opts, erheader)
+    sys.exit(ec)
 
 if __name__ == "__main__":
     run(sys.argv)

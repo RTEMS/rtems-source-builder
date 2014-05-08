@@ -50,10 +50,10 @@ class repo:
             self._git_exit_code(exit_code)
         return exit_code, output
 
-    def __init__(self, _path, opts, macros = None):
+    def __init__(self, _path, opts = None, macros = None):
         self.path = _path
         self.opts = opts
-        if macros is None:
+        if macros is None and opts is not None:
             self.macros = opts.defaults
         else:
             self.macros = macros

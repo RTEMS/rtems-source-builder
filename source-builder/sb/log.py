@@ -86,9 +86,16 @@ def flush(log = None):
     elif default is not None:
         default.flush()
 
+def tail(log = None):
+    if log is not None:
+        return log.tail
+    if default is not None:
+        return default.tail
+    return 'No log output'
+
 class log:
     """Log output to stdout or a file."""
-    def __init__(self, streams = None, tail_size = 100):
+    def __init__(self, streams = None, tail_size = 200):
         self.tail = []
         self.tail_size = tail_size
         self.fhs = [None, None]

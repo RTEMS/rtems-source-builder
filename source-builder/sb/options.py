@@ -303,6 +303,10 @@ class command_line:
             repo_valid = '1'
             repo_head = repo.head()
             repo_clean = not repo.dirty()
+            repo_remotes = '%{nil}'
+            remotes = repo.remotes()
+            if 'origin' in remotes:
+                repo_remotes = '%s/origin' % (remotes['origin']['url'])
             repo_id = repo_head
             if not repo_clean:
                 repo_id += '-modified'
@@ -311,11 +315,13 @@ class command_line:
             repo_valid = '0'
             repo_head = '%{nil}'
             repo_clean = '%{nil}'
+            repo_remotes = '%{nil}'
             repo_id = 'no-repo'
             repo_mail = None
         self.defaults['_sbgit_valid'] = repo_valid
         self.defaults['_sbgit_head']  = repo_head
         self.defaults['_sbgit_clean'] = str(repo_clean)
+        self.defaults['_sbgit_remotes'] = str(repo_remotes)
         self.defaults['_sbgit_id']    = repo_id
         if repo_mail is not None:
             self.defaults['_sbgit_mail'] = repo_mail
@@ -462,9 +468,13 @@ class command_line:
     def download_disabled(self):
         return self.opts['no-download'] != '0'
 
+    def info(self):
+        s = ' Command Line: %s%s' % (' '.join(self.argv), os.linesep)
+        s += ' Python: %s' % (sys.version.replace('\n', ''))
+        return s
+
     def log_info(self):
-        log.output(' Command Line: %s' % (' '.join(self.argv)))
-        log.output(' Python: %s' % (sys.version.replace('\n', '')))
+        log.output(self.info())
 
 def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc'):
     """

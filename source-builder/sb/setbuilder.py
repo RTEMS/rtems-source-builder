@@ -33,6 +33,7 @@ try:
     import build
     import check
     import error
+    import ereport
     import log
     import mailer
     import options
@@ -423,6 +424,10 @@ def list_bset_cfg_files(opts, configs):
 
 def run():
     import sys
+    ec = 0
+    opts = None
+    b = None
+    erheader = None
     try:
         optargs = { '--list-configs':  'List available configurations',
                     '--list-bsets':    'List available build sets',
@@ -450,25 +455,34 @@ def run():
             for bset in opts.params():
                 b = buildset(bset, configs, opts)
                 b.build(deps)
-                del b
+                b = None
         if deps is not None:
             c = 0
             for d in sorted(set(deps)):
                 c += 1
                 print 'dep[%d]: %s' % (c, d)
     except error.general, gerr:
+        erheader = 'Build: %s' % (gerr)
         log.notice(str(gerr))
-        print >> sys.stderr, 'Build FAILED'
-        sys.exit(1)
+        log.stderr('Build FAILED')
+        ec = 1
     except error.internal, ierr:
+        erheader = 'Build: %s' % (ierr)
         log.notice(str(ierr))
-        sys.exit(1)
+        log.stderr('Internal Build FAILED')
+        ec = 1
     except error.exit, eerr:
         pass
     except KeyboardInterrupt:
         log.notice('abort: user terminated')
-        sys.exit(1)
-    sys.exit(0)
+        ec = 1
+    if (ec != 0 and erheader and opts and b) or (opts and opts.dry_run()):
+        if opts.dry_run():
+            bset = 'dry-run'
+        else:
+            bset = b.bset
+        ereport.generate('rsb-report-%s.txt' % (bset), opts, erheader)
+    sys.exit(ec)
 
 if __name__ == "__main__":
     run()
