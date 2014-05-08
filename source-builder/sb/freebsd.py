@@ -83,7 +83,7 @@ def load():
         cxx = '/usr/bin/c++'
         if check.check_exe(cxx, cxx):
             defines['__cxx'] = cxx
-            #defines['optflags_build'] = '-O2 -pipe -fbracket-depth=1024'
+            defines['optflags_build'] = '-O2 -pipe -fbracket-depth=1024'
         cvs = 'cvs'
         if check.check_exe(cvs, cvs):
             defines['__cvs'] = cvs
