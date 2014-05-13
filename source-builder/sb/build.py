@@ -41,6 +41,7 @@ try:
     import log
     import options
     import path
+    import sources
     import version
 except KeyboardInterrupt:
     print 'abort: user terminated'
@@ -131,63 +132,6 @@ class build:
         if not self.opts.dry_run():
             path.mkdir(mkpath)
 
-    def source(self, package, source_tag):
-        #
-        # Scan the sources found in the config file for the one we are
-        # after. Infos or tags are lists. Merge in any macro defined
-        # sources as these may be overridden by user loaded macros.
-        #
-        sources = package.sources()
-        url = None
-        for s in sources:
-            tag = s[len('source'):]
-            if tag.isdigit():
-                if int(tag) == source_tag:
-                    url = sources[s][0]
-                    break
-        if url is None:
-            raise error.general('source tag not found: source%d' % (source_tag))
-        source = download.parse_url(url, '_sourcedir', self.config, self.opts)
-        download.get_file(source['url'], source['local'], self.opts, self.config)
-        if 'symlink' in source:
-            source['script'] = '%%{__ln_s} %s ${source_dir_%d}' % (source['symlink'], source_tag)
-        elif 'compressed' in source:
-            source['script'] = source['compressed'] + ' ' + \
-                source['local'] + ' | %{__tar_extract} -'
-        else:
-            source['script'] = '%{__tar_extract} ' + source['local']
-        return source
-
-    def patch(self, package, args):
-        #
-        # Scan the patches found in the config file for the one we are
-        # after. Infos or tags are lists.
-        #
-        patches = package.patches()
-        url = None
-        for p in patches:
-            if args[0][1:].lower() == p:
-                url = patches[p][0]
-                break
-        if url is None:
-            raise error.general('patch tag not found: %s' % (args[0]))
-        #
-        # Parse the URL first in the source builder's patch directory.
-        #
-        patch = download.parse_url(url, '_patchdir', self.config, self.opts)
-        #
-        # If not in the source builder package check the source directory.
-        #
-        if not path.exists(patch['local']):
-            patch = download.parse_url(url, '_patchdir', self.config, self.opts)
-        download.get_file(patch['url'], patch['local'], self.opts, self.config)
-        if 'compressed' in patch:
-            patch['script'] = patch['compressed'] + ' ' +  patch['local']
-        else:
-            patch['script'] = '%{__cat} ' + patch['local']
-        patch['script'] += ' | %{__patch} ' + ' '.join(args[1:])
-        self.script.append(self.config.expand(patch['script']))
-
     def canadian_cross(self):
         _host = self.config.expand('%{_host}')
         _build = self.config.expand('%{_build}')
@@ -195,16 +139,54 @@ class build:
         return self.config.defined('%{allow_cxc}') and \
             _host != _build and _host != _target
 
-    def setup(self, package, args):
-        log.output('prep: %s: %s' % (package.name(), ' '.join(args)))
-        opts, args = getopt.getopt(args[1:], 'qDcTn:b:a:')
-        source_tag = 0
+    def source(self, name):
+        #
+        # Return the list of sources. Merge in any macro defined sources as
+        # these may be overridden by user loaded macros.
+        #
+        _map = 'source-%s' % (name)
+        src_keys = self.macros.map_keys(_map)
+        if len(src_keys) == 0:
+            raise error.general('no source set: %s (%s)' % (name, _map))
+        srcs = []
+        for s in src_keys:
+            sm = self.macros.get(s, globals = False, maps = _map)
+            if sm is None:
+                raise error.internal('source macro not found: %s in %s (%s)' % \
+                                         (s, name, _map))
+            url = self.config.expand(sm[2])
+            src = download.parse_url(url, '_sourcedir', self.config, self.opts)
+            download.get_file(src['url'], src['local'], self.opts, self.config)
+            if 'symlink' in src:
+                src['script'] = '%%{__ln_s} %s ${source_dir_%s}' % (src['symlink'], name)
+            elif 'compressed' in src:
+                #
+                # Zip files unpack as well so do not use tar.
+                #
+                src['script'] = '%s %s' % (src['compressed'], src['local'])
+                if src['compressed-type'] != 'zip':
+                    src['script'] += ' | %{__tar_extract} -'
+            else:
+                src['script'] = '%{__tar_extract} %s' % (src['local'])
+            srcs += [src]
+        return srcs
+
+    def source_setup(self, package, args):
+        log.output('source setup: %s: %s' % (package.name(), ' '.join(args)))
+        setup_name = args[1]
+        args = args[1:]
+        try:
+            opts, args = getopt.getopt(args[1:], 'qDcn:b:a:')
+        except getopt.GetoptError, ge:
+            raise error.general('source setup error: %s' % str(ge))
         quiet = False
-        unpack_default_source = True
         unpack_before_chdir = True
         delete_before_unpack = True
         create_dir = False
-        name = None
+        deleted_dir = False
+        created_dir = False
+        changed_dir = False
+        opt_name = None
         for o in opts:
             if o[0] == '-q':
                 quiet = True
@@ -212,50 +194,82 @@ class build:
                 delete_before_unpack = False
             elif o[0] == '-c':
                 create_dir = True
-            elif o[0] == '-T':
-                unpack_default_source = False
             elif o[0] == '-n':
-                name = o[1]
+                opt_name = o[1]
             elif o[0] == '-b':
                 unpack_before_chdir = True
-                if not o[1].isdigit():
-                    raise error.general('setup -b source tag is not a number: %s' % (o[1]))
-                source_tag = int(o[1])
             elif o[0] == '-a':
                 unpack_before_chdir = False
-                if not o[1].isdigit():
-                    raise error.general('setup -a source tag is not a number: %s' % (o[1]))
-                source_tag = int(o[1])
-        source0 = None
-        source = self.source(package, source_tag)
-        if name is None:
-            if source:
-                name = source['name']
-            else:
-                raise error.general('setup source tag not found: %d' % (source_tag))
-        name = self._name_(name)
-        self.script.append(self.config.expand('cd %{_builddir}'))
-        if delete_before_unpack:
-            self.script.append(self.config.expand('%{__rm} -rf ' + name))
-        if create_dir:
-            self.script.append(self.config.expand('%{__mkdir_p} ' + name))
-        #
-        # If -a? then change directory before unpacking.
-        #
-        if not unpack_before_chdir or create_dir:
+        name = None
+        for source in self.source(setup_name):
+            if name is None:
+                if opt_name is None:
+                    if source:
+                        opt_name = source['name']
+                    else:
+                        raise error.general('setup source tag not found: %d' % (source_tag))
+                else:
+                    name = opt_name
+                name = self._name_(name)
+            self.script.append(self.config.expand('cd %{_builddir}'))
+            if not deleted_dir and  delete_before_unpack:
+                self.script.append(self.config.expand('%{__rm} -rf ' + name))
+                deleted_dir = True
+            if not created_dir and create_dir:
+                self.script.append(self.config.expand('%{__mkdir_p} ' + name))
+                created_dir = True
+            if not changed_dir and (not unpack_before_chdir or create_dir):
+                self.script.append(self.config.expand('cd ' + name))
+                changed_dir = True
+            self.script.append(self.config.expand(source['script']))
+        if not changed_dir and (unpack_before_chdir and not create_dir):
             self.script.append(self.config.expand('cd ' + name))
-        #
-        # Unpacking the source. Note, treated the same as -a0.
-        #
-        if unpack_default_source and source_tag != 0:
-            source0 = self.source(package, 0)
-            if source0 is None:
-                raise error.general('no setup source0 tag found')
-            self.script.append(self.config.expand(source0['script']))
-        self.script.append(self.config.expand(source['script']))
-        if unpack_before_chdir and not create_dir:
-            self.script.append(self.config.expand('cd ' + name))
+            changed_dir = True
         self.script.append(self.config.expand('%{__setup_post}'))
+
+    def patch_setup(self, package, args):
+        name = args[1]
+        args = args[2:]
+        _map = 'patch-%s' % (name)
+        default_opts = ' '.join(args)
+        patch_keys = self.macros.map_keys(_map)
+        patches = []
+        for p in patch_keys:
+            pm = self.macros.get(p, globals = False, maps = _map)
+            if pm is None:
+                raise error.internal('patch macro not found: %s in %s (%s)' % \
+                                         (p, name, _map))
+            opts = []
+            url = []
+            for pp in pm[2].split():
+                if len(url) == 0 and pp[0] == '-':
+                    opts += [pp]
+                else:
+                    url += [pp]
+            if len(url) == 0:
+                raise error.general('patch URL not found: %s' % (' '.join(args)))
+            if len(opts) == 0:
+                opts = default_opts
+            else:
+                opts = ' '.join(opts)
+            opts = self.config.expand(opts)
+            url = self.config.expand(' '.join(url))
+            #
+            # Parse the URL first in the source builder's patch directory.
+            #
+            patch = download.parse_url(url, '_patchdir', self.config, self.opts)
+            #
+            # If not in the source builder package check the source directory.
+            #
+            if not path.exists(patch['local']):
+                patch = download.parse_url(url, '_patchdir', self.config, self.opts)
+            download.get_file(patch['url'], patch['local'], self.opts, self.config)
+            if 'compressed' in patch:
+                patch['script'] = patch['compressed'] + ' ' +  patch['local']
+            else:
+                patch['script'] = '%{__cat} ' + patch['local']
+            patch['script'] += ' | %%{__patch} %s' % (opts)
+            self.script.append(self.config.expand(patch['script']))
 
     def run(self, command, shell_opts = '', cwd = None):
         e = execute.capture_execution(log = log.default, dump = self.opts.quiet())
@@ -278,12 +292,18 @@ class build:
         if _prep:
             for l in _prep:
                 args = l.split()
-                if args[0] == '%setup':
-                    self.setup(package, args)
-                elif args[0].startswith('%patch'):
-                    self.patch(package, args)
-                else:
-                    self.script.append(' '.join(args))
+                if len(args):
+                    if args[0] == '%setup':
+                        if len(args) == 1:
+                            raise error.general('invalid %%setup directive: %s' % (' '.join(args)))
+                        if args[1] == 'source':
+                            self.source_setup(package, args[1:])
+                        elif args[1] == 'patch':
+                            self.patch_setup(package, args[1:])
+                    elif args[0].startswith('%patch'):
+                        self.patch(package, args)
+                    else:
+                        self.script.append(' '.join(args))
 
     def build(self, package):
         self.script.append('echo "==> clean %{buildroot}: ${SB_BUILD_ROOT}"')

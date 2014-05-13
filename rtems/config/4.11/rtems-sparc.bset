@@ -20,7 +20,7 @@
 #
 # GDB patche
 #
-%define rtems_gdb_patch1 %{rtems_gdb_patches}/sparc/gdb-7.6.2-sis-output-nouartrx.diff
+%patch add gdb %{rtems_gdb_patches}/sparc/gdb-7.6.2-sis-output-nouartrx.diff
 
 #
 # Tools configuration.

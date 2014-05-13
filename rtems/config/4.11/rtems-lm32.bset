@@ -20,7 +20,7 @@
 #
 # Fix the simulator UART interface.
 #
-%define rtems_gdb_patch3 %{rtems_gdb_patches}/lm32/gdb-sim-lm32uart.diff
+%patch add gdb %{rtems_gdb_patches}/lm32/gdb-sim-lm32uart.diff
 
 #
 # Tools configuration.

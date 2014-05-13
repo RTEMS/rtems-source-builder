@@ -40,12 +40,16 @@ def _http_parser(source, config, opts):
     #
     esl = source['ext'].split('.')
     if esl[-1:][0] == 'gz':
+        source['compressed-type'] = 'gzip'
         source['compressed'] = '%{__gzip} -dc'
     elif esl[-1:][0] == 'bz2':
+        source['compressed-type'] = 'bzip2'
         source['compressed'] = '%{__bzip2} -dc'
     elif esl[-1:][0] == 'zip':
+        source['compressed-type'] = 'zip'
         source['compressed'] = '%{__zip} -u'
     elif esl[-1:][0] == 'xz':
+        source['compressed-type'] = 'xz'
         source['compressed'] = '%{__xz} -dc'
 
 def _patchworks_parser(source, config, opts):
@@ -138,6 +142,9 @@ def parse_url(url, pathkey, config, opts):
     source['path'] = url[:colon + 3] + path.dirname(url[colon + 3:])
     source['file'] = path.basename(url)
     source['name'], source['ext'] = path.splitext(source['file'])
+    if source['name'].endswith('.tar'):
+        source['name'] = source['name'][:-4]
+        source['ext'] = '.tar' + source['ext']
     #
     # Get the file. Checks the local source directory first.
     #

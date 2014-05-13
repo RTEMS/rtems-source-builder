@@ -37,6 +37,7 @@ try:
     import options
     import path
     import pkgconfig
+    import sources
 except KeyboardInterrupt:
     print 'user terminated'
     sys.exit(1)
@@ -580,6 +581,9 @@ class file:
             log.trace('config: %s: _select: %s %s %r' % \
                           (self.init_name, r, ls[1], self.macros.maps()))
 
+    def _sources(self, ls):
+        return sources.process(ls[0][1:], ls[1:], self.macros, self._error)
+
     def _define(self, config, ls):
         if len(ls) <= 1:
             log.warning('invalid macro definition')
@@ -794,6 +798,14 @@ class file:
                     if isvalid:
                         self._disable(config, ls)
                 elif ls[0] == '%select':
+                    if isvalid:
+                        self._select(config, ls)
+                elif ls[0] == '%source' or ls[0] == '%patch':
+                    if isvalid:
+                        d = self._sources(ls)
+                        if d is not None:
+                            return ('data', d)
+                elif ls[0] == '%patch':
                     if isvalid:
                         self._select(config, ls)
                 elif ls[0] == '%error':

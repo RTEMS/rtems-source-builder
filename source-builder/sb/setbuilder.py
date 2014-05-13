@@ -39,6 +39,7 @@ try:
     import options
     import path
     import reports
+    import sources
     import version
 except KeyboardInterrupt:
     print 'abort: user terminated'
@@ -248,9 +249,10 @@ class buildset:
                         self.macros.undefine(ls[1].strip())
                     elif ls[0] == '%include':
                         configs += self.parse(ls[1].strip())
-                    else:
-                        raise error.general('%s:%d: invalid directive in build set files: %s' % \
-                                                (self.bset, lc, l))
+                    elif ls[0] == '%patch' or ls[0] == '%source':
+                        def err(msg):
+                            raise error.general('%s:%d: %s' % (self.bset, lc, msg))
+                        sources.process(ls[0][1:], ls[1:], self.macros, err)
                 else:
                     l = l.strip()
                     c = build.find_config(l, self.configs)

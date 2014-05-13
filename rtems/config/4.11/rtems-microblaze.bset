@@ -20,12 +20,12 @@
 #
 # GCC 4.7.2 Microblaze Patch
 #
-%define rtems_gcc_patch2 %{rtems_gcc_patches}/microblaze/gcc-4.7.2-microblaze-ldscript-2.diff
+%patch add gcc %{rtems_gcc_patches}/microblaze/gcc-4.7.2-microblaze-ldscript-2.diff
 
 #
 # GCC 4.8.2 Microblaze Patch for libgcc.
 #
-%define rtems_gcc_patch3 %{rtems_gcc_patches}/microblaze/rtems-gcc-microblaze-libgcc-20131017.diff
+%patch add gcc %{rtems_gcc_patches}/microblaze/rtems-gcc-microblaze-libgcc-20131017.diff
 
 #
 # Tools configuration.

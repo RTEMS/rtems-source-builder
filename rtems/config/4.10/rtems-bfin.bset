@@ -20,7 +20,7 @@
 #
 # GDB simulator fix for the sed command.
 #
-%define rtems_gdb_patch2 %{rtems_gdb_patches}/bfin/gdb-7.3.1-bfin-sim-fix-sed-20130319.diff
+%patch add gdb %{rtems_gdb_patches}/bfin/gdb-7.3.1-bfin-sim-fix-sed-20130319.diff
 
 #
 # Tools configuration.

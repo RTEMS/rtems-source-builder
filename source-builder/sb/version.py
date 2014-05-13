@@ -24,7 +24,7 @@
 #
 
 major = 0
-minor = 2
+minor = 3
 revision = 0
 
 def str():

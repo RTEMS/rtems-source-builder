@@ -20,7 +20,7 @@
 #
 # GCC 4.8 V850 Patch
 #
-%define rtems_gcc_patch3 %{rtems_gcc_patches}/v850/gcc-4.8.2-rtems4.11-20140349.diff
+%patch add gcc %{rtems_gcc_patches}/v850/gcc-4.8.2-rtems4.11-20140349.diff
 
 #
 # Tools configuration.

@@ -84,7 +84,10 @@ class macros:
         text = ''
         for f in self.files:
             text += '> %s%s' % (f, os.linesep)
-        for map in self.macros:
+        maps = sorted(self.macros)
+        maps.remove('global')
+        maps += ['global']
+        for map in maps:
             text += '[%s]%s' % (map, os.linesep)
             for k in sorted(self.macros[map].keys()):
                 d = self.macros[map][k]
@@ -162,8 +165,11 @@ class macros:
     def __len__(self):
         return len(self.keys())
 
-    def keys(self):
-        keys = self.macros['global'].keys()
+    def keys(self, globals = True):
+        if globals:
+            keys = self.macros['global'].keys()
+        else:
+            keys = []
         for rm in self.get_read_maps():
             for mk in self.macros[rm]:
                 if self.macros[rm][mk][1] == 'undefine':
@@ -180,8 +186,24 @@ class macros:
             return False
         return True
 
+    def create_map(self, _map):
+        if _map not in self.macros:
+            self.macros[_map] = {}
+
+    def delete_map(self, _map):
+        if _map in self.macros:
+            self.macros.pop(_map, None)
+
     def maps(self):
         return self.macros.keys()
+
+    def map_keys(self, _map):
+        if _map in self.macros:
+            return self.macros[_map].keys()
+        return []
+
+    def map_num_keys(self, _map):
+        return len(self.map_keys(_map))
 
     def get_read_maps(self):
         return [rm[5:] for rm in self.read_maps]
@@ -348,14 +370,21 @@ class macros:
         raise error.general('opening macro file: %s' % \
                                 (path.host(self.expand(name))))
 
-    def get(self, key):
+    def get(self, key, globals = True, maps = None):
         if type(key) is not str:
             raise TypeError('bad key type: %s' % (type(key)))
         key = self.key_filter(key)
-        for rm in self.get_read_maps():
+        if maps is None:
+            maps = self.get_read_maps()
+        else:
+            if type(maps) is str:
+                maps = [maps]
+            if type(maps) != list:
+                raise TypeError('bad maps type: %s' % (type(map)))
+        for rm in maps:
             if key in self.macros[rm]:
                 return self.macros[rm][key]
-        if key in self.macros['global']:
+        if globals and key in self.macros['global']:
             return self.macros['global'][key]
         return None
 
@@ -408,10 +437,10 @@ class macros:
                 expanded = True
         return _str
 
-    def find(self, regex):
+    def find(self, regex, globals = True):
         what = re.compile(regex)
         keys = []
-        for key in self.keys():
+        for key in self.keys(globals):
             if what.match(key):
                 keys += [key]
         return keys
@@ -439,6 +468,9 @@ class macros:
             self.write_map = map
             return True
         return False
+
+    def unset_write_map(self):
+        self.write_map = 'global'
 
     def lock_read_map(self):
         self.read_map_locked = True
