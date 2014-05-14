@@ -427,9 +427,6 @@ def list_bset_cfg_files(opts, configs):
 def run():
     import sys
     ec = 0
-    opts = None
-    b = None
-    erheader = None
     try:
         optargs = { '--list-configs':  'List available configurations',
                     '--list-bsets':    'List available build sets',
@@ -464,13 +461,9 @@ def run():
                 c += 1
                 print 'dep[%d]: %s' % (c, d)
     except error.general, gerr:
-        erheader = 'Build: %s' % (gerr)
-        log.notice(str(gerr))
         log.stderr('Build FAILED')
         ec = 1
     except error.internal, ierr:
-        erheader = 'Build: %s' % (ierr)
-        log.notice(str(ierr))
         log.stderr('Internal Build FAILED')
         ec = 1
     except error.exit, eerr:
@@ -478,12 +471,6 @@ def run():
     except KeyboardInterrupt:
         log.notice('abort: user terminated')
         ec = 1
-    if (ec != 0 and erheader and opts and b) or (opts and opts.dry_run()):
-        if opts.dry_run():
-            bset = 'dry-run'
-        else:
-            bset = b.bset
-        ereport.generate('rsb-report-%s.txt' % (bset), opts, erheader)
     sys.exit(ec)
 
 if __name__ == "__main__":

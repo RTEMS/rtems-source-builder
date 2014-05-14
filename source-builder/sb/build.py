@@ -109,6 +109,9 @@ class build:
         else:
             return name
 
+    def _generate_report_(self, header):
+        ereport.generate('rsb-report-%s.txt' % self.macros['name'], self.opts, header)
+
     def __init__(self, name, create_tar_files, opts, macros = None):
         self.opts = opts
         if macros is None:
@@ -386,29 +389,44 @@ class build:
         if package.disabled():
             log.notice('package: nothing to build')
         else:
-            name = package.name()
-            if self.canadian_cross():
-                log.notice('package: (Cxc) %s' % (name))
-            else:
-                log.notice('package: %s' % (name))
-                log.trace('---- macro maps %s' % ('-' * 55))
-                log.trace('%s' % (str(self.config.macros)))
-                log.trace('-' * 70)
-            self.script.reset()
-            self.script.append(self.config.expand('%{___build_template}'))
-            self.script.append('echo "=> ' + name + ':"')
-            self.prep(package)
-            self.build_package(package)
-            if not self.opts.dry_run():
-                self.builddir()
-                sn = path.join(self.config.expand('%{_builddir}'), 'doit')
-                log.output('write script: ' + sn)
-                self.script.write(sn)
+            try:
+                name = package.name()
                 if self.canadian_cross():
-                    log.notice('building: (Cxc) %s' % (name))
+                    log.notice('package: (Cxc) %s' % (name))
                 else:
-                    log.notice('building: %s' % (name))
-                self.run(sn)
+                    log.notice('package: %s' % (name))
+                    log.trace('---- macro maps %s' % ('-' * 55))
+                    log.trace('%s' % (str(self.config.macros)))
+                    log.trace('-' * 70)
+                self.script.reset()
+                self.script.append(self.config.expand('%{___build_template}'))
+                self.script.append('echo "=> ' + name + ':"')
+                self.prep(package)
+                self.build_package(package)
+                if not self.opts.dry_run():
+                    self.builddir()
+                    sn = path.join(self.config.expand('%{_builddir}'), 'doit')
+                    log.output('write script: ' + sn)
+                    self.script.write(sn)
+                    if self.canadian_cross():
+                        log.notice('building: (Cxc) %s' % (name))
+                    else:
+                        log.notice('building: %s' % (name))
+                    self.run(sn)
+            except error.general, gerr:
+                log.notice(str(gerr))
+                log.stderr('Build FAILED')
+                self._generate_report_('Build: %s' % (gerr))
+                raise
+            except error.internal, ierr:
+                log.notice(str(ierr))
+                log.stderr('Internal Build FAILED')
+                self._generate_report_('Build: %s' % (ierr))
+                raise
+            except:
+                raise
+            if self.opts.dry_run():
+                self._generate_report_('Build: dry run')
 
     def name(self):
         packages = self.config.packages()
@@ -454,9 +472,6 @@ def find_config(config, configs):
 
 def run(args):
     ec = 0
-    opts = None
-    b = None
-    erheader = None
     try:
         optargs = { '--list-configs': 'List available configurations' }
         opts = options.load(args, optargs)
@@ -479,13 +494,9 @@ def run(args):
                 b.make()
                 b = None
     except error.general, gerr:
-        erheader = 'Build: %s' % (gerr)
-        log.notice(str(gerr))
         log.stderr('Build FAILED')
         ec = 1
     except error.internal, ierr:
-        erheader = 'Build: %s' % (ierr)
-        log.notice(str(ierr))
         log.stderr('Internal Build FAILED')
         ec = 1
     except error.exit, eerr:
@@ -493,12 +504,6 @@ def run(args):
     except KeyboardInterrupt:
         log.notice('abort: user terminated')
         ec = 1
-    if (ec != 0 and erheader and opts and b) or (opts and opts.dry_run()):
-        if opts.dry_run():
-            bname = 'dry-run'
-        else:
-            bname = b.name()
-        ereport.generate('rsb-report-%s.txt' % (bname), opts, erheader)
     sys.exit(ec)
 
 if __name__ == "__main__":
