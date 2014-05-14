@@ -167,7 +167,7 @@ class build:
                 if src['compressed-type'] != 'zip':
                     src['script'] += ' | %{__tar_extract} -'
             else:
-                src['script'] = '%{__tar_extract} %s' % (src['local'])
+                src['script'] = '%%{__tar_extract} %s' % (src['local'])
             srcs += [src]
         return srcs
 
