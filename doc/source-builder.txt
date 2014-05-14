@@ -9,7 +9,7 @@ RTEMS Source Builder
 image:images/rtemswhitebg.jpg["RTEMS",width="30%"]
 
 Chris Johns <chrisj@rtems.org>
-1.6, April 2014
+1.7, May 2014
 
 RTEMS Tools From Source
 -----------------------
@@ -461,7 +461,8 @@ Build Set: Time 0:15:25.92873
 <3> Creating the build set tar file.
 
 You can also suppress installing the files using the `--no-install` option to
-the `sb-set-builder` command.
+the `sb-set-builder` command. This is usefu if your prefix is not accessiable
+when building Canadian cross compiled tool sets.
 
 -------------------------------------------------------------
 $ ../source-builder/sb-set-builder --log=l-sparc.txt \
@@ -608,22 +609,36 @@ Bugs, Crashes, and Build Failures
 ---------------------------------
 
 The RTEMS Source Builder is a Python program and every care is taken to test
-the code however bugs, crashes, and build failure can and do happen. If you
-find a bug please report it via the RTEMS Bug tracker tool Bugzilla:
+the code however bugs, crashes, and build failures can and do happen. If you
+find a bug please report it via the RTEMS Bug tracker tool Bugzilla or via
+email on the RTEMS Users list. RTEMS's bugzilla is found at
+https://www.rtems.org/bugzilla/.
 
-https://www.rtems.org/bugzilla/
+Please include the generated RSB report. If you see the following a report has
+been generated:
 
-or via email on the RTEMS Users list.
+-------------------------------------------------------------
+ ...
+ ...
+Build FAILED <1>
+  See error report: rsb-report-4.11-rtems-lm32.txt <2>
+-------------------------------------------------------------
+<1> The build has failed.
+<2> The report's file name.
 
-Please include the:
+The generated report contains the command line, version of the RSB, your host
++uname+ details, the version of Python and the last 200 lines of the log.
+
+If there is no report please send for some reason and something has falied
+please report the following:
 
 . Command line,
 . The git hash,
 . Host details with the output of the +uname -a+ command,
 . If you have made any modifications.
 
-If there is a crash please cut and paste the Python backtrace into the bug
-report. If the tools fail to build please locate the first error in the log
+If there is a Python crash please cut and paste the Python backtrace into the
+bug report. If the tools fail to build please locate the first error in the log
 file. This can be difficult to find on hosts with many cores so it sometimes
 pays to run the command with the +--jobs=none+ option to get a log that is
 correctly sequenced. If searching the log file seach for +error:+ and the error
@@ -777,32 +792,37 @@ Patches in the RTEMS Tools repository need to be submitted to the upstream
 project. It should not be a clearing house for patches that will not be
 accepted upstream.
 
-Patches are numbered and the number of available slots depends on the package's
-configuration file. For example +source-builder/config/gcc-common-1.cfg+ has 2
-groups of patch numbers, 0 to 9 for GCC and 10 to 19 for newlib. An example is:
+Patches are added to a component's name and in the +%prep:+ section the patches
+can be set up, meaning they are applied to source. The patches are applied in
+the order they are added. If there is a dependency make sure you order the
+patches correctly when you add them. You can add any number of patches and the
+RSB will handle them efficently.
+
+Patches can have options. These are added before the patch URL. If no options
+are provided the patch's setup default options are used.
+
+Patches can be declared in build set up files.
+
+This examples shows how to declare a patch for gdb in the +lm32+ architecture:
 
 -------------------------------------------------------------
-%{?patch0:%patch0 %{?patch0_opts:%{patch0_opts}}%{!?patch0_opts:-p1}}
+%patch add <1> gdb <2> %{rtems_gdb_patches}/lm32/gdb-sim-lm32uart.diff <3>
 -------------------------------------------------------------
+<1> The patch's +add+ command.
+<2> The group of patches this patch belongs too.
+<3> The patch's URL. It is downloaded from here.
 
-The +patch0+ is applied if defined and the option can also be optionally
-defined and passed to patch. An example is a patch to the moxie binutils:
+The patches are applied when a patch +setup+ command is issued in the +%prep:+
+section. All patches in the group are applied. To apply the GDB patch above
+use:
 
 -------------------------------------------------------------
-#
-# Moxie Binutil and GDB patches
-#
-%define rtems_binutils_patch1 %{rtems_binutils_patches}/moxie/binutils-2.22-rtems4.11-moxie-20130214.diff
-%define rtems_binutils_patch2 %{rtems_binutils_patches}/moxie/binutils-2.22-rtems4.11-moxie-20130516.diff
+%patch setup <1> gdb <2> -p1 <3>
 -------------------------------------------------------------
-
-These patches use the default +-p1+ option to patch. Note the patch file name
-includes all the details so it is easy to track and locate when in the +patches+
-directory after download.
-
-The +rtems-4.11-base.bset+ provides paths to the RTEMS Tools repository for
-each common tools package the RSB builds. It is recommended you use
-them. Please check the file for details.
+<1> The patch's +setup+ command.
+<2> The group of patches to apply.
+<3> The patch group's default options. If no option is given with the patch
+these options are used.
 
 Architecture specific patches live in the architecture build set file isolating
 the patch to that specific architecture. If a patch is common to a tool it
@@ -853,6 +873,11 @@ code such as _libc_ on the build host.
 
 TIP: Make sure the host's cross-compiler tools are in your path before run the
 RSB build command.
+
+TIP: Canadian Cross built tools will not run on the machine being used to build
+them so you should provide the +--bset-tar-files+ and +--no-install+
+options. The option to not install the files lets you provide a prefix that
+does not exist or you cannot access.
 
 Command Line
 ~~~~~~~~~~~~
@@ -919,7 +944,7 @@ Source and Patches
 
 The RTEMS Source Builder provides a flexible way to manage source. Source and
 patches are declare in configurations file using the +source+ and +patch+
-directives. There are a single line containing a Universal Resource Location or
+directives. These are a single line containing a Universal Resource Location or
 URL and can contain macros and shell expansions. The <<_prep,%prep>> section
 details the source and patch directives
 
@@ -928,50 +953,63 @@ following schemes are provided:
 
 'http':: Remote access using the HTTP protocol.
 'https':: Remote access using the Secure HTTP protocol.
-'ftp:: Remote access using the FTP protocol.
-'git:: Remote access to a GIT repository.
-'cvs:: Remote access to a CVS repository.
-'file:: Local access to an existing source directory.
+'ftp':: Remote access using the FTP protocol.
+'git':: Remote access to a GIT repository.
+'cvs':: Remote access to a CVS repository.
+'pm':: Remote access to a patch management repository.
+'file':: Local access to an existing source directory.
 
 HTTP, HTTPS, and FTP
 ^^^^^^^^^^^^^^^^^^^^
 
-Remote access to TAR files is provided using HTTP, HTTPS and FTP protocols. The
-full URL provided is used to access the remote file including any query
-components. The URL is parsed to extract the file component and the local
-source directory is checked for that file. If the file is located the remote
-file is not downloaded. Currently no other checks are made. If a download fails
-you need to manually remove the file from the source directory and start the
-build process again.
+Remote access to TAR or ZIP files is provided using HTTP, HTTPS and FTP
+protocols. The full URL provided is used to access the remote file including
+any query components. The URL is parsed to extract the file component and the
+local source directory is checked for that file. If the file is located locally
+the remote file is not downloaded. Currently no other checks are made. If a
+download fails you need to manually remove the file from the source directory
+and start the build process again.
 
-The URL can contain macros. These are expand before issuing the request to
-download the file. The GNU GCC compiler source URL is:
+The URL can contain macros. These are expanded before issuing the request to
+download the file. The standard GNU GCC compiler source URL is:
 
 -------------------------------------------------------------
-Source0: ftp://ftp.gnu.org/gnu/gcc/gcc-%{gcc_version}/gcc-%{gcc_version}.tar.bz2
+%source set<1> gcc<2> ftp://ftp.gnu.org/gnu/gcc/gcc-%{gcc_version}/gcc-%{gcc_version}.tar.bz2
 -------------------------------------------------------------
+<1> The +%source+ command's set command sets the source. The first is set and
+following sets are ignored.
+<2> The source is part of the +gcc+ group.
 
 The type of compression is automatically detected from the file extension. The
 supported compression formats are:
 
-`gz`:: GNU ZIP
-`bzip2`:: BZIP2 ??
-`zip`:: ??
-'xy':: XY ??
+'gz':: GNU ZIP
+'bzip2':: BZIP2
+'zip':: ZIP
+'xy':: XY
 
-The output of the decompression tool is feed to the standard `tar` utility and
-unpacked into the build directory.
+The output of the decompression tool is feed to the standard `tar` utility if
+not a ZIP file and unpacked into the build directory. ZIP files are unpacked by
+the decompression tool and all other files must be in the tar file format.
 
-If the URL references the GitHub API server 'https://api.github.com/' a tarball
-of the specified version is download. For example the URL for the STLINK
-project on GitHub and version is:
+The +%source+ directive typically supports a single source file tar or zip
+file. The +set+ command is used to set the URL for a specific source group. The
+first set command encoutner is registered and any further set commands are
+ignored. This allows you to define a base standard source location and override
+it in build and architecture specific files. You can also add extra source
+files to a group. This is typically done when a collection of source is broken
+down in a number of smaller files and you require the full package. The
+source's +setup+ command must reide in the +%prep:+ section and it unpacks the
+source code ready to be built.
+
+If the source URL references the GitHub API server 'https://api.github.com/' a
+tarball of the specified version is download. For example the URL for the
+STLINK project on GitHub and version is:
 
 -------------------------------------------------------------
 %define stlink_version 3494c11
-Source0: https://api.github.com/repos/texane/stlink/texane-stlink-%{stlink_version}.tar.gz
+%source set stlink https://api.github.com/repos/texane/stlink/texane-stlink-%{stlink_version}.tar.gz
 -------------------------------------------------------------
-
-the TAR file is downloaded and used.
 
 GIT
 ^^^
@@ -992,11 +1030,13 @@ the options with `=`. The options are:
 pass the `hard` argument to force a hard reset.
 
 -------------------------------------------------------------
-Source0: git://gcc.gnu.org/git/gcc.git?branch=gcc-4_7-branch?reset=hard
+%source set gcc git://gcc.gnu.org/git/gcc.git?branch=gcc-4_7-branch?reset=hard
 -------------------------------------------------------------
 
 This will clone the GCC git repository and checkout the 4.7-branch and perform
-a hard reset.
+a hard reset. You can select specific branches and apply patches. The
+repository is cleaned up before each build to avoid various version control
+errors that can arise.
 
 CVS
 ^^^
@@ -1014,7 +1054,7 @@ delimited by `?` and option arguments are delimited from the options with
 `date`:: The CVS date to checkout.
 
 -------------------------------------------------------------
-Source0: cvs://pserver:anoncvs@sourceware.org/cvs/src?module=newlib?src-prefix=src
+%source set newlib cvs://pserver:anoncvs@sourceware.org/cvs/src?module=newlib?src-prefix=src
 -------------------------------------------------------------
 
 Macros and Defaults
@@ -1413,7 +1453,7 @@ packages based on the outer configuration options.
 #
 # Source
 #
-Source0: http://www.jdl.com/software/dtc-v%{dtc_version}.tgz
+%source set dtc http://www.jdl.com/software/dtc-v%{dtc_version}.tgz
 -------------------------------------------------------------
 
 The remainder of the script is broken in to the various phases of a build. They
@@ -1438,10 +1478,10 @@ and that is something the RSB nor you can track easily. The RSB configuration
 script's are a collection of various subtle issues so please ask if you are
 unsure why something is being done a particular way.
 
-The preparation phase will often include a number of conditional patch
-commands. Outer layers can provide patches as needed while being able to use a
-common recipe. Users can override the standard build and supply a custom patch
-for testing using the user macro command line interface.
+The preparation phase will often include source and patch setup commands. Outer
+layers can set the source package and add patches as needed while being able to
+use a common recipe for the build. Users can override the standard build and
+supply a custom patch for testing using the user macro command line interface.
 
 -------------------------------------------------------------
 #
@@ -1450,15 +1490,8 @@ for testing using the user macro command line interface.
 %prep
   build_top=$(pwd)
 
-  %setup -q -n dtc-v%{dtc_version}
-  %{?patch0:%patch0 -p1}
-  %{?patch1:%patch1 -p1}
-  %{?patch2:%patch2 -p1}
-  %{?patch3:%patch3 -p1}
-  %{?patch4:%patch4 -p1}
-  %{?patch5:%patch5 -p1}
-  %{?patch6:%patch6 -p1}
-  %{?patch7:%patch7 -p1}
+  %source setup dtc -q -n dtc-v%{dtc_version}
+  %patch setup dtc -p1
 
   cd ${build_top}
 -------------------------------------------------------------
@@ -1616,6 +1649,8 @@ the package requires.
 Snapshot Testing
 ~~~~~~~~~~~~~~~~
 
+_This section needs to be updated once I sort out snapshot testing._
+
 Testing of release canidates and snapshots is important to those helping
 maintain tool sets. The RTEMS Source Builder helps by providing a simple and
 flexible way to use existing build sets and configuration without needing to
@@ -1634,7 +1669,7 @@ containing:
 -------------------------------------------------------------
 [gcc-4.7-snapshot]
 GCC_Version: none, override, '4.7-20130413'
-Source0:     none, override, 'http://mirrors.kernel.org/sources.redhat.com/gcc/
+Source:     none, override, 'http://mirrors.kernel.org/sources.redhat.com/gcc/
 snapshots/%{gcc_version}/gcc-%{gcc_version}.tar.bz2'
 Patch0:      none, udefine,  ''
 -------------------------------------------------------------
@@ -1678,7 +1713,6 @@ The script language is implemented in terms of macros. The built-in list is:
 +%release+:: The package release. A number that is the release as built by this tool.
 +%version+:: The package's version string.
 +%buildarch+:: The build architecture.
-+%setup+:: Setup a source package.
 +%source+:: Define a source code package. This macro has a number appended.
 +%patch+:: Define a patch. This macro has a is number appended.
 +%echo+:: Print the following string as a message.
@@ -1741,47 +1775,33 @@ user name and `%(date)` will return the current date string.
 The +%prep+ macro starts a block that continues until the next block macro. The
 _prep_ or preparation block defines the setup of the package's source and is a
 mix of RTEMS Source Builder macros and shell scripting. The sequence is
-typically +%setup+ macros for source, +%patch+ macros to patch the source
-mixed with some shell commands to correct any source issues.  A +%prep+ section
-starts with a +%setup+ command. This creates the package source top level
-directory then is followed by the first source file.
+typically +%source+ macros for source, +%patch+ macros to patch the source
+mixed with some shell commands to correct any source issues.
 
 -------------------------------------------------------------
-                     <1>       <2>
-%setup -q -c -T -n %{name}-%{version}
-%setup -q -T -D -n %{name}-%{version} -a0
+              <1>                <2>      <3>
+%source setup gcc -q -c -T -n %{name}-%{version}
 -------------------------------------------------------------
 
-<1> The package's name.
-<2> The version of the package.
+<1> The source group to set up.
+<2> The source's name.
+<3> The version of the source.
 
-The source for a package is declared with the +%source*+ macro where +*+ is
-a number. For example +%source0+ is the source 0 tar file and is defined with
-something similar to this:
+The source set up are declared with the source +set+ and +add+ commands. For
+example:
 
 -------------------------------------------------------------
-Source0: http://ftp.gnu.org/gnu/gdb/gdb-%{gdb_version}.tar.bz2
+%source set gdb http://ftp.gnu.org/gnu/gdb/gdb-%{gdb_version}.tar.bz2
 -------------------------------------------------------------
 
-This URL is the primary location of the GNU GCC source code and the RTEMS
+This URL is the primary location of the GNU GDB source code and the RTEMS
 Source Builder can download the file from this location and by inspecting the
-file extension use +bzip2+ decompression. When the +%prep+ section is processed
-a check of the local +source+ directory is made to see if the file has already
-been downloaded. If not found in the source cache directory the package is
-downloaded from the URL. You can append other base URLs via the command line
-option +--url+. This option accepts a comma delimited list of sites to try.
-
-You can combine the source macro with conditional logic to implement a default
-that can be over-riden in the top level files. This lets you reuse a generic
-build script with different sources. This happens if you have a private source
-package with local modifications. The following example is taken from the
-+gcc-4.8-1.cfg+ build script.
-
--------------------------------------------------------------
-%ifn %{defined Source0}
- Source0: ftp://ftp.gnu.org/gnu/gcc/gcc-%{gcc_version}/gcc-%{gcc_version}.tar.bz2
-%endif
--------------------------------------------------------------
+file extension use +bzip2+ decompression with +tar+. When the +%prep+ section
+is processed a check of the local +source+ directory is made to see if the file
+has already been downloaded. If not found in the source cache directory the
+package is downloaded from the URL. You can append other base URLs via the
+command line option +--url+. This option accepts a comma delimited list of
+sites to try.
 
 You could optionally have a few source files that make up the package. For
 example GNU's GCC was a few tar files for a while and it is now a single tar
@@ -1789,45 +1809,50 @@ file. Support for multiple source files can be conditionally implemented with
 the following scripting:
 
 -------------------------------------------------------------
-%{?source1:%setup -q -T -D -n %{name}-%{version} -a1}
+%source set gcc ftp://ftp.gnu.org/gnu/gcc/gcc-%{gcc_version}/gcc-code-%{gcc_version}.tar.bz2
+%source add gcc ftp://ftp.gnu.org/gnu/gcc/gcc-%{gcc_version}/gcc-g++-%{gcc_version}.tar.bz2
+%source setup gcc -q -T -D -n gcc-%{gcc_version}
 -------------------------------------------------------------
 
-The +source1+ macro value is checked and if present the command string after
-the +:+ is executed. It is common to see a number of these present allowing top
-level configuration files including a base configuration the ability to define
-a number of source packages.
+Separate modules use separate source groups. The GNU GCC compiler for RTEMS
+uses Newlib, MPFR, MPC, and GMP source packages. You define the source with:
 
 -------------------------------------------------------------
-%{?source1:%setup -q -T -D -n %{name}-%{version} -a1}
-%{?source2:%setup -q -T -D -n %{name}-%{version} -a2}
-%{?source3:%setup -q -T -D -n %{name}-%{version} -a3}
+%source set gcc ftp://ftp.gnu.org/gnu/gcc/gcc-%{gcc_version}/gcc-%{gcc_version}.tar.bz2
+%source set newlib ftp://sourceware.org/pub/newlib/newlib-%{newlib_version}.tar.gz
+%source set mpfr http://www.mpfr.org/mpfr-%{mpfr_version}/mpfr-%{mpfr_version}.tar.bz2
+%source set mpc http://www.multiprecision.org/mpc/download/mpc-%{mpc_version}.tar.gz
+%source set gmp ftp://ftp.gnu.org/gnu/gmp/gmp-%{gmp_version}.tar.bz2
+-------------------------------------------------------------
+
+and set up with:
+
+-------------------------------------------------------------
+%source setup gcc -q -n gcc-%{gcc_version}
+%source setup newlib -q -D -n newlib-%{newlib_version}
+%source setup mpfr -q -D -n mpfr-%{mpfr_version}
+%source setup mpc -q -D -n mpc-%{mpc_version}
+%source setup gmp -q -D -n gmp-%{gmp_version}
 -------------------------------------------------------------
 
 Patching also occurs during the preparation stage. Patches are handled in a
-similar way to the source packages. Most patches are based around the top of
-the source tree. This is an example of the patch scripting for the GCC 4.8
-series of compilers:
+similar way to the source packages except you only +add+ patches. Patches are
+applied using the +setup+ command. The +setup+ command takes the default patch
+option. You can provide options with each patch by adding them as arguments
+before the patch URL. Patches with no options uses the +setup+ default.
 
 -------------------------------------------------------------
-cd gcc-%{gcc_version} <1>
-%{?patch0:%patch0 -p1} <2>
-%{?patch1:%patch1 -p1}
-%{?patch2:%patch2 -p1}
-%{?patch3:%patch3 -p1}
-%{?patch4:%patch4 -p1}
-%{?patch5:%patch5 -p1}
-%{?patch6:%patch6 -p1}
-%{?patch7:%patch7 -p1}
-%{?patch8:%patch8 -p1}
-%{?patch9:%patch9 -p1}
-cd .. <3>
+%patch add gdb %{rtems_gdb_patches}/gdb-sim-arange-inline.diff
+%patch add gdb -p0 <1> %{rtems_gdb_patches}/gdb-sim-cgen-inline.diff
 -------------------------------------------------------------
+<1> This patch has a custom option.
 
-<1> Change from the top of the source tree into the package being patched's top
-    directory.
-<2> The conditional macro expansion checks if +%patch0+ is defined and if
-    defined issues the +%patch0" macro giving +-p1+ to the patch command.
-<3> Return back to the top of the source tree.
+To apply these patches:
+
+-------------------------------------------------------------
+%patch setup gdb -p1 <1>
+-------------------------------------------------------------
+<1> The default options.
 
 %build
 ^^^^^^
@@ -2004,11 +2029,47 @@ currently not used in the RTEMS Source Builder and may go away. This macro is
 more important in a real packaging system where the package could end up on the
 wrong architecture.
 
-%setup
-^^^^^^
+%source
+^^^^^^^
 
-The +%setup+ macro sets up the source code tree and is used in the +%prep+
-section of the script. The options are:
+The +%source+ macro has 3 commands that controls what it does. You can +set+
+the source files, +add+ source files to a source group, and +setup+ the source
+file group getting it ready to be used.
+
+Source files are source code files in tar or zip files that are unpacked,
+copied or symbolically linked into the package's build tree. Building a package
+requires one or more dependent packages. These are typically the packages
+source code plus dependent libraries or modules. You can create any number of
+these source groups and set each of them up with a separe source group for each
+needed library or module. Each source group normally has a single tar, zip or
+repository and the +set+ defines this. Some projects split the source code into
+separate tar or zip files and you install them by using the +add+ command.
+
+The first instance of a +set+ command creates the source group and sets the
+source files to be set up. Subsequence +set+ commands for the same source group
+are ignored. this lets you define the standard source files and override them
+for specific releases or snapshots.. To set a source file group:
+
+-------------------------------------------------------------
+%source set gcc <1> ftp://ftp.gnu.org/gnu/gcc/gcc-%{gcc_version}/gcc-%{gcc_version}.tar.bz2
+-------------------------------------------------------------
+<1> The source group is +gcc+.
+
+To add another source package to be installed into the same source tree you use
+the +add+ command:
+
+-------------------------------------------------------------
+%source add gcc ftp://ftp.gnu.org/gnu/gcc/gcc-%{gcc_version}/g++-%{gcc_version}.tar.bz2
+-------------------------------------------------------------
+
+The source +setup+ command can only be issued in the +%prep:+ section. The
+setup is:
+
+-------------------------------------------------------------
+%source gcc setup -q -T -D -n %{name}-%{version}
+-------------------------------------------------------------
+
+Accepted options are:
 
 [horizontal]
 *Switch*:: *Description*
@@ -2027,57 +2088,39 @@ with the +-a+ or +-b+ options.
 +-b <n>+:: The -b option is used to direct %setup to unpack the source archive
 specified on the nth Source: macro line before changing directory into the build
 directory.
-+-a <n>+:: The -a option is used to direct %setup to unpack the source archive
-specified on the nth Source: macro line after changing directory into the build
-directory.
-
-%source
-^^^^^^^
-
-The +%source+ macro is numbered and defines a source tar file used in the
-package. The +%setup+ macro references the packages defined here. A macro is
-defined as:
-
--------------------------------------------------------------
-Source0: ftp://ftp.gnu.org/gnu/gcc/gcc-%{gcc_version}/gcc-%{gcc_version}.tar.bz2
--------------------------------------------------------------
-
-The setup script is:
-
--------------------------------------------------------------
-%setup -q -T -D -n %{name}-%{version} -a0
--------------------------------------------------------------
-
-The +-a0+ means use +%source0+.
 
 %patch
 ^^^^^^
 
-The +%patch+ macro is numbered and can define a patch and in the +%prep+
-section applies the patch. To define a patch append a +:+ followed by the patch
-filename:
+The +%patch+ macro has the same 3 command as the +%source+ command however the
++set+ commands is not really that useful with the with command. You add patches
+with the +add+ command and +setup+ applies the patches. Patch options can be
+added to each patch by placing them before the patch URL. If no patch option is
+provided the default options passed to the +setup+ command are used. An option
+starts with a '-'. The +setup+ command must reside inside the +%prep+ section.
 
--------------------------------------------------------------
-Patch0: gcc-4.7.2-rtems4.11-20121026.diff
--------------------------------------------------------------
+Patches are grouped in a similar way to the +%source+ macro so you can control
+applying a group of patches to a specific source tree.
 
 The +__patchdir+ path is search.
 
-Placing +%patch+ in the +%prep+ section will apply it with any trailing options
-passed to the +patch+ command. This allows the +-p+ option to be passed to
-strip any leading path components from the patch contents.
+
+To add a patch:
 
 -------------------------------------------------------------
-%patch0 -p1
+%patch add gcc <1>  gcc-4.7.2-rtems4.11-20121026.diff
+%patch add gcc -p0 <2>  gcc-4.7.2-rtems4.11-20121101.diff
 -------------------------------------------------------------
+<1> The patch group is +gcc+.
+<2> Option for this specific patch.
 
-You will typically see the patch conditionally used as:
+Placing +%patch setup+ in the +%prep+ section will apply the groups patches.
 
 -------------------------------------------------------------
-%{patch0:%patch0 -p1}
+%patch setup gcc <1>  -p1 <2>
 -------------------------------------------------------------
-
-In this case the patch will only be applied if it is defined.
+<1> The patch group.
+<2> The default option used to apply the patch.
 
 %echo
 ^^^^^
