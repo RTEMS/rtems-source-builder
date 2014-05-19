@@ -18,9 +18,9 @@
 %include rtems-4.11-base.bset
 
 #
-# GDB patche
+# GDB patches
 #
-%patch add gdb %{rtems_gdb_patches}/sparc/gdb-7.6.2-sis-output-nouartrx.diff
+%patch add gdb %{rtems_gdb_patches}/sparc/gdb-7.7-sis-output-nouartrx.diff
 
 #
 # Tools configuration.
