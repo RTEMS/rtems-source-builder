@@ -47,7 +47,7 @@ def _grep(file, pattern):
         matches = [rege.match(l) != None for l in f.readlines()]
         f.close()
     except IOError, err:
-        raise error.general('error reading: %s' % (file))
+        raise error.general('reading: %s' % (file))
     return True in matches
 
 class command:
@@ -58,6 +58,7 @@ class command:
         self.output = None
         self.cmd = cmd
         self.cwd = cwd
+        self.result = None
 
     def runner(self):
 
@@ -84,13 +85,20 @@ class command:
         self.start_time = datetime.datetime.now()
         self.exit_code = 0
         try:
-            self.output = subprocess.check_output(self.cmd, cwd = self.cwd)
-        except subprocess.CalledProcessError, cpe:
-            self.exit_code = cpe.returncode
-            self.output = cpe.output
-        except OSError, ose:
-            raise error.general('bootstrap failed: %s in %s: %s' % \
-                                (' '.join(self.cmd), self.cwd, (str(ose))))
+            try:
+                self.output = subprocess.check_output(self.cmd, cwd = self.cwd)
+            except subprocess.CalledProcessError, cpe:
+                self.exit_code = cpe.returncode
+                self.output = cpe.output
+            except OSError, ose:
+                raise error.general('bootstrap failed: %s in %s: %s' % \
+                                        (' '.join(self.cmd), self.cwd, (str(ose))))
+            except KeyboardInterrupt:
+                pass
+            except:
+                raise
+        except:
+            self.result = sys.exc_info()
         self.end_time = datetime.datetime.now()
 
     def run(self):
@@ -99,6 +107,10 @@ class command:
 
     def is_alive(self):
         return self.thread and self.thread.is_alive()
+
+    def reraise(self):
+        if self.result is not None:
+            raise self.result[0], self.result[1], self.result[2]
 
 class autoreconf:
 
@@ -130,13 +142,14 @@ class autoreconf:
                 b.write('])' + os.linesep)
                 b.close()
             except IOError, err:
-                raise error.general('error writing: %s' % (acinclude))
+                raise error.general('writing: %s' % (acinclude))
 
     def is_alive(self):
         return self.command.is_alive()
 
     def post_process(self):
         if self.command is not None:
+            self.command.reraise()
             if self.command.exit_code != 0:
                 raise error.general('error: autoreconf: %s' % (' '.join(self.command.cmd)))
             makefile = path.join(self.cwd, 'Makefile.am')
@@ -148,7 +161,7 @@ class autoreconf:
                         t.write('timestamp')
                         t.close()
                     except IOError, err:
-                        raise error.general('error writing: %s' % (stamp_h))
+                        raise error.general('writing: %s' % (stamp_h))
 
 def generate(topdir, jobs):
     if type(jobs) is str:
@@ -196,7 +209,7 @@ class ampolish3:
                     p.write(l)
                 p.close()
             except IOError, err:
-                raise error.general('error writing: %s' % (self.preinstall))
+                raise error.general('writing: %s' % (self.preinstall))
 
 def preinstall(topdir, jobs):
     if type(jobs) is str:
