@@ -179,7 +179,7 @@ class build:
         setup_name = args[1]
         args = args[1:]
         try:
-            opts, args = getopt.getopt(args[1:], 'qDcn:b:a:')
+            opts, args = getopt.getopt(args[1:], 'qDcn:ba')
         except getopt.GetoptError, ge:
             raise error.general('source setup error: %s' % str(ge))
         quiet = False
