@@ -93,7 +93,7 @@ def load():
             distro = 'redhat'
     elif distro in ['centos', 'fedora']:
         distro = 'redhat'
-    elif distro in ['Ubuntu', 'ubuntu']:
+    elif distro in ['Ubuntu', 'ubuntu', 'LinuxMint', 'linuxmint']:
         distro = 'debian'
     elif distro in ['Arch']:
         distro = 'arch'
