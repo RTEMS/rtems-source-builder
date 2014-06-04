@@ -28,6 +28,7 @@ import pprint
 import os
 
 import check
+import error
 import execute
 
 def load():
@@ -77,12 +78,24 @@ def load():
     # FreeBSD 10 and above no longer have /usr/bin/cvs, but it can (e.g.) be
     # installed to /usr/local/bin/cvs through the devel/cvs port
     if int(float(version)) >= 10:
+        #
+        # FreeBSD has switched to clang plus gcc. On 10.0 cc is gcc based and
+        # clang is provided however it is not building binutils-2.24.
+        #
         cc = '/usr/bin/cc'
         if check.check_exe(cc, cc):
             defines['__cc'] = cc
+        else:
+            cc = '/usr/bin/clang'
+            if not check.check_exe(cc, cc):
+                raise error.general('no valid cc not found')
         cxx = '/usr/bin/c++'
         if check.check_exe(cxx, cxx):
             defines['__cxx'] = cxx
+        else:
+            cxx = '/usr/bin/clang++'
+            if check.check_exe(cxx, cxx):
+                raise error.general('no valid c++ not found')
             defines['optflags_build'] = '-O2 -pipe -fbracket-depth=1024'
         cvs = 'cvs'
         if check.check_exe(cvs, cvs):
