@@ -1,0 +1,7 @@
+#
+# Build set for Libtool
+#
+
+%define release 1
+
+devel/libtool-2.4.2-1
