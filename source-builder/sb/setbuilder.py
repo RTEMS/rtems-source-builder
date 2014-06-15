@@ -288,6 +288,8 @@ class buildset:
 
     def build(self, deps = None, nesting_count = 0):
 
+        build_error = False
+
         nesting_count += 1
 
         log.trace('_bset: %s: make' % (self.bset))
@@ -295,10 +297,6 @@ class buildset:
 
         if self.opts.get_arg('--mail'):
             mail_report_subject = '%s %s' % (self.bset, self.macros.expand('%{_host}'))
-
-        configs = self.load()
-
-        log.trace('_bset: %s: configs: %s'  % (self.bset, ','.join(configs)))
 
         current_path = os.environ['PATH']
 
@@ -308,6 +306,10 @@ class buildset:
         have_errors = False
 
         try:
+            configs = self.load()
+
+            log.trace('_bset: %s: configs: %s'  % (self.bset, ','.join(configs)))
+
             builds = []
             for s in range(0, len(configs)):
                 b = None
@@ -327,8 +329,12 @@ class buildset:
                     elif configs[s].endswith('.cfg'):
                         mail_report = self.opts.get_arg('--mail')
                         log.trace('_bset: -- %2d %s' % (nesting_count + 1, '-' * 75))
-                        b = build.build(configs[s], self.opts.get_arg('--pkg-tar-files'),
-                                        opts, macros)
+                        try:
+                            b = build.build(configs[s], self.opts.get_arg('--pkg-tar-files'),
+                                            opts, macros)
+                        except:
+                            build_error = True
+                            raise
                         if b.macros.get('%{_disable_reporting}'):
                             mail_report = False
                         if deps is None:
@@ -378,6 +384,8 @@ class buildset:
             for b in builds:
                 del b
         except error.general, gerr:
+            if not build_error:
+                log.stderr(str(gerr))
             raise
         except KeyboardInterrupt:
             mail_report = False
@@ -427,6 +435,7 @@ def list_bset_cfg_files(opts, configs):
 def run():
     import sys
     ec = 0
+    setbuilder_error = False
     try:
         optargs = { '--list-configs':  'List available configurations',
                     '--list-bsets':    'List available build sets',
@@ -452,18 +461,24 @@ def run():
                     not path.ispathwritable(prefix):
                 raise error.general('prefix is not writable: %s' % (path.host(prefix)))
             for bset in opts.params():
+                setbuilder_error = True
                 b = buildset(bset, configs, opts)
                 b.build(deps)
                 b = None
+                setbuilder_error = False
         if deps is not None:
             c = 0
             for d in sorted(set(deps)):
                 c += 1
                 print 'dep[%d]: %s' % (c, d)
     except error.general, gerr:
+        if not setbuilder_error:
+            log.stderr(str(gerr))
         log.stderr('Build FAILED')
         ec = 1
     except error.internal, ierr:
+        if not setbuilder_error:
+            log.stderr(str(ierr))
         log.stderr('Internal Build FAILED')
         ec = 1
     except error.exit, eerr:
