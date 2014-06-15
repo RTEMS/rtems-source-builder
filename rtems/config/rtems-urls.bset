@@ -1,0 +1,13 @@
+#
+# The URLs for RTEMS
+#
+
+#
+# The RTEMS http git URL.
+#
+%define rtems_http_git         http://git.rtems.org
+%define rtems_git_tools        %{rtems_http_git}/rtems-tools/plain/tools/%{rtems_version}
+%define rtems_binutils_patches %{rtems_git_tools}/binutils
+%define rtems_gcc_patches      %{rtems_git_tools}/gcc
+%define rtems_newlib_patches   %{rtems_git_tools}/newlib
+%define rtems_gdb_patches      %{rtems_git_tools}/gdb

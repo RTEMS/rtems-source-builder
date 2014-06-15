@@ -55,6 +55,13 @@ def _check_bool(value):
         istrue = None
     return istrue
 
+def _check_nil(value):
+    if len(value):
+        istrue = True
+    else:
+        istrue = False
+    return istrue
+
 class package:
 
     def __init__(self, name, arch, config):
@@ -242,10 +249,21 @@ class file:
         self.sf = re.compile(r'%\([^\)]+\)')
         for arg in self.opts.args:
             if arg.startswith('--with-') or arg.startswith('--without-'):
-                label = arg[2:].lower().replace('-', '_')
-                self.macros.define(label)
+                if '=' in arg:
+                    label, value = arg.split('=', 1)
+                else:
+                    label = arg
+                    value = None
+                label = label[2:].lower().replace('-', '_')
+                if value:
+                    self.macros.define(label, value)
+                else:
+                    self.macros.define(label)
         self._includes = []
         self.load_depth = 0
+        self.pkgconfig_prefix = None
+        self.pkgconfig_crosscompile = False
+        self.pkgconfig_filter_flags = False
         self.load(name)
 
     def __str__(self):
@@ -383,36 +401,96 @@ class file:
 
     def _pkgconfig_check(self, test):
         ok = False
-        if not self._cross_compile():
-            ts = test.split()
-            pkg = pkgconfig.package(ts[0], output = log.output)
-            if len(ts) != 1 and len(ts) != 3:
-                self._error('malformed check')
-            else:
-                op = '>='
-                ver = '0'
-                if len(ts) == 3:
-                    op = ts[1]
-                    ver = self.macros.expand(ts[2])
-                try:
+        if type(test) == str:
+            test = test.split()
+        if not self._cross_compile() or self.pkgconfig_crosscompile:
+            try:
+                pkg = pkgconfig.package(test[0],
+                                        prefix = self.pkgconfig_prefix,
+                                        output = self._output,
+                                        src = log.trace)
+                if len(test) != 1 and len(test) != 3:
+                    self._error('malformed check: %s' % (' '.join(test)))
+                else:
+                    op = '>='
+                    ver = '0'
+                    if len(test) == 3:
+                        op = test[1]
+                        ver = self.macros.expand(test[2])
                     ok = pkg.check(op, ver)
-                except pkgconfig.error, pe:
-                    self._error('check: %s' % (pe))
-                except:
-                    raise error.interal('pkgconfig failure')
-        return ok
+            except pkgconfig.error, pe:
+                self._error('pkgconfig: check: %s' % (pe))
+            except:
+                raise error.internal('pkgconfig failure')
+        if ok:
+            return '1'
+        return '0'
 
     def _pkgconfig_flags(self, package, flags):
         pkg_flags = None
-        if not self._cross_compile():
-            pkg = pkgconfig.package(package, output = log.output)
+        if not self._cross_compile() or self.pkgconfig_crosscompile:
             try:
+                pkg = pkgconfig.package(package,
+                                        prefix = self.pkgconfig_prefix,
+                                        output = self._output,
+                                        src = log.trace)
                 pkg_flags = pkg.get(flags)
+                if pkg_flags and self.pkgconfig_filter_flags:
+                    fflags = []
+                    for f in pkg_flags.split():
+                        if not f.startswith('-f') and not f.startswith('-W'):
+                            fflags += [f]
+                    pkg_flags = ' '.join(fflags)
+                log.trace('pkgconfig: %s: %s' % (flags, pkg_flags))
             except pkgconfig.error, pe:
-                self._error('flags:%s: %s' % (flags, pe))
+                self._error('pkgconfig: %s: %s' % (flags, pe))
             except:
-                raise error.interal('pkgconfig failure')
+                raise error.internal('pkgconfig failure')
+        if pkg_flags is None:
+            pkg_flags = ''
         return pkg_flags
+
+    def _pkgconfig(self, pcl):
+        ok = False
+        ps = ''
+        if pcl[0] == 'check':
+            ps = self._pkgconfig_check(pcl[1:])
+        elif pcl[0] == 'prefix':
+            if len(pcl) == 2:
+                self.pkgconfig_prefix = pcl[1]
+            else:
+                self._error('prefix error: %s' % (' '.join(pcl)))
+        elif pcl[0] == 'crosscompile':
+            ok = True
+            if len(pcl) == 2:
+                if pcl[1].lower() == 'yes':
+                    self.pkgconfig_crosscompile = True
+                elif pcl[1].lower() == 'no':
+                    self.pkgconfig_crosscompile = False
+                else:
+                    ok = False
+            else:
+                ok = False
+            if not ok:
+                self._error('crosscompile error: %s' % (' '.join(pcl)))
+        elif pcl[0] == 'filter-flags':
+            ok = True
+            if len(pcl) == 2:
+                if pcl[1].lower() == 'yes':
+                    self.pkgconfig_filter_flags = True
+                elif pcl[1].lower() == 'no':
+                    self.pkgconfig_filter_flags = False
+                else:
+                    ok = False
+            else:
+                ok = False
+            if not ok:
+                self._error('crosscompile error: %s' % (' '.join(pcl)))
+        elif pcl[0] in ['ccflags', 'cflags', 'ldflags', 'libs']:
+            ps = self._pkgconfig_flags(pcl[1], pcl[0])
+        else:
+            self._error('pkgconfig error: %s' % (' '.join(pcl)))
+        return ps
 
     def _expand(self, s):
         expand_count = 0
@@ -464,7 +542,7 @@ class file:
                         mn = None
                     else:
                         e = self._expand(m[6:-1].strip())
-                        log.output('%s' % (self._name_line_msg(e)))
+                        log.notice('%s' % (self._name_line_msg(e)))
                         s = ''
                         expanded = True
                         mn = None
@@ -476,44 +554,45 @@ class file:
                         s = s.replace(m, '0')
                     expanded = True
                     mn = None
-                elif m.startswith('%{check'):
-                    if self._pkgconfig_check(m[7:-1].strip()):
-                        s = s.replace(m, '1')
+                elif m.startswith('%{path '):
+                    pl = m[7:-1].strip().split()
+                    ok = False
+                    if len(pl) == 2:
+                        ok = True
+                        epl = []
+                        for p in pl[1:]:
+                            epl += [self._expand(p)]
+                        p = ' '.join(epl)
+                        if pl[0].lower() == 'prepend':
+                            if len(self.macros['_pathprepend']):
+                                self.macros['_pathprepend'] = \
+                                    '%s:%s' % (p, self.macros['_pathprepend'])
+                            else:
+                                self.macros['_pathprepend'] = p
+                        elif pl[0].lower() == 'postpend':
+                            if len(self.macros['_pathprepend']):
+                                self.macros['_pathprepend'] = \
+                                    '%s:%s' % (self.macros['_pathprepend'], p)
+                            else:
+                                self.macros['_pathprepend'] = p
+                        else:
+                            ok = False
+                    if ok:
+                        s = s.replace(m, '')
                     else:
-                        s = s.replace(m, '0')
-                    expanded = True
+                        self._error('path error: %s' % (' '.join(pl)))
                     mn = None
-                elif m.startswith('%{ccflags'):
-                    flags = self._pkgconfig_flags(m[9:-1].strip(), 'ccflags')
-                    if flags:
-                        s = s.replace(m, flags)
+                elif m.startswith('%{pkgconfig '):
+                    pcl = m[11:-1].strip().split()
+                    if len(pcl):
+                        epcl = []
+                        for pc in pcl:
+                            epcl += [self._expand(pc)]
+                        ps = self._pkgconfig(epcl)
+                        s = s.replace(m, ps)
+                        expanded = True
                     else:
-                        self._error('ccflags error: %s' % (m[9:-1].strip()))
-                    expanded = True
-                    mn = None
-                elif m.startswith('%{cflags'):
-                    flags = self._pkgconfig_flags(m[8:-1].strip(), 'cflags')
-                    if flags:
-                        s = s.replace(m, flags)
-                    else:
-                        self._error('cflags error: %s' % (m[8:-1].strip()))
-                    expanded = True
-                    mn = None
-                elif m.startswith('%{ldflags'):
-                    flags = self._pkgconfig_flags(m[9:-1].strip(), 'ldflags')
-                    if flags:
-                        s = s.replace(m, flags)
-                    else:
-                        self._error('ldflags error: %s' % (m[9:-1].strip()))
-                    expanded = True
-                    mn = None
-                elif m.startswith('%{libs'):
-                    flags = self._pkgconfig_flags(m[6:-1].strip(), 'libs')
-                    if flags:
-                        s = s.replace(m, flags)
-                    else:
-                        self._error('libs error: %s' % (m[6:-1].strip()))
-                    expanded = True
+                        self._error('pkgconfig error: %s' % (m[11:-1].strip()))
                     mn = None
                 elif m.startswith('%{?') or m.startswith('%{!?'):
                     if m[2] == '!':
@@ -533,10 +612,10 @@ class file:
                         if m.startswith('%{?'):
                             istrue = False
                             if mn in self.macros:
-                                # If defined and 0 then it is false.
+                                # If defined and 0 or '' then it is false.
                                 istrue = _check_bool(self.macros[mn])
                                 if istrue is None:
-                                    istrue = True
+                                    istrue = _check_nil(self.macros[mn])
                             if colon >= 0 and istrue:
                                 s = s.replace(m, m[start + colon + 1:-1])
                                 expanded = True

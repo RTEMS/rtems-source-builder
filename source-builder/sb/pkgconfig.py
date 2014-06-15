@@ -34,6 +34,7 @@
 # provided by the full pkg-config so packages can configure and build.
 #
 
+import copy
 import os
 import os.path
 import re
@@ -71,6 +72,14 @@ class package(object):
     dual_opts = ['-D', '-U', '-I', '-l', '-L']
     lib_list_splitter = re.compile('[\s,]+')
     loaded = {}
+
+    @staticmethod
+    def _copy(src, dst):
+        dst.name_ = src.name_
+        dst.file_ = src.file_
+        dst.defines = copy.copy(src.defines)
+        dst.fields = copy.copy(src.fields)
+        dst.nodes = copy.copy(src.nodes)
 
     @staticmethod
     def is_version(v):
@@ -384,7 +393,9 @@ class package(object):
 
     def load(self, name):
         if name in package.loaded:
-            raise error('package already loaded: %s' % (name))
+            package._copy(package.loaded[name], self)
+            return
+        self._log('loading: %s' % (name))
         if self.name_:
             self._clean()
         self.name_ = name
@@ -392,14 +403,14 @@ class package(object):
         if file:
             self._log('load: %s (%s)' % (name, file))
             if self.src:
-                self.src.writelines('==%s%s' % ('=' * 80, os.linesep))
-                self.src.writelines(' %s %s%s' % (file, '=' * (80 - len(file)), os.linesep))
-                self.src.writelines('==%s%s' % ('=' * 80, os.linesep))
+                self.src('==%s%s' % ('=' * 80, os.linesep))
+                self.src(' %s %s%s' % (file, '=' * (80 - len(file)), os.linesep))
+                self.src('==%s%s' % ('=' * 80, os.linesep))
             f = open(file)
             tm = False
             for l in f.readlines():
                 if self.src:
-                    self.src.writelines(l)
+                    self.src(l)
                 l = l[:-1]
                 hash = l.find('#')
                 if hash >= 0:
@@ -455,6 +466,7 @@ class package(object):
             package.loaded[name] = self
 
     def get(self, label, private = True):
+        self._log('get: %s (%s)' % (label, ','.join(self.fields)))
         if label.lower() not in self.fields:
             return None
         s = ''
@@ -504,3 +516,46 @@ class package(object):
             else:
                 self._log('check: %s not found' % (self.name_))
         return ok
+
+def check_package(libraries, args, output, src):
+    ec = 1
+    pkg = None
+    flags = { 'cflags': '',
+              'libs': '' }
+    output('libraries: %s' % (libraries))
+    libs = package.splitter(libraries)
+    for lib in libs:
+        output('pkg: %s' % (lib))
+        pkg = package(lib[0], prefix = args.prefix, output = output, src = src)
+        if args.dump:
+            output(pkg)
+        if pkg.exists():
+            if len(lib) == 1:
+                if args.exact_version:
+                    if pkg.check('=', args.exact_version):
+                        ec = 0
+                elif args.atleast_version:
+                    if pkg.check('>=', args.atleast_version):
+                        ec = 0
+                elif args.max_version:
+                    if pkg.check('<=', args.max_version):
+                        ec = 0
+                else:
+                    ec = 0
+            else:
+                if len(lib) != 3:
+                    raise error('invalid package check: %s' % (' '.join(lib)))
+                if pkg.check(lib[1], lib[2]):
+                    ec = 0
+            if ec == 0:
+                cflags = pkg.get('cflags')
+                if cflags:
+                    flags['cflags'] += cflags
+                libs = pkg.get('libs', private = False)
+                if libs:
+                    flags['libs'] += libs
+                break
+        if ec > 0:
+            break
+    return ec, pkg, flags
+

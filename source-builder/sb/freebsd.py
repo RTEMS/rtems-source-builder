@@ -96,14 +96,14 @@ def load():
             cxx = '/usr/bin/clang++'
             if check.check_exe(cxx, cxx):
                 raise error.general('no valid c++ not found')
-            defines['optflags_build'] = '-O2 -pipe -fbracket-depth=1024'
+            defines['build_cflags'] = '-O2 -pipe -fbracket-depth=1024'
         cvs = 'cvs'
         if check.check_exe(cvs, cvs):
             defines['__cvs'] = cvs
         #
         # Fix the mess iconv is on FreeBSD 10.0.
         #
-        defines['iconv_optincludes'] = ('none', 'none', '-I/usr/local/include -L/usr/local/lib')
+        defines['iconv_includes'] = ('none', 'none', '-I/usr/local/include -L/usr/local/lib')
 
     for gv in ['47', '48', '49']:
         gcc = '%s-portbld-freebsd%s-gcc%s' % (cpu, version, gv)

@@ -18,11 +18,6 @@ package: rtems-%{rtems_version}-%{_target}-%{release}
 %define gcc_version_message RTEMS %{rtems_version}-RSB-%{_sbgit_id}-%{release},gcc-%{gcc_version}/newlib-%{newlib_version}
 
 #
-# The RTEMS http git URL.
+# Pick up the RTEMS URLs.
 #
-%define rtems_http_git         http://git.rtems.org
-%define rtems_git_tools        %{rtems_http_git}/rtems-tools/plain/tools/%{rtems_version}
-%define rtems_binutils_patches %{rtems_git_tools}/binutils
-%define rtems_gcc_patches      %{rtems_git_tools}/gcc
-%define rtems_newlib_patches   %{rtems_git_tools}/newlib
-%define rtems_gdb_patches      %{rtems_git_tools}/gdb
+%include rtems-urls.bset

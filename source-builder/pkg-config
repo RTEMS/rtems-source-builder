@@ -58,13 +58,18 @@ trace = True
 trace_stdout = False
 logfile = 'pkg-config.log'
 out = None
+srcfd = None
 
 #
 # Write all the package source parsed to a single file.
 #
 trace_src = True
 if trace_src:
-    src = open('pkg-src.txt', 'w')
+    srcfd = open('pkg-src.txt', 'w')
+
+def src(text):
+    if srcfd:
+        srcfs.writelines(text)
 
 def log(s, lf = True):
     global trace, logfile, out
@@ -82,48 +87,6 @@ def log(s, lf = True):
             if out != sys.stdout and trace_stdout:
                 print s,
             print >> out, s,
-
-def _check_package(libraries, args):
-    ec = 1
-    pkg = None
-    flags = { 'cflags': '',
-              'libs': '' }
-    log('libraries: %s' % (libraries))
-    libs = pkgconfig.package.splitter(libraries)
-    for lib in libs:
-        log('pkg: %s' % (lib))
-        pkg = pkgconfig.package(lib[0], prefix = args.prefix, output = log, src = src)
-        if args.dump:
-            log(pkg)
-        if pkg.exists():
-            if len(lib) == 1:
-                if args.exact_version:
-                    if pkg.check('=', args.exact_version):
-                        ec = 0
-                elif args.atleast_version:
-                    if pkg.check('>=', args.atleast_version):
-                        ec = 0
-                elif args.max_version:
-                    if pkg.check('<=', args.max_version):
-                        ec = 0
-                else:
-                    ec = 0
-            else:
-                if len(lib) != 3:
-                    raise error('invalid package check: %s' % (' '.join(lib)))
-                if pkg.check(lib[1], lib[2]):
-                    ec = 0
-            if ec == 0:
-                cflags = pkg.get('cflags')
-                if cflags:
-                    flags['cflags'] += cflags
-                libs = pkg.get('libs', private = False)
-                if libs:
-                    flags['libs'] += libs
-                break
-        if ec > 0:
-            break
-    return ec, pkg, flags
 
 def run(argv):
 
@@ -224,7 +187,7 @@ def run(argv):
     if args.atleast_pkgconfig_version:
         ec = 0
     else:
-        ec, pkg, flags = _check_package(args.libraries, args)
+        ec, pkg, flags = pkgconfig.check_package(args.libraries, args, log, src)
         if ec == 0:
             if args.cflags:
                 if len(flags['cflags']):
