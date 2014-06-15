@@ -113,16 +113,27 @@ class build:
         ereport.generate('rsb-report-%s.txt' % self.macros['name'], self.opts, header)
 
     def __init__(self, name, create_tar_files, opts, macros = None):
-        self.opts = opts
-        if macros is None:
-            self.macros = opts.defaults
-        else:
-            self.macros = macros
-        self.create_tar_files = create_tar_files
-        log.notice('config: ' + name)
-        self.config = config.file(name, opts, self.macros)
-        self.script = script()
-        self.macros['buildname'] = self._name_(self.macros['name'])
+        try:
+            self.opts = opts
+            if macros is None:
+                self.macros = opts.defaults
+            else:
+                self.macros = macros
+            self.create_tar_files = create_tar_files
+            log.notice('config: ' + name)
+            self.config = config.file(name, opts, self.macros)
+            self.script = script()
+            self.macros['buildname'] = self._name_(self.macros['name'])
+        except error.general, gerr:
+            log.notice(str(gerr))
+            log.stderr('Build FAILED')
+            raise
+        except error.internal, ierr:
+            log.notice(str(ierr))
+            log.stderr('Internal Build FAILED')
+            raise
+        except:
+            raise
 
     def rmdir(self, rmpath):
         log.output('removing: %s' % (path.host(rmpath)))
@@ -140,6 +151,7 @@ class build:
         _build = self.config.expand('%{_build}')
         _target = self.config.expand('%{_target}')
         return self.config.defined('%{allow_cxc}') and \
+            len(_host) and len(_build) and (_target) and \
             _host != _build and _host != _target
 
     def source(self, name):
