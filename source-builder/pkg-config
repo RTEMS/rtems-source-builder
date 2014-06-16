@@ -69,7 +69,7 @@ if trace_src:
 
 def src(text):
     if srcfd:
-        srcfs.writelines(text)
+        srcfd.writelines(text)
 
 def log(s, lf = True):
     global trace, logfile, out
