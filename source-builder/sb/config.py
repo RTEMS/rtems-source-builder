@@ -285,8 +285,16 @@ class file:
             s += str(self._packages[_package])
         return s
 
+    def _relative_path(self, p):
+        sbdir = None
+        if '_sbdir' in self.macros:
+            sbdir = path.dirname(self.expand('%{_sbdir}'))
+            if p.startswith(sbdir):
+                p = p[len(sbdir) + 1:]
+        return p
+
     def _name_line_msg(self,  msg):
-        return '%s:%d: %s' % (path.basename(self.init_name), self.lc,  msg)
+        return '%s:%d: %s' % (path.basename(self.name), self.lc,  msg)
 
     def _output(self, text):
         if not self.opts.quiet():
@@ -648,7 +656,7 @@ class file:
         else:
             if ls[1] == 'select':
                 self.macros.lock_read_map()
-                log.trace('config: %s: _disable_select: %s' % (self.init_name, ls[1]))
+                log.trace('config: %s: _disable_select: %s' % (self.name, ls[1]))
             else:
                 log.warning('invalid disable statement: %s' % (ls[1]))
 
@@ -658,7 +666,7 @@ class file:
         else:
             r = self.macros.set_read_map(ls[1])
             log.trace('config: %s: _select: %s %s %r' % \
-                          (self.init_name, r, ls[1], self.macros.maps()))
+                          (self.name, r, ls[1], self.macros.maps()))
 
     def _sources(self, ls):
         return sources.process(ls[0][1:], ls[1:], self.macros, self._error)
@@ -711,7 +719,7 @@ class file:
                     self._error(label + ' without %endif')
                     raise error.general('terminating build')
                 if r[1] == '%endif':
-                    log.trace('config: %s: _ifs: %s %s' % (self.init_name, r[1], this_isvalid))
+                    log.trace('config: %s: _ifs: %s %s' % (self.name, r[1], this_isvalid))
                     return data
                 if r[1] == '%else':
                     in_iftrue = False
@@ -810,7 +818,7 @@ class file:
                 self._error('malformed if: ' + reduce(add, ls, ''))
             if invert:
                 istrue = not istrue
-            log.trace('config: %s: _if:  %s %s' % (self.init_name, ifls, str(istrue)))
+            log.trace('config: %s: _if:  %s %s' % (self.name, ifls, str(istrue)))
         return self._ifs(config, ls, '%if', istrue, isvalid, dir, info)
 
     def _ifos(self, config, ls, isvalid, dir, info):
@@ -857,7 +865,7 @@ class file:
             if len(l) == 0:
                 continue
             log.trace('config: %s: %03d: %s %s' % \
-                          (self.init_name, self.lc, str(isvalid), l))
+                          (self.name, self.lc, str(isvalid), l))
             lo = l
             if isvalid:
                 l = self._expand(l)
@@ -902,12 +910,12 @@ class file:
                 elif ls[0] == '%if':
                     d = self._if(config, ls, isvalid, dir, info)
                     if len(d):
-                        log.trace('config: %s: %%if: %s' % (self.init_name, d))
+                        log.trace('config: %s: %%if: %s' % (self.name, d))
                         return ('data', d)
                 elif ls[0] == '%ifn':
                     d = self._if(config, ls, isvalid, dir, info, True)
                     if len(d):
-                        log.trace('config: %s: %%ifn: %s' % (self.init_name, d))
+                        log.trace('config: %s: %%ifn: %s' % (self.name, d))
                         return ('data', d)
                 elif ls[0] == '%ifos':
                     d = self._ifos(config, ls, isvalid, dir, info)
@@ -994,7 +1002,7 @@ class file:
             if not directive:
                 l = self._expand(l)
                 ls = self.tags.split(l, 1)
-                log.trace('config: %s: _tag: %s %s' % (self.init_name, l, ls))
+                log.trace('config: %s: _tag: %s %s' % (self.name, l, ls))
                 if len(ls) > 1:
                     info = ls[0].lower()
                     if info[-1] == ':':
@@ -1007,7 +1015,7 @@ class file:
                 else:
                     log.warning("invalid format: '%s'" % (info_data[:-1]))
             else:
-                log.trace('config: %s: _data: %s %s' % (self.init_name, l, new_data))
+                log.trace('config: %s: _data: %s %s' % (self.name, l, new_data))
                 new_data.append(l)
         return (directive, info, data + new_data)
 
@@ -1056,9 +1064,6 @@ class file:
         save_name = self.name
         save_lc = self.lc
 
-        self.name = name
-        self.lc = 0
-
         #
         # Locate the config file. Expand any macros then add the
         # extension. Check if the file exists, therefore directly
@@ -1097,13 +1102,16 @@ class file:
                 raise error.general('no config file found: %s' % (cfgname))
 
         try:
-            log.trace('config: %s: _open: %s' % (self.init_name, path.host(configname)))
+            log.trace('config: %s: _open: %s' % (self.name, path.host(configname)))
             config = open(path.host(configname), 'r')
         except IOError, err:
             raise error.general('error opening config file: %s' % (path.host(configname)))
-        self.configpath += [configname]
 
+        self.configpath += [configname]
         self._includes += [configname]
+
+        self.name = self._relative_path(configname)
+        self.lc = 0
 
         try:
             dir = None
@@ -1187,7 +1195,7 @@ class file:
         return self._includes
 
     def file_name(self):
-        return self.init_name
+        return self.name
 
 def run():
     import sys
