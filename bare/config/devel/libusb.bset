@@ -1,0 +1,7 @@
+#
+# Build set for LibUSB
+#
+
+%define release 1
+
+devel/libusb-1.0.18-1
