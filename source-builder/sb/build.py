@@ -467,7 +467,7 @@ def get_configs(opts):
         hcp = path.host(path.abspath(cp))
         configs['paths'] += [hcp]
         configs['files'] += _scan(hcp, ['.cfg', '.bset'])
-    configs['files'] = sorted(configs['files'])
+    configs['files'] = sorted(set(configs['files']))
     return configs
 
 def find_config(config, configs):
