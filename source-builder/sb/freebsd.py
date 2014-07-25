@@ -97,6 +97,7 @@ def load():
             if check.check_exe(cxx, cxx):
                 raise error.general('no valid c++ not found')
             defines['build_cflags'] = '-O2 -pipe -fbracket-depth=1024'
+            defines['build_cxxflags'] = '-O2 -pipe -fbracket-depth=1024'
         cvs = 'cvs'
         if check.check_exe(cvs, cvs):
             defines['__cvs'] = cvs

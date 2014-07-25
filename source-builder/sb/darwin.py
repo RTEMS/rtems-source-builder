@@ -64,6 +64,8 @@ def load():
         if int(version) >= 13:
             defines['__cc'] = ('exe',     'required', '/usr/bin/cc')
             defines['__cxx'] = ('exe',     'required', '/usr/bin/c++')
+            defines['build_cflags'] = '-O2 -pipe -fbracket-depth=1024'
+            defines['build_cxxflags'] = '-O2 -pipe -fbracket-depth=1024'
 
     defines['_build']        = defines['_host']
     defines['_build_vendor'] = defines['_host_vendor']

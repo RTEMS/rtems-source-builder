@@ -59,6 +59,7 @@ _uid:                none,    convert,  '%(%{__id_u} -n)'
 host_cflags:         none,    convert,  '-O2 -pipe'
 host_includes:       none,    convert,  ''
 build_cflags:        none,    convert,  '-O2 -pipe'
+build_cxxflags:      none,    convert,  '-O2 -pipe'
 build_includes:      none,    convert,  ''
 
 # Extra path a platform can override.
@@ -191,12 +192,14 @@ SB_BUILD_DIR="%{_builddir}"
 SB_HOST_CFLAGS="%{host_cflags} %{host_includes}"
 SB_HOST_LDFLAGS="%{?host_ldflags:%{host_ldflags}}%{?_tmproot:-L%{_tmproot}/${SB_PREFIX_CLEAN}/lib}"
 SB_BUILD_CFLAGS="%{build_cflags} %{?_tmproot:-I%{_tmproot}/${SB_PREFIX_CLEAN}/include}"
+SB_BUILD_CXXFLAGS="%{build_cxxflags} %{?_tmproot:-I%{_tmproot}/${SB_PREFIX_CLEAN}/include}"
 SB_BUILD_LDFLAGS="%{?build_ldflags:%{build_ldflags}}%{?_tmproot:-L%{_tmproot}/${SB_PREFIX_CLEAN}/lib}"
 SB_CFLAGS="${SB_BUILD_CFLAGS} %{build_includes}"
+SB_CXXFLAGS="${SB_BUILD_CXXFLAGS} %{build_includes}"
 SB_ARCH="%{_arch}"
 SB_OS="%{_os}"
 export SB_SOURCE_DIR SB_BUILD_DIR SB_ARCH SB_OS
-export SB_HOST_CFLAGS SB_HOST_LDFLAGS SB_BUILD_CFLAGS SB_BUILD_LDFLAGS SB_CFLAGS
+export SB_HOST_CFLAGS SB_HOST_LDFLAGS SB_BUILD_CFLAGS SB_BUILD_CXXFLAGS SB_BUILD_LDFLAGS SB_CFLAGS SB_CXXFLAGS
 # Documentation
 SB_DOC_DIR="%{_docdir}"
 export SB_DOC_DIR
@@ -303,14 +306,15 @@ if test "%{_build}" != "%{_host}" ; then
   CFLAGS="${SB_HOST_CFLAGS}"
   LDFLAGS="${SB_HOST_LDFLAGS}"
   CFLAGS_FOR_BUILD="${SB_BUILD_CFLAGS}"
+  CXXFLAGS_FOR_BUILD="${SB_BUILD_CXXFLAGS}"
   LDFLAGS_FOR_BUILD="${SB_BUILD_LDFLAGS}"
   CXXFLAGS_FOR_BUILD="${SB_BUILD_CFLAGS}"
   CC_FOR_BUILD=$(echo "%{__cc} ${SB_BUILD_CFLAGS}" | sed -e 's,-std=gnu99 ,,')
-  CXX_FOR_BUILD=$(echo "%{__cxx} ${SB_BUILD_CFLAGS}" | sed -e 's,-std=gnu99 ,,')
+  CXX_FOR_BUILD=$(echo "%{__cxx} ${SB_BUILD_CXXFLAGS}" | sed -e 's,-std=gnu99 ,,')
 else
   LDFLAGS="${SB_BUILD_LDFLAGS}"
   CC=$(echo "%{__cc} ${SB_BUILD_CFLAGS}" | sed -e 's,-std=gnu99 ,,')
-  CXX=$(echo "%{__cxx} ${SB_BUILD_CFLAGS}" | sed -e 's,-std=gnu99 ,,')
+  CXX=$(echo "%{__cxx} ${SB_BUILD_CXXFLAGS}" | sed -e 's,-std=gnu99 ,,')
   CC_FOR_BUILD=${CC}
   CXX_FOR_BUILD=${CXX}
 fi
@@ -322,7 +326,7 @@ build_build_flags:    none,    none,     '''
 # gcc is not ready to be compiled with -std=gnu99
 LDFLAGS="${SB_HOST_LDFLAGS}"
 CC=$(echo "%{__cc} ${SB_CFLAGS}" | sed -e 's,-std=gnu99 ,,')
-CXX=$(echo "%{__cxx} ${SB_CFLAGS}" | sed -e 's,-std=gnu99 ,,')
+CXX=$(echo "%{__cxx} ${SB_CXXFLAGS}" | sed -e 's,-std=gnu99 ,,')
 CC_FOR_BUILD=${CC}
 CXX_FOR_BUILD=${CXX}
 export CC CXX CC_FOR_BUILD CXX_FOR_BUILD CFLAGS LDFLAGS'''
