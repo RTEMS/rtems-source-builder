@@ -195,7 +195,7 @@ def _http_downloader(url, local, config, opts):
             failed = True
         except:
             msg = 'download: %s: error' % (url)
-            log.stderr(msd)
+            log.stderr(msg)
             log.notice(msg)
             if _out is not None:
                 _out.close()
