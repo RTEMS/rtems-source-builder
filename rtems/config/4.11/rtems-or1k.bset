@@ -7,11 +7,6 @@
 %define rtems_arch or1k
 
 #
-# The RTEMS 4.11 BSP to build and test
-#
-%define rtems_bsps      all
-
-#
 # The RTEMS 4.11 base defines.
 #
 %include rtems-4.11-base.bset
@@ -27,7 +22,7 @@ tools/rtems-gdb-7.7-1
 
 #
 # or1k specific patches
-# 
+#
 
 #binutils
 %patch add binutils -p1 https://raw.githubusercontent.com/heshamelmatary/or1k-rtems/master/patches/binutils-2.24-or1k-rtems.diff
@@ -38,7 +33,7 @@ tools/rtems-gdb-7.7-1
 #gcc
 %patch add gcc -p1 https://raw.githubusercontent.com/heshamelmatary/or1k-rtems/master/patches/gcc-4.8.2-or1k-rtems-29-4-2014.diff
 
-#gdb 
+#gdb
 %patch add gdb -p1 https://raw.githubusercontent.com/heshamelmatary/or1k-rtems/master/patches/gdb-7.7-or1k-rtems.diff
 
 #

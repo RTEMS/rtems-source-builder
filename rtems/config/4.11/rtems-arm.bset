@@ -7,18 +7,6 @@
 %define rtems_arch arm
 
 #
-# The RTEMS 4.11 BSP to build and test
-#
-# Do not build: lm3s3749
-# For automated testing, edb7312 should be configured with:
-#    - ON_SKYEYE=1
-# The GDB based simulators could be used as defaults for testing though.
-# Skyeye includes coverage.
-#
-%define rtems_bsps      csb336,csb337,csb637,kit637_v6,edb7312,gba,arm1136jfs,arm1136js,arm7tdmi,arm920,armcortexa9,gp32,gumstix,lm3s6965,lm3s6965_qemu,lpc17xx_ea_ram,lpc17xx_ea_rom_int,lpc17xx_plx800_ram,lpc17xx_plx800_rom_int,lpc2362,lpc23xx_tli800,lpc24xx_ea,lpc24xx_ncs_ram,lpc24xx_ncs_rom_ext,lpc24xx_ncs_rom_int,lpc24xx_plx800_ram,lpc24xx_plx800_rom_int,lpc32xx_mzx,lpc32xx_mzx_stage_1,lpc32xx_mzx_stage_2,lpc32xx_phycore,nds,raspberrypi,rtl22xx,rtl22xx_t,smdk2410,stm32f4
-%define rtems_test_bsps none
-
-#
 # The RTEMS 4.11 base defines.
 #
 %include rtems-4.11-base.bset
@@ -34,6 +22,6 @@
 4.11/rtems-autotools
 devel/expat-2.1.0-1
 tools/rtems-binutils-2.24-1
-tools/rtems-gcc-4.8.2-newlib-2.1.0-1
+tools/rtems-gcc-4.8.3-newlib-cvs-1
 tools/rtems-gdb-7.7-1
 tools/rtems-kernel-4.11

@@ -9,12 +9,6 @@
 %define rtems_arch nios2
 
 #
-# The RTEMS 4.11 BSP to build and test
-#
-%define rtems_bsps      all
-%define rtems_test_bsps none
-
-#
 # The RTEMS 4.11 base defines.
 #
 %include rtems-4.11-base.bset
