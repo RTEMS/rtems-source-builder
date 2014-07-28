@@ -9,7 +9,7 @@ RTEMS Source Builder
 image:images/rtemswhitebg.jpg["RTEMS",width="30%"]
 
 Chris Johns <chrisj@rtems.org>
-1.7, May 2014
+1.8, July 2014
 
 RTEMS Tools From Source
 -----------------------
@@ -46,14 +46,14 @@ from source and taught this tool. The RTEMS Source Builder has been tested on:
 * <<_windows,Windows>>
 * <<_ubuntu,Xubuntu>>
 
-The RTEMS Source Builder has two types configuration data. The first is the
+The RTEMS Source Builder has two types of configuration data. The first is the
 'build set'. A _build set_ describes a collection of packages that define a set
 of tools you would use when developing software for RTEMS. For example the
 basic GNU tool set is binutils, gcc, and gdb and is the typical base suite of
 tools you need for an embedded cross-development type project. The second type
 of configuration data is the configuration files and they define how a package
 is built. Configuration files are scripts loosely based on the RPM spec file
-format and detail the steps needed to build a package. The steps are
+format and they detail the steps needed to build a package. The steps are
 'preparation', 'building', and 'installing'. Scripts support macros, shell
 expansion, logic, includes plus many more features useful when build packages.
 
@@ -61,8 +61,16 @@ The RTEMS Source Builder does not interact with any host package management
 systems. There is no automatic dependence checking between various packages you
 build or packages and software your host system you may have installed. We
 assume the build sets and configuration files you are using have been created
-by developers who do. If you have a problem please ask on the RTEMS Users
-mailing list.
+by developers who do. Support is provided for package config or pkgconfg type
+files so you can check and use standard libraries if present. If you have a
+problem please ask on the RTEMS Users mailing list.
+
+This documentation caters for a range of users from new to experienced RTEMS
+developers. New users can follow the Quick Start section up to the "Installing
+and Tar Files" to get a working tools and RTEMS. Users building a binary tool
+set for release can read the "Installing and Tar Files". Users wanting to run
+and test bleeding edge tools or packages, or wanting update or extend the RSB's
+configuration can read the remaining sections.
 
 *************************************************************
 IMPORTANT: If you have a problem please see <<_bugs,the reporting bugs>>
@@ -73,8 +81,8 @@ Quick Start
 -----------
 
 The quick start will show you how to build a set of RTEMS tools for a supported
-architecture. The tools are installed into a build _prefix_ and this is top of
-a group of directories containing all the files needed to develop RTEMS
+architecture. The tools are installed into a build _prefix_. The _prefix_ is the
+top of a group of directories containing all the files needed to develop RTEMS
 applications. Building an RTEMS build set will build all that you need. This
 includes autoconf, automake, assemblers, linkers, compilers, debuggers,
 standard libraries and RTEMS itself.
@@ -315,8 +323,8 @@ Build Set: Time 0:13:43.616383 <10>
     file is checked for and if not found the '%{_configdir} path is
     searched. The set builder will first look for files with a +.bset+
     extension and then for a configuration file with a +.cfg+ extension.
-<4> The SPARC build set first builds the expat library as is used in GDB. This
-    is the expat configuration used.
+<4> The SPARC build set first builds the expat library as it is used in GDB.
+    This is the expat configuration used.
 <5> The binutils build configuration.
 <6> The GCC and Newlib build configuration.
 <7> The GDB build configuration.
@@ -331,7 +339,11 @@ Your SPARC RTEMS 4.11 tool set will be installed and ready to build RTEMS and
 RTEMS applications. When the build runs you will notice the tool fetch the
 source code from the internet. These files are cached in a directory called
 +source+. If you run the build again the cached files are used. This is what
-happened in the show example before.
+happened in the shown example before.
+
+TIP: The RSB for releases will automatically build and install RTEMS. The
+development version require adding +--with-rtems+. Use this for a single
+command to get the tools and RTEMS with one command.
 
 The installed tools:
 
@@ -394,15 +406,21 @@ NOTE: The RTEMS thread model enables specific hooks in GCC so applications
 built with RTEMS tools need the RTEMS runtime to operate correctly. You can use
 RTEMS tools to build bare metal component but it is more difficult than with a
 bare metal tool chain and you need to know what you are doing at a low
-level. The RTEMS Source Builder can build bare metal tool chains.
+level. The RTEMS Source Builder can build bare metal tool chains as well. Look
+in the top level +bare+ directory.
 
-Installing and Tar Files
-~~~~~~~~~~~~~~~~~~~~~~~~
+Distributing and Archiving A Build
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The RTEMS Source Builder can install the built packages directly and optionally
-it can create a build set tar file or a tar file per package built. The normal
-and default behaviour is to let the RTEMS Source Builder install the tools. The
-source will be downloaded, built, installed and cleaned up.
+If you wish to create and distribute your build or you want to archive a build
+you can create a tar file. This is a more advanced method for binary packaging
+and installing of tools.
+
+By default the RTEMS Source Builder installs the built packages directly and
+optionally it can also create a _build set tar file_ or a _package tar file_
+per package built. The normal and default behaviour is to let the RTEMS Source
+Builder install the tools. The source will be downloaded, built, installed and
+cleaned up.
 
 The tar files are created with the full build prefix present and if you follow
 the examples given in this documentation the path is absolute. This can cause
@@ -626,11 +644,10 @@ Build FAILED <1>
 <1> The build has failed.
 <2> The report's file name.
 
-The generated report contains the command line, version of the RSB, your host
+The generated report contains the command line, version of the RSB, your host's
 +uname+ details, the version of Python and the last 200 lines of the log.
 
-If there is no report please send for some reason and something has falied
-please report the following:
+If for some reason there is no report please send please report the following:
 
 . Command line,
 . The git hash,
@@ -640,7 +657,7 @@ please report the following:
 If there is a Python crash please cut and paste the Python backtrace into the
 bug report. If the tools fail to build please locate the first error in the log
 file. This can be difficult to find on hosts with many cores so it sometimes
-pays to run the command with the +--jobs=none+ option to get a log that is
+pays to re-run the command with the +--jobs=none+ option to get a log that is
 correctly sequenced. If searching the log file seach for +error:+ and the error
 should be just above it.
 
@@ -648,20 +665,16 @@ should be just above it.
 Contributing
 ------------
 
-The RSB is open source and open to contributions. These can be bug fixes, new
-features or new configurations. Please break patches down into changes to the
-core Python code, configuration changes or new configurations.
+We welcome all users adding, fixing, updating and upgrading packages and their
+configurations. The RSB is open source and open to contributions. These can be
+bug fixes, new features or new configurations. Please break patches down into
+changes to the core Python code, configuration changes or new configurations.
 
 Please email me patches via git so I can maintain your commit messages so you
 are acknowledged as the contributor.
 
-Packages
-~~~~~~~~
-
-We welcome users adding, fixing, updating and upgrading packages and their
-configurations. The RSB contains the 'bare' configuration tree and you can use
-this to add packages you use on the hosts. For example 'qemu' is support on a
-range of hosts. RTEMS tools live in the +rtems/config+ directory tree.
+Most of what follows is related to the development of RSB and it's
+configurations.
 
 Project Sets
 ------------
@@ -690,13 +703,57 @@ various tools. You can specialise these in your private configurations to make
 use of them. If you add new generic configurations please contribute them back
 to the project
 
-RTEMS Configurations
-~~~~~~~~~~~~~~~~~~~~
+Bare Metal
+~~~~~~~~~~
 
-The RTEMS Configurations are grouped by RTEMS version. In RTEMS the tools are
-specific to a specific version because of variations between Newlib and
-RTEMS. Restructuring in RTEMS and Newlib sometimes moves _libc_ functionality
-between these two parts and this makes existing tools incompatible with RTEMS.
+The RSB contains a 'bare' configuration tree and you can use this to add
+packages you use on the hosts. For example 'qemu' is supported on a range of
+hosts. RTEMS tools live in the +rtems/config+ directory tree. RTEMS packages
+include tools for use on your host computer as well as packages you can build
+and run on RTEMS.
+
+The 'bare metal' support for GNU Tool chains. An example is the 'lang/gcc491'
+build set. You need to provide a target via the command line '--target'
+option and this is in the standard 2 or 3 tuple form. For example for an ARM
+compiler you would use 'arm-eabi' or 'arm-eabihf', and for SPARC you would
+use 'sparc-elf'.
+
+-------------------------------------------------------------
+$ cd rtems-source-builder/bare
+$../source-builder/sb-set-builder --log=log_arm_eabihf \
+    --prefix=$HOME/development/bare --target=arm-eabihf lang/gcc491
+RTEMS Source Builder - Set Builder, v0.3.0
+Build Set: lang/gcc491
+config: devel/expat-2.1.0-1.cfg
+package: expat-2.1.0-x86_64-apple-darwin13.2.0-1
+building: expat-2.1.0-x86_64-apple-darwin13.2.0-1
+config: devel/binutils-2.24-1.cfg
+package: arm-eabihf-binutils-2.24-1
+building: arm-eabihf-binutils-2.24-1
+config: devel/gcc-4.9.1-newlib-2.1.0-1.cfg
+package: arm-eabihf-gcc-4.9.1-newlib-2.1.0-1
+building: arm-eabihf-gcc-4.9.1-newlib-2.1.0-1
+config: devel/gdb-7.7-1.cfg
+package: arm-eabihf-gdb-7.7-1
+building: arm-eabihf-gdb-7.7-1
+installing: expat-2.1.0-x86_64-apple-darwin13.2.0-1 -> /Users/chris/development/bare
+installing: arm-eabihf-binutils-2.24-1 -> /Users/chris/development/bare
+installing: arm-eabihf-gcc-4.9.1-newlib-2.1.0-1 -> /Users/chris/development/bare
+installing: arm-eabihf-gdb-7.7-1 -> /Users/chris/development/bare
+cleaning: expat-2.1.0-x86_64-apple-darwin13.2.0-1
+cleaning: arm-eabihf-binutils-2.24-1
+cleaning: arm-eabihf-gcc-4.9.1-newlib-2.1.0-1
+cleaning: arm-eabihf-gdb-7.7-1
+-------------------------------------------------------------
+
+RTEMS
+~~~~~
+
+The RTEMS Configurations found in the 'rtems' directory. The configurations are
+grouped by RTEMS version. In RTEMS the tools are specific to a specific version
+because of variations between Newlib and RTEMS. Restructuring in RTEMS and
+Newlib sometimes moves _libc_ functionality between these two parts and this
+makes existing tools incompatible with RTEMS.
 
 RTEMS allows architectures to have different tool versions and patches. The
 large number of architectures RTEMS supports can make it difficult to get a
@@ -834,26 +891,52 @@ see the patch is present and will not attempt to download it. Once you are
 happy with the patch submit it to the project and a core developer will review
 it and add it to the RTEMS Tools git repository.
 
-Cross Building
---------------
+Cross and Canadian Cross Building
+---------------------------------
 
-Cross building or Canadian cross compiling is the process of building a set of
-RTEMS tools for one type of host on another host. The RSB is a source builder
-so the need for this is not often called on because you can just build the
-tools for the host you wish to run on. There are however a few special cases
-where this is needed. The host may not have a stable reliable means of building
-the tools, such as Windows, or you wish to manage the configuration of tools on
-different hosts from a single environment because of auditing or verfication
-reasons.
+Cross building and Canadian Cross building is the process of building on one
+machine an executable that runs on another machine. An example is building a
+set of RTEMS tools on Linux to run on Windows. The RSB supports cross building
+and Canadian cross building.
+
+This sections details how to the RSB to cross and Canadian cross build.
+
+Cross Building
+~~~~~~~~~~~~~~
+
+Cross building is where the _build_ machine and _host_ are different. The
+_build_ machine runs the RSB and the _host_ machine is where the output from
+the build runs. An example is building a package such as NTP for RTEMS on your
+development machine.
+
+To build the NTP package for RTEMS you enter the RSB command:
+
+-------------------------------------------------------------
+$ ../source-builder/sb-set-builder \
+   --log=log_ntp_arm.txt \
+   --prefix=$HOME/development/rtems/4.11 <1> \
+   --host=arm-rtems4.11 <2> \
+   --with-rtems-bsp=xilinx_zynq_zc706 <3> \
+   4.11/net/ntp
+-------------------------------------------------------------
+<1> The tools and the RTEMS BSP are installed under the same prefix.
+<2> The +--host+ command is the RTEMS architecture and version.
+<3> The BSP is built and installed in the prefix. The arhcitecture must
+    match the +--host+ architecture.
+
+TIP: If you install BSPs into a different path to the prefix use the
++--with-tools+ option to specify the path to the tools. Do not add the 'bin'
+directory at the end of the path.
 
 Canadian Cross Building
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-The process of building cross compilers on one host for another host is
-commonly referred to as a Canadian cross build. The process is controlled by
-setting the build triplet to the host you are building, the host triplet to the
-host the tools will run on and the target to the RTEMS architecture you
-require. The tools needed by the RSB are:
+A Canadian cross builds are where the _build_, _host_ and _target_ machines all
+differ. For example building an RTEMS compiler for an ARM processor that runs
+on Windows is built using a Linux machine. The process is controlled by setting
+the build triplet to the host you are building, the host triplet to the host
+the tools will run on and the target to the RTEMS architecture you require. The
+tools needed by the RSB are:
 
 . Build host C and C++ compiler
 . Host C and C++ cross compiler
@@ -879,9 +962,6 @@ them so you should provide the +--bset-tar-files+ and +--no-install+
 options. The option to not install the files lets you provide a prefix that
 does not exist or you cannot access.
 
-Command Line
-~~~~~~~~~~~~
-
 To perform a cross build add +--host=+ to the command line. For example to
 build a MinGW tool set on FreeBSD for Windows add +--host=mingw32+ if the cross
 compiler is +mingw32-gcc+:
@@ -903,6 +983,302 @@ $ ../source-builder/sb-set-builder --host=i686-w64-mingw32 \
    4.11/rtems-sparc
 -------------------------------------------------------------
 
+RTEMS 3rd Party Packages
+------------------------
+
+This section describes how to build and add an RTEMS 3rd party package to the
+RSB.
+
+A 3rd party package is a library or software package built to run on RTEMS,
+examples are NTP, Net-Snmp, libjpeg or Python. These pieces of software can be
+used to help build RTEMS applications. The package is built for a specific
+BSP and so requires a working RTEMS tool chain and an installed RTEMS Board
+Support Package (BSP).
+
+The RSB support for building 3rd part packages is based around the pkconfig
+files (PC) installed with the BSP. The pkgconfig support in RTEMS is considered
+experimental and can have some issues for some BSPs. This issue is rooted deep
+in the RTEMS build system. If you have any issues with this support please ask
+on the RTEMS developers mailing list.
+
+Building
+~~~~~~~~
+
+To build a package you need to have a suitable RTEMS tool chain and RTEMS BSP
+installed. The set builder command line requires you provide the tools path,
+the RTEMS host, and the prefix path to the installed RTEMS BSP. The prefix
+needs to be the same as the prefix used to build RTEMS.
+
+To build Net-SNMP the command is:
+
+-------------------------------------------------------------
+cd rtems-source-builder/rtems
+$ ../source-builder/sb-set-builder --log=log_sis_net_snmp \
+    --prefix=$HOME/development/rtems/bsps/4.11 \
+    --with-tools=$HOME/development/rtems/4.11 \
+    --host=sparc-rtems4.11 --with-rtems-bsp=sis 4.11/net-mgmt/net-snmp
+RTEMS Source Builder - Set Builder, v0.3.0
+Build Set: 4.11/net-mgmt/net-snmp
+config: net-mgmt/net-snmp-5.7.2.1-1.cfg
+package: net-snmp-5.7.2.1-sparc-rtems4.11-1
+building: net-snmp-5.7.2.1-sparc-rtems4.11-1
+installing: net-snmp-5.7.2.1-sparc-rtems4.11-1 -> /Users/chris/development/rtems/bsps/4.11
+cleaning: net-snmp-5.7.2.1-sparc-rtems4.11-1
+Build Set: Time 0:01:10.651926
+-------------------------------------------------------------
+
+Adding
+~~~~~~
+
+Adding a package requires you first build it manually by downloading the source
+for the package and building it for RTEMS using the command line of a standard
+shell. If the package has not been ported to RTEMS you will need to port it and
+this may require you asking questions on the package's user or development
+support lists as well as RTEMS's developers list. Your porting effort may end
+up with a patch. RTEMS requires a patch be submitted upstream to the project's
+community as well as RTEMS so it can be added to the RTEMS Tools git
+repository. A patch in the RTEMS Tools git reposiitory can then be referenced
+by an RSB configuration file.
+
+A package may create executables, for example NTP normally creates executables
+such as +ntdp+, +ntpupdate+, or +ntpdc+. These executables can be useful when
+testing the package however they are of limited use by RTEMS users because they
+cannot be directly linked into a user application. Users need to link to the
+functions in these executables or even the executable as a function placed in
+libraries. If the package does not export the code in a suitable manner please
+contact the project's commuinity and see if you can work them to provide a way
+for the code to be exported. This may be difficult because exporting internal
+headers and functions opens the project up to API compatibility issues they did
+not have before. In the simplest case attempting to get the code into a static
+library with a single call entry point exported in a header would give RTEMS
+user's access to the package's main functionality.
+
+A package requires 3 files to be created:
+
+. The first file is the RTEMS build set file and it resides in the
+  +$$rtems/config/%{rtems_version}$$+ path in a directory tree based on the
+  FreeBSD ports collection. For the NTP package and RTEMS 4.11 this is
+  +rtems/config/4.11/net/ntp.bset+. If you do not know the FreeBSD port path
+  for the package you are adding please ask. The build set file references a
+  specific configuration file therefore linking the RTEMS version to a specific
+  version of the package you are adding. Updating the package to a new version
+  requires changing the build set to the new configuration file.
+
+. The second file is an RTEMS version specific configuration file and it
+  includes the RSB RTEMS BSP support. These configuration files reside in the
+  +rtems/config+ tree again under the FreeBSP port's path name. For example the
+  NTP package is found in the +net+ directory of the FreeBSD ports tree so the
+  NTP configuration path is +$$rtems/config/net/ntp-4.2.6p5-1.cfg$$+ for that
+  specific version. The configuration file name typically provides version
+  specific references and the RTEMS build set file references a specific
+  version. This configuration file references the build configuration file held
+  in the common configuration file tree.
+
+. The build configuration. This is a common script that builds the package. It
+  resides in the +source-builder/config+ directory and typically has the
+  packages's name with the major version number. If the build script does not
+  change for each major version number a _common_ base script can be created
+  and included by each major version configuration script. The _gcc_ compiler
+  configuration is an example. This approach lets you branch a version if
+  something changes that is not backwards compatible. It is important to keep
+  existing versions building. The build configuration should be able to build a
+  package for the build host as well as RTEMS as the RSB abstracts the RTEMS
+  specific parts. See <<H1,+_Configuration_+>> for more details.
+
+BSP Support
+~~~~~~~~~~~
+
+The RSB provides support to help build packages for RTEMS. RTEMS applications
+can be viewed as statically linked executables operating in a single address
+space. As a result only the static libraries a package builds are required and
+these libraries need to be ABI compatible with the RTEMS kernel and application
+code meaning compiler ABI flags cannot be mixed when building code. The 3rd
+party package need to use the same compiler flags as the BSP used to build
+RTEMS.
+
+[TIP]
+=============================================================
+
+RTEMS's dynamic loading support does not use the standard shared library
+support found in Unix and the ELF standard. RTEMS's loader uses static
+libraries and the runtime link editor performs a similar function to a host
+based static linker. RTEMS will only reference static libraries even if dynamic
+libraries are created and installed.
+
+=============================================================
+
+The RSB provides the configuration file +rtems/config/rtems-bsp.cfg+ to support
+building 3rd party packages and you need to include this file in your RTEMS
+version specific configuration file. For example the Net-SNMP configuration
+file:
+
+.rtems/config/net-mgmt/net-snmp-5.7.2.1-1.cfg
+-------------------------------------------------------------
+#
+# NetSNMP 5.7.2.1
+#
+
+%if %{release} == %{nil}
+ %define release 1 <1>
+%endif
+
+%include %{_configdir}/rtems-bsp.cfg <2>
+
+#
+# NetSNMP Version
+#
+%define net_snmp_version 5.7.2.1 <3>
+
+#
+# We need some special flags to build this version.
+#
+%define net_snmp_cflags <4> -DNETSNMP_CAN_USE_SYSCTL=1 -DARP_SCAN_FOUR_ARGUMENTS=1 -DINP_IPV6=0
+
+#
+# Patch for RTEMS support.
+#
+%patch add net-snmp %{rtems_git_tools}/net-snmp/rtems-net-snmp-5.7.2.1-20140623.patch <5>
+
+#
+# NetSNMP Build configuration
+#
+%include %{_configdir}/net-snmp-5-1.cfg <6>
+-------------------------------------------------------------
+<1> The release number.
+<2> Include the RSB RTEMS BSP support.
+<3> The Net-SNMP package's version.
+<4> Add specific CFLAGS to the build process. See the +net-snmp-5.7.2.1-1.cfg+
+    for details.
+<5> The RTEMS Net-SNMP patch downloaded from the RTEMS Tools git repo.
+<6> The Net-SNMP standard build configuration.
+
+The RSB RTEMS BSP support file +rtems/config/rtems-bsp.cfg+ checks to make sure
+standard command line options are provided. These include `--host` and
+`--with-rtems-bsp`. If the `--with-tools` command line option is not given the
++${\_prefix}+ is used.
+
+.rtems/config/rtems-bsp.cfg
+-------------------------------------------------------------
+%if %{_host} == %{nil} <1>
+ %error No RTEMS target specified: --host=host
+%endif
+
+%ifn %{defined with_rtems_bsp} <2>
+ %error No RTEMS BSP specified: --with-rtems-bsp=bsp
+%endif
+
+%ifn %{defined with_tools} <3>
+ %define with_tools %{_prefix}
+%endif
+
+#
+# Set the path to the tools.
+#
+%{path prepend %{with_tools}/bin} <4>
+-------------------------------------------------------------
+<1> Check the host has been set.
+<2> Check a BSP has been specified.
+<3> If no tools path has been provided assume they are under the %{\_prefix}.
+<4> Add the tools +bin+ path to the system path.
+
+RTEMS exports the build flags used in pkgconfig (.pc) files and the RSB can
+read and manage them even when there is no pkgconfig support installed on your
+build machine. Using this support we can obtain a BSP's configuration and set
+some standard macros variables:
+
+.rtems/config/rtems-bsp.cfg
+-------------------------------------------------------------
+%{pkgconfig prefix %{_prefix}/lib/pkgconfig} <1>
+%{pkgconfig crosscompile yes} <2>
+%{pkgconfig filter-flags yes} <3>
+
+#
+# The RTEMS BSP Flags
+#
+%define rtems_bsp           %{with_rtems_bsp}
+%define rtems_bsp_ccflags   %{pkgconfig ccflags %{_host}-%{rtems_bsp}} <4>
+%define rtems_bsp_cflags    %{pkgconfig cflags  %{_host}-%{rtems_bsp}}
+%define rtems_bsp_ldflags   %{pkgconfig ldflags %{_host}-%{rtems_bsp}}
+%define rtems_bsp_libs      %{pkgconfig libs    %{_host}-%{rtems_bsp}}
+-------------------------------------------------------------
+<1> Set the path to the BSP's pkgconfig file.
+<2> Let pkgconfig know this is a cross-compile build.
+<3> Filter flags such as warnings. Warning flags are specific to a package.
+<4> Ask pkgconfig for the various items we require.
+
+The flags obtain by pkgconfig and given a `rtems_bsp_` prefix and we uses these
+to set the RSB host support CFLAGS, LDFLAGS and LIBS flags. When we build a 3rd
+party library your host computer is the _build_ machine and RTEMS is the _host_
+machine therefore we set the `host` variables:
+
+.rtems/config/rtems-bsp.cfg
+-------------------------------------------------------------
+%define host_cflags  %{rtems_bsp_cflags}
+%define host_ldflags %{rtems_bsp_ldflags}
+%define host_libs    %{rtems_bsp_libs}
+-------------------------------------------------------------
+
+Finally we provide all the paths you may require when configuring a
+package. Packages by default consider the `_prefix` the base and install
+various files under this tree. The package you are building is specific to a
+BSP and so needs to install into the specific BSP path under the
+`_prefix`. This allows more than BSP build of this package to be install under
+the same `_prefix` at the same time:
+
+.rtems/config/rtems-bsp.cfg
+-------------------------------------------------------------
+%define rtems_bsp_prefix  %{_prefix}/%{_host}/%{rtems_bsp} <1>
+%define _exec_prefix      %{rtems_bsp_prefix}
+%define _bindir           %{_exec_prefix}/bin
+%define _sbindir          %{_exec_prefix}/sbin
+%define _libexecdir       %{_exec_prefix}/libexec
+%define _datarootdir      %{_exec_prefix}/share
+%define _datadir          %{_datarootdir}
+%define _sysconfdir       %{_exec_prefix}/etc
+%define _sharedstatedir   %{_exec_prefix}/com
+%define _localstatedir    %{_exec_prefix}/var
+%define _includedir       %{_libdir}/include
+%define _lib              lib
+%define _libdir           %{_exec_prefix}/%{_lib}
+%define _libexecdir       %{_exec_prefix}/libexec
+%define _mandir           %{_datarootdir}/man
+%define _infodir          %{_datarootdir}/info
+%define _localedir        %{_datarootdir}/locale
+%define _localedir        %{_datadir}/locale
+%define _localstatedir    %{_exec_prefix}/var
+-------------------------------------------------------------
+<1> The path to the BSP.
+
+When you configure a package you can reference these paths and the RSB will
+provide sensible default or in this case map them to the BSP:
+
+.source-builder/config/ntp-4-1.cfg
+-------------------------------------------------------------
+  ../${source_dir_ntp}/configure \ <1>
+    --host=%{_host} \
+    --prefix=%{_prefix} \
+    --bindir=%{_bindir} \
+    --exec_prefix=%{_exec_prefix} \
+    --includedir=%{_includedir} \
+    --libdir=%{_libdir} \
+    --libexecdir=%{_libexecdir} \
+    --mandir=%{_mandir} \
+    --infodir=%{_infodir} \
+    --datadir=%{_datadir} \
+    --disable-ipv6 \
+    --disable-HOPFPCI
+-------------------------------------------------------------
+<1> The configure command for NTP.
+
+RTEMS BSP Configuration
+~~~~~~~~~~~~~~~~~~~~~~~
+
+To build a package for RTEMS you need to build it with the matching BSP
+configuration. A BSP can be built with specific flags that require all code
+being used needs to be built with the same flags.
+
+
+[[H1]]
 Configuration
 -------------
 
@@ -924,11 +1300,13 @@ directory your configurations will be used.
 +%\{_configdir\}+. It's default is defined as:
 
 -------------------------------------------------------------
-_configdir          : dir      optional   %{_topdir}/config:%{_sbdir}/config <1>
+_configdir   : dir  optional<2>  %{_topdir}/config:%{_sbdir}/config <1>
 -------------------------------------------------------------
 
 <1> The +_topdir+ is the directory you run the command from and +_sbdir+ is the
 location of the RTEMS Source Builder command.
+<2> A macro definition in a macro file has 4 fields, the label, type,
+constraint and the definition.
 
 Build set files have the file extension +.bset+ and the package build
 configuration files have the file extension of +.cfg+. The +sb-set-builder+
