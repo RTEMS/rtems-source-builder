@@ -17,6 +17,11 @@
 %define enable_obsolete 1
 
 #
+# Add support for Cortex-M4 and Cortex-R based chips
+#
+%patch add gcc pw://patchwork.ozlabs.org/patch/372178/raw/v2-RTEMS-Add-multilibs-for-ARM.patch
+
+#
 # Tools configuration.
 #
 4.11/rtems-autotools
