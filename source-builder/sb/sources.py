@@ -72,3 +72,17 @@ def process(label, args, macros, error):
     elif args[0] == 'setup':
         return setup(label, args[1:], macros, error)
     error('invalid %%%s command: %s' % (label, args[0]))
+
+def hash(args, macros, error):
+    args = _args(args)
+    if len(args) != 3:
+        error('invalid number of hash args')
+    _map = 'hashes'
+    _file = macros.expand(args[1])
+    if _file in macros.map_keys(_map):
+        error('hash already set: %s' % (args[1]))
+    macros.create_map(_map)
+    macros.set_write_map(_map)
+    macros.define(_file, '%s %s' % (args[0], args[2]))
+    macros.unset_write_map()
+    return None

@@ -236,6 +236,8 @@ class buildset:
                     self.bset_pkg = self.macros.expand(ls[1].strip())
                     self.macros['package'] = self.bset_pkg
                 elif ls[0][0] == '%':
+                    def err(msg):
+                        raise error.general('%s:%d: %s' % (self.bset, lc, msg))
                     if ls[0] == '%define':
                         if len(ls) > 2:
                             self.macros.define(ls[1].strip(),
@@ -249,10 +251,10 @@ class buildset:
                         self.macros.undefine(ls[1].strip())
                     elif ls[0] == '%include':
                         configs += self.parse(ls[1].strip())
-                    elif ls[0] == '%patch' or ls[0] == '%source':
-                        def err(msg):
-                            raise error.general('%s:%d: %s' % (self.bset, lc, msg))
+                    elif ls[0] in ['%patch', '%source']:
                         sources.process(ls[0][1:], ls[1:], self.macros, err)
+                    elif ls[0] == '%hash':
+                        sources.hash(ls[1:], self.macros, err)
                 else:
                     l = l.strip()
                     c = build.find_config(l, self.configs)

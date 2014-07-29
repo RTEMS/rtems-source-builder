@@ -20,6 +20,7 @@
 # Add support for Cortex-M4 and Cortex-R based chips
 #
 %patch add gcc pw://patchwork.ozlabs.org/patch/372178/raw/v2-RTEMS-Add-multilibs-for-ARM.patch
+%hash  md5 v2-RTEMS-Add-multilibs-for-ARM.patch 2f3b5cf8db2a4c19f77752851ca10f6e
 
 #
 # Tools configuration.

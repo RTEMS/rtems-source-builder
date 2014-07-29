@@ -22,6 +22,7 @@
 # installed not to be package unless you run a packager around this.
 #
 
+import hashlib
 import os
 import stat
 import sys
@@ -49,6 +50,47 @@ def _humanize_bytes(bytes, precision = 1):
         if bytes >= factor:
             break
     return '%.*f%s' % (precision, float(bytes) / factor, suffix)
+
+def _hash_check(file_, absfile, macros, remove = True):
+    failed = False
+    if file_.lower() in macros.map_keys('hashes'):
+        m1, m2, hash = macros.get(file_.lower(), globals = False, maps = 'hashes')
+        hash = hash.split()
+        if len(hash) != 2:
+            raise error.internal('invalid hash format: %s' % (file_))
+        if hash[0] not in hashlib.algorithms:
+            raise error.general('invalid hash algorithm for %s: %s' % (file_, hash[0]))
+        hasher = None
+        _in = None
+        try:
+            hasher = hashlib.new(hash[0])
+            _in = open(absfile, 'rb')
+            hasher.update(_in.read())
+        except IOError, err:
+            log.notice('hash: %s: read error: %s' % (file_, str(err)))
+            failed = True
+        except:
+            msg = 'hash: %s: error' % (file_)
+            log.stderr(msg)
+            log.notice(msg)
+            if _in is not None:
+                _in.close()
+            raise
+        if _in is not None:
+            _in.close()
+        log.output('checksums: %s: %s => %s' % (file_, hasher.hexdigest(), hash[1]))
+        if hasher.hexdigest() != hash[1]:
+            log.warning('checksum error: %s' % (file_))
+            failed = True
+        if failed and remove:
+            log.warning('removing: %s' % (file_))
+            if path.exists(absfile):
+                os.remove(path.host(absfile))
+        if hasher is not None:
+            del hasher
+    else:
+        log.warning('%s: no hash found' % (file_))
+    return not failed
 
 def _http_parser(source, config, opts):
     #
@@ -173,6 +215,7 @@ def parse_url(url, pathkey, config, opts):
         if path.exists(local):
             source['local_prefix'] = path.abspath(p)
             source['local'] = local
+            _hash_check(source['file'], local, config.macros)
             break
     source['script'] = ''
     for p in parsers:
@@ -257,6 +300,8 @@ def _http_downloader(url, local, config, opts):
         if not failed:
             if not path.isfile(local):
                 raise error.general('source is not a file: %s' % (path.host(local)))
+            if not _hash_check(path.basename(local), local, config.macros, False):
+                raise error.general('checksum failure file: %s' % (dst))
     return not failed
 
 def _git_downloader(url, local, config, opts):

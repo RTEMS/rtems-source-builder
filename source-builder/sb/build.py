@@ -308,6 +308,8 @@ class build:
             for l in _prep:
                 args = l.split()
                 if len(args):
+                    def err(msg):
+                        raise error.general('%s: %s' % (package, msg))
                     if args[0] == '%setup':
                         if len(args) == 1:
                             raise error.general('invalid %%setup directive: %s' % (' '.join(args)))
@@ -315,8 +317,11 @@ class build:
                             self.source_setup(package, args[1:])
                         elif args[1] == 'patch':
                             self.patch_setup(package, args[1:])
-                    elif args[0].startswith('%patch'):
-                        self.patch(package, args)
+                    elif args[0] in ['%patch', '%source']:
+                        sources.process(args[0][1:], args[1:], self.macros, err)
+                    elif args[0] == '%hash':
+                        sources.hash(args[1:], self.macros, err)
+                        self.hash(package, args)
                     else:
                         self.script.append(' '.join(args))
 

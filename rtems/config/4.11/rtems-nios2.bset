@@ -17,6 +17,7 @@
 # Add support for Cortex-M4 and Cortex-R based chips
 #
 %patch add gcc pw://patchwork.ozlabs.org/patch/364504/raw/RTEMS-Add-Nios-2-support.patch
+%hash  md5 RTEMS-Add-Nios-2-support.patch fd9bbc8482e69623214e2a4289e38d8f
 
 #
 # Tools configuration.

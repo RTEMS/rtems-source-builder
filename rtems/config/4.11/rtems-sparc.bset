@@ -15,6 +15,7 @@
 # GDB patches
 #
 %patch add gdb %{rtems_gdb_patches}/sparc/gdb-7.7-sis-output-nouartrx.diff
+%hash  md5 gdb-7.7-sis-output-nouartrx.diff bc35b15de1325f3c4461ac3cda027bea
 
 #
 # Tools configuration.

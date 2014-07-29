@@ -229,8 +229,9 @@ class file:
 
     _ignore = [ re.compile('%setup'),
                 re.compile('%configure'),
-                re.compile('%source[0-9]*'),
-                re.compile('%patch[0-9]*'),
+                re.compile('%source'),
+                re.compile('%patch'),
+                re.compile('%hash'),
                 re.compile('%select'),
                 re.compile('%disable') ]
 
@@ -671,6 +672,9 @@ class file:
     def _sources(self, ls):
         return sources.process(ls[0][1:], ls[1:], self.macros, self._error)
 
+    def _hash(self, ls):
+        return sources.hash(ls[1:], self.macros, self._error)
+
     def _define(self, config, ls):
         if len(ls) <= 1:
             log.warning('invalid macro definition')
@@ -890,6 +894,11 @@ class file:
                 elif ls[0] == '%source' or ls[0] == '%patch':
                     if isvalid:
                         d = self._sources(ls)
+                        if d is not None:
+                            return ('data', d)
+                elif ls[0] == '%hash':
+                    if isvalid:
+                        d = self._hash(ls)
                         if d is not None:
                             return ('data', d)
                 elif ls[0] == '%patch':

@@ -82,7 +82,7 @@ def trace(text = os.linesep, log = None):
 
 def warning(text = os.linesep, log = None):
     for l in text.replace(chr(13), '').splitlines():
-        _output('warning: %s' % (l), log)
+        notice('warning: %s' % (l), log)
 
 def flush(log = None):
     if log:
