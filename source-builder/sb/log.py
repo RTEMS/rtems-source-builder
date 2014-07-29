@@ -58,6 +58,10 @@ def _output(text = os.linesep, log = None):
         for l in text.replace(chr(13), '').splitlines():
             print l
 
+def stdout_raw(text = os.linesep):
+    print text,
+    sys.stdout.flush()
+
 def stderr(text = os.linesep, log = None):
     for l in text.replace(chr(13), '').splitlines():
         print >> sys.stderr, l

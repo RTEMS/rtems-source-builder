@@ -34,6 +34,22 @@ import git
 import log
 import path
 
+def _humanize_bytes(bytes, precision = 1):
+    abbrevs = (
+        (1 << 50L, 'PB'),
+        (1 << 40L, 'TB'),
+        (1 << 30L, 'GB'),
+        (1 << 20L, 'MB'),
+        (1 << 10L, 'kB'),
+        (1, ' bytes')
+    )
+    if bytes == 1:
+        return '1 byte'
+    for factor, suffix in abbrevs:
+        if bytes >= factor:
+            break
+    return '%.*f%s' % (precision, float(bytes) / factor, suffix)
+
 def _http_parser(source, config, opts):
     #
     # Is the file compressed ?
@@ -174,15 +190,49 @@ def _http_downloader(url, local, config, opts):
     #
     if url.startswith('https://api.github.com'):
         url = urlparse.urljoin(url, config.expand('tarball/%{version}'))
-    log.notice('download: %s -> %s' % (url, os.path.relpath(path.host(local))))
+    dst = os.path.relpath(path.host(local))
+    log.notice('download: %s -> %s' % (url, dst))
     failed = False
     if not opts.dry_run():
         _in = None
         _out = None
+        _length = None
+        _have = 0
+        _chunk_size = 256 * 1024
+        _chunk = None
+        _last_percent = 200.0
+        _last_msg = ''
+        _wipe_output = False
         try:
-            _in = urllib2.urlopen(url)
-            _out = open(path.host(local), 'wb')
-            _out.write(_in.read())
+            try:
+                _in = urllib2.urlopen(url)
+                _out = open(path.host(local), 'wb')
+                try:
+                    _length = int(_in.info().getheader('Content-Length').strip())
+                except:
+                    pass
+                while True:
+                    _msg = '\rdownloading: %s - %s ' % (dst, _humanize_bytes(_have))
+                    if _length:
+                        _percent = round((float(_have) / _length) * 100, 2)
+                        if _percent != _last_percent:
+                            _msg += 'of %s (%0.0f%%) ' % (_humanize_bytes(_length), _percent)
+                    if _msg != _last_msg:
+                        extras = (len(_last_msg) - len(_msg))
+                        log.stdout_raw('%s%s' % (_msg, ' ' * extras + '\b' * extras))
+                        _last_msg = _msg
+                    _chunk = _in.read(_chunk_size)
+                    if not _chunk:
+                        break
+                    _out.write(_chunk)
+                    _have += len(_chunk)
+                if _wipe_output:
+                    log.stdout_raw('\r%s\r' % (' ' * len(_last_msg)))
+                else:
+                    log.stdout_raw('\n')
+            except:
+                log.stdout_raw('\n')
+                raise
         except IOError, err:
             log.notice('download: %s: error: %s' % (url, str(err)))
             if path.exists(local):
