@@ -1,6 +1,6 @@
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2010-2013 Chris Johns (chrisj@rtems.org)
+# Copyright 2010-2014 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -24,7 +24,7 @@
 #
 
 major = 0
-minor = 3
+minor = 4
 revision = 0
 
 def str():
