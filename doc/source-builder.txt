@@ -9,7 +9,7 @@ RTEMS Source Builder
 image:images/rtemswhitebg.jpg["RTEMS",width="30%"]
 
 Chris Johns <chrisj@rtems.org>
-1.8, July 2014
+1.9, July 2014
 
 RTEMS Tools From Source
 -----------------------
@@ -869,6 +869,16 @@ This examples shows how to declare a patch for gdb in the +lm32+ architecture:
 <2> The group of patches this patch belongs too.
 <3> The patch's URL. It is downloaded from here.
 
+Patches require a checksum to avoid a warning. The +%hash+ directive can be
+used to add a checksum for a patch that is used to verify the patch:
+
+-------------------------------------------------------------
+%hash md5 <1> gdb-sim-lm32uart.diff <2> 77d070878112783292461bd6e7db17fb <3>
+-------------------------------------------------------------
+<1> The type of checksum, in the case an MD5 hash.
+<2> The patch file the checksum is for.
+<3> The MD5 hash.
+
 The patches are applied when a patch +setup+ command is issued in the +%prep:+
 section. All patches in the group are applied. To apply the GDB patch above
 use:
@@ -890,6 +900,8 @@ To test a patch simply copy it to your local +patches+ directory. The RSB will
 see the patch is present and will not attempt to download it. Once you are
 happy with the patch submit it to the project and a core developer will review
 it and add it to the RTEMS Tools git repository.
+
+File Checksums
 
 Cross and Canadian Cross Building
 ---------------------------------
@@ -2093,6 +2105,7 @@ The script language is implemented in terms of macros. The built-in list is:
 +%buildarch+:: The build architecture.
 +%source+:: Define a source code package. This macro has a number appended.
 +%patch+:: Define a patch. This macro has a is number appended.
++%hash+:: Define a checksum for a source or patch file.
 +%echo+:: Print the following string as a message.
 +%warning+:: Print the following string as a warning and continue.
 +%error+:: Print the following string as an error and exit.
@@ -2482,7 +2495,6 @@ applying a group of patches to a specific source tree.
 
 The +__patchdir+ path is search.
 
-
 To add a patch:
 
 -------------------------------------------------------------
@@ -2499,6 +2511,36 @@ Placing +%patch setup+ in the +%prep+ section will apply the groups patches.
 -------------------------------------------------------------
 <1> The patch group.
 <2> The default option used to apply the patch.
+
+%hash
+^^^^^
+
+The +%hash+ macro requires 3 arguments and defines a checksum for a specific
+file. The checksum is not applied until the file is checked before downloading
+and once downloaded. A patch or source file that does not has a hash defined
+generates a warning.
+
+A file to be checksum must be unqiue in the any of the source and patch
+directories. The basename of the file is used as the key for the hash.
+
+The hash algorthim can be 'md5', 'sha1', 'sha224', 'sha256', 'sha384', and
+'sha512' and we typically use 'md5'.
+
+To add a hash:
+
+-------------------------------------------------------------
+%hash md5 <1> net-snmp-%{net_snmp_version}.tar.gz <2> 7db683faba037249837b226f64d566d4 <3>
+-------------------------------------------------------------
+<1> The type of checksum.
+<2> The file to checksum. It can contain macros that are expanded for you.
+<3> The MD5 hash for the Net-SNMP file +net-snmp-5.7.2.1.tar.gz+.
+
+Do not include a path with the file name. Only the basename is required. Files
+can be searched for from a number of places and having a path conponent would
+create confusion. This does mean files with hashes must be unique.
+
+Downloading of repositories such as git and cvs cannot be checksumed. It is
+assumed those protocols and tools manage the state of the files.
 
 %echo
 ^^^^^
