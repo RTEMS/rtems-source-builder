@@ -3136,27 +3136,35 @@ are:
 # pkg_add ftp://ftp.netbsd.org/pub/pkgsrc/packages/NetBSD/i386/6.1/archivers/xz-5.0.4.tgz
 -------------------------------------------------------------
 
-MacOS X
-~~~~~~~
+MacOS
+~~~~~
 
 The RTEMS Source Builder has been tested on Mountain Lion. You will need to
 install the Xcode app using the _App Store_ tool, run Xcode and install the
 Developers Tools package within Xcode.
 
-Maverick
-^^^^^^^^
+Mavericks
+^^^^^^^^^
 
-The RSB works on Maverick and the GNU tools can be built for RTEMS using the
-Maverick clang LLVM tool chain. You will need to build and install a couple of
+The RSB works on Mavericks and the GNU tools can be built for RTEMS using the
+Mavericks clang LLVM tool chain. You will need to build and install a couple of
 packages to make the RSB pass the +sb-check+. These are CVS and XZ. You can get
 these tools from a packaging tool for MacOS such as _MacPorts_ or _HomeBrew_.
 
 I do not use 3rd party packaging on MacOS and prefer to build the packages from
-source using a prefix of '/usr/local'. The XZ package's home page is
-http://tukaani.org/xz/ and it builds without change. CVS can be found at
-http://cvs.nongnu.org/ and it requires this patch
-http://www.rtems.org/ftp/pub/rtems/people/chrisj/source-builder/cvs-1.11.23-osx-maverick.diff
-to build.
+source using a prefix of '/usr/local'. There are good 3rd party packages around
+however they sometimes bring in extra dependence and that complicates my build
+environment and I want to know the minimal requirements when building
+tools. The following are required:
+
+. The XZ package's home page is http://tukaani.org/xz/ and I use version
+  5.0.5. XZ builds and installs cleanly.
+
+. CVS can be found at http://cvs.nongnu.org/ and I use version 1.11.23. CVS
+  requires the following patch
+  http://www.rtems.org/ftp/pub/rtems/people/chrisj/source-builder/cvs-1.11.23-osx-maverick.diff
+  to build. Place the diff in the same directory as the unpacked cvs-1.11.23
+  and apply with +patch -p0 < cvs-1.11.23-osx-maverick.diff+.
 
 Windows
 ~~~~~~~
