@@ -78,7 +78,7 @@ class command:
                     cmd = kwargs.get("args")
                     if cmd is None:
                         cmd = popenargs[0]
-                    raise CalledProcessError(retcode, cmd)
+                    raise subprocess.CalledProcessError(retcode, cmd)
                 return output
             subprocess.check_output = f
 
