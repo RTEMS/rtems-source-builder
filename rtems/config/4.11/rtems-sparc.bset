@@ -18,6 +18,13 @@
 %hash  md5 gdb-7.7-sis-output-nouartrx.diff bc35b15de1325f3c4461ac3cda027bea
 
 #
+# If Windows (MinGW) do not build the simulator.
+#
+%if %{_build_os} == win32
+ %define gdb-disable-sim
+%endif
+
+#
 # Tools configuration.
 #
 4.11/rtems-autotools

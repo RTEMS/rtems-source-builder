@@ -31,6 +31,11 @@
 %define _targetcxxflags -g -O0
 
 #
+# If Windows (MinGW) do not build the simulator.
+#
+%define win32-gdb-disable-sim
+
+#
 # Tools configuration.
 #
 4.11/rtems-autotools
