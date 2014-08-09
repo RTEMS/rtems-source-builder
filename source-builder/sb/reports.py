@@ -37,6 +37,7 @@ try:
     import options
     import path
     import setbuilder
+    import sources
     import version
 except KeyboardInterrupt:
     print 'user terminated'
@@ -62,6 +63,13 @@ class report:
         self.configs_active = False
         self.out = ''
         self.asciidoc = None
+        if self.is_ini():
+            self.cini = ';'
+        else:
+            self.cini = ''
+        self.files = { 'buildsets':[], 'configs':[] }
+        self.sources = {}
+        self.patches = {}
 
     def _sbpath(self, *args):
         p = self.macros.expand('%{_sbdir}')
@@ -78,8 +86,14 @@ class report:
     def is_asciidoc(self):
         return self.format == 'asciidoc' or self.format == 'html'
 
+    def is_html(self):
+        return self.format == 'html'
+
+    def is_ini(self):
+        return self.format == 'ini'
+
     def setup(self):
-        if self.format == 'html':
+        if self.is_html():
             try:
                 import asciidocapi
             except:
@@ -103,6 +117,10 @@ class report:
             self.output("'''")
             self.output('')
             self.output('.%s' % (text))
+        elif self.is_ini():
+            self.output(';')
+            self.output('; %s' % (text))
+            self.output(';')
         else:
             self.output('-' * self.line_len)
             self.output('%s' % (text))
@@ -112,7 +130,7 @@ class report:
             if self.is_asciidoc():
                 self.output('*Remotes*:;;')
             else:
-                self.output(' Remotes:')
+                self.output('%s Remotes:' % (self.cini))
             repo_remotes = repo.remotes()
             rc = 0
             for r in repo_remotes:
@@ -125,36 +143,40 @@ class report:
                 if self.is_asciidoc():
                     self.output('. %s' % (text))
                 else:
-                    self.output('  %2d: %s' % (rc, text))
+                    self.output('%s  %2d: %s' % (self.cini, rc, text))
             if self.is_asciidoc():
                 self.output('*Status*:;;')
             else:
-                self.output(' Status:')
-            if repo.clean():
-                if self.is_asciidoc():
-                    self.output('Clean')
-                else:
-                    self.output('  Clean')
-            else:
+                self.output('%s Status:' % (self.cini))
+            if repo.dirty():
                 if self.is_asciidoc():
                     self.output('_Repository is dirty_')
                 else:
-                    self.output('  Repository is dirty')
+                    self.output('%s  Repository is dirty' % (self.cini))
+            else:
+                if self.is_asciidoc():
+                    self.output('Clean')
+                else:
+                    self.output('%s  Clean' % (self.cini))
             repo_head = repo.head()
             if self.is_asciidoc():
                 self.output('*Head*:;;')
                 self.output('Commit: %s' % (repo_head))
             else:
-                self.output(' Head:')
-                self.output('  Commit: %s' % (repo_head))
+                self.output('%s Head:' % (self.cini))
+                self.output('%s  Commit: %s' % (self.cini, repo_head))
         else:
-            self.output('_Not a valid GIT repository_')
+            if self.is_asciidoc():
+                self.output('_Not a valid GIT repository_')
+            else:
+                self.output('%s Not a valid GIT repository' % (self.cini))
         if self.is_asciidoc():
             self.output('')
             self.output("'''")
             self.output('')
 
     def introduction(self, name, intro_text = None):
+        now = datetime.datetime.now().ctime()
         if self.is_asciidoc():
             h = 'RTEMS Source Builder Report'
             self.output(h)
@@ -174,9 +196,16 @@ class report:
             self.output('')
             if intro_text:
                 self.output('%s' % ('\n'.join(intro_text)))
+        elif self.is_ini():
+            self.output(';')
+            self.output('; RTEMS Tools Project <rtems-users@rtems.org> %s' % now)
+            if intro_text:
+                self.output(';')
+                self.output('; %s' % ('\n; '.join(intro_text)))
+                self.output(';')
         else:
             self.output('=' * self.line_len)
-            self.output('RTEMS Tools Project <rtems-users@rtems.org> %s' % datetime.datetime.now().ctime())
+            self.output('RTEMS Tools Project <rtems-users@rtems.org> %s' % now)
             if intro_text:
                 self.output('')
                 self.output('%s' % ('\n'.join(intro_text)))
@@ -184,20 +213,28 @@ class report:
             self.output('Report: %s' % (name))
         self.git_status()
 
-    def config_start(self, name):
+    def config_start(self, name, _config):
+        self.files['configs'] += [name]
+        for cf in _config.includes():
+            cfbn = path.basename(cf)
+            if cfbn not in self.files['configs']:
+                self.files['configs'] += [cfbn]
         first = not self.configs_active
         self.configs_active = True
 
-    def config_end(self, name):
+    def config_end(self, name, _config):
         if self.is_asciidoc():
             self.output('')
             self.output("'''")
             self.output('')
 
     def buildset_start(self, name):
+        self.files['buildsets'] += [name]
         if self.is_asciidoc():
             h = '%s' % (name)
             self.output('=%s %s' % ('=' * self.bset_nesting, h))
+        elif self.is_ini():
+            pass
         else:
             self.output('=-' * (self.line_len / 2))
             self.output('Build Set: %s' % (name))
@@ -205,11 +242,30 @@ class report:
     def buildset_end(self, name):
         self.configs_active = False
 
-    def source(self, package, source_tag):
-        return package.sources()
+    def source(self, macros):
+        def err(msg):
+            raise error.general('%s' % (msg))
+        srcs = {}
+        for n in sources.get_source_names(macros, err):
+            srcs[n] = sources.get_sources(n, macros, err)
+        return srcs
 
-    def patch(self, package, args):
-        return package.patches()
+    def patch(self, macros):
+        def err(msg):
+            raise error.general('%s' % (msg))
+        _patches = {}
+        for n in sources.get_patch_names(macros, err):
+            _patches[n] = sources.get_patches(n, macros, err)
+        patches = {}
+        for n in _patches:
+            pl = []
+            for p in _patches[n]:
+                pl += [p.split()[-1]]
+            patches[n] = pl
+        return patches
+
+    def hash(self, name, macros):
+        return sources.get_hash(name, macros)
 
     def output_info(self, name, info, separated = False):
         if info is not None:
@@ -245,12 +301,28 @@ class report:
             if self.is_asciidoc():
                 self.output('--------------------------------------------')
 
-    def config(self, _config, opts, macros):
+    def get_sources_patches(self, macros):
+        def _merge(src, dst):
+            for name in src:
+                if name not in dst:
+                    dst[name] = []
+                for s in src[name]:
+                    dst[name] += [s]
+                dst[name] = dst[name]
+        sources = self.source(macros)
+        _merge(sources, self.sources)
+        patches = self.patch(macros)
+        _merge(patches, self.patches)
+        return sources, patches
 
+    def config(self, _config, opts, macros):
         packages = _config.packages()
         package = packages['main']
         name = package.name()
-        self.config_start(name)
+        sources, patches = self.get_sources_patches(macros)
+        self.config_start(name, _config)
+        if self.is_ini():
+            return
         if self.is_asciidoc():
             self.output('*Package*: _%s_ +' % (name))
             self.output('*Config*: %s' % (_config.file_name()))
@@ -266,7 +338,6 @@ class report:
         self.output_info('Build Arch', package.get_info('buildarch'))
         if self.is_asciidoc():
             self.output('')
-        sources = package.sources()
         if self.is_asciidoc():
             self.output('*Sources:*::')
             if len(sources) == 0:
@@ -274,13 +345,23 @@ class report:
         else:
             self.output('  Sources: %d' % (len(sources)))
         c = 0
-        for s in sources:
-            c += 1
-            if self.is_asciidoc():
-                self.output('. %s' % (sources[s][0]))
-            else:
-                self.output('   %2d: %s' % (c, sources[s][0]))
-        patches = package.patches()
+        for name in sources:
+            for s in sources[name]:
+                c += 1
+                if self.is_asciidoc():
+                    self.output('. %s' % (s))
+                else:
+                    self.output('   %2d: %s' % (c, s))
+                hash = self.hash(path.basename(s).lower(), macros)
+                if hash is None:
+                    h = 'No checksum'
+                else:
+                    hash = hash.split()
+                    h = '%s: %s' % (hash[0], hash[1])
+                if self.is_asciidoc():
+                    self.output(' %s' % (h))
+                else:
+                    self.output('       %s' % (h))
         if self.is_asciidoc():
             self.output('')
             self.output('*Patches:*::')
@@ -295,14 +376,47 @@ class report:
                 self.output('. %s' % (patches[p][0]))
             else:
                 self.output('   %2d: %s' % (c, patches[p][0]))
+                hash = self.hash(path.basename(s).lower(), macros)
+                if hash is None:
+                    h = 'No checksum'
+                else:
+                    hash = hash.split()
+                    h = '%s: %s' % (hash[0], hash[1])
+                if self.is_asciidoc():
+                    self.output(' %s' % (h))
+                else:
+                    self.output('       %s' % (h))
         self.output_directive('Preparation', package.prep())
         self.output_directive('Build', package.build())
         self.output_directive('Install', package.install())
         self.output_directive('Clean', package.clean())
-        self.config_end(name)
+        self.config_end(name, _config)
 
-    def write(self, name):
-        if self.format == 'html':
+    def generate_ini(self, sysname):
+        self.output(';')
+        self.output('; Buildset File(s):')
+        for bf in sorted(self.files['buildsets']):
+            self.output(';   %s' % (bf))
+        self.output(';')
+        self.output('; Configuration File(s):')
+        for cf in sorted(self.files['configs']):
+            self.output(';   %s' % (cf))
+        names = sorted(set(self.sources.keys() + self.patches.keys()))
+        self.output(';')
+        self.output('')
+        self.output('[%s]' % (sysname))
+        for name in names:
+            self.output('%s = rtems-%s' % (name, name))
+        for name in names:
+            self.output('')
+            self.output('[%s-%s]' % (sysname, name))
+            if name in self.sources:
+                self.output('sources = %s' % (', '.join(set(self.sources[name]))))
+            if name in self.patches:
+                self.output('patches = %s' % (', '.join(set(self.patches[name]))))
+
+    def write(self, sysname, name):
+        if self.is_html():
             if self.asciidoc is None:
                 raise error.general('asciidoc not initialised')
             import StringIO
@@ -312,6 +426,8 @@ class report:
             self.out = outfile.getvalue()
             infile.close()
             outfile.close()
+        elif self.is_ini():
+            self.generate_ini(sysname)
         if name is not None:
             try:
                 o = open(path.host(name), "w")
@@ -331,7 +447,7 @@ class report:
         bset = setbuilder.buildset(name, self.configs, opts, macros)
         for c in bset.load():
             if c.endswith('.bset'):
-                self.buildset(c, bset.opts, bset.macros)
+                self.generate(c, bset.opts, bset.macros)
             elif c.endswith('.cfg'):
                 self.config(config.file(c, bset.opts, bset.macros),
                             bset.opts, bset.macros)
@@ -340,17 +456,18 @@ class report:
         self.buildset_end(name)
         self.bset_nesting -= 1
 
-    def create(self, inname, outname = None, intro_text = None):
+    def create(self, sysname, inname, outname = None, intro_text = None):
         self.setup()
         self.introduction(inname, intro_text)
         self.generate(inname)
-        self.write(outname)
+        self.write(sysname, outname)
 
 def run(args):
     try:
+        sysname = 'rtems'
         optargs = { '--list-bsets':   'List available build sets',
                     '--list-configs': 'List available configurations',
-                    '--format':       'Output format (text, html, asciidoc)',
+                    '--format':       'Output format (text, html, asciidoc, ini)',
                     '--output':       'File name to output the report' }
         opts = options.load(args, optargs)
         if opts.get_arg('--output') and len(opts.params()) > 1:
@@ -378,6 +495,9 @@ def run(args):
                 elif format_opt[1] == 'html':
                     format = 'html'
                     ext = '.html'
+                elif format_opt[1] == 'ini':
+                    format = 'ini'
+                    ext = '.ini'
                 else:
                     raise error.general('invalid format: %s' % (format_opt[1]))
             r = report(format, configs, opts)
@@ -390,7 +510,7 @@ def run(args):
                 config = build.find_config(_config, configs)
                 if config is None:
                     raise error.general('config file not found: %s' % (inname))
-                r.create(config, outname)
+                r.create(sysname, config, outname)
             del r
         else:
             raise error.general('invalid config type: %s' % (config))
