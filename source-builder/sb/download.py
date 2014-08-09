@@ -53,8 +53,8 @@ def _humanize_bytes(bytes, precision = 1):
 
 def _hash_check(file_, absfile, macros, remove = True):
     failed = False
-    if file_.lower() in macros.map_keys('hashes'):
-        m1, m2, hash = macros.get(file_.lower(), globals = False, maps = 'hashes')
+    hash = sources.get_hash(file_.lower(), macros)
+    if hash is not None:
         hash = hash.split()
         if len(hash) != 2:
             raise error.internal('invalid hash format: %s' % (file_))

@@ -62,7 +62,7 @@ def process(label, args, macros, error):
     if label != 'source' and label != 'patch':
         error('invalid source type: %s' % (label))
     args = _args(args)
-    log.output('sources: %s' % (' '.join(args)))
+    log.trace('sources: %s' % (' '.join(args)))
     if len(args) < 3:
         error('%%%s requires at least 3 arguments: %s' % (label, ' '.join(args)))
     if args[0] == 'set':
@@ -86,3 +86,41 @@ def hash(args, macros, error):
     macros.define(_file, '%s %s' % (args[0], args[2]))
     macros.unset_write_map()
     return None
+
+def get(type_, name, macros, error):
+    _map = '%s-%s' % (type_, name)
+    keys = macros.map_keys(_map)
+    if len(keys) == 0:
+        error('no %s set: %s (%s)' % (type_, name, _map))
+    srcs = []
+    for s in keys:
+        sm = macros.get(s, globals = False, maps = _map)
+        if sm is None:
+            error('source macro not found: %s in %s (%s)' % (s, name, _map))
+        srcs += [sm[2]]
+    return srcs
+
+def get_sources(name, macros, error):
+    return get('source', name, macros, error)
+
+def get_patches(name, macros, error):
+    return get('patch', name, macros, error)
+
+def get_names(type_, macros, error):
+    names = []
+    for m in macros.maps():
+        if m.startswith('%s-' % (type_)):
+            names += [m[len('%s-' % (type_)):]]
+    return names
+
+def get_source_names(macros, error):
+    return get_names('source', macros, error)
+
+def get_patch_names(macros, error):
+    return get_names('patch', macros, error)
+
+def get_hash(name, macros):
+    hash = None
+    if name in macros.map_keys('hashes'):
+        m1, m2, hash = macros.get(name, globals = False, maps = 'hashes')
+    return hash
