@@ -27,6 +27,9 @@ import datetime
 import os
 import sys
 
+import pprint
+pp = pprint.PrettyPrinter(indent = 2)
+
 try:
     import build
     import check
@@ -45,6 +48,17 @@ except KeyboardInterrupt:
 except:
     print 'error: unknown application load error'
     sys.exit(1)
+
+def _tree_name(path_):
+    return path.splitext(path.basename(path_))[0]
+
+def _merge(_dict, new):
+    new = copy.deepcopy(new)
+    for i in new:
+        if i not in _dict:
+            _dict[i] = new[i]
+        else:
+            _dict[i] += new[i]
 
 class report:
     """Report the build details about a package given a config file."""
@@ -67,9 +81,8 @@ class report:
             self.cini = ';'
         else:
             self.cini = ''
+        self.tree = {}
         self.files = { 'buildsets':[], 'configs':[] }
-        self.sources = {}
-        self.patches = {}
 
     def _sbpath(self, *args):
         p = self.macros.expand('%{_sbdir}')
@@ -177,6 +190,7 @@ class report:
 
     def introduction(self, name, intro_text = None):
         now = datetime.datetime.now().ctime()
+        title = 'RTEMS Tools Project <users@rtems.org>'
         if self.is_asciidoc():
             h = 'RTEMS Source Builder Report'
             self.output(h)
@@ -188,7 +202,7 @@ class report:
             self.output(':numbered:')
             self.output(':data-uri:')
             self.output('')
-            self.output('RTEMS Tools Project <rtems-users@rtems.org>')
+            self.output(title)
             self.output(datetime.datetime.now().ctime())
             self.output('')
             image = self._sbpath(options.basepath, 'images', 'rtemswhitebg.jpg')
@@ -198,14 +212,14 @@ class report:
                 self.output('%s' % ('\n'.join(intro_text)))
         elif self.is_ini():
             self.output(';')
-            self.output('; RTEMS Tools Project <rtems-users@rtems.org> %s' % now)
+            self.output('; %s %s' % (title, now))
             if intro_text:
                 self.output(';')
                 self.output('; %s' % ('\n; '.join(intro_text)))
                 self.output(';')
         else:
             self.output('=' * self.line_len)
-            self.output('RTEMS Tools Project <rtems-users@rtems.org> %s' % now)
+            self.output('%s %s' % (title, now))
             if intro_text:
                 self.output('')
                 self.output('%s' % ('\n'.join(intro_text)))
@@ -245,9 +259,15 @@ class report:
     def source(self, macros):
         def err(msg):
             raise error.general('%s' % (msg))
+        _srcs = {}
+        for p in sources.get_source_names(macros, err):
+            if 'setup' in sources.get_source_keys(p, macros, err):
+                _srcs[p] = \
+                    [s for s in sources.get_sources(p, macros, err) if not s.startswith('%setup')]
+                _srcs[p] = [macros.expand(s) for s in _srcs[p]]
         srcs = {}
-        for n in sources.get_source_names(macros, err):
-            srcs[n] = sources.get_sources(n, macros, err)
+        for p in _srcs:
+            srcs[p] = [(s, sources.get_hash(path.basename(s).lower(), macros)) for s in _srcs[p]]
         return srcs
 
     def patch(self, macros):
@@ -255,17 +275,14 @@ class report:
             raise error.general('%s' % (msg))
         _patches = {}
         for n in sources.get_patch_names(macros, err):
-            _patches[n] = sources.get_patches(n, macros, err)
+            if 'setup' in sources.get_patch_keys(n, macros, err):
+                _patches[n] = \
+                    [p for p in sources.get_patches(n, macros, err) if not p.startswith('%setup')]
+                _patches[n] = [macros.expand(p.split()[-1]) for p in _patches[n]]
         patches = {}
         for n in _patches:
-            pl = []
-            for p in _patches[n]:
-                pl += [p.split()[-1]]
-            patches[n] = pl
+            patches[n] = [(p, sources.get_hash(path.basename(p).lower(), macros)) for p in _patches[n]]
         return patches
-
-    def hash(self, name, macros):
-        return sources.get_hash(name, macros)
 
     def output_info(self, name, info, separated = False):
         if info is not None:
@@ -301,25 +318,41 @@ class report:
             if self.is_asciidoc():
                 self.output('--------------------------------------------')
 
-    def get_sources_patches(self, macros):
-        def _merge(src, dst):
-            for name in src:
-                if name not in dst:
-                    dst[name] = []
-                for s in src[name]:
-                    dst[name] += [s]
-                dst[name] = dst[name]
-        sources = self.source(macros)
-        _merge(sources, self.sources)
-        patches = self.patch(macros)
-        _merge(patches, self.patches)
-        return sources, patches
+    def tree_sources(self, name, tree, sources = []):
+        if 'cfg' in tree:
+            packages = {}
+            if 'sources' in tree['cfg']:
+                _merge(packages, tree['cfg']['sources'])
+            if 'patches' in tree['cfg']:
+                _merge(packages, tree['cfg']['patches'])
+            for package in packages:
+                for source in packages[package]:
+                    if not source[0].startswith('git') and not source[0].startswith('cvs'):
+                        sources += [(path.basename(source[0]), source[0], source[1])]
+        if 'bset' in tree:
+            for node in sorted(tree['bset'].keys()):
+                self.tree_sources(_tree_name(node), tree['bset'][node], sources)
+        return sources
 
-    def config(self, _config, opts, macros):
+    def config(self, _config, tree, opts, macros):
         packages = _config.packages()
         package = packages['main']
         name = package.name()
-        sources, patches = self.get_sources_patches(macros)
+        if len(name) == 0:
+            return
+        tree['file'] += [_config.file_name()]
+        sources = self.source(macros)
+        patches = self.patch(macros)
+        if len(sources):
+            if 'sources' in tree:
+                tree['sources'] = dict(tree['sources'].items() + sources.items())
+            else:
+                tree['sources'] = sources
+        if len(patches):
+            if 'patches' in tree:
+                tree['patches'] = dict(tree['patches'].items() + patches.items())
+            else:
+                tree['patches'] = patches
         self.config_start(name, _config)
         if self.is_ini():
             return
@@ -349,17 +382,16 @@ class report:
             for s in sources[name]:
                 c += 1
                 if self.is_asciidoc():
-                    self.output('. %s' % (s))
+                    self.output('. %s' % (s[0]))
                 else:
-                    self.output('   %2d: %s' % (c, s))
-                hash = self.hash(path.basename(s).lower(), macros)
-                if hash is None:
+                    self.output('   %2d: %s' % (c, s[0]))
+                if s[1] is None:
                     h = 'No checksum'
                 else:
-                    hash = hash.split()
+                    hash = s[1].split()
                     h = '%s: %s' % (hash[0], hash[1])
                 if self.is_asciidoc():
-                    self.output(' %s' % (h))
+                    self.output('+\n%s\n' % (h))
                 else:
                     self.output('       %s' % (h))
         if self.is_asciidoc():
@@ -370,20 +402,21 @@ class report:
         else:
             self.output('  Patches: %s' % (len(patches)))
         c = 0
-        for p in patches:
-            c += 1
-            if self.is_asciidoc():
-                self.output('. %s' % (patches[p][0]))
-            else:
-                self.output('   %2d: %s' % (c, patches[p][0]))
-                hash = self.hash(path.basename(s).lower(), macros)
+        for name in patches:
+            for p in patches[name]:
+                c += 1
+                if self.is_asciidoc():
+                    self.output('. %s' % (p[0]))
+                else:
+                    self.output('   %2d: %s' % (c, p[0]))
+                hash = p[1]
                 if hash is None:
                     h = 'No checksum'
                 else:
                     hash = hash.split()
                     h = '%s: %s' % (hash[0], hash[1])
                 if self.is_asciidoc():
-                    self.output(' %s' % (h))
+                    self.output('+\n(%s)\n' % (h))
                 else:
                     self.output('       %s' % (h))
         self.output_directive('Preparation', package.prep())
@@ -392,30 +425,94 @@ class report:
         self.output_directive('Clean', package.clean())
         self.config_end(name, _config)
 
-    def generate_ini(self, sysname):
-        self.output(';')
-        self.output('; Buildset File(s):')
-        for bf in sorted(self.files['buildsets']):
-            self.output(';   %s' % (bf))
-        self.output(';')
-        self.output('; Configuration File(s):')
-        for cf in sorted(self.files['configs']):
-            self.output(';   %s' % (cf))
-        names = sorted(set(self.sources.keys() + self.patches.keys()))
-        self.output(';')
-        self.output('')
-        self.output('[%s]' % (sysname))
-        for name in names:
-            self.output('%s = rtems-%s' % (name, name))
-        for name in names:
-            self.output('')
-            self.output('[%s-%s]' % (sysname, name))
-            if name in self.sources:
-                self.output('sources = %s' % (', '.join(set(self.sources[name]))))
-            if name in self.patches:
-                self.output('patches = %s' % (', '.join(set(self.patches[name]))))
+    def generate_ini_tree(self, name, tree, prefix_char, prefix = ''):
+        if prefix_char == '|':
+            c = '|'
+        else:
+            c = '+'
+        self.output('; %s  %s- %s' % (prefix, c, name))
+        prefix += '  %s ' % (prefix_char)
+        if 'cfg' in tree:
+            files = sorted(tree['cfg']['file'])
+            if len(files):
+                for f in range(0, len(files) - 1):
+                    self.output('; %s  |- %s' % (prefix, files[f]))
+                if 'bset' in tree and len(tree['bset'].keys()):
+                    c = '|'
+                else:
+                    c = '+'
+                self.output('; %s  %s- %s' % (prefix, c, files[f + 1]))
+        if 'bset' in tree:
+            nodes = sorted(tree['bset'].keys())
+            for node in range(0, len(nodes)):
+                if node == len(nodes) - 1:
+                    prefix_char = ' '
+                else:
+                    prefix_char = '|'
+                self.generate_ini_tree(nodes[node],
+                                       tree['bset'][nodes[node]],
+                                       prefix_char,
+                                       prefix)
 
-    def write(self, sysname, name):
+    def generate_ini_node(self, name, tree, sections = []):
+        if name not in sections:
+            sections += [name]
+            self.output('')
+            self.output('[%s]' % (name))
+            if 'bset' in tree and len(tree['bset']):
+                self.output(' packages = %s' % \
+                                (', '.join([_tree_name(n) for n in sorted(tree['bset'])])))
+            if 'cfg' in tree:
+                packages = {}
+                if 'sources' in tree['cfg']:
+                    _merge(packages, tree['cfg']['sources'])
+                if 'patches' in tree['cfg']:
+                    _merge(packages, tree['cfg']['patches'])
+                for package in packages:
+                    self.output(' %s = %s' % (package, ', '.join([s[0] for s in packages[package]])))
+            if 'bset' in tree:
+                for node in sorted(tree['bset'].keys()):
+                    self.generate_ini_node(_tree_name(node), tree['bset'][node], sections)
+
+    def generate_ini_source(self, sources):
+        self.output('')
+        self.output('[source]')
+        for source in sources:
+            self.output(' %s = %s' % (source[0], source[1]))
+
+    def generate_ini_hash(self, sources):
+        self.output('')
+        self.output('[hash]')
+        for source in sources:
+            if source[2] is None:
+                hash = ''
+            else:
+                hash = source[2].split()
+                hash = '%s:%s' % (hash[0], hash[1])
+            self.output(' %s = %s' % (source[0], hash))
+
+    def generate_ini(self):
+        #self.output(pp.pformat(self.tree))
+        nodes = sorted([node for node in self.tree.keys() if node != 'bset'])
+        self.output(';')
+        self.output('; Configuration Tree:')
+        for node in range(0, len(nodes)):
+            if node == len(nodes) - 1:
+                prefix_char = ' '
+            else:
+                prefix_char = '|'
+            self.generate_ini_tree(nodes[node], self.tree[nodes[node]], prefix_char)
+        self.output(';')
+        sources = []
+        for node in nodes:
+            sources += self.tree_sources(_tree_name(node), self.tree[node])
+        sources = sorted(set(sources))
+        self.generate_ini_source(sources)
+        self.generate_ini_hash(sources)
+        for node in nodes:
+            self.generate_ini_node(_tree_name(node), self.tree[node])
+
+    def write(self, name):
         if self.is_html():
             if self.asciidoc is None:
                 raise error.general('asciidoc not initialised')
@@ -427,7 +524,7 @@ class report:
             infile.close()
             outfile.close()
         elif self.is_ini():
-            self.generate_ini(sysname)
+            self.generate_ini()
         if name is not None:
             try:
                 o = open(path.host(name), "w")
@@ -437,34 +534,37 @@ class report:
             except IOError, err:
                 raise error.general('writing output file: %s: %s' % (name, err))
 
-    def generate(self, name, opts = None, macros = None):
+    def generate(self, name, tree = None, opts = None, defaults = None):
         self.bset_nesting += 1
         self.buildset_start(name)
+        if tree is None:
+            tree = self.tree
         if opts is None:
             opts = self.opts
-        if macros is None:
-            macros = self.macros
-        bset = setbuilder.buildset(name, self.configs, opts, macros)
+        bset = setbuilder.buildset(name, self.configs, opts, defaults)
+        if name in tree:
+            raise error.general('duplicate build set in tree: %s' % (name))
+        tree[name] = { 'bset': { }, 'cfg': { 'file': []  } }
         for c in bset.load():
+            macros = copy.copy(bset.macros)
             if c.endswith('.bset'):
-                self.generate(c, bset.opts, bset.macros)
+                self.generate(c, tree[name]['bset'], bset.opts, macros)
             elif c.endswith('.cfg'):
-                self.config(config.file(c, bset.opts, bset.macros),
-                            bset.opts, bset.macros)
+                self.config(config.file(c, bset.opts, macros),
+                            tree[name]['cfg'], bset.opts, macros)
             else:
                 raise error.general('invalid config type: %s' % (c))
         self.buildset_end(name)
         self.bset_nesting -= 1
 
-    def create(self, sysname, inname, outname = None, intro_text = None):
+    def create(self, inname, outname = None, intro_text = None):
         self.setup()
         self.introduction(inname, intro_text)
         self.generate(inname)
-        self.write(sysname, outname)
+        self.write(outname)
 
 def run(args):
     try:
-        sysname = 'rtems'
         optargs = { '--list-bsets':   'List available build sets',
                     '--list-configs': 'List available configurations',
                     '--format':       'Output format (text, html, asciidoc, ini)',
@@ -510,7 +610,7 @@ def run(args):
                 config = build.find_config(_config, configs)
                 if config is None:
                     raise error.general('config file not found: %s' % (inname))
-                r.create(sysname, config, outname)
+                r.create(config, outname)
             del r
         else:
             raise error.general('invalid config type: %s' % (config))

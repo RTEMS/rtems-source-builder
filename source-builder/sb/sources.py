@@ -32,9 +32,14 @@ def add(label, args, macros, error):
         error('%%%s requires at least 2 arguments' % (label))
     _map = '%s-%s' % (label, args[0])
     macros.create_map(_map)
+    index = 0
+    while True:
+        key = '%s%d' % (label, index)
+        if key not in macros.map_keys(_map):
+            break
+        index += 1
     macros.set_write_map(_map)
-    index = macros.map_num_keys(_map)
-    macros.define('%s%d' % (label, index), ' '.join(args[1:]))
+    macros.define(key, ' '.join(args[1:]))
     macros.unset_write_map()
     return None
 
@@ -55,8 +60,14 @@ def setup(label, args, macros, error):
     args = _args(args)
     if len(args) < 2:
         error('%%%s requires at least 2 arguments: %s' % (label, ' '.join(args)))
+    ss = '%%setup %s %s' % (label, ' '.join(args))
     _map = '%s-%s' % (label, args[0])
-    return ['%%setup %s %s' % (label, ' '.join(args))]
+    if 'setup' in macros.map_keys(_map):
+        error('%%%s already setup source: %s' % (label, ' '.join(args)))
+    macros.set_write_map(_map)
+    macros.define('setup', ss)
+    macros.unset_write_map()
+    return [ss]
 
 def process(label, args, macros, error):
     if label != 'source' and label != 'patch':
@@ -87,11 +98,11 @@ def hash(args, macros, error):
     macros.unset_write_map()
     return None
 
-def get(type_, name, macros, error):
-    _map = '%s-%s' % (type_, name)
+def get(label, name, macros, error):
+    _map = '%s-%s' % (label, name)
     keys = macros.map_keys(_map)
     if len(keys) == 0:
-        error('no %s set: %s (%s)' % (type_, name, _map))
+        error('no %s set: %s (%s)' % (label, name, _map))
     srcs = []
     for s in keys:
         sm = macros.get(s, globals = False, maps = _map)
@@ -106,11 +117,21 @@ def get_sources(name, macros, error):
 def get_patches(name, macros, error):
     return get('patch', name, macros, error)
 
-def get_names(type_, macros, error):
+def get_keys(label, name, macros, error):
+    _map = '%s-%s' % (label, name)
+    return macros.map_keys(_map)
+
+def get_source_keys(name, macros, error):
+    return get_keys('source', name, macros, error)
+
+def get_patch_keys(name, macros, error):
+    return get_keys('patch', name, macros, error)
+
+def get_names(label, macros, error):
     names = []
     for m in macros.maps():
-        if m.startswith('%s-' % (type_)):
-            names += [m[len('%s-' % (type_)):]]
+        if m.startswith('%s-' % (label)):
+            names += [m[len('%s-' % (label)):]]
     return names
 
 def get_source_names(macros, error):

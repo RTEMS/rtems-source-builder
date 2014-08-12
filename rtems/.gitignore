@@ -5,6 +5,7 @@ tar
 build
 *.txt
 *.html
+*.ini
 #*#
 .*
 log_*
