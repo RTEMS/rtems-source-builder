@@ -34,6 +34,7 @@ import error
 import git
 import log
 import path
+import sources
 
 def _humanize_bytes(bytes, precision = 1):
     abbrevs = (

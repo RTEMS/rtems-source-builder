@@ -160,7 +160,7 @@ class build:
         # these may be overridden by user loaded macros.
         #
         _map = 'source-%s' % (name)
-        src_keys = self.macros.map_keys(_map)
+        src_keys = [s for s in self.macros.map_keys(_map) if s != 'setup']
         if len(src_keys) == 0:
             raise error.general('no source set: %s (%s)' % (name, _map))
         srcs = []
@@ -247,7 +247,7 @@ class build:
         args = args[2:]
         _map = 'patch-%s' % (name)
         default_opts = ' '.join(args)
-        patch_keys = self.macros.map_keys(_map)
+        patch_keys = [p for p in self.macros.map_keys(_map) if p != 'setup']
         patches = []
         for p in patch_keys:
             pm = self.macros.get(p, globals = False, maps = _map)
