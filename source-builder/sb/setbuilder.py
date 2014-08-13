@@ -33,7 +33,6 @@ try:
     import build
     import check
     import error
-    import ereport
     import log
     import mailer
     import options

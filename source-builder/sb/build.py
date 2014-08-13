@@ -109,8 +109,9 @@ class build:
         else:
             return name
 
-    def _generate_report_(self, header):
-        ereport.generate('rsb-report-%s.txt' % self.macros['name'], self.opts, header)
+    def _generate_report_(self, header, footer = None):
+        ereport.generate('rsb-report-%s.txt' % self.macros['name'],
+                         self.opts, header, footer)
 
     def __init__(self, name, create_tar_files, opts, macros = None):
         try:
@@ -443,7 +444,8 @@ class build:
             except:
                 raise
             if self.opts.dry_run():
-                self._generate_report_('Build: dry run')
+                self._generate_report_('Build: dry run (no actual error)',
+                                       'Build: dry run (no actual error)')
 
     def name(self):
         packages = self.config.packages()
