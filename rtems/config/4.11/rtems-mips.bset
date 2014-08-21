@@ -12,6 +12,11 @@
 %include rtems-4.11-base.bset
 
 #
+# Simulator options.
+#
+%define gdb-sim-options --enable-sim-hardware
+
+#
 # If Windows (MinGW) do not build the simulator.
 #
 %define win32-gdb-disable-sim

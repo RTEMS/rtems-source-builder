@@ -531,7 +531,7 @@ class file:
                         log.warning('malformed expand macro, no colon found')
                     else:
                         e = self._expand(m[colon + 1:-1].strip())
-                        s = s.replace(m, e)
+                        s = s.replace(m, self._label(e))
                         expanded = True
                         mn = None
                 elif m.startswith('%{with '):
