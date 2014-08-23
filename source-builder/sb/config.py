@@ -402,6 +402,7 @@ class file:
                 else:
                     cmd = s[2:-1]
                 exit_code, proc, output = e.shell(cmd)
+                log.trace('shell-output: %d %s' % (exit_code, output))
                 if exit_code == 0:
                     line = line.replace(s, output)
                 else:
@@ -785,7 +786,15 @@ class file:
                         istrue = True
                     else:
                         self._error('invalid if bool operator: ' + reduce(add, ls, ''))
-            elif len(ifls) == 3:
+            else:
+                if len(ifls) > 3:
+                    for op in ['==', '!=', '>=', '=>', '=<', '<=', '>', '<']:
+                        ops = s.split(op)
+                        if len(ops) == 2:
+                            ifls = (ops[0], op, ops[1])
+                            break
+                if len(ifls) != 3:
+                     self._error('malformed if: ' + reduce(add, ls, ''))
                 if ifls[1] == '==':
                     if ifls[0] == ifls[2]:
                         istrue = True
@@ -818,8 +827,6 @@ class file:
                         istrue = False
                 else:
                     self._error('invalid %if operator: ' + reduce(add, ls, ''))
-            else:
-                self._error('malformed if: ' + reduce(add, ls, ''))
             if invert:
                 istrue = not istrue
             log.trace('config: %s: _if:  %s %s' % (self.name, ifls, str(istrue)))
