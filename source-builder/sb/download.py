@@ -110,7 +110,7 @@ def _http_parser(source, config, opts):
         source['compressed'] = '%{__bzip2} -dc'
     elif esl[-1:][0] == 'zip':
         source['compressed-type'] = 'zip'
-        source['compressed'] = '%{__zip} -u'
+        source['compressed'] = '%{__unzip} -u'
     elif esl[-1:][0] == 'xz':
         source['compressed-type'] = 'xz'
         source['compressed'] = '%{__xz} -dc'
