@@ -1,0 +1,7 @@
+#
+# Build set for or1ksim emulator 
+#
+
+%define release 1
+
+devel/or1ksim-1.1.0
