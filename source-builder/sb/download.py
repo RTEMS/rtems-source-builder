@@ -201,7 +201,7 @@ def parse_url(url, pathkey, config, opts):
     source['url'] = url
     colon = url.find(':')
     if url[colon + 1:colon + 3] != '//':
-        raise error.general('malforned URL: %s' % (url))
+        raise error.general('malforned URL (no protocol prefix): %s' % (url))
     source['path'] = url[:colon + 3] + path.dirname(url[colon + 3:])
     source['file'] = path.basename(url)
     source['name'], source['ext'] = path.splitext(source['file'])
@@ -310,9 +310,27 @@ def _http_downloader(url, local, config, opts):
     return not failed
 
 def _git_downloader(url, local, config, opts):
+    repo = git.repo(local, opts, config.macros)
     rlp = os.path.relpath(path.host(local))
     us = url.split('?')
-    repo = git.repo(local, opts, config.macros)
+    #
+    # Handle the various git protocols.
+    #
+    # remove 'git' from 'git://xxxx/xxxx?protocol=...'
+    #
+    url_base = us[0][len('git'):]
+    for a in us[1:]:
+        _as = a.split('=')
+        if _as[0] == 'protocol':
+            if len(_as) != 2:
+                raise error.general('invalid git protocol option: %s' % (_as))
+            if _as[1] == 'none':
+                # remove the rest of the protocol header leaving nothing.
+                us[0] = url_base[len('://'):]
+            else:
+                if _as[1] not in ['ssh', 'git', 'http', 'https', 'ftp', 'ftps', 'rsync']:
+                    raise error.general('unknown git protocol: %s' % (_as[1]))
+                us[0] = _as[1] + url_base
     if not repo.valid():
         log.notice('git: clone: %s -> %s' % (us[0], rlp))
         if not opts.dry_run():
@@ -350,6 +368,10 @@ def _git_downloader(url, local, config, opts):
             log.notice('git: reset: %s' % (us[0]))
             if not opts.dry_run():
                 repo.reset(arg)
+        elif _as[0] == 'protocol':
+            pass
+        else:
+            raise error.general('invalid git option: %s' % (_as))
     return True
 
 def _cvs_downloader(url, local, config, opts):

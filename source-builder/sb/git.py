@@ -57,7 +57,10 @@ class repo:
             self.macros = opts.defaults
         else:
             self.macros = macros
-        self.git = self.macros.expand('%{__git}')
+        if self.macros is None:
+            self.git = 'git'
+        else:
+            self.git = self.macros.expand('%{__git}')
 
     def git_version(self):
         ec, output = self._run(['--version'], True)

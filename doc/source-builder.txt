@@ -1413,6 +1413,8 @@ the repository via the URL by appending options and arguments to the GIT
 path. The options are delimited by `?` and option arguments are delimited from
 the options with `=`. The options are:
 
+`protocol`:: Use a specific protocol. The supported values are _ssh_, _git_,
+_http_, _https_, _ftp_, _ftps_, _rsync_, and _none_.
 `branch`:: Checkout the specified branch.
 `pull`:: Perform a pull to update the repository.
 `fetch`:: Perform a fetch to get any remote updates.
@@ -1427,6 +1429,10 @@ This will clone the GCC git repository and checkout the 4.7-branch and perform
 a hard reset. You can select specific branches and apply patches. The
 repository is cleaned up before each build to avoid various version control
 errors that can arise.
+
+The protocol option lets you set a specific protocol. The 'git://' prefix used
+by the RSB to select a git repository can be removed using _none_ or replaced
+with one of the standard git protcols.
 
 CVS
 ^^^
