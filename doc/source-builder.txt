@@ -3073,10 +3073,11 @@ installed.
 Fedora
 ^^^^^^
 
-The RTEMS Source Builder has been tested on Fedora 18 64bit.
+The RTEMS Source Builder has been tested on Fedora 19 64bit with the following packages.
 
 -------------------------------------------------------------
-# yum install ncurses-devel python4.7-devel
+# yum install ncurses-devel python-devel git bison gcc cvs gcc-c++ \
+         flex texinfo patch perl-Text-ParseWords zlib-devel
 -------------------------------------------------------------
 
 Raspbian
