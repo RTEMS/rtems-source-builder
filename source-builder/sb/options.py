@@ -529,6 +529,9 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc'):
             elif uname[0] == 'Linux':
                 import linux
                 overrides = linux.load()
+            elif uname[0] == 'SunOS':
+                import solaris
+                overrides = solaris.load()
         except:
             raise error.general('failed to load %s host support' % (uname[0]))
     else:
