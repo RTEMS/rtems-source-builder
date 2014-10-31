@@ -21,6 +21,7 @@
 # Determine the defaults and load the specific file.
 #
 
+import datetime
 import glob
 import pprint
 import re
@@ -458,7 +459,7 @@ class command_line:
     def logfiles(self):
         if 'log' in self.opts and self.opts['log'] is not None:
             return self.opts['log'].split(',')
-        return ['stdout']
+        return ['rsb-log-%s.txt' % (datetime.datetime.now().strftime('%Y%m%d-%H%M%S'))]
 
     def urls(self):
         if self.opts['url'] is not None:
