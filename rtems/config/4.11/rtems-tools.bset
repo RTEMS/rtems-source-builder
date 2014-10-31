@@ -1,0 +1,7 @@
+#
+# Tools Set for RTEMS 4.11 Tools Stable
+#
+
+%define release 1
+
+tools/rtems-tools-4.11-1
