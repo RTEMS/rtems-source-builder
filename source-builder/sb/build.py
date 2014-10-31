@@ -174,7 +174,8 @@ class build:
             src = download.parse_url(url, '_sourcedir', self.config, self.opts)
             download.get_file(src['url'], src['local'], self.opts, self.config)
             if 'symlink' in src:
-                src['script'] = '%%{__ln_s} %s ${source_dir_%s}' % (src['symlink'], name)
+                sname = name.replace('-', '_')
+                src['script'] = '%%{__ln_s} %s ${source_dir_%s}' % (src['symlink'], sname)
             elif 'compressed' in src:
                 #
                 # Zip files unpack as well so do not use tar.
