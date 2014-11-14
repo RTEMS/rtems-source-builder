@@ -14,8 +14,8 @@
 #
 # GDB patches
 #
-%patch add gdb %{rtems_gdb_patches}/sparc/gdb-7.7-sis-output-nouartrx.diff
-%hash  md5 gdb-7.7-sis-output-nouartrx.diff bc35b15de1325f3c4461ac3cda027bea
+%patch add gdb %{rtems_gdb_patches}/sparc/gdb-7.7-sis-leon2-leon3-fixup.diff
+%hash  md5 gdb-7.7-sis-leon2-leon3-fixup.diff afa25717cd54de8bfd103daaa754b6d7
 
 #
 # If Windows (MinGW) do not build the simulator.
@@ -29,6 +29,6 @@
 devel/expat-2.1.0-1
 tools/rtems-binutils-2.24-1
 tools/rtems-gcc-4.9.2-newlib-git-1
-tools/rtems-gdb-7.7-1
+tools/rtems-gdb-7.8.1-1
 tools/rtems-tools-4.11-1
 tools/rtems-kernel-4.11
