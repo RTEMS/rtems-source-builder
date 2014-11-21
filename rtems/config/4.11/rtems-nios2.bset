@@ -1,8 +1,6 @@
 #
 # Tools Set for RTEMS NIOS 4.11 Stable
 #
-# The NIOS source is a special version released by Altera.
-#
 
 %define release 1
 
@@ -12,12 +10,6 @@
 # The RTEMS 4.11 base defines.
 #
 %include rtems-4.11-base.bset
-
-#
-# Add support for Cortex-M4 and Cortex-R based chips
-#
-%patch add gcc pw://patchwork.ozlabs.org/patch/364504/raw/RTEMS-Add-Nios-2-support.patch
-%hash  md5 RTEMS-Add-Nios-2-support.patch fd9bbc8482e69623214e2a4289e38d8f
 
 #
 # Tools configuration.
