@@ -14,8 +14,8 @@
 #
 # GDB patches
 #
-%patch add gdb %{rtems_gdb_patches}/sparc/gdb-7.7-sis-leon2-leon3-fixup.diff
-%hash  md5 gdb-7.7-sis-leon2-leon3-fixup.diff afa25717cd54de8bfd103daaa754b6d7
+%patch add gdb %{rtems_gdb_patches}/sparc/gdb-7.7-7.8-sis-leon2-leon3-fixup.diff
+%hash  md5 gdb-7.7-7.8-sis-leon2-leon3-fixup.diff 8bec52d4dcb535eba18229621cce7023
 
 #
 # If Windows (MinGW) do not build the simulator.
