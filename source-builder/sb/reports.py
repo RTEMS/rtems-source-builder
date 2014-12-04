@@ -49,6 +49,41 @@ except:
     print 'error: unknown application load error'
     sys.exit(1)
 
+class formatter(object):
+    def format(self):
+        raise error.general('internal error: formatter.format() not implemented')
+
+    def ext(self):
+        raise error.general('internal error: formatter.ext() not implemented')
+
+class asciidoc_formatter(formatter):
+    def format(self):
+        return 'asciidoc'
+
+    def ext(self):
+        return '.txt'
+
+class ini_formatter(formatter):
+    def format(self):
+        return 'ini'
+
+    def ext(self):
+        return '.ini'
+
+class html_formatter(formatter):
+    def format(self):
+        return 'html'
+
+    def ext(self):
+        return '.html'
+
+class text_formatter(formatter):
+    def format(self):
+        return 'text'
+
+    def ext(self):
+        return '.txt'
+
 def _tree_name(path_):
     return path.splitext(path.basename(path_))[0]
 
@@ -65,8 +100,9 @@ class report:
 
     line_len = 78
 
-    def __init__(self, format, _configs, opts, macros = None):
-        self.format = format
+    def __init__(self, formatter, _configs, opts, macros = None):
+        self.formatter = formatter
+        self.format = formatter.format()
         self.configs = _configs
         self.opts = opts
         if macros is None:
@@ -581,8 +617,7 @@ def run(args):
             output = opts.get_arg('--output')
             if output is not None:
                 output = output[1]
-            format = 'text'
-            ext = '.txt'
+            formatter = text_formatter()
             format_opt = opts.get_arg('--format')
             if format_opt:
                 if len(format_opt) != 2:
@@ -590,20 +625,17 @@ def run(args):
                 if format_opt[1] == 'text':
                     pass
                 elif format_opt[1] == 'asciidoc':
-                    format = 'asciidoc'
-                    ext = '.txt'
+                    formatter = asciidoc_formatter()
                 elif format_opt[1] == 'html':
-                    format = 'html'
-                    ext = '.html'
+                    formatter = html_formatter()
                 elif format_opt[1] == 'ini':
-                    format = 'ini'
-                    ext = '.ini'
+                    formatter = ini_formatter()
                 else:
                     raise error.general('invalid format: %s' % (format_opt[1]))
-            r = report(format, configs, opts)
+            r = report(formatter, configs, opts)
             for _config in opts.params():
                 if output is None:
-                    outname = path.splitext(_config)[0] + ext
+                    outname = path.splitext(_config)[0] + formatter.ext()
                     outname = outname.replace('/', '-')
                 else:
                     outname = output
