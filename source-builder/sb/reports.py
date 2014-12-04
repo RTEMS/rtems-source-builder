@@ -49,12 +49,45 @@ except:
     print 'error: unknown application load error'
     sys.exit(1)
 
+_line_len = 78
+
+_title = 'RTEMS Tools Project <users@rtems.org>'
+
+def _make_path(p, *args):
+    for arg in args:
+        p = path.join(p, arg)
+    return os.path.abspath(path.host(p))
+
+class chunk:
+    def __init__(self):
+        self.data = ''
+
+    def line(self, text):
+        self.data += text + '\n'
+
+    def get(self):
+        return self.data
+
 class formatter(object):
+    def set_sbpath(self, sbpath):
+        self.sbpath = sbpath
+
     def format(self):
         raise error.general('internal error: formatter.format() not implemented')
 
     def ext(self):
         raise error.general('internal error: formatter.ext() not implemented')
+
+    def introduction(self, name, now, intro_text):
+        c = chunk()
+        c.line('=' * _line_len)
+        c.line('%s %s' % (_title, now))
+        if intro_text:
+            c.line('')
+            c.line('%s' % ('\n'.join(intro_text)))
+        c.line('=' * _line_len)
+        c.line('Report: %s' % (name))
+        return c.get()
 
 class asciidoc_formatter(formatter):
     def format(self):
@@ -63,14 +96,29 @@ class asciidoc_formatter(formatter):
     def ext(self):
         return '.txt'
 
-class ini_formatter(formatter):
-    def format(self):
-        return 'ini'
+    def introduction(self, name, now, intro_text):
+        c = chunk()
+        h = 'RTEMS Source Builder Report'
+        c.line(h)
+        c.line('=' * len(h))
+        c.line(':doctype: book')
+        c.line(':toc2:')
+        c.line(':toclevels: 5')
+        c.line(':icons:')
+        c.line(':numbered:')
+        c.line(':data-uri:')
+        c.line('')
+        c.line(_title)
+        c.line(now)
+        c.line('')
+        image = _make_path(self.sbpath, options.basepath, 'images', 'rtemswhitebg.jpg')
+        c.line('image:%s["RTEMS",width="20%%"]' % (image))
+        c.line('')
+        if intro_text:
+            c.line('%s' % ('\n'.join(intro_text)))
+        return c.get()
 
-    def ext(self):
-        return '.ini'
-
-class html_formatter(formatter):
+class html_formatter(asciidoc_formatter):
     def format(self):
         return 'html'
 
@@ -83,6 +131,34 @@ class text_formatter(formatter):
 
     def ext(self):
         return '.txt'
+
+    def introduction(self, name, now, intro_text):
+        c = chunk()
+        c.line('=' * _line_len)
+        c.line('%s %s' % (_title, now))
+        if intro_text:
+            c.line('')
+            c.line('%s' % ('\n'.join(intro_text)))
+        c.line('=' * _line_len)
+        c.line('Report: %s' % (name))
+        return c.get()
+
+class ini_formatter(text_formatter):
+    def format(self):
+        return 'ini'
+
+    def ext(self):
+        return '.ini'
+
+    def introduction(self, name, now, intro_text):
+        c = chunk()
+        c.line(';')
+        c.line('; %s %s' % (_title, now))
+        if intro_text:
+            c.line(';')
+            c.line('; %s' % ('\n; '.join(intro_text)))
+            c.line(';')
+        return c.get()
 
 def _tree_name(path_):
     return path.splitext(path.basename(path_))[0]
@@ -98,8 +174,6 @@ def _merge(_dict, new):
 class report:
     """Report the build details about a package given a config file."""
 
-    line_len = 78
-
     def __init__(self, formatter, _configs, opts, macros = None):
         self.formatter = formatter
         self.format = formatter.format()
@@ -109,8 +183,9 @@ class report:
             self.macros = opts.defaults
         else:
             self.macros = macros
+        self.sbpath = self.macros.expand('%{_sbdir}')
+        self.formatter.set_sbpath(self.sbpath)
         self.bset_nesting = 0
-        self.configs_active = False
         self.out = ''
         self.asciidoc = None
         if self.is_ini():
@@ -120,14 +195,8 @@ class report:
         self.tree = {}
         self.files = { 'buildsets':[], 'configs':[] }
 
-    def _sbpath(self, *args):
-        p = self.macros.expand('%{_sbdir}')
-        for arg in args:
-            p = path.join(p, arg)
-        return os.path.abspath(path.host(p))
-
     def output(self, text):
-        self.out += '%s\n' % (text)
+        self.out += text + '\n'
 
     def is_text(self):
         return self.format == 'text'
@@ -147,7 +216,7 @@ class report:
                 import asciidocapi
             except:
                 raise error.general('installation error: no asciidocapi found')
-            asciidoc_py = self._sbpath(options.basepath, 'asciidoc', 'asciidoc.py')
+            asciidoc_py = _make_path(self.sbpath, options.basepath, 'asciidoc', 'asciidoc.py')
             try:
                 self.asciidoc = asciidocapi.AsciiDocAPI(asciidoc_py)
             except:
@@ -171,7 +240,7 @@ class report:
             self.output('; %s' % (text))
             self.output(';')
         else:
-            self.output('-' * self.line_len)
+            self.output('-' * _line_len)
             self.output('%s' % (text))
         repo = git.repo('.', self.opts, self.macros)
         repo_valid = repo.valid()
@@ -226,41 +295,7 @@ class report:
 
     def introduction(self, name, intro_text = None):
         now = datetime.datetime.now().ctime()
-        title = 'RTEMS Tools Project <users@rtems.org>'
-        if self.is_asciidoc():
-            h = 'RTEMS Source Builder Report'
-            self.output(h)
-            self.output('=' * len(h))
-            self.output(':doctype: book')
-            self.output(':toc2:')
-            self.output(':toclevels: 5')
-            self.output(':icons:')
-            self.output(':numbered:')
-            self.output(':data-uri:')
-            self.output('')
-            self.output(title)
-            self.output(datetime.datetime.now().ctime())
-            self.output('')
-            image = self._sbpath(options.basepath, 'images', 'rtemswhitebg.jpg')
-            self.output('image:%s["RTEMS",width="20%%"]' % (image))
-            self.output('')
-            if intro_text:
-                self.output('%s' % ('\n'.join(intro_text)))
-        elif self.is_ini():
-            self.output(';')
-            self.output('; %s %s' % (title, now))
-            if intro_text:
-                self.output(';')
-                self.output('; %s' % ('\n; '.join(intro_text)))
-                self.output(';')
-        else:
-            self.output('=' * self.line_len)
-            self.output('%s %s' % (title, now))
-            if intro_text:
-                self.output('')
-                self.output('%s' % ('\n'.join(intro_text)))
-            self.output('=' * self.line_len)
-            self.output('Report: %s' % (name))
+        self.out += self.formatter.introduction(name, now, intro_text)
         self.git_status()
 
     def config_start(self, name, _config):
@@ -269,8 +304,6 @@ class report:
             cfbn = path.basename(cf)
             if cfbn not in self.files['configs']:
                 self.files['configs'] += [cfbn]
-        first = not self.configs_active
-        self.configs_active = True
 
     def config_end(self, name, _config):
         if self.is_asciidoc():
@@ -286,11 +319,11 @@ class report:
         elif self.is_ini():
             pass
         else:
-            self.output('=-' * (self.line_len / 2))
+            self.output('=-' * (_line_len / 2))
             self.output('Build Set: %s' % (name))
 
     def buildset_end(self, name):
-        self.configs_active = False
+        return
 
     def source(self, macros):
         def err(msg):
@@ -397,7 +430,7 @@ class report:
             self.output('*Config*: %s' % (_config.file_name()))
             self.output('')
         else:
-            self.output('-' * self.line_len)
+            self.output('-' * _line_len)
             self.output('Package: %s' % (name))
             self.output(' Config: %s' % (_config.file_name()))
         self.output_info('Summary', package.get_info('summary'), True)
