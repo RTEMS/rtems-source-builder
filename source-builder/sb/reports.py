@@ -89,6 +89,9 @@ class formatter(object):
         c.line('Report: %s' % (name))
         return c.get()
 
+    def epilogue(self, name):
+        return ''
+
 class asciidoc_formatter(formatter):
     def format(self):
         return 'asciidoc'
@@ -158,6 +161,25 @@ class ini_formatter(text_formatter):
             c.line(';')
             c.line('; %s' % ('\n; '.join(intro_text)))
             c.line(';')
+        return c.get()
+
+class xml_formatter(formatter):
+    def format(self):
+        return 'xml'
+
+    def ext(self):
+        return '.xml'
+
+    def introduction(self, name, now, intro_text):
+        c = chunk()
+        c.line('<RTEMSSourceBuilderReport>')
+        if intro_text:
+            c.line('\t<Introduction>%s</Introduction>' % (intro_text))
+        return c.get()
+
+    def epilogue(self, name):
+        c = chunk()
+        c.line('</RTEMSSourceBuilderReport>')
         return c.get()
 
 def _tree_name(path_):
@@ -297,6 +319,9 @@ class report:
         now = datetime.datetime.now().ctime()
         self.out += self.formatter.introduction(name, now, intro_text)
         self.git_status()
+
+    def epilogue(self, name):
+        self.out += self.formatter.epilogue(name)
 
     def config_start(self, name, _config):
         self.files['configs'] += [name]
@@ -630,13 +655,14 @@ class report:
         self.setup()
         self.introduction(inname, intro_text)
         self.generate(inname)
+        self.epilogue(inname)
         self.write(outname)
 
 def run(args):
     try:
         optargs = { '--list-bsets':   'List available build sets',
                     '--list-configs': 'List available configurations',
-                    '--format':       'Output format (text, html, asciidoc, ini)',
+                    '--format':       'Output format (text, html, asciidoc, ini, xml)',
                     '--output':       'File name to output the report' }
         opts = options.load(args, optargs)
         if opts.get_arg('--output') and len(opts.params()) > 1:
@@ -663,6 +689,8 @@ def run(args):
                     formatter = html_formatter()
                 elif format_opt[1] == 'ini':
                     formatter = ini_formatter()
+                elif format_opt[1] == 'xml':
+                    formatter = xml_formatter()
                 else:
                     raise error.general('invalid format: %s' % (format_opt[1]))
             r = report(formatter, configs, opts)
