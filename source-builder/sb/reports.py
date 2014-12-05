@@ -53,6 +53,8 @@ _line_len = 78
 
 _title = 'RTEMS Tools Project <users@rtems.org>'
 
+_git_status_text = 'RTEMS Source Builder Repository Status'
+
 def _make_path(p, *args):
     for arg in args:
         p = path.join(p, arg)
@@ -64,6 +66,9 @@ class chunk:
 
     def line(self, text):
         self.data += text + '\n'
+
+    def add(self, text):
+        self.data += text
 
     def get(self):
         return self.data
@@ -121,6 +126,35 @@ class asciidoc_formatter(formatter):
             c.line('%s' % ('\n'.join(intro_text)))
         return c.get()
 
+    def git_status(self, valid, dirty, head, remotes):
+        c = chunk()
+        c.line('')
+        c.line("'''")
+        c.line('')
+        c.line('.%s' % (_git_status_text))
+        if valid:
+            c.line('*Remotes*:;;')
+            for r in remotes:
+                if 'url' in remotes[r]:
+                    text = remotes[r]['url']
+                else:
+                    text = 'no URL found'
+                text = '%s: %s' % (r, text)
+                c.line('. %s' % (text))
+            c.line('*Status*:;;')
+            if dirty:
+                c.line('_Repository is dirty_')
+            else:
+                c.line('Clean')
+            c.line('*Head*:;;')
+            c.line('Commit: %s' % (head))
+        else:
+            c.line('_Not a valid GIT repository_')
+        c.line('')
+        c.line("'''")
+        c.line('')
+        return c.get()
+
 class html_formatter(asciidoc_formatter):
     def format(self):
         return 'html'
@@ -129,6 +163,10 @@ class html_formatter(asciidoc_formatter):
         return '.html'
 
 class text_formatter(formatter):
+    def __init__(self):
+        super(text_formatter, self).__init__()
+        self.cini = ''
+
     def format(self):
         return 'text'
 
@@ -146,7 +184,42 @@ class text_formatter(formatter):
         c.line('Report: %s' % (name))
         return c.get()
 
+    def git_status_header(self):
+        c = chunk()
+        c.line('-' * _line_len)
+        c.line('%s' % (_git_status_text))
+        return c.get()
+
+    def git_status(self, valid, dirty, head, remotes):
+        c = chunk()
+        c.add(self.git_status_header())
+        if valid:
+            c.line('%s Remotes:' % (self.cini))
+            rc = 0
+            for r in remotes:
+                rc += 1
+                if 'url' in remotes[r]:
+                    text = remotes[r]['url']
+                else:
+                    text = 'no URL found'
+                text = '%s: %s' % (r, text)
+                c.line('%s  %2d: %s' % (self.cini, rc, text))
+            c.line('%s Status:' % (self.cini))
+            if dirty:
+                c.line('%s  Repository is dirty' % (self.cini))
+            else:
+                c.line('%s  Clean' % (self.cini))
+            c.line('%s Head:' % (self.cini))
+            c.line('%s  Commit: %s' % (self.cini, head))
+        else:
+            c.line('%s Not a valid GIT repository' % (self.cini))
+        return c.get()
+
 class ini_formatter(text_formatter):
+    def __init__(self):
+        super(ini_formatter, self).__init__()
+        self.cini = ';'
+
     def format(self):
         return 'ini'
 
@@ -161,6 +234,13 @@ class ini_formatter(text_formatter):
             c.line(';')
             c.line('; %s' % ('\n; '.join(intro_text)))
             c.line(';')
+        return c.get()
+
+    def git_status_header(self):
+        c = chunk()
+        c.line(';')
+        c.line('; %s' % (_git_status_text))
+        c.line(';')
         return c.get()
 
 class xml_formatter(formatter):
@@ -180,6 +260,20 @@ class xml_formatter(formatter):
     def epilogue(self, name):
         c = chunk()
         c.line('</RTEMSSourceBuilderReport>')
+        return c.get()
+
+    def git_status(self, valid, dirty, head, remotes):
+        c = chunk()
+        c.line('\t<Git>')
+        if valid:
+            if dirty:
+                c.line('\t\t<Status>dirty</Status>')
+            else:
+                c.line('\t\t<Status>clean</Status>')
+            c.line('\t\t<Commit>' + head + '</Commit>')
+        else:
+            c.line('\t\t<Status>invalid</Status>')
+        c.line('\t</Git>')
         return c.get()
 
 def _tree_name(path_):
@@ -251,69 +345,8 @@ class report:
         pass
 
     def git_status(self):
-        text = 'RTEMS Source Builder Repository Status'
-        if self.is_asciidoc():
-            self.output('')
-            self.output("'''")
-            self.output('')
-            self.output('.%s' % (text))
-        elif self.is_ini():
-            self.output(';')
-            self.output('; %s' % (text))
-            self.output(';')
-        else:
-            self.output('-' * _line_len)
-            self.output('%s' % (text))
-        repo = git.repo('.', self.opts, self.macros)
-        repo_valid = repo.valid()
-        if repo_valid:
-            if self.is_asciidoc():
-                self.output('*Remotes*:;;')
-            else:
-                self.output('%s Remotes:' % (self.cini))
-            repo_remotes = repo.remotes()
-            rc = 0
-            for r in repo_remotes:
-                rc += 1
-                if 'url' in repo_remotes[r]:
-                    text = repo_remotes[r]['url']
-                else:
-                    text = 'no URL found'
-                text = '%s: %s' % (r, text)
-                if self.is_asciidoc():
-                    self.output('. %s' % (text))
-                else:
-                    self.output('%s  %2d: %s' % (self.cini, rc, text))
-            if self.is_asciidoc():
-                self.output('*Status*:;;')
-            else:
-                self.output('%s Status:' % (self.cini))
-            if repo.dirty():
-                if self.is_asciidoc():
-                    self.output('_Repository is dirty_')
-                else:
-                    self.output('%s  Repository is dirty' % (self.cini))
-            else:
-                if self.is_asciidoc():
-                    self.output('Clean')
-                else:
-                    self.output('%s  Clean' % (self.cini))
-            repo_head = repo.head()
-            if self.is_asciidoc():
-                self.output('*Head*:;;')
-                self.output('Commit: %s' % (repo_head))
-            else:
-                self.output('%s Head:' % (self.cini))
-                self.output('%s  Commit: %s' % (self.cini, repo_head))
-        else:
-            if self.is_asciidoc():
-                self.output('_Not a valid GIT repository_')
-            else:
-                self.output('%s Not a valid GIT repository' % (self.cini))
-        if self.is_asciidoc():
-            self.output('')
-            self.output("'''")
-            self.output('')
+        r = git.repo('.', self.opts, self.macros)
+        self.out += self.formatter.git_status(r.valid(), r.dirty(), r.head(), r.remotes())
 
     def introduction(self, name, intro_text = None):
         now = datetime.datetime.now().ctime()
