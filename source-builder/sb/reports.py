@@ -97,6 +97,58 @@ class formatter(object):
     def epilogue(self, name):
         return ''
 
+    def config_start(self, nest_level, name):
+        return ''
+
+    def config(self, nest_level, name, _config):
+        c = chunk()
+        c.line('-' * _line_len)
+        c.line('Package: %s' % (name))
+        c.line(' Config: %s' % (_config.file_name()))
+        return c.get()
+
+    def config_end(self, nest_level, name):
+        return ''
+
+    def buildset_start(self, nest_level, name):
+        c = chunk()
+        c.line('=-' * (_line_len / 2))
+        c.line('Build Set: %s' % (name))
+        return c.get()
+
+    def buildset_end(self, nest_level, name):
+        return ''
+
+    def info(self, nest_level, name, info, separated):
+        c = chunk()
+        c.line(' ' + name + ':')
+        for l in info:
+            c.line('  ' + l)
+        return c.get()
+
+    def directive(self, nest_level, name, data):
+        c = chunk()
+        c.line(' %s:' % (name))
+        for l in data:
+            c.line('  ' + l)
+        return c.get()
+
+    def files(self, nest_level, sigular, plural, _files):
+        c = chunk()
+        c.line('  ' + plural + ': %d' % (len(_files)))
+        i = 0
+        for name in _files:
+            for s in _files[name]:
+                i += 1
+                c.line('   %2d: %s' % (i, s[0]))
+                if s[1] is None:
+                    h = 'No checksum'
+                else:
+                    hash = s[1].split()
+                    h = '%s: %s' % (hash[0], hash[1])
+                c.line('       %s' % (h))
+        return c.get()
+
 class asciidoc_formatter(formatter):
     def format(self):
         return 'asciidoc'
@@ -153,6 +205,69 @@ class asciidoc_formatter(formatter):
         c.line('')
         c.line("'''")
         c.line('')
+        return c.get()
+
+    def config(self, nest_level, name, _config):
+        c = chunk()
+        c.line('*Package*: _%s_ +' % (name))
+        c.line('*Config*: %s' % (_config.file_name()))
+        c.line('')
+        return c.get()
+
+    def config_end(self, nest_level, name):
+        c = chunk()
+        c.line('')
+        c.line("'''")
+        c.line('')
+        return c.get()
+
+    def buildset_start(self, nest_level, name):
+        c = chunk()
+        h = '%s' % (name)
+        c.line('=%s %s' % ('=' * nest_level, h))
+        return c.get()
+
+    def info(self, nest_level, name, info, separated):
+        c = chunk()
+        end = ''
+        if separated:
+            c.line('*%s:*::' % (name))
+            c.line('')
+        else:
+            c.line('*%s:* ' % (name))
+            end = ' +'
+        spaces = ''
+        for l in info:
+            c.line('%s%s%s' % (spaces, l, end))
+        if separated:
+            c.line('')
+        return c.get()
+
+    def directive(self, nest_level, name, data):
+        c = chunk()
+        c.line('')
+        c.line('*%s*:' % (name))
+        c.line('--------------------------------------------')
+        for l in data:
+            c.line(l)
+        c.line('--------------------------------------------')
+        return c.get()
+
+    def files(self, nest_level, singular, plural, _files):
+        c = chunk()
+        c.line('')
+        c.line('*' + plural + ':*::')
+        if len(_files) == 0:
+            c.line('No ' + plural.lower())
+        for name in _files:
+            for s in _files[name]:
+                c.line('. %s' % (s[0]))
+                if s[1] is None:
+                    h = 'No checksum'
+                else:
+                    hash = s[1].split()
+                    h = '%s: %s' % (hash[0], hash[1])
+                c.line('+\n%s\n' % (h))
         return c.get()
 
 class html_formatter(asciidoc_formatter):
@@ -243,6 +358,21 @@ class ini_formatter(text_formatter):
         c.line(';')
         return c.get()
 
+    def config(self, nest_level, name, _config):
+        return ''
+
+    def buildset_start(self, nest_level, name):
+        return ''
+
+    def info(self, nest_level, name, info, separated):
+        return ''
+
+    def directive(self, nest_level, name, data):
+        return ''
+
+    def files(self, nest_level, singular, plural, _files):
+        return ''
+
 class xml_formatter(formatter):
     def format(self):
         return 'xml'
@@ -274,6 +404,58 @@ class xml_formatter(formatter):
         else:
             c.line('\t\t<Status>invalid</Status>')
         c.line('\t</Git>')
+        return c.get()
+
+    def config_start(self, nest_level, name):
+        c = chunk()
+        c.line('\t' * nest_level + '<Package name="' + name + '">')
+        return c.get()
+
+    def config(self, nest_level, name, _config):
+        c = chunk()
+        c.line('\t' * nest_level + '<Config>' + _config.file_name() + '</Config>')
+        return c.get()
+
+    def config_end(self, nest_level, name):
+        c = chunk()
+        c.line('\t' * nest_level + '</Package>')
+        return c.get()
+
+    def buildset_start(self, nest_level, name):
+        c = chunk()
+        c.line('\t' * nest_level + '<BuildSet name="' + name + '">')
+        return c.get()
+
+    def buildset_end(self, nest_level, name):
+        c = chunk()
+        c.line('\t' * nest_level + '</BuildSet>')
+        return c.get()
+
+    def info(self, nest_level, name, info, separated):
+        c = chunk()
+        c.add('\t' * nest_level + '<' + name.replace(' ', '') + '>')
+        for l in info:
+            c.add(l)
+        c.line('</' + name + '>')
+        return c.get()
+
+    def directive(self, nest_level, name, data):
+        c = chunk()
+        c.line('\t' * nest_level + '<' + name + '><![CDATA[')
+        for l in data:
+            c.line(l.replace(']]>', ']]]><![CDATA[]>'))
+        c.line(']]></' + name + '>')
+        return c.get()
+
+    def files(self, nest_level, sigular, plural, _files):
+        c = chunk()
+        for name in _files:
+            for s in _files[name]:
+                c.add('\t' * nest_level + '<' + sigular)
+                if not (s[1] is None):
+                    hash = s[1].split()
+                    c.add(' ' + hash[0] + '="' + hash[1] + '"')
+                c.line('>' + s[0] + '</' + sigular + '>')
         return c.get()
 
 def _tree_name(path_):
@@ -362,26 +544,17 @@ class report:
             cfbn = path.basename(cf)
             if cfbn not in self.files['configs']:
                 self.files['configs'] += [cfbn]
+        self.out += self.formatter.config_start(self.bset_nesting + 1, name)
 
     def config_end(self, name, _config):
-        if self.is_asciidoc():
-            self.output('')
-            self.output("'''")
-            self.output('')
+        self.out += self.formatter.config_end(self.bset_nesting + 1, name)
 
     def buildset_start(self, name):
         self.files['buildsets'] += [name]
-        if self.is_asciidoc():
-            h = '%s' % (name)
-            self.output('=%s %s' % ('=' * self.bset_nesting, h))
-        elif self.is_ini():
-            pass
-        else:
-            self.output('=-' * (_line_len / 2))
-            self.output('Build Set: %s' % (name))
+        self.out += self.formatter.buildset_start(self.bset_nesting, name)
 
     def buildset_end(self, name):
-        return
+        self.out += self.formatter.buildset_end(self.bset_nesting, name)
 
     def source(self, macros):
         def err(msg):
@@ -413,37 +586,11 @@ class report:
 
     def output_info(self, name, info, separated = False):
         if info is not None:
-            end = ''
-            if self.is_asciidoc():
-                if separated:
-                    self.output('*%s:*::' % (name))
-                    self.output('')
-                else:
-                    self.output('*%s:* ' % (name))
-                    end = ' +'
-                spaces = ''
-            else:
-                self.output(' %s:' % (name))
-                spaces = '  '
-            for l in info:
-                self.output('%s%s%s' % (spaces, l, end))
-            if self.is_asciidoc() and separated:
-                self.output('')
+            self.out += self.formatter.info(self.bset_nesting + 2, name, info, separated)
 
     def output_directive(self, name, directive):
         if directive is not None:
-            if self.is_asciidoc():
-                self.output('')
-                self.output('*%s*:' % (name))
-                self.output('--------------------------------------------')
-                spaces = ''
-            else:
-                self.output(' %s:' % (name))
-                spaces = '  '
-            for l in directive:
-                self.output('%s%s' % (spaces, l))
-            if self.is_asciidoc():
-                self.output('--------------------------------------------')
+            self.out += self.formatter.directive(self.bset_nesting + 2, name, directive)
 
     def tree_sources(self, name, tree, sources = []):
         if 'cfg' in tree:
@@ -481,71 +628,14 @@ class report:
             else:
                 tree['patches'] = patches
         self.config_start(name, _config)
-        if self.is_ini():
-            return
-        if self.is_asciidoc():
-            self.output('*Package*: _%s_ +' % (name))
-            self.output('*Config*: %s' % (_config.file_name()))
-            self.output('')
-        else:
-            self.output('-' * _line_len)
-            self.output('Package: %s' % (name))
-            self.output(' Config: %s' % (_config.file_name()))
+        self.out += self.formatter.config(self.bset_nesting + 2, name, _config)
         self.output_info('Summary', package.get_info('summary'), True)
         self.output_info('URL', package.get_info('url'))
         self.output_info('Version', package.get_info('version'))
         self.output_info('Release', package.get_info('release'))
         self.output_info('Build Arch', package.get_info('buildarch'))
-        if self.is_asciidoc():
-            self.output('')
-        if self.is_asciidoc():
-            self.output('*Sources:*::')
-            if len(sources) == 0:
-                self.output('No sources')
-        else:
-            self.output('  Sources: %d' % (len(sources)))
-        c = 0
-        for name in sources:
-            for s in sources[name]:
-                c += 1
-                if self.is_asciidoc():
-                    self.output('. %s' % (s[0]))
-                else:
-                    self.output('   %2d: %s' % (c, s[0]))
-                if s[1] is None:
-                    h = 'No checksum'
-                else:
-                    hash = s[1].split()
-                    h = '%s: %s' % (hash[0], hash[1])
-                if self.is_asciidoc():
-                    self.output('+\n%s\n' % (h))
-                else:
-                    self.output('       %s' % (h))
-        if self.is_asciidoc():
-            self.output('')
-            self.output('*Patches:*::')
-            if len(patches) == 0:
-                self.output('No patches')
-        else:
-            self.output('  Patches: %s' % (len(patches)))
-        c = 0
-        for name in patches:
-            for p in patches[name]:
-                c += 1
-                if self.is_asciidoc():
-                    self.output('. %s' % (p[0]))
-                else:
-                    self.output('   %2d: %s' % (c, p[0]))
-                hash = p[1]
-                if hash is None:
-                    h = 'No checksum'
-                else:
-                    hash = hash.split()
-                    h = '%s: %s' % (hash[0], hash[1])
-                if self.is_asciidoc():
-                    self.output('+\n(%s)\n' % (h))
-                else:
-                    self.output('       %s' % (h))
+        self.out += self.formatter.files(self.bset_nesting + 2, "Source", "Sources", sources)
+        self.out += self.formatter.files(self.bset_nesting + 2, "Patch", "Patches", patches)
         self.output_directive('Preparation', package.prep())
         self.output_directive('Build', package.build())
         self.output_directive('Install', package.install())
