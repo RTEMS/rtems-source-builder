@@ -60,20 +60,16 @@ def _make_path(p, *args):
         p = path.join(p, arg)
     return os.path.abspath(path.host(p))
 
-class chunk:
+class formatter(object):
     def __init__(self):
-        self.data = ''
+        self.content = ''
 
     def line(self, text):
-        self.data += text + '\n'
+        self.content += text + '\n'
 
     def add(self, text):
-        self.data += text
+        self.content += text
 
-    def get(self):
-        return self.data
-
-class formatter(object):
     def set_sbpath(self, sbpath):
         self.sbpath = sbpath
 
@@ -84,75 +80,66 @@ class formatter(object):
         raise error.general('internal error: formatter.ext() not implemented')
 
     def introduction(self, name, now, intro_text):
-        c = chunk()
-        c.line('=' * _line_len)
-        c.line('%s %s' % (_title, now))
+        self.line('=' * _line_len)
+        self.line('%s %s' % (_title, now))
         if intro_text:
-            c.line('')
-            c.line('%s' % ('\n'.join(intro_text)))
-        c.line('=' * _line_len)
-        c.line('Report: %s' % (name))
-        return c.get()
+            self.line('')
+            self.line('%s' % ('\n'.join(intro_text)))
+        self.line('=' * _line_len)
+        self.line('Report: %s' % (name))
 
     def epilogue(self, name):
-        return ''
+        return
 
     def config_start(self, nest_level, name):
-        return ''
+        return
 
     def config(self, nest_level, name, _config):
-        c = chunk()
-        c.line('-' * _line_len)
-        c.line('Package: %s' % (name))
-        c.line(' Config: %s' % (_config.file_name()))
-        return c.get()
+        self.line('-' * _line_len)
+        self.line('Package: %s' % (name))
+        self.line(' Config: %s' % (_config.file_name()))
 
     def config_end(self, nest_level, name):
-        return ''
+        return
 
     def buildset_start(self, nest_level, name):
-        c = chunk()
-        c.line('=-' * (_line_len / 2))
-        c.line('Build Set: %s' % (name))
-        return c.get()
+        self.line('=-' * (_line_len / 2))
+        self.line('Build Set: %s' % (name))
 
     def buildset_end(self, nest_level, name):
-        return ''
+        return
 
     def info(self, nest_level, name, info, separated):
-        c = chunk()
-        c.line(' ' + name + ':')
+        self.line(' ' + name + ':')
         for l in info:
-            c.line('  ' + l)
-        return c.get()
+            self.line('  ' + l)
 
     def directive(self, nest_level, name, data):
-        c = chunk()
-        c.line(' %s:' % (name))
+        self.line(' %s:' % (name))
         for l in data:
-            c.line('  ' + l)
-        return c.get()
+            self.line('  ' + l)
 
     def files(self, nest_level, sigular, plural, _files):
-        c = chunk()
-        c.line('  ' + plural + ': %d' % (len(_files)))
+        self.line('  ' + plural + ': %d' % (len(_files)))
         i = 0
         for name in _files:
             for s in _files[name]:
                 i += 1
-                c.line('   %2d: %s' % (i, s[0]))
+                self.line('   %2d: %s' % (i, s[0]))
                 if s[1] is None:
                     h = 'No checksum'
                 else:
                     hash = s[1].split()
                     h = '%s: %s' % (hash[0], hash[1])
-                c.line('       %s' % (h))
-        return c.get()
+                self.line('       %s' % (h))
 
-    def post_process(self, out):
-        return out
+    def post_process(self):
+        return self.content
 
 class asciidoc_formatter(formatter):
+    def __init__(self):
+        super(asciidoc_formatter, self).__init__()
+
     def format(self):
         return 'asciidoc'
 
@@ -160,118 +147,102 @@ class asciidoc_formatter(formatter):
         return '.txt'
 
     def introduction(self, name, now, intro_text):
-        c = chunk()
         h = 'RTEMS Source Builder Report'
-        c.line(h)
-        c.line('=' * len(h))
-        c.line(':doctype: book')
-        c.line(':toc2:')
-        c.line(':toclevels: 5')
-        c.line(':icons:')
-        c.line(':numbered:')
-        c.line(':data-uri:')
-        c.line('')
-        c.line(_title)
-        c.line(now)
-        c.line('')
+        self.line(h)
+        self.line('=' * len(h))
+        self.line(':doctype: book')
+        self.line(':toc2:')
+        self.line(':toclevels: 5')
+        self.line(':icons:')
+        self.line(':numbered:')
+        self.line(':data-uri:')
+        self.line('')
+        self.line(_title)
+        self.line(now)
+        self.line('')
         image = _make_path(self.sbpath, options.basepath, 'images', 'rtemswhitebg.jpg')
-        c.line('image:%s["RTEMS",width="20%%"]' % (image))
-        c.line('')
+        self.line('image:%s["RTEMS",width="20%%"]' % (image))
+        self.line('')
         if intro_text:
-            c.line('%s' % ('\n'.join(intro_text)))
-        return c.get()
+            self.line('%s' % ('\n'.join(intro_text)))
 
     def git_status(self, valid, dirty, head, remotes):
-        c = chunk()
-        c.line('')
-        c.line("'''")
-        c.line('')
-        c.line('.%s' % (_git_status_text))
+        self.line('')
+        self.line("'''")
+        self.line('')
+        self.line('.%s' % (_git_status_text))
         if valid:
-            c.line('*Remotes*:;;')
+            self.line('*Remotes*:;;')
             for r in remotes:
                 if 'url' in remotes[r]:
                     text = remotes[r]['url']
                 else:
                     text = 'no URL found'
                 text = '%s: %s' % (r, text)
-                c.line('. %s' % (text))
-            c.line('*Status*:;;')
+                self.line('. %s' % (text))
+            self.line('*Status*:;;')
             if dirty:
-                c.line('_Repository is dirty_')
+                self.line('_Repository is dirty_')
             else:
-                c.line('Clean')
-            c.line('*Head*:;;')
-            c.line('Commit: %s' % (head))
+                self.line('Clean')
+            self.line('*Head*:;;')
+            self.line('Commit: %s' % (head))
         else:
-            c.line('_Not a valid GIT repository_')
-        c.line('')
-        c.line("'''")
-        c.line('')
-        return c.get()
+            self.line('_Not a valid GIT repository_')
+        self.line('')
+        self.line("'''")
+        self.line('')
 
     def config(self, nest_level, name, _config):
-        c = chunk()
-        c.line('*Package*: _%s_ +' % (name))
-        c.line('*Config*: %s' % (_config.file_name()))
-        c.line('')
-        return c.get()
+        self.line('*Package*: _%s_ +' % (name))
+        self.line('*Config*: %s' % (_config.file_name()))
+        self.line('')
 
     def config_end(self, nest_level, name):
-        c = chunk()
-        c.line('')
-        c.line("'''")
-        c.line('')
-        return c.get()
+        self.line('')
+        self.line("'''")
+        self.line('')
 
     def buildset_start(self, nest_level, name):
-        c = chunk()
         h = '%s' % (name)
-        c.line('=%s %s' % ('=' * nest_level, h))
-        return c.get()
+        self.line('=%s %s' % ('=' * nest_level, h))
 
     def info(self, nest_level, name, info, separated):
-        c = chunk()
         end = ''
         if separated:
-            c.line('*%s:*::' % (name))
-            c.line('')
+            self.line('*%s:*::' % (name))
+            self.line('')
         else:
-            c.line('*%s:* ' % (name))
+            self.line('*%s:* ' % (name))
             end = ' +'
         spaces = ''
         for l in info:
-            c.line('%s%s%s' % (spaces, l, end))
+            self.line('%s%s%s' % (spaces, l, end))
         if separated:
-            c.line('')
-        return c.get()
+            self.line('')
 
     def directive(self, nest_level, name, data):
-        c = chunk()
-        c.line('')
-        c.line('*%s*:' % (name))
-        c.line('--------------------------------------------')
+        self.line('')
+        self.line('*%s*:' % (name))
+        self.line('--------------------------------------------')
         for l in data:
-            c.line(l)
-        c.line('--------------------------------------------')
-        return c.get()
+            self.line(l)
+        self.line('--------------------------------------------')
 
     def files(self, nest_level, singular, plural, _files):
-        c = chunk()
-        c.line('')
-        c.line('*' + plural + ':*::')
+        self.line('')
+        self.line('*' + plural + ':*::')
         if len(_files) == 0:
-            c.line('No ' + plural.lower())
+            self.line('No ' + plural.lower())
         for name in _files:
             for s in _files[name]:
-                c.line('. %s' % (s[0]))
+                self.line('. %s' % (s[0]))
                 if s[1] is None:
                     h = 'No checksum'
                 else:
                     hash = s[1].split()
                     h = '%s: %s' % (hash[0], hash[1])
-                c.line('+\n%s\n' % (h))
-        return c.get()
+                self.line('+\n%s\n' % (h))
 
 class html_formatter(asciidoc_formatter):
     def __init__(self):
@@ -292,9 +263,9 @@ class html_formatter(asciidoc_formatter):
     def ext(self):
         return '.html'
 
-    def post_process(self, out):
+    def post_process(self):
         import StringIO
-        infile = StringIO.StringIO(out)
+        infile = StringIO.StringIO(self.content)
         outfile = StringIO.StringIO()
         self.asciidoc.execute(infile, outfile)
         out = outfile.getvalue()
@@ -314,27 +285,22 @@ class text_formatter(formatter):
         return '.txt'
 
     def introduction(self, name, now, intro_text):
-        c = chunk()
-        c.line('=' * _line_len)
-        c.line('%s %s' % (_title, now))
+        self.line('=' * _line_len)
+        self.line('%s %s' % (_title, now))
         if intro_text:
-            c.line('')
-            c.line('%s' % ('\n'.join(intro_text)))
-        c.line('=' * _line_len)
-        c.line('Report: %s' % (name))
-        return c.get()
+            self.line('')
+            self.line('%s' % ('\n'.join(intro_text)))
+        self.line('=' * _line_len)
+        self.line('Report: %s' % (name))
 
     def git_status_header(self):
-        c = chunk()
-        c.line('-' * _line_len)
-        c.line('%s' % (_git_status_text))
-        return c.get()
+        self.line('-' * _line_len)
+        self.line('%s' % (_git_status_text))
 
     def git_status(self, valid, dirty, head, remotes):
-        c = chunk()
-        c.add(self.git_status_header())
+        self.git_status_header()
         if valid:
-            c.line('%s Remotes:' % (self.cini))
+            self.line('%s Remotes:' % (self.cini))
             rc = 0
             for r in remotes:
                 rc += 1
@@ -343,17 +309,16 @@ class text_formatter(formatter):
                 else:
                     text = 'no URL found'
                 text = '%s: %s' % (r, text)
-                c.line('%s  %2d: %s' % (self.cini, rc, text))
-            c.line('%s Status:' % (self.cini))
+                self.line('%s  %2d: %s' % (self.cini, rc, text))
+            self.line('%s Status:' % (self.cini))
             if dirty:
-                c.line('%s  Repository is dirty' % (self.cini))
+                self.line('%s  Repository is dirty' % (self.cini))
             else:
-                c.line('%s  Clean' % (self.cini))
-            c.line('%s Head:' % (self.cini))
-            c.line('%s  Commit: %s' % (self.cini, head))
+                self.line('%s  Clean' % (self.cini))
+            self.line('%s Head:' % (self.cini))
+            self.line('%s  Commit: %s' % (self.cini, head))
         else:
-            c.line('%s Not a valid GIT repository' % (self.cini))
-        return c.get()
+            self.line('%s Not a valid GIT repository' % (self.cini))
 
 class ini_formatter(text_formatter):
     def __init__(self):
@@ -367,38 +332,37 @@ class ini_formatter(text_formatter):
         return '.ini'
 
     def introduction(self, name, now, intro_text):
-        c = chunk()
-        c.line(';')
-        c.line('; %s %s' % (_title, now))
+        self.line(';')
+        self.line('; %s %s' % (_title, now))
         if intro_text:
-            c.line(';')
-            c.line('; %s' % ('\n; '.join(intro_text)))
-            c.line(';')
-        return c.get()
+            self.line(';')
+            self.line('; %s' % ('\n; '.join(intro_text)))
+            self.line(';')
 
     def git_status_header(self):
-        c = chunk()
-        c.line(';')
-        c.line('; %s' % (_git_status_text))
-        c.line(';')
-        return c.get()
+        self.line(';')
+        self.line('; %s' % (_git_status_text))
+        self.line(';')
 
     def config(self, nest_level, name, _config):
-        return ''
+        return
 
     def buildset_start(self, nest_level, name):
-        return ''
+        return
 
     def info(self, nest_level, name, info, separated):
-        return ''
+        return
 
     def directive(self, nest_level, name, data):
-        return ''
+        return
 
     def files(self, nest_level, singular, plural, _files):
-        return ''
+        return
 
 class xml_formatter(formatter):
+    def __init__(self):
+        super(xml_formatter, self).__init__()
+
     def format(self):
         return 'xml'
 
@@ -406,82 +370,60 @@ class xml_formatter(formatter):
         return '.xml'
 
     def introduction(self, name, now, intro_text):
-        c = chunk()
-        c.line('<RTEMSSourceBuilderReport>')
+        self.line('<RTEMSSourceBuilderReport>')
         if intro_text:
-            c.line('\t<Introduction>%s</Introduction>' % (intro_text))
-        return c.get()
+            self.line('\t<Introduction>%s</Introduction>' % (intro_text))
 
     def epilogue(self, name):
-        c = chunk()
-        c.line('</RTEMSSourceBuilderReport>')
-        return c.get()
+        self.line('</RTEMSSourceBuilderReport>')
 
     def git_status(self, valid, dirty, head, remotes):
-        c = chunk()
-        c.line('\t<Git>')
+        self.line('\t<Git>')
         if valid:
             if dirty:
-                c.line('\t\t<Status>dirty</Status>')
+                self.line('\t\t<Status>dirty</Status>')
             else:
-                c.line('\t\t<Status>clean</Status>')
-            c.line('\t\t<Commit>' + head + '</Commit>')
+                self.line('\t\t<Status>clean</Status>')
+            self.line('\t\t<Commit>' + head + '</Commit>')
         else:
-            c.line('\t\t<Status>invalid</Status>')
-        c.line('\t</Git>')
-        return c.get()
+            self.line('\t\t<Status>invalid</Status>')
+        self.line('\t</Git>')
 
     def config_start(self, nest_level, name):
-        c = chunk()
-        c.line('\t' * nest_level + '<Package name="' + name + '">')
-        return c.get()
+        self.line('\t' * nest_level + '<Package name="' + name + '">')
 
     def config(self, nest_level, name, _config):
-        c = chunk()
-        c.line('\t' * nest_level + '<Config>' + _config.file_name() + '</Config>')
-        return c.get()
+        self.line('\t' * nest_level + '<Config>' + _config.file_name() + '</Config>')
 
     def config_end(self, nest_level, name):
-        c = chunk()
-        c.line('\t' * nest_level + '</Package>')
-        return c.get()
+        self.line('\t' * nest_level + '</Package>')
 
     def buildset_start(self, nest_level, name):
-        c = chunk()
-        c.line('\t' * nest_level + '<BuildSet name="' + name + '">')
-        return c.get()
+        self.line('\t' * nest_level + '<BuildSet name="' + name + '">')
 
     def buildset_end(self, nest_level, name):
-        c = chunk()
-        c.line('\t' * nest_level + '</BuildSet>')
-        return c.get()
+        self.line('\t' * nest_level + '</BuildSet>')
 
     def info(self, nest_level, name, info, separated):
-        c = chunk()
-        c.add('\t' * nest_level + '<' + name.replace(' ', '') + '>')
+        self.add('\t' * nest_level + '<' + name.replace(' ', '') + '>')
         for l in info:
-            c.add(l)
-        c.line('</' + name + '>')
-        return c.get()
+            self.add(l)
+        self.line('</' + name + '>')
 
     def directive(self, nest_level, name, data):
-        c = chunk()
-        c.line('\t' * nest_level + '<' + name + '><![CDATA[')
+        self.line('\t' * nest_level + '<' + name + '><![CDATA[')
         for l in data:
-            c.line(l.replace(']]>', ']]]><![CDATA[]>'))
-        c.line(']]></' + name + '>')
-        return c.get()
+            self.line(l.replace(']]>', ']]]><![CDATA[]>'))
+        self.line(']]></' + name + '>')
 
     def files(self, nest_level, sigular, plural, _files):
-        c = chunk()
         for name in _files:
             for s in _files[name]:
-                c.add('\t' * nest_level + '<' + sigular)
+                self.add('\t' * nest_level + '<' + sigular)
                 if not (s[1] is None):
                     hash = s[1].split()
-                    c.add(' ' + hash[0] + '="' + hash[1] + '"')
-                c.line('>' + s[0] + '</' + sigular + '>')
-        return c.get()
+                    self.add(' ' + hash[0] + '="' + hash[1] + '"')
+                self.line('>' + s[0] + '</' + sigular + '>')
 
 def _tree_name(path_):
     return path.splitext(path.basename(path_))[0]
@@ -526,15 +468,15 @@ class report:
 
     def git_status(self):
         r = git.repo('.', self.opts, self.macros)
-        self.out += self.formatter.git_status(r.valid(), r.dirty(), r.head(), r.remotes())
+        self.formatter.git_status(r.valid(), r.dirty(), r.head(), r.remotes())
 
     def introduction(self, name, intro_text = None):
         now = datetime.datetime.now().ctime()
-        self.out += self.formatter.introduction(name, now, intro_text)
+        self.formatter.introduction(name, now, intro_text)
         self.git_status()
 
     def epilogue(self, name):
-        self.out += self.formatter.epilogue(name)
+        self.formatter.epilogue(name)
 
     def config_start(self, name, _config):
         self.files['configs'] += [name]
@@ -542,17 +484,17 @@ class report:
             cfbn = path.basename(cf)
             if cfbn not in self.files['configs']:
                 self.files['configs'] += [cfbn]
-        self.out += self.formatter.config_start(self.bset_nesting + 1, name)
+        self.formatter.config_start(self.bset_nesting + 1, name)
 
     def config_end(self, name, _config):
-        self.out += self.formatter.config_end(self.bset_nesting + 1, name)
+        self.formatter.config_end(self.bset_nesting + 1, name)
 
     def buildset_start(self, name):
         self.files['buildsets'] += [name]
-        self.out += self.formatter.buildset_start(self.bset_nesting, name)
+        self.formatter.buildset_start(self.bset_nesting, name)
 
     def buildset_end(self, name):
-        self.out += self.formatter.buildset_end(self.bset_nesting, name)
+        self.formatter.buildset_end(self.bset_nesting, name)
 
     def source(self, macros):
         def err(msg):
@@ -584,11 +526,11 @@ class report:
 
     def output_info(self, name, info, separated = False):
         if info is not None:
-            self.out += self.formatter.info(self.bset_nesting + 2, name, info, separated)
+            self.formatter.info(self.bset_nesting + 2, name, info, separated)
 
     def output_directive(self, name, directive):
         if directive is not None:
-            self.out += self.formatter.directive(self.bset_nesting + 2, name, directive)
+            self.formatter.directive(self.bset_nesting + 2, name, directive)
 
     def tree_sources(self, name, tree, sources = []):
         if 'cfg' in tree:
@@ -626,14 +568,14 @@ class report:
             else:
                 tree['patches'] = patches
         self.config_start(name, _config)
-        self.out += self.formatter.config(self.bset_nesting + 2, name, _config)
+        self.formatter.config(self.bset_nesting + 2, name, _config)
         self.output_info('Summary', package.get_info('summary'), True)
         self.output_info('URL', package.get_info('url'))
         self.output_info('Version', package.get_info('version'))
         self.output_info('Release', package.get_info('release'))
         self.output_info('Build Arch', package.get_info('buildarch'))
-        self.out += self.formatter.files(self.bset_nesting + 2, "Source", "Sources", sources)
-        self.out += self.formatter.files(self.bset_nesting + 2, "Patch", "Patches", patches)
+        self.formatter.files(self.bset_nesting + 2, "Source", "Sources", sources)
+        self.formatter.files(self.bset_nesting + 2, "Patch", "Patches", patches)
         self.output_directive('Preparation', package.prep())
         self.output_directive('Build', package.build())
         self.output_directive('Install', package.install())
@@ -728,7 +670,7 @@ class report:
             self.generate_ini_node(_tree_name(node), self.tree[node])
 
     def write(self, name):
-        self.out = self.formatter.post_process(self.out)
+        self.out = self.formatter.post_process()
         if self.is_ini():
             self.generate_ini()
         if name is not None:
