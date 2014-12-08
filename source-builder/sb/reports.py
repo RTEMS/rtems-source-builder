@@ -149,6 +149,9 @@ class formatter(object):
                 c.line('       %s' % (h))
         return c.get()
 
+    def post_process(self, out):
+        return out
+
 class asciidoc_formatter(formatter):
     def format(self):
         return 'asciidoc'
@@ -271,11 +274,33 @@ class asciidoc_formatter(formatter):
         return c.get()
 
 class html_formatter(asciidoc_formatter):
+    def __init__(self):
+        super(html_formatter, self).__init__()
+        try:
+            import asciidocapi
+        except:
+            raise error.general('installation error: no asciidocapi found')
+        asciidoc_py = _make_path(self.sbpath, options.basepath, 'asciidoc', 'asciidoc.py')
+        try:
+            self.asciidoc = asciidocapi.AsciiDocAPI(asciidoc_py)
+        except:
+            raise error.general('application error: asciidocapi failed')
+
     def format(self):
         return 'html'
 
     def ext(self):
         return '.html'
+
+    def post_process(self, out):
+        import StringIO
+        infile = StringIO.StringIO(out)
+        outfile = StringIO.StringIO()
+        self.asciidoc.execute(infile, outfile)
+        out = outfile.getvalue()
+        infile.close()
+        outfile.close()
+        return out
 
 class text_formatter(formatter):
     def __init__(self):
@@ -474,7 +499,6 @@ class report:
 
     def __init__(self, formatter, _configs, opts, macros = None):
         self.formatter = formatter
-        self.format = formatter.format()
         self.configs = _configs
         self.opts = opts
         if macros is None:
@@ -485,40 +509,14 @@ class report:
         self.formatter.set_sbpath(self.sbpath)
         self.bset_nesting = 0
         self.out = ''
-        self.asciidoc = None
-        if self.is_ini():
-            self.cini = ';'
-        else:
-            self.cini = ''
         self.tree = {}
         self.files = { 'buildsets':[], 'configs':[] }
 
     def output(self, text):
         self.out += text + '\n'
 
-    def is_text(self):
-        return self.format == 'text'
-
-    def is_asciidoc(self):
-        return self.format == 'asciidoc' or self.format == 'html'
-
-    def is_html(self):
-        return self.format == 'html'
-
     def is_ini(self):
-        return self.format == 'ini'
-
-    def setup(self):
-        if self.is_html():
-            try:
-                import asciidocapi
-            except:
-                raise error.general('installation error: no asciidocapi found')
-            asciidoc_py = _make_path(self.sbpath, options.basepath, 'asciidoc', 'asciidoc.py')
-            try:
-                self.asciidoc = asciidocapi.AsciiDocAPI(asciidoc_py)
-            except:
-                raise error.general('application error: asciidocapi failed')
+        return self.formatter.format() == 'ini'
 
     def header(self):
         pass
@@ -730,17 +728,8 @@ class report:
             self.generate_ini_node(_tree_name(node), self.tree[node])
 
     def write(self, name):
-        if self.is_html():
-            if self.asciidoc is None:
-                raise error.general('asciidoc not initialised')
-            import StringIO
-            infile = StringIO.StringIO(self.out)
-            outfile = StringIO.StringIO()
-            self.asciidoc.execute(infile, outfile)
-            self.out = outfile.getvalue()
-            infile.close()
-            outfile.close()
-        elif self.is_ini():
+        self.out = self.formatter.post_process(self.out)
+        if self.is_ini():
             self.generate_ini()
         if name is not None:
             try:
@@ -775,7 +764,6 @@ class report:
         self.bset_nesting -= 1
 
     def create(self, inname, outname = None, intro_text = None):
-        self.setup()
         self.introduction(inname, intro_text)
         self.generate(inname)
         self.epilogue(inname)
