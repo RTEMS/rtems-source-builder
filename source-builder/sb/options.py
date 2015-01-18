@@ -297,6 +297,10 @@ class command_line:
             rsb_macros = path.join(os.environ['HOME'], '.rsb_macros')
             if path.exists(rsb_macros):
                 self.defaults.load(rsb_macros)
+        # If a Cxc build disable installing.
+        if self.canadian_cross():
+            self.opts['no-install'] = '1'
+            self.defaults['_no_install'] = '1'
 
     def sb_git(self):
         repo = git.repo(self.defaults.expand('%{_sbdir}'), self)
@@ -359,6 +363,15 @@ class command_line:
 
     def no_install(self):
         return self.opts['no-install'] != '0'
+
+    def canadian_cross(self):
+        _host = self.defaults.expand('%{_host}')
+        _build = self.defaults.expand('%{_build}')
+        _target = self.defaults.expand('%{_target}')
+        if len(_target):
+            return len(_host) and len(_build) and (_target) and \
+                _host != _build and _host != _target
+        return len(_host) and len(_build) and _host != _build
 
     def user_macros(self):
         #

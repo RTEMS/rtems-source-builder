@@ -458,8 +458,10 @@ def run():
             deps = None
         if not list_bset_cfg_files(opts, configs):
             prefix = opts.defaults.expand('%{_prefix}')
-            if not opts.dry_run() and not opts.no_install() and \
-                    not path.ispathwritable(prefix):
+            if not opts.dry_run() and \
+               not not opts.canadian_cross() and \
+               not opts.no_install() and \
+               not path.ispathwritable(prefix):
                 raise error.general('prefix is not writable: %s' % (path.host(prefix)))
             for bset in opts.params():
                 setbuilder_error = True
