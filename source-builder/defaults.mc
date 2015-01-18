@@ -305,6 +305,14 @@ if test "%{_build}" != "%{_host}" ; then
   CXX=$(echo "%{_host}-%{_host_cxx}" | sed -e 's,-std=gnu99 ,,')
   CFLAGS="${SB_HOST_CFLAGS}"
   LDFLAGS="${SB_HOST_LDFLAGS}"
+  # Host
+  CFLAGS_FOR_HOST="${SB_HOST_CFLAGS}"
+  CXXFLAGS_FOR_HOST="${SB_HOST_CXXFLAGS}"
+  LDFLAGS_FOR_HOST="${SB_HOST_LDFLAGS}"
+  CXXFLAGS_FOR_HOST="${SB_HOST_CFLAGS}"
+  CC_FOR_HOST=$(echo "%{_host_cc} ${SB_HOST_CFLAGS}" | sed -e 's,-std=gnu99 ,,')
+  CXX_FOR_HOST=$(echo "%{_host_cxx} ${SB_HOST_CXXFLAGS}" | sed -e 's,-std=gnu99 ,,')
+  # Build
   CFLAGS_FOR_BUILD="${SB_BUILD_CFLAGS}"
   CXXFLAGS_FOR_BUILD="${SB_BUILD_CXXFLAGS}"
   LDFLAGS_FOR_BUILD="${SB_BUILD_LDFLAGS}"
@@ -318,7 +326,9 @@ else
   CC_FOR_BUILD=${CC}
   CXX_FOR_BUILD=${CXX}
 fi
-export CC CXX CC_FOR_BUILD CXX_FOR_BUILD CFLAGS CFLAGS_FOR_BUILD CXXFLAGS_FOR_BUILD LDFLAGS LDFLAGS_FOR_BUILD'''
+export CC CXX CFLAGS LDFLAGS
+export CC_FOR_HOST CXX_FOR_HOST CFLAGS_FOR_HOST CXXFLAGS_FOR_HOST LDFLAGS_FOR_HOST
+export CC_FOR_BUILD CXX_FOR_BUILD CFLAGS_FOR_BUILD CXXFLAGS_FOR_BUILD LDFLAGS_FOR_BUILD'''
 
 # Build/build flags.
 build_build_flags:    none,    none,     '''
