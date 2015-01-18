@@ -4,7 +4,7 @@
 
 %define release 1
 
-package: gnu-tools-%{_target}-%{release}
+package: gnu-tools-%{_target}-%{_host}-%{release}
 
 #
 # Project custom message

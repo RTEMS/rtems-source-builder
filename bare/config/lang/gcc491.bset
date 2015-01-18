@@ -4,7 +4,7 @@
 
 %define release 1
 
-package: gcc491-%{_target}-%{release}
+package: gcc491-%{_target}-%{_host}-%{release}
 
 #
 # Project custom message

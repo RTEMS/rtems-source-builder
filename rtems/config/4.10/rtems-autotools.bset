@@ -14,7 +14,7 @@
 #
 # The autotoolspackage.
 #
-package: rtems-%{rtems_version}-autotools-%{release}
+package: rtems-%{rtems_version}-autotools-%{_host}-%{release}
 
 #
 # Tools configuration.

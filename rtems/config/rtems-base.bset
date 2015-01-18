@@ -10,7 +10,7 @@
 #
 # The generic package name.
 #
-package: rtems-%{rtems_version}-%{_target}-%{release}
+package: rtems-%{rtems_version}-%{_target}-%{_host}-%{release}
 
 #
 # Project custom message
