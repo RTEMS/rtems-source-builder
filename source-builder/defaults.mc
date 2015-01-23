@@ -57,6 +57,7 @@ _uid:                none,    convert,  '%(%{__id_u} -n)'
 # flags and include paths to the tools. The host is the final platform
 # the tools will run on and build is the host building the tools.
 host_cflags:         none,    convert,  '-O2 -pipe'
+host_cxxflags:       none,    convert,  '-O2 -pipe'
 host_includes:       none,    convert,  ''
 build_cflags:        none,    convert,  '-O2 -pipe'
 build_cxxflags:      none,    convert,  '-O2 -pipe'
@@ -190,6 +191,7 @@ SB_SOURCE_DIR="%{_sourcedir}"
 SB_BUILD_DIR="%{_builddir}"
 # host == build, use build; host != build , host uses host and build uses build
 SB_HOST_CFLAGS="%{host_cflags} %{host_includes}"
+SB_HOST_CXXFLAGS="%{host_cxxflags} %{host_includes}"
 SB_HOST_LDFLAGS="%{?host_ldflags:%{host_ldflags}}%{?_tmproot:-L%{_tmproot}/${SB_PREFIX_CLEAN}/lib}"
 SB_BUILD_CFLAGS="%{build_cflags} %{?_tmproot:-I%{_tmproot}/${SB_PREFIX_CLEAN}/include}"
 SB_BUILD_CXXFLAGS="%{build_cxxflags} %{?_tmproot:-I%{_tmproot}/${SB_PREFIX_CLEAN}/include}"
@@ -199,7 +201,9 @@ SB_CXXFLAGS="${SB_BUILD_CXXFLAGS} %{build_includes}"
 SB_ARCH="%{_arch}"
 SB_OS="%{_os}"
 export SB_SOURCE_DIR SB_BUILD_DIR SB_ARCH SB_OS
-export SB_HOST_CFLAGS SB_HOST_LDFLAGS SB_BUILD_CFLAGS SB_BUILD_CXXFLAGS SB_BUILD_LDFLAGS SB_CFLAGS SB_CXXFLAGS
+export SB_HOST_CFLAGS SB_HOST_CXXFLAGS SB_HOST_LDFLAGS
+export SB_BUILD_CFLAGS SB_BUILD_CXXFLAGS SB_BUILD_LDFLAGS
+export SB_CFLAGS SB_CXXFLAGS
 # Documentation
 SB_DOC_DIR="%{_docdir}"
 export SB_DOC_DIR
@@ -304,6 +308,7 @@ if test "%{_build}" != "%{_host}" ; then
   CC=$(echo "%{_host}-%{_host_cc}" | sed -e 's,-std=gnu99 ,,')
   CXX=$(echo "%{_host}-%{_host_cxx}" | sed -e 's,-std=gnu99 ,,')
   CFLAGS="${SB_HOST_CFLAGS}"
+  CXXFLAGS="${SB_HOST_CXXFLAGS}"
   LDFLAGS="${SB_HOST_LDFLAGS}"
   # Host
   CFLAGS_FOR_HOST="${SB_HOST_CFLAGS}"
@@ -326,7 +331,7 @@ else
   CC_FOR_BUILD=${CC}
   CXX_FOR_BUILD=${CXX}
 fi
-export CC CXX CFLAGS LDFLAGS
+export CC CXX CFLAGS CXXFLAGS LDFLAGS
 export CC_FOR_HOST CXX_FOR_HOST CFLAGS_FOR_HOST CXXFLAGS_FOR_HOST LDFLAGS_FOR_HOST
 export CC_FOR_BUILD CXX_FOR_BUILD CFLAGS_FOR_BUILD CXXFLAGS_FOR_BUILD LDFLAGS_FOR_BUILD'''
 
