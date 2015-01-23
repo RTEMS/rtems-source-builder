@@ -1,0 +1,20 @@
+#
+# Build set for Google Protocol Buffers
+#
+
+%define release 1
+
+#
+# RTEMS Version
+#
+%define rtems_version 4.11
+
+#
+# The RTEMS URL paths.
+#
+%include rtems-urls.bset
+
+#
+# Build Protocol Buffers.
+#
+net/protobuf-2.6.1-1

@@ -9,3 +9,5 @@ build
 #*#
 .*
 log_*
+*.log
+*.txt
