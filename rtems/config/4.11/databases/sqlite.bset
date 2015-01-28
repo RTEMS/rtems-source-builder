@@ -1,0 +1,20 @@
+#
+# Build set for Sqlite
+#
+
+%define release 1
+
+#
+# RTEMS Version
+#
+%define rtems_version 4.11
+
+#
+# The RTEMS URL paths.
+#
+%include rtems-urls.bset
+
+#
+# Build Protocol Buffers.
+#
+databases/sqlite-3.8.8.1-1
