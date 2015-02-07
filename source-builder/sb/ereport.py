@@ -36,7 +36,10 @@ def generate(name, opts, header = None, footer = None):
                           opts.defaults.get_value('%{_sbgit_id}'))]
     else:
         r += [' RSB: not a valid repo']
-    r += [' %s' % (' '.join(os.uname()))]
+    if os.name == 'nt':
+        r += [' Windows']
+    else:
+        r += [' %s' % (' '.join(os.uname()))]
     r += []
     r += ['Tail of the build log:']
     r += log.tail()

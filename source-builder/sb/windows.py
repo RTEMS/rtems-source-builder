@@ -30,13 +30,18 @@ import execute
 def load():
     # Default to the native Windows Python.
     uname = 'win32'
-    system = 'mingw32'
-    if os.environ.has_key('HOSTTYPE'):
-        hosttype = os.environ['HOSTTYPE']
+    if os.environ.has_key('PROCESSOR_ARCHITECTURE'):
+        if os.environ['PROCESSOR_ARCHITECTURE'] == 'AMD64':
+            hosttype = 'x86_64'
+            machsize = '64'
+        else:
+            hosttype = 'i686'
+            machsize = '32'
     else:
-        hosttype = 'i686'
-    host_triple = hosttype + '-pc-' + system
-    build_triple = hosttype + '-pc-' + system
+        hosttype = 'x86_64'
+        machsize = '32'
+    host_triple = '%s-w%s-mingw32' % (hosttype, machsize)
+    build_triple = '%s-w%s-mingw32' % (hosttype, machsize)
 
     # See if this is actually Cygwin Python
     if os.name == 'posix':

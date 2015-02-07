@@ -127,7 +127,14 @@ def mkdir(path):
 def removeall(path):
 
     def _onerror(function, path, excinfo):
-        print 'removeall error: (%s) %s' % (excinfo, path)
+        import stat
+        if not os.access(path, os.W_OK):
+            # Is the error an access error ?
+            os.chmod(path, stat.S_IWUSR)
+            function(path)
+        else:
+            print 'removeall error: %s' % (path)
+            raise
 
     path = host(path)
     shutil.rmtree(path, onerror = _onerror)

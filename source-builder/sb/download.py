@@ -69,7 +69,7 @@ def _hash_check(file_, absfile, macros, remove = True):
         _in = None
         try:
             hasher = hashlib.new(hash[0])
-            _in = open(absfile, 'rb')
+            _in = open(path.host(absfile), 'rb')
             hasher.update(_in.read())
         except IOError, err:
             log.notice('hash: %s: read error: %s' % (file_, str(err)))
@@ -90,7 +90,12 @@ def _hash_check(file_, absfile, macros, remove = True):
         if failed and remove:
             log.warning('removing: %s' % (file_))
             if path.exists(absfile):
-                os.remove(path.host(absfile))
+                try:
+                    os.remove(path.host(absfile))
+                except IOError, err:
+                    raise error.general('hash: %s: remove: %s' % (absfile, str(err)))
+                except:
+                    raise error.general('hash: %s: remove error' % (file_))
         if hasher is not None:
             del hasher
     else:

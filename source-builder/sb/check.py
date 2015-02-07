@@ -104,7 +104,7 @@ def path_check(opts, silent = False):
                 if not silent:
                     log.notice('error: environment PATH contains an empty path')
                 return False
-            elif p.strip() == '.' or p.strip() == '..':
+            elif not options.host_windows and (p.strip() == '.' or p.strip() == '..'):
                 if not silent:
                     log.notice('error: environment PATH invalid path: %s' % (p))
                 return False

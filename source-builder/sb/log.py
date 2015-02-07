@@ -74,6 +74,7 @@ def notice(text = os.linesep, log = None):
     if not quiet and default is not None and not default.has_stdout():
         for l in text.replace(chr(13), '').splitlines():
             print l
+        sys.stdout.flush()
     _output(text, log)
 
 def trace(text = os.linesep, log = None):

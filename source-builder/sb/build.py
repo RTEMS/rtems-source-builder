@@ -227,7 +227,6 @@ class build:
                         raise error.general('setup source tag not found: %d' % (source_tag))
                 else:
                     name = opt_name
-                name = self._name_(name)
             self.script.append(self.config.expand('cd %{_builddir}'))
             if not deleted_dir and  delete_before_unpack:
                 self.script.append(self.config.expand('%{__rm} -rf ' + name))
