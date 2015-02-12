@@ -15,10 +15,6 @@
 # or1k specific patches
 #
 
-#binutils
-%patch add binutils -p1 https://raw.githubusercontent.com/heshamelmatary/or1k-rtems/master/patches/binutils-2.24-or1k-rtems.diff
-%hash  md5 binutils-2.24-or1k-rtems.diff 6a1d5ae6e37f6eed421b357a63a612db
-
 #gcc
 %patch add gcc -p1 https://raw.githubusercontent.com/heshamelmatary/or1k-rtems/master/patches/gcc-4.8.3-or1k-rtems-29072014.diff
 %hash  md5 gcc-4.8.3-or1k-rtems-29072014.diff df2555b2dd4de2d78366fabd705f36ac
@@ -41,7 +37,7 @@
 #
 4.11/rtems-autotools
 devel/expat-2.1.0-1
-tools/rtems-binutils-2.24-1
+tools/rtems-binutils-2.25-1
 tools/rtems-gcc-4.8.3-newlib-git-1
 tools/rtems-tools-4.11-1
 tools/rtems-gdb-7.7-1
