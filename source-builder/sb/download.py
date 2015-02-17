@@ -36,6 +36,16 @@ import log
 import path
 import sources
 
+def _do_download(opts):
+    download = True
+    if opts.dry_run():
+        download = False
+        wa = opts.with_arg('download')
+        if wa is not None:
+            if wa[0] == 'with_download' and wa[1] == 'yes':
+                download = True
+    return download
+
 def _humanize_bytes(bytes, precision = 1):
     abbrevs = (
         (1 << 50L, 'PB'),
@@ -102,7 +112,56 @@ def _hash_check(file_, absfile, macros, remove = True):
         log.warning('%s: no hash found' % (file_))
     return not failed
 
-def _http_parser(source, config, opts):
+def _local_path(source, pathkey, config):
+    for p in config.define(pathkey).split(':'):
+        local = path.join(path.abspath(p), source['file'])
+        if source['local'] is None:
+            source['local_prefix'] = path.abspath(p)
+            source['local'] = local
+        if path.exists(local):
+            source['local_prefix'] = path.abspath(p)
+            source['local'] = local
+            _hash_check(source['file'], local, config.macros)
+            break
+
+def _http_parser(source, pathkey, config, opts):
+    #
+    # Hack for gitweb.cgi patch downloads. We rewrite the various fields.
+    #
+    if 'gitweb.cgi' in source['url']:
+        url = source['url']
+        if '?' not in url:
+            raise error.general('invalid gitweb.cgi request: %s' % (url))
+        req = url.split('?')[1]
+        if len(req) == 0:
+            raise error.general('invalid gitweb.cgi request: %s' % (url))
+        #
+        # The gitweb.cgi request should have:
+        #    p=<what>
+        #    a=patch
+        #    h=<hash>
+        # so extract the p and h parts to make the local name.
+        #
+        p = None
+        a = None
+        h = None
+        for r in req.split(';'):
+            if '=' not in r:
+                raise error.general('invalid gitweb.cgi path: %s' % (url))
+            rs = r.split('=')
+            if rs[0] == 'p':
+                p = rs[1].replace('.', '-')
+            elif rs[0] == 'a':
+                a = rs[1]
+            elif rs[0] == 'h':
+                h = rs[1]
+        if p is None or h is None:
+            raise error.general('gitweb.cgi path missing p or h: %s' % (url))
+        source['file'] = '%s-%s.patch' % (p, h)
+    #
+    # Check local path
+    #
+    _local_path(source, pathkey, config)
     #
     # Is the file compressed ?
     #
@@ -120,10 +179,18 @@ def _http_parser(source, config, opts):
         source['compressed-type'] = 'xz'
         source['compressed'] = '%{__xz} -dc'
 
-def _patchworks_parser(source, config, opts):
+def _patchworks_parser(source, pathkey, config, opts):
+    #
+    # Check local path
+    #
+    _local_path(source, pathkey, config)
     source['url'] = 'http%s' % (source['path'][2:])
 
-def _git_parser(source, config, opts):
+def _git_parser(source, pathkey, config, opts):
+    #
+    # Check local path
+    #
+    _local_path(source, pathkey, config)
     #
     # Symlink.
     #
@@ -137,7 +204,11 @@ def _git_parser(source, config, opts):
         path.join(source['local_prefix'], 'git', source['file'])
     source['symlink'] = source['local']
 
-def _cvs_parser(source, config, opts):
+def _cvs_parser(source, pathkey, config, opts):
+    #
+    # Check local path
+    #
+    _local_path(source, pathkey, config)
     #
     # Symlink.
     #
@@ -185,7 +256,11 @@ def _cvs_parser(source, config, opts):
     else:
         source['symlink'] = source['local']
 
-def _file_parser(source, config, opts):
+def _file_parser(source, pathkey, config, opts):
+    #
+    # Check local path
+    #
+    _local_path(source, pathkey, config)
     #
     # Symlink.
     #
@@ -217,22 +292,12 @@ def parse_url(url, pathkey, config, opts):
     # Get the file. Checks the local source directory first.
     #
     source['local'] = None
-    for p in config.define(pathkey).split(':'):
-        local = path.join(path.abspath(p), source['file'])
-        if source['local'] is None:
-            source['local_prefix'] = path.abspath(p)
-            source['local'] = local
-        if path.exists(local):
-            source['local_prefix'] = path.abspath(p)
-            source['local'] = local
-            _hash_check(source['file'], local, config.macros)
-            break
-    source['script'] = ''
     for p in parsers:
         if url.startswith(p):
             source['type'] = p
-            if parsers[p](source, config, opts):
+            if parsers[p](source, pathkey, config, opts):
                 break
+    source['script'] = ''
     return source
 
 def _http_downloader(url, local, config, opts):
@@ -246,7 +311,7 @@ def _http_downloader(url, local, config, opts):
     dst = os.path.relpath(path.host(local))
     log.notice('download: %s -> %s' % (url, dst))
     failed = False
-    if not opts.dry_run():
+    if _do_download(opts):
         _in = None
         _out = None
         _length = None
@@ -258,7 +323,10 @@ def _http_downloader(url, local, config, opts):
         _wipe_output = False
         try:
             try:
+                _in = None
                 _in = urllib2.urlopen(url)
+                if url != _in.geturl():
+                    log.notice(' redirect: %s' % (_in.geturl()))
                 _out = open(path.host(local), 'wb')
                 try:
                     _length = int(_in.info().getheader('Content-Length').strip())
@@ -300,12 +368,15 @@ def _http_downloader(url, local, config, opts):
             msg = 'download: %s: error' % (url)
             log.stderr(msg)
             log.notice(msg)
+            if _in is not None:
+                _in.close()
             if _out is not None:
                 _out.close()
             raise
         if _out is not None:
             _out.close()
         if _in is not None:
+            _in.close()
             del _in
         if not failed:
             if not path.isfile(local):
@@ -338,7 +409,7 @@ def _git_downloader(url, local, config, opts):
                 us[0] = _as[1] + url_base
     if not repo.valid():
         log.notice('git: clone: %s -> %s' % (us[0], rlp))
-        if not opts.dry_run():
+        if _do_download(opts):
             repo.clone(us[0], local)
     else:
         repo.clean(['-f', '-d'])
@@ -350,28 +421,28 @@ def _git_downloader(url, local, config, opts):
             if len(_as) != 2:
                 raise error.general('invalid git branch/checkout: %s' % (_as))
             log.notice('git: checkout: %s => %s' % (us[0], _as[1]))
-            if not opts.dry_run():
+            if _do_download(opts):
                 repo.checkout(_as[1])
         elif _as[0] == 'pull':
             log.notice('git: pull: %s' % (us[0]))
-            if not opts.dry_run():
+            if _do_download(opts):
                 repo.pull()
         elif _as[0] == 'submodule':
             if len(_as) != 2:
                 raise error.general('invalid git submodule: %s' % (_as))
             log.notice('git: submodule: %s <= %s' % (us[0], _as[1]))
-            if not opts.dry_run():
+            if _do_download(opts):
                 repo.submodule(_as[1])
         elif _as[0] == 'fetch':
             log.notice('git: fetch: %s -> %s' % (us[0], rlp))
-            if not opts.dry_run():
+            if _do_download(opts):
                 repo.fetch()
         elif _as[0] == 'reset':
             arg = []
             if len(_as) > 1:
                 arg = ['--%s' % (_as[1])]
             log.notice('git: reset: %s' % (us[0]))
-            if not opts.dry_run():
+            if _do_download(opts):
                 repo.reset(arg)
         elif _as[0] == 'protocol':
             pass
@@ -409,20 +480,20 @@ def _cvs_downloader(url, local, config, opts):
         if not path.isdir(local):
             log.notice('Creating source directory: %s' % \
                            (os.path.relpath(path.host(local))))
-            if not opts.dry_run():
+            if _do_download(opts):
                 path.mkdir(local)
             log.notice('cvs: checkout: %s -> %s' % (us[0], rlp))
-            if not opts.dry_run():
+            if _do_download(opts):
                 repo.checkout(':%s' % (us[0][6:]), module, tag, date)
     for a in us[1:]:
         _as = a.split('=')
         if _as[0] == 'update':
             log.notice('cvs: update: %s' % (us[0]))
-            if not opts.dry_run():
+            if _do_download(opts):
                 repo.update()
         elif _as[0] == 'reset':
             log.notice('cvs: reset: %s' % (us[0]))
-            if not opts.dry_run():
+            if _do_download(opts):
                 repo.reset()
     return True
 
@@ -445,7 +516,7 @@ def get_file(url, local, opts, config):
         log.notice('Creating source directory: %s' % \
                        (os.path.relpath(path.host(path.dirname(local)))))
     log.output('making dir: %s' % (path.host(path.dirname(local))))
-    if not opts.dry_run():
+    if _do_download(opts):
         path.mkdir(path.dirname(local))
     if not path.exists(local) and opts.download_disabled():
         raise error.general('source not found: %s' % (path.host(local)))
@@ -472,5 +543,5 @@ def get_file(url, local, opts, config):
             if url.startswith(dl):
                 if downloaders[dl](url, local, config, opts):
                     return
-    if not opts.dry_run():
+    if _do_download(opts):
         raise error.general('downloading %s: all paths have failed, giving up' % (url))

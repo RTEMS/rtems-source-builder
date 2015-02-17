@@ -190,7 +190,7 @@ class command_line:
 
     def help(self):
         print '%s: [options] [args]' % (self.command_name)
-        print 'RTEMS Source Builder, an RTEMS Tools Project (c) 2012-2013 Chris Johns'
+        print 'RTEMS Source Builder, an RTEMS Tools Project (c) 2012-2015 Chris Johns'
         print 'Options and arguments:'
         print '--force                : Force the build to proceed'
         print '--quiet                : Quiet output (not used)'
@@ -427,14 +427,49 @@ class command_line:
     def params(self):
         return self.opts['params']
 
+    def parse_args(self, arg, error = True):
+        for a in range(0, len(self.args)):
+            if self.args[a].startswith(arg):
+                lhs = None
+                rhs = None
+                if '=' in self.args[a]:
+                    eqs = self.args[a].split('=')
+                    lhs = eqs[0]
+                    if len(eqs) > 2:
+                        rhs = '='.join(eqs[1:])
+                    else:
+                        rhs = eqs[1]
+                else:
+                    lhs = self.args[a]
+                    a += 1
+                    if a >= len(self.args):
+                        return [arg, None]
+                    rhs = self.args[a]
+                return [lhs, rhs]
+            a += 1
+        return None
+
     def get_arg(self, arg):
         if self.optargs is None or arg not in self.optargs:
             raise error.internal('bad arg: %s' % (arg))
-        for a in self.args:
-            sa = a.split('=')
-            if sa[0].startswith(arg):
-                return sa
-        return None
+        return self.parse_args(arg)
+
+    def with_arg(self, label):
+        for pre in ['with', 'without']:
+            arg_str = '--%s-%s' % (pre, label)
+            arg_label = '%s_%s' % (pre, label)
+            arg = self.parse_args(arg_str, error = False)
+            if arg is not None:
+                if arg[1] is  None:
+                    result = 'yes'
+                else:
+                    result = arg[1]
+                break
+            if pre == 'with':
+                result = 'yes'
+            else:
+                result = 'no'
+        return [arg_label, result]
 
     def get_config_files(self, config):
         #
@@ -570,6 +605,8 @@ def run(args):
         log.notice(str(_opts))
         log.notice('Defaults:')
         log.notice(str(_opts.defaults))
+        log.notice('with-opt1: %r' % (_opts.with_arg('opt1')))
+        log.notice('without-opt2: %r' % (_opts.with_arg('opt2')))
     except error.general, gerr:
         print gerr
         sys.exit(1)
