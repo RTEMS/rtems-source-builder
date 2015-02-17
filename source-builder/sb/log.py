@@ -57,6 +57,7 @@ def _output(text = os.linesep, log = None):
     else:
         for l in text.replace(chr(13), '').splitlines():
             print l
+        sys.stdout.flush()
 
 def stdout_raw(text = os.linesep):
     print text,
@@ -65,6 +66,7 @@ def stdout_raw(text = os.linesep):
 def stderr(text = os.linesep, log = None):
     for l in text.replace(chr(13), '').splitlines():
         print >> sys.stderr, l
+        sys.stderr.flush()
 
 def output(text = os.linesep, log = None):
     if not quiet:
