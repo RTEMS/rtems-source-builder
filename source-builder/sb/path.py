@@ -1,6 +1,6 @@
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2010-2012 Chris Johns (chrisj@rtems.org)
+# Copyright 2010-2015 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -128,6 +128,8 @@ def removeall(path):
 
     def _onerror(function, path, excinfo):
         import stat
+        if windows:
+            path = "\\\\?\\" + path
         if not os.access(path, os.W_OK):
             # Is the error an access error ?
             os.chmod(path, stat.S_IWUSR)
@@ -147,20 +149,32 @@ def expand(name, paths):
     return l
 
 def copy_tree(src, dst):
+    trace = False
+
     hsrc = host(src)
     hdst = host(dst)
 
-    if os.path.exists(src):
-        names = os.listdir(src)
+    if os.path.exists(hsrc):
+        names = os.listdir(hsrc)
     else:
         names = []
 
-    if not os.path.isdir(dst):
-        os.makedirs(dst)
+    if trace:
+        print 'path.copy_tree:'
+        print '   src: %s' % (src)
+        print '  hsrc: %s' % (hsrc)
+        print '   dst: %s' % (dst)
+        print '  hdst: %s' % (hdst)
+        print ' names: %r' % (names)
+
+    if not os.path.isdir(hdst):
+        if trace:
+            print ' mkdir: %s' % (hdst)
+        os.makedirs(hdst)
 
     for name in names:
-        srcname = os.path.join(src, name)
-        dstname = os.path.join(dst, name)
+        srcname = os.path.join(hsrc, name)
+        dstname = os.path.join(hdst, name)
         try:
             if os.path.islink(srcname):
                 linkto = os.readlink(srcname)
@@ -180,19 +194,24 @@ def copy_tree(src, dst):
             elif os.path.isdir(srcname):
                 copy_tree(srcname, dstname)
             else:
-                shutil.copy2(srcname, dstname)
+                if windows:
+                    shutil.copy2("\\\\?\\" + srcname, dstname)
+                else:
+                    shutil.copy2(srcname, dstname)
         except shutil.Error, err:
-            raise error.general('copying tree: %s -> %s: %s' % (src, dst, str(err)))
+            raise error.general('copying tree: %s -> %s: %s' % \
+                                (hsrc, hdst, str(err)))
         except EnvironmentError, why:
-            raise error.general('copying tree: %s -> %s: %s' % (srcname, dstname, str(why)))
+            raise error.general('copying tree: %s -> %s: %s' % \
+                                (srcname, dstname, str(why)))
     try:
-        shutil.copystat(src, dst)
+        shutil.copystat(hsrc, hdst)
     except OSError, why:
         if windows:
             if WindowsError is not None and isinstance(why, WindowsError):
                 pass
         else:
-            raise error.general('copying tree: %s -> %s: %s' % (src, dst, str(why)))
+            raise error.general('copying tree: %s -> %s: %s' % (hsrc, hdst, str(why)))
 
 if __name__ == '__main__':
     print host('/a/b/c/d-e-f')
