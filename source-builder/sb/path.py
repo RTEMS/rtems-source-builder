@@ -26,6 +26,7 @@
 import log
 import os
 import shutil
+import stat
 import string
 
 import error
@@ -36,17 +37,25 @@ def host(path):
     if path is not None:
         while '//' in path:
             path = path.replace('//', '/')
-        if windows and len(path) > 2:
-            if path[0] == '/' and path[2] == '/' and \
-                    (path[1] in string.ascii_lowercase or \
-                         path[1] in string.ascii_uppercase):
-                path = ('%s:%s' % (path[1], path[2:])).replace('/', '\\')
+        if windows:
+            if len(path) > 2 and \
+               path[0] == '/' and path[2] == '/' and \
+               (path[1] in string.ascii_lowercase or \
+                path[1] in string.ascii_uppercase):
+                path = '%s:%s' % (path[1], path[2:])
+            path = path.replace('/', '\\')
+            if not path.startswith('\\\\?\\') and len(path) > 254:
+                path = '\\\\?\\' + path
     return path
 
 def shell(path):
     if path is not None:
-        if windows and len(path) > 1 and path[1] == ':':
-            path = ('/%s%s' % (path[0], path[2:])).replace('\\', '/')
+        if windows:
+            if path.startswith('\\\\?\\'):
+                path = path[4:]
+            if len(path) > 1 and path[1] == ':':
+                path = '/%s%s' % (path[0], path[2:])
+            path = path.replace('\\', '/')
         while '//' in path:
             path = path.replace('//', '/')
     return path
@@ -125,22 +134,26 @@ def mkdir(path):
                 raise error.general('cannot make directory: %s' % (path))
 
 def removeall(path):
-
-    def _onerror(function, path, excinfo):
-        import stat
-        if windows:
-            path = "\\\\?\\" + path
-        if not os.access(path, os.W_OK):
-            # Is the error an access error ?
-            os.chmod(path, stat.S_IWUSR)
-            function(path)
-        else:
-            print 'removeall error: %s' % (path)
-            raise
-
+    #
+    # Perform the removal of the directory tree manually so we can
+    # make sure on Windows the files and correctly encoded to avoid
+    # the size limit.
+    #
     path = host(path)
-    shutil.rmtree(path, onerror = _onerror)
-    return
+    for root, dirs, files in os.walk(path, topdown = False):
+        for name in files:
+            file = host(os.path.join(root, name))
+            if not os.access(file, os.W_OK):
+                os.chmod(file, stat.S_IWUSR)
+            os.unlink(file)
+        for name in dirs:
+            dir = host(os.path.join(root, name))
+            if not os.access(dir, os.W_OK):
+                os.chmod(dir, stat.S_IWUSR)
+            os.rmdir(dir)
+    if not os.access(path, os.W_OK):
+        os.chmod(path, stat.S_IWUSR)
+    os.rmdir(path)
 
 def expand(name, paths):
     l = []
@@ -173,8 +186,8 @@ def copy_tree(src, dst):
         os.makedirs(hdst)
 
     for name in names:
-        srcname = os.path.join(hsrc, name)
-        dstname = os.path.join(hdst, name)
+        srcname = host(os.path.join(hsrc, name))
+        dstname = host(os.path.join(hdst, name))
         try:
             if os.path.islink(srcname):
                 linkto = os.readlink(srcname)
@@ -182,7 +195,7 @@ def copy_tree(src, dst):
                     if os.path.islink(dstname):
                         dstlinkto = os.readlink(dstname)
                         if linkto != dstlinkto:
-                            log.warning('copying tree: update of link does not match: %s -> %s' % \
+                            log.warning('copying tree: link does not match: %s -> %s' % \
                                             (dstname, dstlinkto))
                             os.remove(dstname)
                     else:
@@ -194,10 +207,7 @@ def copy_tree(src, dst):
             elif os.path.isdir(srcname):
                 copy_tree(srcname, dstname)
             else:
-                if windows:
-                    shutil.copy2("\\\\?\\" + srcname, dstname)
-                else:
-                    shutil.copy2(srcname, dstname)
+                    shutil.copy2(host(srcname), host(dstname))
         except shutil.Error, err:
             raise error.general('copying tree: %s -> %s: %s' % \
                                 (hsrc, hdst, str(err)))
@@ -227,4 +237,4 @@ if __name__ == '__main__':
     print shell('w:/x/y/z')
     print basename('x:/sd/df/fg/me.txt')
     print dirname('x:/sd/df/fg/me.txt')
-    print join('s:/d/', '/g', '/tyty/fgfg')
+    print join('s:/d/e\\f/g', '/h', '/tyty/zxzx', '\\mm\\nn/p')

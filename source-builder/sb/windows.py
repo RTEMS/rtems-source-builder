@@ -67,6 +67,9 @@ def load():
     else:
         ncpus = '1'
 
+    if os.environ.has_key('MSYSTEM'):
+        os.environ.pop('NUMBER_OF_PROCESSORS')
+
     version = uname[2]
     defines = {
         '_ncpus':            ('none',    'none',     ncpus),
