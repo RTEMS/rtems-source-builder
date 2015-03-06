@@ -143,17 +143,23 @@ def removeall(path):
     for root, dirs, files in os.walk(path, topdown = False):
         for name in files:
             file = host(os.path.join(root, name))
-            if not os.access(file, os.W_OK):
+            if not os.path.islink(file) and not os.access(file, os.W_OK):
                 os.chmod(file, stat.S_IWUSR)
             os.unlink(file)
         for name in dirs:
             dir = host(os.path.join(root, name))
-            if not os.access(dir, os.W_OK):
-                os.chmod(dir, stat.S_IWUSR)
-            os.rmdir(dir)
-    if not os.access(path, os.W_OK):
+            if os.path.islink(dir):
+                os.unlink(dir)
+            else:
+                if not os.access(dir, os.W_OK):
+                    os.chmod(dir, stat.S_IWUSR)
+                os.rmdir(dir)
+    if not os.path.islink(path) and not os.access(path, os.W_OK):
         os.chmod(path, stat.S_IWUSR)
-    os.rmdir(path)
+    if os.path.islink(path):
+        os.unlink(path)
+    else:
+        os.rmdir(path)
 
 def expand(name, paths):
     l = []
