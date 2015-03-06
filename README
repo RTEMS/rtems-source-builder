@@ -15,8 +15,7 @@ The project is part of the RTEMS Project. See http://www.rtems.org/ for
 details. The master repositiory is
 http://git.rtems.org/rtems-source-builder.git/.
 
-Documentation is in the 'doc' directory and available as HTML at
-http://www.rtems.org/ftp/pub/rtems/people/chrisj/source-builder/source-builder.html.
+Documentation is in the 'doc' directory and available as HTML at https://docs.rtems.org/rsb/.
 
 Contributions, suggestions, and bug reports are welcome.
 
