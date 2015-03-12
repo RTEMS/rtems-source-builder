@@ -3176,25 +3176,55 @@ tools. The following are required:
 Windows
 ~~~~~~~
 
-Windows tool sets are supported creating native Windows executable. Native
-Windows tools are built using a MinGW compiler and do not need any extra
-libraries or emulation layer to run once built. The tools understand and use
-standard Windows paths and integrate easly into Windows IDE environments. A
-shell maybe needed to build other parts of your system however if your
-development tools are all native Windows tool you can easly integrate these
-tool sets.
+Windows tool sets are supported. The tools are native Windows executable which
+means they do not need an emulation layer to run once built. The tools
+understand and use standard Windows paths and integrate easily into Windows IDE
+environments because they understand and use standard Windows paths. Native
+Windows tools have proven over time to be stable and reliable with good
+performance. If you are a Windows user or you are required to use Windows you
+can still develop RTEMS application as easily as a Unix operating system. Some
+debugging experiences may vary and if this is an issue please raised the topic
+on the RTEMS Users mailing list.
+
+Building the tools or some other packages may require a Unix or POSIX type
+shell. There are a few options, Cygwin and MSYS2. I recommend MSYS2.
 
 .Ready To Go Windows Tools
-NOTE: I provide tools for Windows at
-http://www.rtems.org/ftp/pub/rtems/people/chrisj/source-builder/4.11/mingw32/
+NOTE: From time to time I provide tools for Windows at
+http://ftp.rtems.org/pub/rtems/people/chrisj/source-builder/4.11/mingw32/
+
+MSYS2
+
+This is a new version of the old MinGW project's original MSYS based around the
+Arch Linux pacman packager. MSYS and MSYS2 are a specific fork of the Cygwin
+project with some fundamental changes in the handling of paths and mounts that
+allow easy interaction between the emulated POSIX environment and the native
+Windows environment.
+
+Install MSYS2 using the installer you can download from
+https://msys2.github.io/. Follow the instructions on the install page and make
+sure you remove any global path entries to any other Cygwin, MinGW, MSYS or
+packages that may uses a Cygwin DLL, for example some ports of Git.
+
+To build the tools you need install the following packages using pacman:
+
+ $ pacman -S git cvs bison make texinfo patch unzip diffutils tar \
+          mingw64/mingw-w64-x86_64-gcc mingw64/mingw-w64-x86_64-binutils
+
+To build make sure you add '--without-python --jobs=none' to the standard RSB
+command line. MSYS2 has a temp file name issue and so the GNU AR steps on
+itself when running in parallel on SMP hardware which means we have to set the
+jobs option to none.
+
+Install a suitable version of Python from http://www.python.org/ and add it to
+the start of your path. The MSYS2 python does not work with waf.
+
+Cygwin
 
 Building on Windows is a little more complicated because the Cygwin shell is
-used rather than the MinGW MSYS shell. The MSYS shell is simpler because the
+used rather than the MSYS2 shell. The MSYS2 shell is simpler because the
 detected host triple is MinGW so the build is standard cross-compiler build.
-The age of the MSYS code base, its stability and ability to to complete a build
-with limitations such as the length of file names support make using MSYS
-difficult therefore the more complex path of a Canadian cross-build using
-Cygwin is supported.
+A Canadian cross-build using Cygwin is supported if you would like native tools.
 
 Install a recent Cygwin version using the Cygwin setup tool. Select and install
 the groups and packages listed:
