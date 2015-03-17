@@ -78,6 +78,9 @@ class repo:
     def fetch(self):
         ec, output = self._run(['fetch'], check = True)
 
+    def merge(self):
+        ec, output = self._run(['merge'], check = True)
+
     def pull(self):
         ec, output = self._run(['pull'], check = True)
 

@@ -423,10 +423,6 @@ def _git_downloader(url, local, config, opts):
             log.notice('git: checkout: %s => %s' % (us[0], _as[1]))
             if _do_download(opts):
                 repo.checkout(_as[1])
-        elif _as[0] == 'pull':
-            log.notice('git: pull: %s' % (us[0]))
-            if _do_download(opts):
-                repo.pull()
         elif _as[0] == 'submodule':
             if len(_as) != 2:
                 raise error.general('invalid git submodule: %s' % (_as))
@@ -437,6 +433,14 @@ def _git_downloader(url, local, config, opts):
             log.notice('git: fetch: %s -> %s' % (us[0], rlp))
             if _do_download(opts):
                 repo.fetch()
+        elif _as[0] == 'merge':
+            log.notice('git: merge: %s' % (us[0]))
+            if _do_download(opts):
+                repo.merge()
+        elif _as[0] == 'pull':
+            log.notice('git: pull: %s' % (us[0]))
+            if _do_download(opts):
+                repo.pull()
         elif _as[0] == 'reset':
             arg = []
             if len(_as) > 1:
