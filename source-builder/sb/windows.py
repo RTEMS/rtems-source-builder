@@ -40,8 +40,6 @@ def load():
     else:
         hosttype = 'x86_64'
         machsize = '32'
-    host_triple = '%s-w%s-mingw32' % (hosttype, machsize)
-    build_triple = '%s-w%s-mingw32' % (hosttype, machsize)
 
     # See if this is actually Cygwin Python
     if os.name == 'posix':
@@ -50,17 +48,16 @@ def load():
             hosttype = uname[4]
             uname = uname[0]
             if uname.startswith('CYGWIN'):
-                if uname.endswith('WOW64'):
-                    uname = 'cygwin'
-                    build_triple = hosttype + '-pc-' + uname
-                    hosttype = 'x86_64'
-                    host_triple = hosttype + '-w64-' + system
-                else:
-                    raise error.general('invalid uname for Windows')
+                uname = 'cygwin'
+                host_triple = hosttype + '-pc-' + uname
+                build_triple = hosttype + '-pc-' + uname
             else:
                 raise error.general('invalid POSIX python')
         except:
             pass
+    else:
+        host_triple = '%s-w%s-mingw32' % (hosttype, machsize)
+        build_triple = '%s-w%s-mingw32' % (hosttype, machsize)
 
     if os.environ.has_key('NUMBER_OF_PROCESSORS'):
         ncpus = os.environ['NUMBER_OF_PROCESSORS']
