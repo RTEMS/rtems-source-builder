@@ -427,7 +427,7 @@ class command_line:
     def params(self):
         return self.opts['params']
 
-    def parse_args(self, arg, error = True):
+    def parse_args(self, arg, error = True, extra = True):
         for a in range(0, len(self.args)):
             if self.args[a].startswith(arg):
                 lhs = None
@@ -439,12 +439,11 @@ class command_line:
                         rhs = '='.join(eqs[1:])
                     else:
                         rhs = eqs[1]
-                else:
+                elif extra:
                     lhs = self.args[a]
                     a += 1
-                    if a >= len(self.args):
-                        return [arg, None]
-                    rhs = self.args[a]
+                    if a < len(self.args):
+                        rhs = self.args[a]
                 return [lhs, rhs]
             a += 1
         return None
@@ -458,7 +457,7 @@ class command_line:
         for pre in ['with', 'without']:
             arg_str = '--%s-%s' % (pre, label)
             arg_label = '%s_%s' % (pre, label)
-            arg = self.parse_args(arg_str, error = False)
+            arg = self.parse_args(arg_str, error = False, extra = False)
             if arg is not None:
                 if arg[1] is  None:
                     result = 'yes'
