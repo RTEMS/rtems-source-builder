@@ -22,8 +22,52 @@
 #
 # GDB patches
 #
-%patch add gdb %{rtems_gdb_patches}/sparc/gdb-7.7-7.8-sis-leon2-leon3-fixup.diff
-%hash  md5 gdb-7.7-7.8-sis-leon2-leon3-fixup.diff afa25717cd54de8bfd103daaa754b6d7
+%patch add gdb %{rtems_gdb_patches}/sparc/7.9/0001-sim-erc32-Disassembly-in-stand-alone-mode-did-not-wo.patch
+%hash  md5 0001-sim-erc32-Disassembly-in-stand-alone-mode-did-not-wo.patch d7f8e58777535ad28186c443e713b8db
+%patch add gdb %{rtems_gdb_patches}/sparc/7.9/0002-sim-erc32-Corrected-wrong-CPU-implementation-and-ver.patch
+%hash  md5 0002-sim-erc32-Corrected-wrong-CPU-implementation-and-ver.patch 422bb1bd2d5dac178db8dd26ae9410b0
+%patch add gdb %{rtems_gdb_patches}/sparc/7.9/0003-sim-erc32-Perform-pseudo-init-if-binary-linked-to-no.patch
+%hash  md5 0003-sim-erc32-Perform-pseudo-init-if-binary-linked-to-no.patch 9e266f674393663a14c207cda895f929
+%patch add gdb %{rtems_gdb_patches}/sparc/7.9/0004-sim-erc32-Use-fenv.h-for-host-FPU-access.patch
+%hash  md5 0004-sim-erc32-Use-fenv.h-for-host-FPU-access.patch ce9c689916905355564eff33b4bb78aa
+%patch add gdb %{rtems_gdb_patches}/sparc/7.9/0005-sim-erc32-Remove-unused-defines-in-Makefile-and-swit.patch
+%hash  md5 0005-sim-erc32-Remove-unused-defines-in-Makefile-and-swit.patch 03d4ea37708a6ce593e1daba5f39a266
+%patch add gdb %{rtems_gdb_patches}/sparc/7.9/0006-sim-erc32-Fix-incorrect-simulator-performance-report.patch
+%hash  md5 0006-sim-erc32-Fix-incorrect-simulator-performance-report.patch 28d2264d5dcea559507e888994ca4a54
+%patch add gdb %{rtems_gdb_patches}/sparc/7.9/0007-sim-erc32-File-loading-via-command-line-did-not-work.patch
+%hash  md5 0007-sim-erc32-File-loading-via-command-line-did-not-work.patch 83a37ca11eef01d37f7f97a14c15dec9
+%patch add gdb %{rtems_gdb_patches}/sparc/7.9/0008-sim-erc32-Added-v-command-line-switch-for-verbose-ou.patch
+%hash  md5 0008-sim-erc32-Added-v-command-line-switch-for-verbose-ou.patch 1eaf7790407aeef5ec0e1d30b8387626
+%patch add gdb %{rtems_gdb_patches}/sparc/7.9/0009-sim-erc32-Removed-type-mismatch-compiler-warnings.patch
+%hash  md5 0009-sim-erc32-Removed-type-mismatch-compiler-warnings.patch 75b3828964a10a8864b80dbaba64fff0
+%patch add gdb %{rtems_gdb_patches}/sparc/7.9/0010-sim-erc32-Switched-emulated-memory-to-host-endian-or.patch
+%hash  md5 0010-sim-erc32-Switched-emulated-memory-to-host-endian-or.patch 6a8771a47060e97acac90abdd9e9add0
+%patch add gdb %{rtems_gdb_patches}/sparc/7.9/0011-sim-erc32-use-SIM_AC_OPTION_HOSTENDIAN-to-probe-for-.patch
+%hash  md5 0011-sim-erc32-use-SIM_AC_OPTION_HOSTENDIAN-to-probe-for-.patch 98d24e693486aae278c3ddbc1e727dc9
+%patch add gdb %{rtems_gdb_patches}/sparc/7.9/0012-sim-erc32-Use-memory_iread-function-for-instruction-.patch
+%hash  md5 0012-sim-erc32-Use-memory_iread-function-for-instruction-.patch 647991a1b02fdb0032adf47af4a0c326
+%patch add gdb %{rtems_gdb_patches}/sparc/7.9/0013-sim-erc32-Fix-a-few-compiler-warnings.patch
+%hash  md5 0013-sim-erc32-Fix-a-few-compiler-warnings.patch 9e23c26becc215b2552eecc8f7b01386
+%patch add gdb %{rtems_gdb_patches}/sparc/7.9/0014-sim-erc32-Use-gdb-callback-for-UART-I-O-when-linked-.patch
+%hash  md5 0014-sim-erc32-Use-gdb-callback-for-UART-I-O-when-linked-.patch 3734eeda3d615704a687c02a24df0e86
+%patch add gdb %{rtems_gdb_patches}/sparc/7.9/0015-sim-erc32-Access-memory-subsystem-through-struct-mem.patch
+%hash  md5 0015-sim-erc32-Access-memory-subsystem-through-struct-mem.patch 1fccaba355b1e684efce5f18a2ce3273
+%patch add gdb %{rtems_gdb_patches}/sparc/7.9/0016-sim-erc32-Use-readline.h-for-readline-types-and-func.patch
+%hash  md5 0016-sim-erc32-Use-readline.h-for-readline-types-and-func.patch 72d575faf24002e705f6284a15e57c0b
+%patch add gdb %{rtems_gdb_patches}/sparc/7.9/0017-sim-erc32-Move-local-extern-declarations-into-sis.h.patch
+%hash  md5 0017-sim-erc32-Move-local-extern-declarations-into-sis.h.patch 5d1f57522d31e6dbf01ba2c1401e5c66
+%patch add gdb %{rtems_gdb_patches}/sparc/7.9/0018-sim-erc32-Add-support-for-LEON3-processor-emulation.patch
+%hash  md5 0018-sim-erc32-Add-support-for-LEON3-processor-emulation.patch 8070d6ccbc15752b78c8c41d9299e9ea
+%patch add gdb %{rtems_gdb_patches}/sparc/7.9/0019-sim-erc32-Add-support-for-LEON2-processor-emulation.patch
+%hash  md5 0019-sim-erc32-Add-support-for-LEON2-processor-emulation.patch a58423e0f55981d408ac94c7e8562120
+%patch add gdb %{rtems_gdb_patches}/sparc/7.9/0020-sim-erc32-Updated-documentation.patch
+%hash  md5 0020-sim-erc32-Updated-documentation.patch c3584690e0706ca7314c97c7b0c44aca
+%patch add gdb %{rtems_gdb_patches}/sparc/7.9/0021-sim-erc32-Add-data-watchpoint-support.patch
+%hash  md5 0021-sim-erc32-Add-data-watchpoint-support.patch dbbe838c360df11d92a6db6caaf1e49a
+%patch add gdb %{rtems_gdb_patches}/sparc/7.9/0022-Add-watchpoint-support-to-gdb-simulator-interface.patch
+%hash  md5 0022-Add-watchpoint-support-to-gdb-simulator-interface.patch 2a48b303f7325b46e99240c802e027f2
+%patch add gdb %{rtems_gdb_patches}/sparc/7.9/0023-sim-erc32-ELF-loading-could-fail-on-unaligned-sectio.patch
+%hash  md5 0023-sim-erc32-ELF-loading-could-fail-on-unaligned-sectio.patch 4942529b35e91618865e95132216b702
 
 #
 # If Windows (MinGW) do not build the simulator.
@@ -37,6 +81,6 @@
 devel/expat-2.1.0-1
 tools/rtems-binutils-2.24-1
 tools/rtems-gcc-4.9.2-newlib-2.20.0-20150323-1
-tools/rtems-gdb-7.8.2-1
+tools/rtems-gdb-7.9-1
 tools/rtems-tools-4.11-1
 tools/rtems-kernel-4.11
