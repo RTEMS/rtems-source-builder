@@ -26,6 +26,9 @@ import log
 def _args(args):
     return [i for s in [ii.split() for ii in args] for i in s]
 
+def _make_key(label, index):
+    return '%s%04d' % (label, index)
+
 def add(label, args, macros, error):
     args = _args(args)
     if len(args) < 2:
@@ -34,7 +37,7 @@ def add(label, args, macros, error):
     macros.create_map(_map)
     index = 0
     while True:
-        key = '%s%d' % (label, index)
+        key = _make_key(label, index)
         if key not in macros.map_keys(_map):
             break
         index += 1
@@ -49,7 +52,7 @@ def set(label, args, macros, error):
         error('%%%s requires at least 2 arguments' % (label))
     _map = '%s-%s' % (label, args[0])
     macros.create_map(_map)
-    key = '%s0' % (label)
+    key = _make_key(label, 0)
     if key not in macros.map_keys(_map):
         macros.set_write_map(_map)
         macros.define(key, ' '.join(args[1:]))

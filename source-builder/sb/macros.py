@@ -199,7 +199,7 @@ class macros:
 
     def map_keys(self, _map):
         if _map in self.macros:
-            return self.macros[_map].keys()
+            return sorted(self.macros[_map].keys())
         return []
 
     def map_num_keys(self, _map):
