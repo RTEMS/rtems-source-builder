@@ -5,7 +5,7 @@
 #
 # The RTEMS http git URL.
 #
-%define rtems_http_git         http://git.rtems.org
+%define rtems_http_git         https://git.rtems.org
 %define rtems_git_tools        %{rtems_http_git}/rtems-tools/plain/tools/%{rtems_version}
 %define rtems_binutils_patches %{rtems_git_tools}/binutils
 %define rtems_gcc_patches      %{rtems_git_tools}/gcc
