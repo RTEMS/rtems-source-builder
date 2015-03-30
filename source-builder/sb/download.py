@@ -328,9 +328,11 @@ def _http_downloader(url, local, config, opts):
                 try:
                     import ssl
                     _ssl_context = ssl._create_unverified_context()
+                    _in = urllib2.urlopen(url, context = _ssl_context)
                 except:
-                    pass
-                _in = urllib2.urlopen(url, context = _ssl_context)
+                    _ssl_context = None
+                if _ssl_context is None:
+                    _in = urllib2.urlopen(url)
                 if url != _in.geturl():
                     log.notice(' redirect: %s' % (_in.geturl()))
                 _out = open(path.host(local), 'wb')
