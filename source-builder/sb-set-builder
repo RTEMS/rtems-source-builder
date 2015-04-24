@@ -25,5 +25,5 @@ try:
     import setbuilder
     setbuilder.run()
 except ImportError:
-    print >> sys.stderr, "Incorrect Set Bulder installation"
+    print >> sys.stderr, "Incorrect Set Builder installation"
     sys.exit(1)
