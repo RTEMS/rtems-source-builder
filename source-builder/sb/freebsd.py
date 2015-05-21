@@ -88,14 +88,14 @@ def load():
         else:
             cc = '/usr/bin/clang'
             if not check.check_exe(cc, cc):
-                raise error.general('no valid cc not found')
+                raise error.general('no valid cc found')
         cxx = '/usr/bin/c++'
         if check.check_exe(cxx, cxx):
             defines['__cxx'] = cxx
         else:
             cxx = '/usr/bin/clang++'
             if check.check_exe(cxx, cxx):
-                raise error.general('no valid c++ not found')
+                raise error.general('no valid c++ found')
         #
         # Assume the compiler is clang and so we need to increase
         # bracket depth build build the gcc ARM compiler.
@@ -109,17 +109,17 @@ def load():
         # Fix the mess iconv is on FreeBSD 10.0.
         #
         defines['iconv_includes'] = ('none', 'none', '-I/usr/local/include -L/usr/local/lib')
-
-    for gv in ['47', '48', '49']:
-        gcc = '%s-portbld-freebsd%s-gcc%s' % (cpu, version, gv)
-        if check.check_exe(gcc, gcc):
-            defines['__cc'] = gcc
-            break
-    for gv in ['47', '48', '49']:
-        gxx = '%s-portbld-freebsd%s-g++%s' % (cpu, version, gv)
-        if check.check_exe(gxx, gxx):
-            defines['__cxx'] = gxx
-            break
+    else:
+        for gv in ['49', '48', '47']:
+            gcc = '%s-portbld-freebsd%s-gcc%s' % (cpu, version, gv)
+            if check.check_exe(gcc, gcc):
+                defines['__cc'] = gcc
+                break
+        for gv in ['49', '48', '47']:
+            gxx = '%s-portbld-freebsd%s-g++%s' % (cpu, version, gv)
+            if check.check_exe(gxx, gxx):
+                defines['__cxx'] = gxx
+                break
 
     return defines
 
