@@ -24,7 +24,7 @@
 # Fetch GNU tools from external repos (temporarly).
 #
 %source set binutils https://github.com/adapteva/epiphany-binutils-gdb/archive/b6c483b4a98424731e6e44558cb4b9863751fb1b.zip 
-%hash md5 b6c483b4a98424731e6e44558cb4b9863751fb1b.zip 61ab9fb4fb3887e47234bd6af978e076 
+%hash md5 b6c483b4a98424731e6e44558cb4b9863751fb1b.zip 8fc71b965425a9b683489597048c49dc 
 
 %source set gcc https://github.com/adapteva/epiphany-gcc/archive/f7051762470c42ce7f01baa7edeb113d51c7dd72.zip 
 %hash md5 f7051762470c42ce7f01baa7edeb113d51c7dd72.zip 365502839d3cee955a930125582e4ccf
