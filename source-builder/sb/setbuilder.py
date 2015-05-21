@@ -90,14 +90,15 @@ class buildset:
         if not self.opts.dry_run():
             path.copy_tree(src, dst)
 
-    def report(self, _config, _build):
-        if not _build.opts.get_arg('--no-report') \
+    def report(self, _config, _build, opts, macros):
+        if len(_build.main_package().name()) > 0 \
            and not _build.macros.get('%{_disable_reporting}') \
-           and _build.opts.get_arg('--mail'):
+           and (not _build.opts.get_arg('--no-report') \
+                or _build.opts.get_arg('--mail')):
             format = _build.opts.get_arg('--report-format')
             if format is None:
-                format = 'html'
-                ext = '.html'
+                format = 'text'
+                ext = '.txt'
             else:
                 if len(format) != 2:
                     raise error.general('invalid report format option: %s' % ('='.join(format)))
@@ -110,6 +111,12 @@ class buildset:
                 elif format[1] == 'html':
                     format = 'html'
                     ext = '.html'
+                elif format[1] == 'xml':
+                    format = 'xml'
+                    ext = '.xml'
+                elif format[1] == 'ini':
+                    format = 'ini'
+                    ext = '.ini'
                 else:
                     raise error.general('invalid report format: %s' % (format[1]))
             buildroot = _build.config.abspath('%{buildroot}')
@@ -117,22 +124,26 @@ class buildset:
             name = _build.main_package().name() + ext
             log.notice('reporting: %s -> %s' % (_config, name))
             if not _build.opts.get_arg('--no-report'):
-                outpath = path.host(path.join(buildroot, prefix, 'share', 'rtems-source-builder'))
-                outname = path.host(path.join(outpath, name))
-                r = reports.report(format, self.configs, _build.opts, _build.macros)
-                r.setup()
+                outpath = path.host(path.join(buildroot, prefix, 'share', 'rtems', 'rsb'))
+                if not _build.opts.dry_run():
+                    outname = path.host(path.join(outpath, name))
+                else:
+                    outname = None
+                r = reports.report(format, self.configs,
+                                   copy.copy(opts), copy.copy(macros))
                 r.introduction(_build.config.file_name())
-                r.config(_build.config, _build.opts, _build.macros)
+                r.generate(_build.config.file_name())
+                r.epilogue(_build.config.file_name())
                 if not _build.opts.dry_run():
                     _build.mkdir(outpath)
                     r.write(outname)
                 del r
-            if not _build.macros.get('%{_disable_reporting}') \
-               and _build.opts.get_arg('--mail'):
-                r = reports.report('text', self.configs, _build.opts, _build.macros)
-                r.setup()
+            if _build.opts.get_arg('--mail'):
+                r = reports.report('text', self.configs,
+                                   copy.copy(opts), copy.copy(macros))
                 r.introduction(_build.config.file_name())
-                r.config(_build.config, _build.opts, _build.macros)
+                r.generate(_build.config.file_name())
+                r.epilogue(_build.config.file_name())
                 self.write_mail_report(r.out)
                 del r
 
@@ -176,7 +187,6 @@ class buildset:
             if _build.canadian_cross():
                 self.canadian_cross(_build)
             _build.make()
-            self.report(_config, _build)
             if not _build.macros.get('%{_disable_collecting}'):
                 self.root_copy(_build.config.expand('%{buildroot}'),
                                _build.config.expand('%{_tmproot}'))
@@ -340,6 +350,9 @@ class buildset:
                             mail_report = False
                         if deps is None:
                             self.build_package(configs[s], b)
+                            self.report(configs[s], b,
+                                        copy.copy(self.opts),
+                                        copy.copy(self.macros))
                             if s == len(configs) - 1 and not have_errors:
                                 self.bset_tar(b)
                         else:

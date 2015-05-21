@@ -247,15 +247,6 @@ class asciidoc_formatter(formatter):
 class html_formatter(asciidoc_formatter):
     def __init__(self):
         super(html_formatter, self).__init__()
-        try:
-            import asciidocapi
-        except:
-            raise error.general('installation error: no asciidocapi found')
-        asciidoc_py = _make_path(self.sbpath, options.basepath, 'asciidoc', 'asciidoc.py')
-        try:
-            self.asciidoc = asciidocapi.AsciiDocAPI(asciidoc_py)
-        except:
-            raise error.general('application error: asciidocapi failed')
 
     def format(self):
         return 'html'
@@ -267,7 +258,16 @@ class html_formatter(asciidoc_formatter):
         import StringIO
         infile = StringIO.StringIO(self.content)
         outfile = StringIO.StringIO()
-        self.asciidoc.execute(infile, outfile)
+        try:
+            import asciidocapi
+        except:
+            raise error.general('installation error: no asciidocapi found')
+        asciidoc_py = _make_path(self.sbpath, options.basepath, 'asciidoc', 'asciidoc.py')
+        try:
+            asciidoc = asciidocapi.AsciiDocAPI(asciidoc_py)
+        except:
+            raise error.general('application error: asciidocapi failed')
+        asciidoc.execute(infile, outfile)
         out = outfile.getvalue()
         infile.close()
         outfile.close()
@@ -440,7 +440,21 @@ class report:
     """Report the build details about a package given a config file."""
 
     def __init__(self, formatter, _configs, opts, macros = None):
-        self.formatter = formatter
+        if type(formatter) == str:
+            if formatter == 'text':
+                self.formatter = text_formatter()
+            elif formatter == 'asciidoc':
+                self.formatter = asciidoc_formatter()
+            elif formatter == 'html':
+                self.formatter = html_formatter()
+            elif formatter == 'ini':
+                self.formatter = ini_formatter()
+            elif formatter == 'xml':
+                self.formatter = xml_formatter()
+            else:
+                raise error.general('invalid format: %s' % (formatter))
+        else:
+            self.formatter = formatter
         self.configs = _configs
         self.opts = opts
         if macros is None:
@@ -554,19 +568,20 @@ class report:
         name = package.name()
         if len(name) == 0:
             return
-        tree['file'] += [_config.file_name()]
         sources = self.source(macros)
         patches = self.patch(macros)
-        if len(sources):
-            if 'sources' in tree:
-                tree['sources'] = dict(tree['sources'].items() + sources.items())
-            else:
-                tree['sources'] = sources
-        if len(patches):
-            if 'patches' in tree:
-                tree['patches'] = dict(tree['patches'].items() + patches.items())
-            else:
-                tree['patches'] = patches
+        if tree is not None:
+            tree['file'] += [_config.file_name()]
+            if len(sources):
+                if 'sources' in tree:
+                    tree['sources'] = dict(tree['sources'].items() + sources.items())
+                else:
+                    tree['sources'] = sources
+            if len(patches):
+                if 'patches' in tree:
+                    tree['patches'] = dict(tree['patches'].items() + patches.items())
+                else:
+                    tree['patches'] = patches
         self.config_start(name, _config)
         self.formatter.config(self.bset_nesting + 2, name, _config)
         self.output_info('Summary', package.get_info('summary'), True)
@@ -682,14 +697,16 @@ class report:
             except IOError, err:
                 raise error.general('writing output file: %s: %s' % (name, err))
 
-    def generate(self, name, tree = None, opts = None, defaults = None):
+    def generate(self, name, tree = None, opts = None, macros = None):
         self.bset_nesting += 1
         self.buildset_start(name)
         if tree is None:
             tree = self.tree
         if opts is None:
             opts = self.opts
-        bset = setbuilder.buildset(name, self.configs, opts, defaults)
+        if macros is None:
+            macros = self.macros
+        bset = setbuilder.buildset(name, self.configs, opts, macros)
         if name in tree:
             raise error.general('duplicate build set in tree: %s' % (name))
         tree[name] = { 'bset': { }, 'cfg': { 'file': []  } }
