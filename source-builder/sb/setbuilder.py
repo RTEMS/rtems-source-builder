@@ -90,35 +90,31 @@ class buildset:
         if not self.opts.dry_run():
             path.copy_tree(src, dst)
 
-    def report(self, _config, _build, opts, macros):
+    def report(self, _config, _build, opts, macros, format = None):
         if len(_build.main_package().name()) > 0 \
            and not _build.macros.get('%{_disable_reporting}') \
            and (not _build.opts.get_arg('--no-report') \
                 or _build.opts.get_arg('--mail')):
-            format = _build.opts.get_arg('--report-format')
+            if format is None:
+                format = _build.opts.get_arg('--report-format')
+                if format is not None:
+                    if len(format) != 2:
+                        raise error.general('invalid report format option: %s' % ('='.join(format)))
+                    format = format[1]
             if format is None:
                 format = 'text'
+            if format == 'text':
                 ext = '.txt'
+            elif format == 'asciidoc':
+                ext = '.txt'
+            elif format == 'html':
+                ext = '.html'
+            elif format == 'xml':
+                ext = '.xml'
+            elif format == 'ini':
+                ext = '.ini'
             else:
-                if len(format) != 2:
-                    raise error.general('invalid report format option: %s' % ('='.join(format)))
-                if format[1] == 'text':
-                    format = 'text'
-                    ext = '.txt'
-                elif format[1] == 'asciidoc':
-                    format = 'asciidoc'
-                    ext = '.txt'
-                elif format[1] == 'html':
-                    format = 'html'
-                    ext = '.html'
-                elif format[1] == 'xml':
-                    format = 'xml'
-                    ext = '.xml'
-                elif format[1] == 'ini':
-                    format = 'ini'
-                    ext = '.ini'
-                else:
-                    raise error.general('invalid report format: %s' % (format[1]))
+                raise error.general('invalid report format: %s' % (format))
             buildroot = _build.config.abspath('%{buildroot}')
             prefix = _build.macros.expand('%{_prefix}')
             name = _build.main_package().name() + ext
@@ -353,6 +349,11 @@ class buildset:
                             self.report(configs[s], b,
                                         copy.copy(self.opts),
                                         copy.copy(self.macros))
+                            # Always product an XML report.
+                            self.report(configs[s], b,
+                                        copy.copy(self.opts),
+                                        copy.copy(self.macros),
+                                        format = 'xml')
                             if s == len(configs) - 1 and not have_errors:
                                 self.bset_tar(b)
                         else:
