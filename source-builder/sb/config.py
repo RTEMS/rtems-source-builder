@@ -1031,6 +1031,7 @@ class file:
                 else:
                     log.warning("invalid format: '%s'" % (info_data[:-1]))
             else:
+                l = self._expand(l)
                 log.trace('config: %s: _data: %s %s' % (self.name, l, new_data))
                 new_data.append(l)
         return (directive, info, data + new_data)
