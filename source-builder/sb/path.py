@@ -167,6 +167,18 @@ def expand(name, paths):
         l += [join(p, name)]
     return l
 
+def copy(src, dst):
+    hsrc = host(src)
+    hdst = host(dst)
+    try:
+        shutil.copy(hsrc, hdst)
+    except OSError, why:
+        if windows:
+            if WindowsError is not None and isinstance(why, WindowsError):
+                pass
+        else:
+            raise error.general('copying tree: %s -> %s: %s' % (hsrc, hdst, str(why)))
+
 def copy_tree(src, dst):
     trace = False
 

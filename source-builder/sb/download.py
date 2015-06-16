@@ -262,9 +262,9 @@ def _file_parser(source, pathkey, config, opts):
     #
     _local_path(source, pathkey, config)
     #
-    # Symlink.
+    # Get the paths sorted.
     #
-    source['symlink'] = source['local']
+    source['file'] = source['url'][6:]
 
 parsers = { 'http': _http_parser,
             'ftp':  _http_parser,
@@ -510,9 +510,11 @@ def _cvs_downloader(url, local, config, opts):
     return True
 
 def _file_downloader(url, local, config, opts):
-    if path.exists(local):
-        return True
-    return path.isdir(url)
+    try:
+        path.copy(url[6:], local)
+    except:
+        return False
+    return True
 
 downloaders = { 'http': _http_downloader,
                 'ftp':  _http_downloader,
