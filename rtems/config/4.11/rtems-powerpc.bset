@@ -12,16 +12,6 @@
 %include rtems-4.11-base.bset
 
 #
-# GCC patches
-#
-%patch add gcc %{rtems_gcc_patches}/powerpc/gcc-4.9.2-RTEMS-Use-MULTILIB_REQUIRED-for-PowerPC.patch
-%hash  md5 gcc-4.9.2-RTEMS-Use-MULTILIB_REQUIRED-for-PowerPC.patch 3e33454ec448a88edf348939cba12f2e
-%patch add gcc %{rtems_gcc_patches}/powerpc/gcc-4.9.2-RTEMS-Fix-MPC8540-multilibs-for-PowerPC.patch
-%hash  md5 gcc-4.9.2-RTEMS-Fix-MPC8540-multilibs-for-PowerPC.patch b07d820bce6e7bdd2995bee47924c24c
-%patch add gcc %{rtems_gcc_patches}/powerpc/gcc-4.9.2-RTEMS-Add-e6500-multilibs-for-PowerPC.patch
-%hash  md5 gcc-4.9.2-RTEMS-Add-e6500-multilibs-for-PowerPC.patch 7a702cd90a4c89970e515ef7d0b81e35
-
-#
 # Simulator options.
 #
 %define gdb-sim-options --enable-sim-hardware --enable-timebase --enable-sim-trace
@@ -37,7 +27,7 @@
 4.11/rtems-autotools
 devel/expat-2.1.0-1
 tools/rtems-binutils-2.24-1
-tools/rtems-gcc-4.9.2-newlib-2.2.0-20150423-1
+tools/rtems-gcc-4.9.3-newlib-2.2.0-20150423-1
 tools/rtems-gdb-7.9-1
 tools/rtems-tools-4.11-1
 tools/rtems-kernel-4.11

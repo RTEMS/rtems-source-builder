@@ -12,14 +12,6 @@
 %include rtems-4.11-base.bset
 
 #
-# GCC patches
-#
-%patch add gcc %{rtems_gcc_patches}/sparc/gcc-4.9.2-leon3v7.diff
-%hash  md5 gcc-4.9.2-leon3v7.diff 06a5a1c42284426bfaeacea4debb791d
-%patch add gcc %{rtems_gcc_patches}/sparc/gcc-4.9.2-rtems-multilibs.diff
-%hash  md5 gcc-4.9.2-rtems-multilibs.diff a39e38ad3e71792b7e7084e1451e8042
-
-#
 # GDB patches
 #
 %patch add gdb %{rtems_gdb_patches}/sparc/7.9/0001-sim-erc32-Disassembly-in-stand-alone-mode-did-not-wo.patch
@@ -80,7 +72,7 @@
 4.11/rtems-autotools
 devel/expat-2.1.0-1
 tools/rtems-binutils-2.24-1
-tools/rtems-gcc-4.9.2-newlib-2.2.0-20150423-1
+tools/rtems-gcc-4.9.3-newlib-2.2.0-20150423-1
 tools/rtems-gdb-7.9-1
 tools/rtems-tools-4.11-1
 tools/rtems-kernel-4.11
