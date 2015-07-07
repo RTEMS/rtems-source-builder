@@ -17,6 +17,11 @@
 %define enable_obsolete 1
 
 #
+# Enable OpenMP support
+#
+%define with_libgomp
+
+#
 # Tools configuration.
 #
 4.11/rtems-autotools
