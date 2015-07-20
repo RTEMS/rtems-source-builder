@@ -201,7 +201,11 @@ def copy_tree(src, dst):
     if not os.path.isdir(hdst):
         if trace:
             print ' mkdir: %s' % (hdst)
-        os.makedirs(hdst)
+        try:
+            os.makedirs(hdst)
+        except OSError, why:
+            raise error.general('copying tree: cannot create target directory %s: %s' % \
+                                (hdst, str(why)))
 
     for name in names:
         srcname = host(os.path.join(hsrc, name))

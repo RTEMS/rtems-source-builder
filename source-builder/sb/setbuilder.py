@@ -99,7 +99,8 @@ class buildset:
                 format = _build.opts.get_arg('--report-format')
                 if format is not None:
                     if len(format) != 2:
-                        raise error.general('invalid report format option: %s' % ('='.join(format)))
+                        raise error.general('invalid report format option: %s' % \
+                                            ('='.join(format)))
                     format = format[1]
             if format is None:
                 format = 'text'
@@ -156,27 +157,28 @@ class buildset:
         self.copy(src, dst)
 
     def canadian_cross(self, _build):
-        # @fixme Switch to using a private macros map.
-        macros_to_save = ['%{_prefix}',
-                          '%{_tmproot}',
-                          '%{buildroot}',
-                          '%{_builddir}',
-                          '%{_host}']
-        macros_to_copy = [('%{_host}',     '%{_build}'),
-                          ('%{_tmproot}',  '%{_tmpcxcroot}'),
-                          ('%{buildroot}', '%{buildcxcroot}'),
-                          ('%{_builddir}', '%{_buildcxcdir}')]
-        orig_macros = {}
-        for m in macros_to_save:
-            orig_macros[m] = _build.config.macro(m)
+        log.trace('_bset: Cxc for build machine: _build => _host')
+        macros_to_copy = [('%{_host}',        '%{_build}'),
+                          ('%{_host_alias}',  '%{_build_alias}'),
+                          ('%{_host_arch}',   '%{_build_arch}'),
+                          ('%{_host_cpu}',    '%{_build_cpu}'),
+                          ('%{_host_os}',     '%{_build_os}'),
+                          ('%{_host_vendor}', '%{_build_vendor}'),
+                          ('%{_tmproot}',     '%{_tmpcxcroot}'),
+                          ('%{buildroot}',    '%{buildcxcroot}'),
+                          ('%{_builddir}',    '%{_buildcxcdir}')]
+        cxc_macros = _build.copy_init_macros()
         for m in macros_to_copy:
-            _build.config.set_define(m[0], _build.config.macro(m[1]))
+            log.trace('_bset: Cxc: %s <= %s' % (m[0], cxc_macros[m[1]]))
+            cxc_macros[m[0]] = cxc_macros[m[1]]
+        _build.set_macros(cxc_macros)
+        _build.reload()
         _build.make()
-        for m in macros_to_save:
-            _build.config.set_define(m, orig_macros[m])
         if not _build.macros.get('%{_disable_collecting}'):
-            self.root_copy(_build.config.expand('%{buildcxcroot}'),
-                           _build.config.expand('%{_tmpcxcroot}'))
+            self.root_copy(_build.config.expand('%{buildroot}'),
+                           _build.config.expand('%{_tmproot}'))
+        _build.set_macros(_build.copy_init_macros())
+        _build.reload()
 
     def build_package(self, _config, _build):
         if not _build.disabled():
@@ -189,7 +191,7 @@ class buildset:
 
     def bset_tar(self, _build):
         tardir = _build.config.expand('%{_tardir}')
-        if self.opts.get_arg('--bset-tar-file') \
+        if (self.opts.get_arg('--bset-tar-file') or self.opts.canadian_cross()) \
            and not _build.macros.get('%{_disable_packaging}'):
             path.mkdir(tardir)
             tar = path.join(tardir, _build.config.expand('%s.tar.bz2' % (self.bset_pkg)))
@@ -380,16 +382,21 @@ class buildset:
                             raise
                     else:
                         raise
+            #
+            # Installing ...
+            #
+            log.trace('_bset: installing: deps:%r no-install:%r' % \
+                      (deps is None, self.opts.no_install()))
             if deps is None \
                and not self.opts.no_install() \
                and not have_errors:
                 for b in builds:
-                    if not b.canadian_cross() \
-                       and not b.disabled() \
-                       and not b.macros.get('%{_disable_installing}'):
+                    log.trace('_bset: installing: %r' % b.installable())
+                    if b.installable():
                         self.install(b.name(),
                                      b.config.expand('%{buildroot}'),
                                      b.config.expand('%{_prefix}'))
+
             if deps is None and \
                     (not self.opts.no_clean() or self.opts.always_clean()):
                 for b in builds:
@@ -472,6 +479,9 @@ def run():
             deps = None
         if not list_bset_cfg_files(opts, configs):
             prefix = opts.defaults.expand('%{_prefix}')
+            if opts.canadian_cross():
+                opts.disable_install()
+
             if not opts.dry_run() and \
                not opts.canadian_cross() and \
                not opts.no_install() and \

@@ -23,8 +23,8 @@
 # level. This allows macro expansion to work.
 #
 
-major = 0
-minor = 5
+major = 4
+minor = 11
 revision = 0
 
 def str():
