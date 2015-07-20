@@ -22,6 +22,7 @@
 # installed not to be package unless you run a packager around this.
 #
 
+import copy
 import getopt
 import glob
 import os
@@ -116,12 +117,12 @@ class build:
     def __init__(self, name, create_tar_files, opts, macros = None):
         try:
             self.opts = opts
-            if macros is None:
-                self.macros = opts.defaults
-            else:
-                self.macros = macros
+            self.init_name = name
+            self.init_macros = macros
+            self.config = None
             self.create_tar_files = create_tar_files
             log.notice('config: ' + name)
+            self.set_macros(macros)
             self.config = config.file(name, opts, self.macros)
             self.script = script()
             self.macros['buildname'] = self._name_(self.macros['name'])
@@ -135,6 +136,20 @@ class build:
             raise
         except:
             raise
+
+    def copy_init_macros(self):
+        return copy.copy(self.init_macros)
+
+    def copy_macros(self):
+        return copy.copy(self.macros)
+
+    def set_macros(self, macros):
+        if macros is None:
+            self.macros = copy.copy(opts.defaults)
+        else:
+            self.macros = copy.copy(macros)
+        if self.config:
+            self.config.set_macros(self.macros)
 
     def rmdir(self, rmpath):
         log.output('removing: %s' % (path.host(rmpath)))
@@ -151,9 +166,30 @@ class build:
         _host = self.config.expand('%{_host}')
         _build = self.config.expand('%{_build}')
         _target = self.config.expand('%{_target}')
-        return self.config.defined('%{allow_cxc}') and \
-            len(_host) and len(_build) and (_target) and \
-            _host != _build and _host != _target
+        _allowed = self.config.defined('%{allow_cxc}')
+        if len(_host) and len(_build) and (_target) and \
+           _allowed and _host != _build and _host != _target:
+            return True
+        return False
+
+    def installable(self):
+        _host = self.config.expand('%{_host}')
+        _build = self.config.expand('%{_build}')
+        _canadian_cross = self.canadian_cross()
+        if self.macros.get('_disable_installing') and \
+           self.config.expand('%{_disable_installing}') == 'yes':
+            _disable_installing = True
+        else:
+            _disable_installing = False
+        _no_install = self.opts.no_install()
+        log.trace('_build: installable: host=%s build=%s ' \
+                  'no-install=%r Cxc=%r disable_installing=%r disabled=%r' % \
+                  (_host, _build, _no_install, _canadian_cross, _disable_installing, \
+                   self.disabled()))
+        return len(_host) and len(_build) and \
+            not self.disabled() and \
+            not _disable_installing and \
+            not _canadian_cross
 
     def source(self, name):
         #
@@ -313,7 +349,8 @@ class build:
                         raise error.general('%s: %s' % (package, msg))
                     if args[0] == '%setup':
                         if len(args) == 1:
-                            raise error.general('invalid %%setup directive: %s' % (' '.join(args)))
+                            raise error.general('invalid %%setup directive: %s' % \
+                                                (' '.join(args)))
                         if args[1] == 'source':
                             self.source_setup(package, args[1:])
                         elif args[1] == 'patch':
@@ -371,6 +408,8 @@ class build:
 
     def build_package(self, package):
         if self.canadian_cross():
+            if not self.config.defined('%{allow_cxc}'):
+                raise error.general('Canadian Cross is not allowed')
             self.script.append('echo "==> Candian-cross build/target:"')
             self.script.append('SB_CXC="yes"')
         else:
@@ -402,6 +441,9 @@ class build:
         packages = self.config.packages()
         return packages['main']
 
+    def reload(self):
+        self.config.load(self.init_name)
+
     def make(self):
         package = self.main_package()
         if package.disabled():
@@ -410,12 +452,13 @@ class build:
             try:
                 name = package.name()
                 if self.canadian_cross():
-                    log.notice('package: (Cxc) %s' % (name))
+                    cxc_label = '(Cxc) '
                 else:
-                    log.notice('package: %s' % (name))
-                    log.trace('---- macro maps %s' % ('-' * 55))
-                    log.trace('%s' % (str(self.config.macros)))
-                    log.trace('-' * 70)
+                    cxc_label = ''
+                log.notice('package: %s%s' % (cxc_label, name))
+                log.trace('---- macro maps %s' % ('-' * 55))
+                log.trace('%s' % (str(self.config.macros)))
+                log.trace('-' * 70)
                 self.script.reset()
                 self.script.append(self.config.expand('%{___build_template}'))
                 self.script.append('echo "=> ' + name + ':"')
@@ -426,10 +469,7 @@ class build:
                     sn = path.join(self.config.expand('%{_builddir}'), 'doit')
                     log.output('write script: ' + sn)
                     self.script.write(sn)
-                    if self.canadian_cross():
-                        log.notice('building: (Cxc) %s' % (name))
-                    else:
-                        log.notice('building: %s' % (name))
+                    log.notice('building: %s%s' % (cxc_label, name))
                     self.run(sn)
             except error.general, gerr:
                 log.notice(str(gerr))

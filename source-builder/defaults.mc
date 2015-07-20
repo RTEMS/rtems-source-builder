@@ -79,12 +79,14 @@ _sourcedir:          dir,     optional, '%{_topdir}/sources'
 _patchdir:           dir,     optional, '%{_topdir}/patches:%{_sbdir}/patches'
 _builddir:           dir,     optional, '%{_topdir}/build/%{buildname}'
 _buildcxcdir:        dir,     optional, '%{_topdir}/build/%{buildname}-cxc'
+_buildxcdir:         dir,     optional, '%{_topdir}/build/%{buildname}-xc'
 _docdir:             dir,     none,     '%{_defaultdocdir}'
 _tmppath:            dir,     none,     '%{_topdir}/build/tmp'
 _tmproot:            dir,     none,     '%{_tmppath}/sb-%{_uid}/%{_bset}'
 _tmpcxcroot:         dir,     none,     '%{_tmppath}/sb-%{_uid}-cxc/%{_bset}'
 buildroot:           dir,     none,     '%{_tmppath}/%{buildname}-%{_uid}'
 buildcxcroot:        dir,     none,     '%{_tmppath}/%{buildname}-%{_uid}-cxc'
+buildxcroot:         dir,     none,     '%{_tmppath}/%{buildname}-%{_uid}-xx'
 _datadir:            dir,     none,     '%{_prefix}/share'
 _defaultdocdir:      dir,     none,     '%{_prefix}/share/doc'
 _exeext:             none,    none,     ''
@@ -301,7 +303,7 @@ fi'''
 # Host/build flags.
 host_build_flags:    none,    none,     '''
 # Host and build flags, Cross build if host and build are different and
-# Cxc build idf target is deifned and also different.
+# Cxc build if target is deifned and also different.
 # Note, gcc is not ready to be compiled with -std=gnu99 (this needs to be checked).
 if test "%{_build}" != "%{_host}" ; then
   # Cross build

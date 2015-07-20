@@ -236,35 +236,14 @@ class file:
                 re.compile('%disable') ]
 
     def __init__(self, name, opts, macros = None):
+        log.trace('config: %s: initialising' % (name))
         self.opts = opts
-        if macros is None:
-            self.macros = opts.defaults
-        else:
-            self.macros = macros
         self.init_name = name
-        log.trace('config: %s' % (name))
-        self.disable_macro_reassign = False
-        self.configpath = []
         self.wss = re.compile(r'\s+')
         self.tags = re.compile(r':+')
         self.sf = re.compile(r'%\([^\)]+\)')
-        for arg in self.opts.args:
-            if arg.startswith('--with-') or arg.startswith('--without-'):
-                if '=' in arg:
-                    label, value = arg.split('=', 1)
-                else:
-                    label = arg
-                    value = None
-                label = label[2:].lower().replace('-', '_')
-                if value:
-                    self.macros.define(label, value)
-                else:
-                    self.macros.define(label)
-        self._includes = []
-        self.load_depth = 0
-        self.pkgconfig_prefix = None
-        self.pkgconfig_crosscompile = False
-        self.pkgconfig_filter_flags = False
+        self.set_macros(macros)
+        self._reset(name)
         self.load(name)
 
     def __str__(self):
@@ -285,6 +264,34 @@ class file:
         for _package in self._packages:
             s += str(self._packages[_package])
         return s
+
+    def _reset(self, name):
+        self.name = name
+        self.load_depth = 0
+        self.configpath = []
+        self._includes = []
+        self._packages = {}
+        self.in_error = False
+        self.lc = 0
+        self.conditionals = {}
+        self._packages = {}
+        self.package = 'main'
+        self.disable_macro_reassign = False
+        self.pkgconfig_prefix = None
+        self.pkgconfig_crosscompile = False
+        self.pkgconfig_filter_flags = False
+        for arg in self.opts.args:
+            if arg.startswith('--with-') or arg.startswith('--without-'):
+                if '=' in arg:
+                    label, value = arg.split('=', 1)
+                else:
+                    label = arg
+                    value = None
+                label = label[2:].lower().replace('-', '_')
+                if value:
+                    self.macros.define(label, value)
+                else:
+                    self.macros.define(label)
 
     def _relative_path(self, p):
         sbdir = None
@@ -1053,6 +1060,12 @@ class file:
     def _info_append(self, info, data):
         self._packages[self.package].info_append(info, data)
 
+    def set_macros(self, macros):
+        if macros is None:
+            self.macros = opts.defaults
+        else:
+            self.macros = macros
+
     def load(self, name):
 
         def common_end(left, right):
@@ -1066,12 +1079,7 @@ class file:
             return end
 
         if self.load_depth == 0:
-            self.in_error = False
-            self.lc = 0
-            self.name = name
-            self.conditionals = {}
-            self._packages = {}
-            self.package = 'main'
+            self._reset(name)
             self._packages[self.package] = package(self.package,
                                                    self.define('%{_arch}'),
                                                    self)

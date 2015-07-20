@@ -221,6 +221,9 @@ class command_line:
         print '--libstdcxxflags flags : List of C++ flags to build the target libstdc++ code'
         print '--with-<label>         : Add the --with-<label> to the build'
         print '--without-<label>      : Add the --without-<label> to the build'
+        print '--rtems-tools path     : Path to an install RTEMS tool set'
+        print '--rtems-bsp arc/bsp    : Standard RTEMS architecure and BSP specifier'
+        print '--rtems-version ver    : The RTEMS major/minor version string'
         if self.optargs:
             for a in self.optargs:
                 print '%-22s : %s' % (a, self.optargs[a])
@@ -297,10 +300,6 @@ class command_line:
             rsb_macros = path.join(os.environ['HOME'], '.rsb_macros')
             if path.exists(rsb_macros):
                 self.defaults.load(rsb_macros)
-        # If a Cxc build disable installing.
-        if self.canadian_cross():
-            self.opts['no-install'] = '1'
-            self.defaults['_no_install'] = '1'
 
     def sb_git(self):
         repo = git.repo(self.defaults.expand('%{_sbdir}'), self)
@@ -450,7 +449,7 @@ class command_line:
 
     def get_arg(self, arg):
         if self.optargs is None or arg not in self.optargs:
-            raise error.internal('bad arg: %s' % (arg))
+            return None
         return self.parse_args(arg)
 
     def with_arg(self, label):
@@ -516,6 +515,9 @@ class command_line:
     def download_disabled(self):
         return self.opts['no-download'] != '0'
 
+    def disable_install(self):
+        self.opts['no-install'] = '1'
+
     def info(self):
         s = ' Command Line: %s%s' % (' '.join(self.argv), os.linesep)
         s += ' Python: %s' % (sys.version.replace('\n', ''))
@@ -523,6 +525,28 @@ class command_line:
 
     def log_info(self):
         log.output(self.info())
+
+    def rtems_options(self):
+        # Check for RTEMS specific helper options.
+        rtems_tools = self.parse_args('--rtems-tools')
+        if rtems_tools is not None:
+            if self.get_arg('--with-tools') is not None:
+                raise error.general('--rtems-tools and --with-tools cannot be used together')
+            self.args.append('--with-tools=%s' % (rtems_tools[1]))
+        rtems_arch_bsp = self.parse_args('--rtems-bsp')
+        if rtems_arch_bsp is not None:
+            if self.get_arg('--target') is not None:
+                raise error.general('--rtems-bsp and --target cannot be used together')
+            ab = rtems_arch_bsp[1].split('/')
+            if len(ab) != 2:
+                raise error.general('invalid --rtems-bsp option')
+            rtems_version = self.parse_args('--rtems-version')
+            if rtems_version is None:
+                rtems_version = '%d.%d' % (version.major, version.minor)
+            else:
+                rtems_version = rtems_version[1]
+            self.args.append('--target=%s-rtems%s' % (ab[0], rtems_version))
+            self.args.append('--with-rtems-bsp=%s' % (ab[1]))
 
 def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc'):
     """
@@ -590,6 +614,7 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc'):
         o.defaults[k] = overrides[k]
 
     o.sb_git()
+    o.rtems_options()
     o.process()
     o.post_process()
 
