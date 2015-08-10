@@ -1,0 +1,20 @@
+#
+# Build set for nxlib
+#
+
+%define release 1
+
+#
+# RTEMS Version
+#
+%define rtems_version 4.11
+
+#
+# The RTEMS URL paths.
+#
+%include rtems-urls.bset
+
+#
+# Build nxlib.
+#
+graphics/nxlib-0.47-dev-1.cfg
