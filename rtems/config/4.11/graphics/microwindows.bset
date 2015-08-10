@@ -1,0 +1,20 @@
+#
+# Build set for Nano-X Window System
+#
+
+%define release 1
+
+#
+# RTEMS Version
+#
+%define rtems_version 4.11
+
+#
+# The RTEMS URL paths.
+#
+%include rtems-urls.bset
+
+#
+# Build microwindows.
+#
+graphics/microwindows-0.93-dev-1.cfg
