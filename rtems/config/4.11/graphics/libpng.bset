@@ -1,0 +1,20 @@
+#
+# Build set for libpng
+#
+
+%define release 1
+
+#
+# RTEMS Version
+#
+%define rtems_version 4.11
+
+#
+# The RTEMS URL paths.
+#
+%include rtems-urls.bset
+
+#
+# Build libpng.
+#
+graphics/libpng-1.5.22-1.cfg
