@@ -1,0 +1,54 @@
+diff --git a/src/drivers/kbd_rtems.c b/src/drivers/kbd_rtems.c
+--- a/src/drivers/kbd_rtems.c
++++ b/src/drivers/kbd_rtems.c
+@@ -30,9 +30,12 @@
+ #include <fcntl.h>
+ #include <sys/ioctl.h>
+ #include <errno.h>
++#include <string.h>
+
+ #include <rtems/mw_uid.h>
++#include <bsp/keyboard.h>
+ #include "device.h"
++#include "keymap_standard.h"
+
+ extern int close (int fd); /* RTEMS does not include close() in stdio.h */
+
+@@ -45,6 +48,9 @@ void    MWKbd_Close (void);
+ void MWKbd_GetModifierInfo (MWKEYMOD *modifiers, MWKEYMOD *curmodifiers);
+ int  MWKbd_Read (MWKEY *buf, MWKEYMOD *modifiers, MWSCANCODE *scancode);
+
++static MWKEY TranslateScancode(int scancode, MWKEYMOD modstate);
++static void LoadKernelKeymaps(int fd);
++
+ KBDDEVICE kbddev = {
+         MWKbd_Open,
+  MWKbd_Close,
+diff --git a/src/Configs/config.rtems b/src/Configs/config.rtems
+index 129860f..0872d8c 100644
+--- a/src/Configs/config.rtems
++++ b/src/Configs/config.rtems
+@@ -67,8 +67,8 @@ OBJFRAMEWORK             = N
+ # Demos to build
+ #
+ ####################################################################
+-MICROWINDEMO             = Y
+-NANOXDEMO                = Y
++MICROWINDEMO             = N
++NANOXDEMO                = N
+
+ ####################################################################
+ #
+diff --git a/src/rtems/rtems_init.c b/src/rtems/rtems_init.c
+index 70a4639..1a4f8f2 100644
+--- a/src/rtems/rtems_init.c
++++ b/src/rtems/rtems_init.c
+@@ -38,7 +38,7 @@
+ /* TBD: Find better way than this to deal with BSPs which do not have
+  *      these driver entries.  This is a hacky cover up.
+  */
+-#if 0
++#if 1
+
+ #ifndef PAUX_DRIVER_TABLE_ENTRY
+   #define PAUX_DRIVER_TABLE_ENTRY NULL_DRIVER_TABLE_ENTRY

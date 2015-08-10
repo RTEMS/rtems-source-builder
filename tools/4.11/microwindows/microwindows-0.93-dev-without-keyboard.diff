@@ -1,0 +1,14 @@
+diff --git a/src/drivers/Objects.rules b/src/drivers/Objects.rules
+--- a/src/drivers/Objects.rules
++++ b/src/drivers/Objects.rules
+@@ -253,8 +253,8 @@ MW_CORE_OBJS += $(MW_DIR_OBJ)/drivers/kbd_pipe.o
+ endif
+
+ ifeq ($(ARCH), RTEMS)
+-MW_CORE_OBJS += $(MW_DIR_OBJ)/drivers/kbd_rtems.o
+-MW_CORE_OBJS += $(MW_DIR_OBJ)/drivers/mou_rtems.o
++MW_CORE_OBJS += $(MW_DIR_OBJ)/drivers/kbd_null.o
++MW_CORE_OBJS += $(MW_DIR_OBJ)/drivers/mou_null.o
+ endif # RTEMS architecture
+
+ ifeq ($(LIRCKBD2), Y)
