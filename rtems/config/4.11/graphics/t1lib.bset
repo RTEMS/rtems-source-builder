@@ -1,0 +1,20 @@
+#
+# Build set for adobe type 1 library
+#
+
+%define release 1
+
+#
+# RTEMS Version
+#
+%define rtems_version 4.11
+
+#
+# The RTEMS URL paths.
+#
+%include rtems-urls.bset
+
+#
+# Build t1lib.
+#
+graphics/t1lib-5.1.2-1.cfg
