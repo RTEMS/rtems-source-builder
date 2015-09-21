@@ -41,16 +41,32 @@ import re
 import shlex
 import sys
 
+import path
+
 def default_prefix(common = True):
     paths = []
+    #
+    # We have two paths to work around an issue in MSYS2 and the
+    # conversion of Windows paths to shell paths.
+    #
+    if 'PKG_CONFIG_DEFAULT_PATH' in os.environ:
+        for p in os.environ['PKG_CONFIG_DEFAULT_PATH'].split(os.pathsep):
+            paths += [path.shell(p)]
     if 'PKG_CONFIG_PATH' in os.environ:
-        paths += os.environ['PKG_CONFIG_PATH'].split(':')
+        for p in os.environ['PKG_CONFIG_PATH'].split(os.pathsep):
+            paths += [path.shell(p)]
     if common:
-        defaults = ['/usr', '/usr/share', '/lib', '/lib64', '/usr/lib', '/usr/lib64', '/usr/local']
+        defaults = ['/usr',
+                    '/usr/share',
+                    '/lib',
+                    '/lib64',
+                    '/usr/lib',
+                    '/usr/lib64',
+                    '/usr/local']
         for d in defaults:
             for cp in package.config_prefixes:
-                prefix = os.path.join(d, cp, 'pkgconfig')
-                if os.path.exists(prefix):
+                prefix = path.join(d, cp, 'pkgconfig')
+                if path.exists(prefix):
                     paths += [prefix]
     return paths
 
@@ -64,7 +80,9 @@ class error(Exception):
 class package(object):
 
     node_types = ['requires', 'requires.private']
-    node_type_labels = { 'requires': 'r', 'requires.private': 'rp', 'failed': 'F' }
+    node_type_labels = { 'requires': 'r',
+                         'requires.private': 'rp',
+                         'failed': 'F' }
     version_ops = ['=', '<', '>', '<=', '>=', '!=']
     config_prefixes = ['lib', 'libdata']
     get_recursion = ['cflags', 'libs']
@@ -180,7 +198,8 @@ class package(object):
         for n in sorted(package.loaded):
             print package.loaded[n]._str()
 
-    def __init__(self, name = None, prefix = None, libs_scan = False, output = None, src = None):
+    def __init__(self, name = None, prefix = None,
+                 libs_scan = False, output = None, src = None):
         self._clean()
         self.name_ = name
         self.libs_scan = libs_scan
@@ -191,14 +210,16 @@ class package(object):
         if prefix is None:
             prefix = default_prefix()
         if prefix:
+            self._log('prefix: %s' % (prefix))
             if type(prefix) is str:
-                self.prefix = prefix.split(os.pathsep)
+                for p in prefix.split(os.pathsep):
+                    self.prefix += [path.shell(p)]
             elif type(prefix) is list:
                 self.prefix = prefix
             else:
                 raise error('invalid type of prefix: %s' % (type(prefix)))
             for p in self.prefix:
-                if os.path.exists(p):
+                if path.exists(p):
                     self.paths += [p]
             self._log('paths: %s' % (', '.join(self.paths)))
         if 'sysroot' in self.defines:
@@ -264,9 +285,9 @@ class package(object):
 
     def _find_package(self, name):
         if len(self.paths):
-            for path in self.paths:
-                pc = os.path.join(path, '%s.pc' % (name))
-                if os.path.isfile(pc):
+            for p in self.paths:
+                pc = path.join(p, '%s.pc' % (name))
+                if path.isfile(pc):
                     return pc;
         return None
 
@@ -274,11 +295,11 @@ class package(object):
         libraries = []
         if self.libs_scan:
             for prefix in self.prefix:
-                prefix = os.path.join(prefix, 'lib')
-                if os.path.exists(prefix):
-                    for l in os.listdir(prefix):
+                prefix = path.join(prefix, 'lib')
+                if path.exists(prefix):
+                    for l in os.listdir(path.host(prefix)):
                         if l.startswith(name + '.'):
-                            libraries += [os.path.join(prefix, l)]
+                            libraries += [path.join(prefix, l)]
                             break
         return libraries
 
@@ -305,9 +326,9 @@ class package(object):
                     if dash < 0:
                         break
                     if offset + dash + 2 < len(s) and s[offset + dash + 1] in 'LI':
-                        path = s[offset + dash + 2:]
-                        if not path.startswith(top_builddir):
-                            s = s[:offset + dash + 2] + top_builddir + path
+                        p = s[offset + dash + 2:]
+                        if not p.startswith(top_builddir):
+                            s = s[:offset + dash + 2] + top_builddir + p
                     offset += dash + 1
         return s
 
@@ -372,7 +393,7 @@ class package(object):
             file = self.file_
         if file is None:
             return None
-        name = os.path.basename(file)
+        name = path.basename(file)
         if name.endswith('.pc'):
             name = name[:-3]
         return name
@@ -406,7 +427,7 @@ class package(object):
                 self.src('==%s%s' % ('=' * 80, os.linesep))
                 self.src(' %s %s%s' % (file, '=' * (80 - len(file)), os.linesep))
                 self.src('==%s%s' % ('=' * 80, os.linesep))
-            f = open(file)
+            f = open(path.host(file))
             tm = False
             for l in f.readlines():
                 if self.src:
@@ -558,4 +579,3 @@ def check_package(libraries, args, output, src):
         if ec > 0:
             break
     return ec, pkg, flags
-
