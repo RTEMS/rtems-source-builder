@@ -22,7 +22,7 @@
 4.11/rtems-autotools
 devel/expat-2.1.0-1
 devel/dtc-1.4.1-1
-tools/rtems-binutils-2.24-1
+tools/rtems-binutils-2.25-1
 tools/rtems-gcc-4.9.3-newlib-2.2.0-20150423-1
 tools/rtems-gdb-7.9-1
 tools/rtems-tools-4.11-1
