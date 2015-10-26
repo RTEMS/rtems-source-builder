@@ -63,6 +63,7 @@ def load():
         '__bison':          ('exe',     'required', '/usr/local/bin/bison'),
         '__git':            ('exe',     'required', '/usr/local/bin/git'),
         '__svn':            ('exe',     'required', '/usr/local/bin/svn'),
+        '__unzip':          ('exe',     'optional', '/usr/local/bin/unzip'),
         '__xz':             ('exe',     'optional', '/usr/bin/xz'),
         '__make':           ('exe',     'required', 'gmake'),
         '__patch_opts':     ('none',     'none',    '-E')
