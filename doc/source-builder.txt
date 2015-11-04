@@ -3179,7 +3179,7 @@ tools. The following are required:
 
 . CVS can be found at http://cvs.nongnu.org/ and I use version 1.11.23. CVS
   requires the following patch
-  http://www.rtems.org/ftp/pub/rtems/people/chrisj/source-builder/cvs-1.11.23-osx-maverick.diff
+  http://ftp.rtems.org/pub/rtems/people/chrisj/source-builder/cvs-1.11.23-osx-maverick.diff
   to build. Place the diff in the same directory as the unpacked cvs-1.11.23
   and apply with +patch -p0 < cvs-1.11.23-osx-maverick.diff+.
 
