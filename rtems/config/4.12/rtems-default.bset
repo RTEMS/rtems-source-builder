@@ -1,0 +1,8 @@
+%include rtems-4.12-base.bset
+
+4.12/rtems-autotools
+devel/expat-2.1.0-1
+tools/rtems-binutils-2.25-1
+tools/rtems-gcc-6-20151101-newlib-2.2.0.20151023-1
+tools/rtems-gdb-7.9-1
+tools/rtems-tools-4.12-1
