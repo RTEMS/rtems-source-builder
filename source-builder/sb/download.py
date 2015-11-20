@@ -264,7 +264,8 @@ def _file_parser(source, pathkey, config, opts):
     #
     # Get the paths sorted.
     #
-    source['file'] = source['url'][6:]
+    source['file'] = source['url'][7:]
+    return True
 
 parsers = { 'http': _http_parser,
             'ftp':  _http_parser,
@@ -511,7 +512,8 @@ def _cvs_downloader(url, local, config, opts):
 
 def _file_downloader(url, local, config, opts):
     try:
-        path.copy(url[6:], local)
+        if url[7:]!=local:
+            path.copy(url[7:], local)
     except:
         return False
     return True
