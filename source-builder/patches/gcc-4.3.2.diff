@@ -1,0 +1,91 @@
+diff -Naur gcc-4.3.2-orig/gcc/doc/c-tree.texi gcc-4.3.2/gcc/doc/c-tree.texi
+--- gcc-4.3.2-orig/gcc/doc/c-tree.texi	2008-02-17 19:52:04.000000000 +0100
++++ gcc-4.3.2/gcc/doc/c-tree.texi	2015-11-19 15:57:28.246547226 +0100
+@@ -2325,13 +2325,13 @@
+ not matter.  The type of the operands and that of the result are
+ always of @code{BOOLEAN_TYPE} or @code{INTEGER_TYPE}.
+ 
+-@itemx POINTER_PLUS_EXPR
++@item POINTER_PLUS_EXPR
+ This node represents pointer arithmetic.  The first operand is always
+ a pointer/reference type.  The second operand is always an unsigned
+ integer type compatible with sizetype.  This is the only binary
+ arithmetic operand that can operate on pointer types.
+ 
+-@itemx PLUS_EXPR
++@item PLUS_EXPR
+ @itemx MINUS_EXPR
+ @itemx MULT_EXPR
+ These nodes represent various binary arithmetic operations.
+diff -Naur gcc-4.3.2-orig/gcc/doc/cppopts.texi gcc-4.3.2/gcc/doc/cppopts.texi
+--- gcc-4.3.2-orig/gcc/doc/cppopts.texi	2007-07-30 20:29:20.000000000 +0200
++++ gcc-4.3.2/gcc/doc/cppopts.texi	2015-11-19 15:57:28.246547226 +0100
+@@ -754,7 +754,7 @@
+ Enable special code to work around file systems which only permit very
+ short file names, such as MS-DOS@.
+ 
+-@itemx --help
++@item --help
+ @itemx --target-help
+ @opindex help
+ @opindex target-help
+diff -Naur gcc-4.3.2-orig/gcc/doc/extend.texi gcc-4.3.2/gcc/doc/extend.texi
+--- gcc-4.3.2-orig/gcc/doc/extend.texi	2008-07-15 17:52:35.000000000 +0200
++++ gcc-4.3.2/gcc/doc/extend.texi	2015-11-19 16:00:11.664369617 +0100
+@@ -2861,6 +2861,8 @@
+ The possible values of @var{visibility_type} correspond to the
+ visibility settings in the ELF gABI.
+ 
++@end table
++
+ @table @dfn
+ @c keep this list of visibilities in alphabetical order.
+ 
+@@ -2901,8 +2903,6 @@
+ definition in that module.  That is, the declared entity cannot be
+ overridden by another module.
+ 
+-@end table
+-
+ All visibilities are supported on many, but not all, ELF targets
+ (supported when the assembler supports the @samp{.visibility}
+ pseudo-op).  Default visibility is supported everywhere.  Hidden
+@@ -4231,7 +4231,7 @@
+ Otherwise the two shared objects will be unable to use the same
+ typeinfo node and exception handling will break.
+ 
+-@subsection ARM Type Attributes
++@item ARM Type Attributes
+ 
+ On those ARM targets that support @code{dllimport} (such as Symbian
+ OS), you can use the @code{notshared} attribute to indicate that the
+@@ -4255,7 +4255,7 @@
+ most Symbian OS code uses @code{__declspec}.)
+ 
+ @anchor{i386 Type Attributes}
+-@subsection i386 Type Attributes
++@item i386 Type Attributes
+ 
+ Two attributes are currently defined for i386 configurations:
+ @code{ms_struct} and @code{gcc_struct}
+diff -Naur gcc-4.3.2-orig/gcc/doc/invoke.texi gcc-4.3.2/gcc/doc/invoke.texi
+--- gcc-4.3.2-orig/gcc/doc/invoke.texi	2008-06-25 03:37:53.000000000 +0200
++++ gcc-4.3.2/gcc/doc/invoke.texi	2015-11-19 15:57:28.254547117 +0100
+@@ -957,7 +957,7 @@
+ generic, or subprogram renaming declaration).  Such files are also
+ called @dfn{specs}.
+ 
+-@itemx @var{file}.adb
++@item @var{file}.adb
+ Ada source code file containing a library unit body (a subprogram or
+ package body).  Such files are also called @dfn{bodies}.
+ 
+@@ -8569,7 +8569,7 @@
+ @samp{cortex-a8}, @samp{cortex-r4}, @samp{cortex-m3},
+ @samp{xscale}, @samp{iwmmxt}, @samp{ep9312}.
+ 
+-@itemx -mtune=@var{name}
++@item -mtune=@var{name}
+ @opindex mtune
+ This option is very similar to the @option{-mcpu=} option, except that
+ instead of specifying the actual target processor type, and hence
