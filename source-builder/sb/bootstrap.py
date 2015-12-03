@@ -242,7 +242,7 @@ def run(args):
     try:
         optargs = { '--rtems':       'The RTEMS source directory',
                     '--preinstall':  'Preinstall AM generation' }
-        log.notice('RTEMS Source Builder - RTEMS Bootstrap, v%s' % (version.str()))
+        log.notice('RTEMS Source Builder - RTEMS Bootstrap, %s' % (version.str()))
         opts = options.load(sys.argv, optargs)
         if opts.get_arg('--rtems'):
             topdir = opts.get_arg('--rtems')

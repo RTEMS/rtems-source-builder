@@ -534,7 +534,7 @@ def run(args):
     try:
         optargs = { '--list-configs': 'List available configurations' }
         opts = options.load(args, optargs)
-        log.notice('RTEMS Source Builder, Package Builder v%s' % (version.str()))
+        log.notice('RTEMS Source Builder, Package Builder, %s' % (version.str()))
         if not check.host_setup(opts):
             if not opts.force():
                 raise error.general('host build environment is not set up' +

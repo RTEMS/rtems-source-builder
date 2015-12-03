@@ -468,7 +468,7 @@ def run():
                     '--report-format': 'The report format (text, html, asciidoc).' }
         mailer.append_options(optargs)
         opts = options.load(sys.argv, optargs)
-        log.notice('RTEMS Source Builder - Set Builder, v%s' % (version.str()))
+        log.notice('RTEMS Source Builder - Set Builder, %s' % (version.str()))
         opts.log_info()
         if not check.host_setup(opts):
             raise error.general('host build environment is not set up correctly')

@@ -1,6 +1,6 @@
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2010-2013 Chris Johns (chrisj@rtems.org)
+# Copyright 2010-2015 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -53,6 +53,7 @@ _line_len = 78
 
 _title = 'RTEMS Tools Project <users@rtems.org>'
 
+_release_status_text = 'RTEMS Source Builder Release'
 _git_status_text = 'RTEMS Source Builder Repository Status'
 
 def _make_path(p, *args):
@@ -104,7 +105,7 @@ class formatter(object):
 
     def buildset_start(self, nest_level, name):
         self.line('=-' * (_line_len / 2))
-        self.line('Build Set: %s' % (name))
+        self.line('Build Set: (%d) %s' % (nest_level, name))
 
     def buildset_end(self, nest_level, name):
         return
@@ -165,6 +166,16 @@ class asciidoc_formatter(formatter):
         self.line('')
         if intro_text:
             self.line('%s' % ('\n'.join(intro_text)))
+
+    def release_status(self, release_string):
+        self.line('')
+        self.line("'''")
+        self.line('')
+        self.line('.%s' % (_release_status_text))
+        self.line('*Version*: %s;;' % (release_string))
+        self.line('')
+        self.line("'''")
+        self.line('')
 
     def git_status(self, valid, dirty, head, remotes):
         self.line('')
@@ -293,6 +304,14 @@ class text_formatter(formatter):
         self.line('=' * _line_len)
         self.line('Report: %s' % (name))
 
+    def release_status_header(self):
+        self.line('-' * _line_len)
+        self.line('%s' % (_release_status_text))
+
+    def release_status(self, release_string):
+        self.release_status_header()
+        self.line('%s Version: %s' % (self.cini, release_string))
+
     def git_status_header(self):
         self.line('-' * _line_len)
         self.line('%s' % (_git_status_text))
@@ -324,6 +343,8 @@ class ini_formatter(text_formatter):
     def __init__(self):
         super(ini_formatter, self).__init__()
         self.cini = ';'
+        self.ini_pkg = {}
+        self.name = None
 
     def format(self):
         return 'ini'
@@ -339,25 +360,57 @@ class ini_formatter(text_formatter):
             self.line('; %s' % ('\n; '.join(intro_text)))
             self.line(';')
 
+    def epilogue(self, name):
+        pkgs = sorted(self.ini_pkg.keys())
+        for pkg in pkgs:
+            self.line('')
+            self.line('[%s]' % (pkg))
+            items = sorted(self.ini_pkg[pkg].keys())
+            for item in items:
+                i = self.ini_pkg[pkg][item]
+                if len(i) == 1:
+                    self.line('%s = "%s"' % (item, i[0]))
+                else:
+                    self.line('%s = <<<DATA' % (item))
+                    self.line('\n'.join(i))
+                    self.line('DATA')
+        self.line('')
+
+    def release_status_header(self):
+        self.line(';')
+        self.line('; %s' % (_release_status_text))
+
     def git_status_header(self):
         self.line(';')
         self.line('; %s' % (_git_status_text))
         self.line(';')
 
     def config(self, nest_level, name, _config):
-        return
+        pass
 
     def buildset_start(self, nest_level, name):
-        return
+        if name.endswith('.cfg'):
+            self.name = path.basename(name[:-4])
+            if self.name not in self.ini_pkg:
+                self.ini_pkg[self.name] = {}
+
+    def buildset_end(self, nest_level, name):
+        self.name = None
 
     def info(self, nest_level, name, info, separated):
-        return
+        if self.name:
+            if 'info' not in self.ini_pkg[self.name]:
+                self.ini_pkg[self.name]['info'] = []
+            self.ini_pkg[self.name]['info'] += info
 
     def directive(self, nest_level, name, data):
-        return
+        if self.name:
+            if name not in self.ini_pkg[self.name]:
+                self.ini_pkg[self.name][name] = []
+            self.ini_pkg[self.name][name] += data
 
     def files(self, nest_level, singular, plural, _files):
-        return
+        pass
 
 class xml_formatter(formatter):
     def __init__(self):
@@ -376,6 +429,11 @@ class xml_formatter(formatter):
 
     def epilogue(self, name):
         self.line('</RTEMSSourceBuilderReport>')
+
+    def release_status(self, release_string):
+        self.line('\t<Release>')
+        self.line('\t\t<Version>%s</Version>' % (release_string))
+        self.line('\t</Release>')
 
     def git_status(self, valid, dirty, head, remotes):
         self.line('\t<Git>')
@@ -469,7 +527,7 @@ class report:
         self.files = { 'buildsets':[], 'configs':[] }
 
     def output(self, text):
-        self.out += text + '\n'
+        self.formatter.line(text)
 
     def is_ini(self):
         return self.formatter.format() == 'ini'
@@ -480,6 +538,9 @@ class report:
     def footer(self):
         pass
 
+    def release_status(self):
+        self.formatter.release_status(version.str())
+
     def git_status(self):
         r = git.repo('.', self.opts, self.macros)
         self.formatter.git_status(r.valid(), r.dirty(), r.head(), r.remotes())
@@ -487,7 +548,10 @@ class report:
     def introduction(self, name, intro_text = None):
         now = datetime.datetime.now().ctime()
         self.formatter.introduction(name, now, intro_text)
-        self.git_status()
+        if version.released():
+            self.release_status()
+        else:
+            self.git_status()
 
     def epilogue(self, name):
         self.formatter.epilogue(name)
@@ -504,11 +568,13 @@ class report:
         self.formatter.config_end(self.bset_nesting + 1, name)
 
     def buildset_start(self, name):
+        self.bset_nesting += 1
         self.files['buildsets'] += [name]
         self.formatter.buildset_start(self.bset_nesting, name)
 
     def buildset_end(self, name):
         self.formatter.buildset_end(self.bset_nesting, name)
+        self.bset_nesting -= 1
 
     def source(self, macros):
         def err(msg):
@@ -545,6 +611,13 @@ class report:
     def output_directive(self, name, directive):
         if directive is not None:
             self.formatter.directive(self.bset_nesting + 2, name, directive)
+
+    def tree_packages(self, tree, packages = []):
+        if 'bset' in tree:
+            for node in sorted(tree['bset'].keys()):
+                packages += [_tree_name(node)]
+                packages += self.tree_packages(tree['bset'][node], packages)
+        return set(packages)
 
     def tree_sources(self, name, tree, sources = []):
         if 'cfg' in tree:
@@ -626,26 +699,6 @@ class report:
                                        prefix_char,
                                        prefix)
 
-    def generate_ini_node(self, name, tree, sections = []):
-        if name not in sections:
-            sections += [name]
-            self.output('')
-            self.output('[%s]' % (name))
-            if 'bset' in tree and len(tree['bset']):
-                self.output(' packages = %s' % \
-                                (', '.join([_tree_name(n) for n in sorted(tree['bset'])])))
-            if 'cfg' in tree:
-                packages = {}
-                if 'sources' in tree['cfg']:
-                    _merge(packages, tree['cfg']['sources'])
-                if 'patches' in tree['cfg']:
-                    _merge(packages, tree['cfg']['patches'])
-                for package in packages:
-                    self.output(' %s = %s' % (package, ', '.join([s[0] for s in packages[package]])))
-            if 'bset' in tree:
-                for node in sorted(tree['bset'].keys()):
-                    self.generate_ini_node(_tree_name(node), tree['bset'][node], sections)
-
     def generate_ini_source(self, sources):
         self.output('')
         self.output('[source]')
@@ -664,7 +717,6 @@ class report:
             self.output(' %s = %s' % (source[0], hash))
 
     def generate_ini(self):
-        #self.output(pp.pformat(self.tree))
         nodes = sorted([node for node in self.tree.keys() if node != 'bset'])
         self.output(';')
         self.output('; Configuration Tree:')
@@ -681,13 +733,9 @@ class report:
         sources = sorted(set(sources))
         self.generate_ini_source(sources)
         self.generate_ini_hash(sources)
-        for node in nodes:
-            self.generate_ini_node(_tree_name(node), self.tree[node])
 
     def write(self, name):
         self.out = self.formatter.post_process()
-        if self.is_ini():
-            self.generate_ini()
         if name is not None:
             try:
                 o = open(path.host(name), "w")
@@ -698,7 +746,6 @@ class report:
                 raise error.general('writing output file: %s: %s' % (name, err))
 
     def generate(self, name, tree = None, opts = None, macros = None):
-        self.bset_nesting += 1
         self.buildset_start(name)
         if tree is None:
             tree = self.tree
@@ -715,16 +762,19 @@ class report:
             if c.endswith('.bset'):
                 self.generate(c, tree[name]['bset'], bset.opts, macros)
             elif c.endswith('.cfg'):
+                self.buildset_start(c)
                 self.config(config.file(c, bset.opts, macros),
                             tree[name]['cfg'], bset.opts, macros)
+                self.buildset_end(c)
             else:
                 raise error.general('invalid config type: %s' % (c))
         self.buildset_end(name)
-        self.bset_nesting -= 1
 
     def create(self, inname, outname = None, intro_text = None):
         self.introduction(inname, intro_text)
         self.generate(inname)
+        if self.is_ini():
+            self.generate_ini()
         self.epilogue(inname)
         self.write(outname)
 
@@ -737,7 +787,7 @@ def run(args):
         opts = options.load(args, optargs)
         if opts.get_arg('--output') and len(opts.params()) > 1:
             raise error.general('--output can only be used with a single config')
-        print 'RTEMS Source Builder, Reporter v%s' % (version.str())
+        print 'RTEMS Source Builder, Reporter, %s' % (version.str())
         opts.log_info()
         if not check.host_setup(opts):
             log.warning('forcing build with known host setup problems')
