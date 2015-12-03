@@ -191,7 +191,7 @@ def run(args):
         bsp = bsp_config(opts, prefix, opts.get_arg('--rtems-bsp')[1])
 
         if opts.get_arg('--list'):
-            log.notice('RTEMS Source Builder - RTEMS Configuration, v%s' % (version.str()))
+            log.notice('RTEMS Source Builder - RTEMS Configuration, %s' % (version.str()))
             opts.log_info()
             configs = bsp.keys()
             for c in sorted(configs.keys()):

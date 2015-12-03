@@ -301,6 +301,12 @@ class command_line:
             if path.exists(rsb_macros):
                 self.defaults.load(rsb_macros)
 
+    def sb_released(self):
+        if version.released():
+            self.defaults['is_rsb_released'] = '1'
+            self.defaults['_sbreleased'] = '1'
+            self.defaults['_sbversion'] = version.str()
+
     def sb_git(self):
         repo = git.repo(self.defaults.expand('%{_sbdir}'), self)
         if repo.valid():
@@ -613,6 +619,7 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc'):
     for k in overrides:
         o.defaults[k] = overrides[k]
 
+    o.sb_released()
     o.sb_git()
     o.rtems_options()
     o.process()
@@ -623,7 +630,7 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc'):
 def run(args):
     try:
         _opts = load(args = args, defaults = 'defaults.mc')
-        log.notice('RTEMS Source Builder - Defaults, v%s' % (version.str()))
+        log.notice('RTEMS Source Builder - Defaults, %s' % (version.str()))
         _opts.log_info()
         log.notice('Options:')
         log.notice(str(_opts))
