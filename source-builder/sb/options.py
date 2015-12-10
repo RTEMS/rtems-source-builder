@@ -303,9 +303,8 @@ class command_line:
 
     def sb_released(self):
         if version.released():
-            self.defaults['is_rsb_released'] = '1'
-            self.defaults['_sbreleased'] = '1'
-            self.defaults['_sbversion'] = version.str()
+            self.defaults['rsb_released'] = '1'
+        self.defaults['rsb_version'] = version.str()
 
     def sb_git(self):
         repo = git.repo(self.defaults.expand('%{_sbdir}'), self)

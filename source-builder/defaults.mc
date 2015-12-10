@@ -45,8 +45,9 @@ version:             none,    none,     ''
 release:             none,    none,     ''
 buildname:           none,    none,     '%{name}'
 
-# The default is not release.
-is_rsb_release:      none,    none,     '0'
+# The default is not released.
+rsb_released:        none,    none,     '0'
+rsb_version:         none,    none,     'no-version'
 
 # GNU triples needed to build packages
 _host:               triplet, required, ''
