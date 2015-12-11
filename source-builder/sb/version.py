@@ -96,7 +96,11 @@ def load_release_hashes(macros):
     if released():
         v = _load_released_version_config()
         if v is not None:
-            for hash in v.items('hashes'):
+            try:
+                hashes = v.items('hashes')
+            except:
+                hashes = []
+            for hash in hashes:
                 hs = hash[1].split()
                 if len(hs) != 2:
                     raise error.general('invalid release hash in VERSION')
