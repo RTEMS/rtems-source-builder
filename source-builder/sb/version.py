@@ -27,15 +27,14 @@ import sys
 import error
 import git
 import path
-
-major = 4
-minor = 11
-revision = 0
+import sources
 
 #
 # Default to an internal string.
 #
-_version_str =  '%d.%d.%d' % (major, minor, revision)
+_version = '4.11'
+_revision = 'not_released'
+_version_str = '%s.%s' % (_version, _revision)
 _released = False
 _git = False
 
@@ -45,19 +44,23 @@ def _top():
         top = '.'
     return top
 
-def _load_released_version():
-    global _released
-    global _version_str
+def _load_released_version_config():
     top = _top()
     for ver in [top, '..']:
         if path.exists(path.join(ver, 'VERSION')):
-            try:
-                with open(path.join(ver, 'VERSION')) as v:
-                    _version_str = v.readline().strip()
-                v.close()
-                _released = True
-            except:
-                raise error.general('Cannot access the VERSION file')
+            import ConfigParser
+            v = ConfigParser.SafeConfigParser()
+            v.read(path.join(ver, 'VERSION'))
+            return v
+    return None
+
+def _load_released_version():
+    global _released
+    global _version_str
+    v = _load_released_version_config()
+    if v is not None:
+        _version_str = v.get('version', 'release')
+        _released = True
     return _released
 
 def _load_git_version():
@@ -70,7 +73,7 @@ def _load_git_version():
             modified = ' modified'
         else:
             modified = ''
-        _version_str = '%d.%d.%d (%s%s)' % (major, minor, revision, head[0:12], modified)
+        _version_str = '%s (%s%s)' % (_version, head[0:12], modified)
         _git = True
     return _git
 
@@ -86,8 +89,18 @@ def str():
             _load_git_version()
     return _version_str
 
+def load_release_hashes(macros):
+    def hash_error(msg):
+        raise error.general(msg)
+
+    if released():
+        v = _load_released_version_config()
+        if v is not None:
+            for hash in v.items('hashes'):
+                hs = hash[1].split()
+                if len(hs) != 2:
+                    raise error.general('invalid release hash in VERSION')
+                sources.hash((hs[0], hash[0], hs[1]), macros, hash_error)
+
 if __name__ == '__main__':
-    print 'major = %d' % (major)
-    print 'minor = %d' % (minor)
-    print 'revision = %d' % (revision)
     print 'Version: %s' % (str())
