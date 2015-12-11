@@ -710,8 +710,6 @@ class file:
             mn = self._label(ls[1])
             if mn in self.macros:
                 del self.macros[mn]
-            else:
-                log.warning("macro '%s' not defined" % (mn))
 
     def _ifs(self, config, ls, label, iftrue, isvalid, dir, info):
         in_iftrue = True
