@@ -35,6 +35,7 @@ import git
 import log
 import path
 import sources
+import version
 
 def _do_download(opts):
     download = True
@@ -109,6 +110,8 @@ def _hash_check(file_, absfile, macros, remove = True):
         if hasher is not None:
             del hasher
     else:
+        if version.released():
+            raise error.general('%s: no hash found in released RSB' % (file_))
         log.warning('%s: no hash found' % (file_))
     return not failed
 
