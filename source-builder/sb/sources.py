@@ -50,6 +50,7 @@ def set(label, args, macros, error):
     args = _args(args)
     if len(args) < 2:
         error('%%%s requires at least 2 arguments' % (label))
+        return
     _map = '%s-%s' % (label, args[0])
     macros.create_map(_map)
     key = _make_key(label, 0)
@@ -67,6 +68,7 @@ def setup(label, args, macros, error):
     _map = '%s-%s' % (label, args[0])
     if 'setup' in macros.map_keys(_map):
         error('%%%s already setup source: %s' % (label, ' '.join(args)))
+        return
     macros.set_write_map(_map)
     macros.define('setup', ss)
     macros.unset_write_map()
@@ -79,6 +81,7 @@ def process(label, args, macros, error):
     log.trace('sources: %s' % (' '.join(args)))
     if len(args) < 3:
         error('%%%s requires at least 3 arguments: %s' % (label, ' '.join(args)))
+        return
     if args[0] == 'set':
         return set(label, args[1:], macros, error)
     elif args[0] == 'add':
@@ -91,10 +94,12 @@ def hash(args, macros, error):
     args = _args(args)
     if len(args) != 3:
         error('invalid number of hash args')
+        return
     _map = 'hashes'
     _file = macros.expand(args[1])
     if _file in macros.map_keys(_map):
         error('hash already set: %s' % (args[1]))
+        return
     macros.create_map(_map)
     macros.set_write_map(_map)
     macros.define(_file, '%s %s' % (args[0], args[2]))
@@ -106,6 +111,7 @@ def get(label, name, macros, error):
     keys = macros.map_keys(_map)
     if len(keys) == 0:
         error('no %s set: %s (%s)' % (label, name, _map))
+        return
     srcs = []
     for s in keys:
         sm = macros.get(s, globals = False, maps = _map)
