@@ -624,6 +624,11 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc'):
     o.process()
     o.post_process()
 
+    #
+    # Load the release hashes
+    #
+    version.load_release_hashes(o.defaults)
+
     return o
 
 def run(args):
