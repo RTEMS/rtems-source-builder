@@ -4,4 +4,14 @@
 
 %define release 1
 
+#
+# We need an arch defined for the common RTEMS files to work.
+#
+%define rtems_arch tools
+
+#
+# The RTEMS 4.11 base defines.
+#
+%include rtems-4.11-base.bset
+
 tools/rtems-tools-4.11-1
