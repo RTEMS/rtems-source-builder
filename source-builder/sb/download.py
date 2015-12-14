@@ -513,10 +513,14 @@ def _cvs_downloader(url, local, config, opts):
     return True
 
 def _file_downloader(url, local, config, opts):
-    try:
-        path.copy(url[6:], local)
-    except:
-        return False
+    if not path.exists(local):
+        try:
+            src = url[7:]
+            dst = local
+            log.notice('download: copy %s -> %s' % (src, dst))
+            path.copy(src, dst)
+        except:
+            return False
     return True
 
 downloaders = { 'http': _http_downloader,
@@ -538,21 +542,40 @@ def get_file(url, local, opts, config):
     if not path.exists(local) and opts.download_disabled():
         raise error.general('source not found: %s' % (path.host(local)))
     #
-    # Check if a URL has been provided on the command line.
+    # Check if a URL has been provided on the command line. If the package is
+    # release push to the start the RTEMS URL.
     #
     url_bases = opts.urls()
+    if version.released():
+        rtems_release_url = config.macros.expand('%{rtems_release_url}/%{rsb_version}/sources')
+        log.trace('release url: %s' % (rtems_release_url))
+        #
+        # If the URL being fetched is under the release path do not add the
+        # sources release path because it is already there.
+        #
+        if not url.startswith(rtems_release_url):
+            if url_bases is None:
+                url_bases = [rtems_release_url]
+            else:
+                url_bases.append(rtems_release_url)
     urls = []
     if url_bases is not None:
+        #
+        # Split up the URL we are being asked to download.
+        #
+        url_path = urlparse.urlsplit(url)[2]
+        slash = url_path.rfind('/')
+        if slash < 0:
+            url_file = url_path
+        else:
+            url_file = url_path[slash + 1:]
+        log.trace('url_file: %s' %(url_file))
         for base in url_bases:
             if base[-1:] != '/':
                 base += '/'
-            url_path = urlparse.urlsplit(url)[2]
-            slash = url_path.rfind('/')
-            if slash < 0:
-                url_file = url_path
-            else:
-                url_file = url_path[slash + 1:]
-            urls.append(urlparse.urljoin(base, url_file))
+            next_url = urlparse.urljoin(base, url_file)
+            log.trace('url: %s' %(next_url))
+            urls.append(next_url)
     urls += url.split()
     log.trace('_url: %s -> %s' % (','.join(urls), local))
     for url in urls:
