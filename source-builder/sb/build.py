@@ -147,7 +147,7 @@ class build:
 
     def set_macros(self, macros):
         if macros is None:
-            self.macros = copy.copy(opts.defaults)
+            self.macros = copy.copy(self.opts.defaults)
         else:
             self.macros = copy.copy(macros)
         if self.config:
@@ -537,6 +537,7 @@ def run(args):
         optargs = { '--list-configs': 'List available configurations' }
         opts = options.load(args, optargs)
         log.notice('RTEMS Source Builder, Package Builder, %s' % (version.str()))
+        opts.log_info()
         if not check.host_setup(opts):
             if not opts.force():
                 raise error.general('host build environment is not set up' +
