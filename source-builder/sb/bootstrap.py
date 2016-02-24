@@ -86,13 +86,17 @@ class command:
         self.exit_code = 0
         try:
             try:
-                self.output = subprocess.check_output(self.cmd, cwd = self.cwd)
+                if os.name == 'nt':
+                    cmd = ['sh', '-c'] + self.cmd
+                else:
+                    cmd = self.cmd
+                self.output = subprocess.check_output(cmd, cwd = path.host(self.cwd))
             except subprocess.CalledProcessError, cpe:
                 self.exit_code = cpe.returncode
                 self.output = cpe.output
             except OSError, ose:
                 raise error.general('bootstrap failed: %s in %s: %s' % \
-                                        (' '.join(self.cmd), self.cwd, (str(ose))))
+                                        (' '.join(cmd), path.host(self.cwd), (str(ose))))
             except KeyboardInterrupt:
                 pass
             except:
@@ -240,6 +244,18 @@ def preinstall(topdir, jobs):
 
 def run(args):
     try:
+        #
+        # On Windows MSYS2 prepends a path to itself to the environment
+        # path. This means the RTEMS specific automake is not found and which
+        # breaks the bootstrap. We need to remove the prepended path. Also
+        # remove any ACLOCAL paths from the environment.
+        #
+        if os.name == 'nt':
+            cspath = os.environ['PATH'].split(os.pathsep)
+            if 'msys' in cspath[0] and cspath[0].endswith('bin'):
+                os.environ['PATH'] = os.pathsep.join(cspath[1:])
+            if 'ACLOCAL_PATH' in os.environ:
+                os.environ['ACLOCAL_PATH'].clear()
         optargs = { '--rtems':       'The RTEMS source directory',
                     '--preinstall':  'Preinstall AM generation' }
         log.notice('RTEMS Source Builder - RTEMS Bootstrap, %s' % (version.str()))
