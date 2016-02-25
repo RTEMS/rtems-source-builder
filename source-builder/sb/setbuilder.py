@@ -198,8 +198,8 @@ class buildset:
             log.notice('tarball: %s' % (os.path.relpath(path.host(tar))))
             if not self.opts.dry_run():
                 tmproot = _build.config.expand('%{_tmproot}')
-                cmd = _build.config.expand("'cd " + tmproot + \
-                                               " && %{__tar} -cf - . | %{__bzip2} > " + tar + "'")
+                cmd = _build.config.expand('"cd ' + tmproot + \
+                                               ' && %{__tar} -cf - . | %{__bzip2} > ' + tar + '"')
                 _build.run(cmd, shell_opts = '-c', cwd = tmproot)
 
     def parse(self, bset):
