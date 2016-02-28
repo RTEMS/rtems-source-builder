@@ -1,6 +1,6 @@
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2010-2013 Chris Johns (chrisj@rtems.org)
+# Copyright 2010-2016 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -161,6 +161,13 @@ def _http_parser(source, pathkey, config, opts):
         if p is None or h is None:
             raise error.general('gitweb.cgi path missing p or h: %s' % (url))
         source['file'] = '%s-%s.patch' % (p, h)
+    #
+    # Check the source file name for any extra request query data and remove if
+    # found. Some hosts do not like file names containing them.
+    #
+    if '?' in source['file']:
+        qmark = source['file'].find('?')
+        source['file'] = source['file'][:qmark]
     #
     # Check local path
     #
