@@ -7,6 +7,8 @@
 #
 %define rtems_http_git         https://git.rtems.org
 %define rtems_git_tools        %{rtems_http_git}/rtems-tools/plain/tools/%{rtems_version}
+%define rtems_autoconf_patches %{rtems_git_tools}/autoconf
+%define rtems_automake_patches %{rtems_git_tools}/automake
 %define rtems_binutils_patches %{rtems_git_tools}/binutils
 %define rtems_gcc_patches      %{rtems_git_tools}/gcc
 %define rtems_newlib_patches   %{rtems_git_tools}/newlib
