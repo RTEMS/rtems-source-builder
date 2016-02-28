@@ -1,6 +1,6 @@
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2013 Chris Johns (chrisj@rtems.org)
+# Copyright 2013-2016 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -255,7 +255,14 @@ def run(args):
             if 'msys' in cspath[0] and cspath[0].endswith('bin'):
                 os.environ['PATH'] = os.pathsep.join(cspath[1:])
             if 'ACLOCAL_PATH' in os.environ:
-                os.environ['ACLOCAL_PATH'].clear()
+                #
+                # The clear fails on a current MSYS2 python (Feb 2016). Delete
+                # the entry if the clear fails.
+                #
+                try:
+                    os.environ['ACLOCAL_PATH'].clear()
+                except:
+                    del os.environ['ACLOCAL_PATH']
         optargs = { '--rtems':       'The RTEMS source directory',
                     '--preinstall':  'Preinstall AM generation' }
         log.notice('RTEMS Source Builder - RTEMS Bootstrap, %s' % (version.str()))
