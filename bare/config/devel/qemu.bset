@@ -5,6 +5,11 @@
 %define release 1
 
 #
+# Name of the package.
+#
+package: qemu-%{qemu_version}-%{_host}-%{release}
+
+#
 # A magic internal path that would break if changes in the defaults.mc
 # macro file are made.
 #
