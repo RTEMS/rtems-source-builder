@@ -1,6 +1,6 @@
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2010-2013 Chris Johns (chrisj@rtems.org)
+# Copyright 2010-2016 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -25,7 +25,10 @@
 # other software modules.
 #
 
+from __future__ import print_function
+
 import copy
+from functools import reduce
 import os
 import re
 import sys
@@ -39,10 +42,10 @@ try:
     import pkgconfig
     import sources
 except KeyboardInterrupt:
-    print 'user terminated'
+    print('user terminated', file = sys.stderr)
     sys.exit(1)
 except:
-    print 'error: unknown application load error'
+    print('error: unknown application load error', file = sys.stderr)
     sys.exit(1)
 
 def _check_bool(value):
@@ -75,7 +78,7 @@ class package:
 
         def _dictlist(dl):
             s = ''
-            dll = dl.keys()
+            dll = list(dl.keys())
             dll.sort()
             for d in dll:
                 if d:
@@ -250,7 +253,7 @@ class file:
 
         def _dict(dd):
             s = ''
-            ddl = dd.keys()
+            ddl = list(dd.keys())
             ddl.sort()
             for d in ddl:
                 s += '  ' + d + ': ' + dd[d] + '\n'
@@ -339,14 +342,14 @@ class file:
            outter level. Nested levels will need to split with futher calls.'''
         trace_me = False
         if trace_me:
-            print '------------------------------------------------------'
+            print('------------------------------------------------------')
         macros = []
         nesting = []
         has_braces = False
         c = 0
         while c < len(s):
             if trace_me:
-                print 'ms:', c, '"' + s[c:] + '"', has_braces, len(nesting), nesting
+                print('ms:', c, '"' + s[c:] + '"', has_braces, len(nesting), nesting)
             #
             # We need to watch for shell type variables or the form '${var}' because
             # they can upset the brace matching.
@@ -394,9 +397,9 @@ class file:
                             macros.append(s[macro_start:c + 1].strip())
             c += 1
         if trace_me:
-            print 'ms:', macros
+            print('ms:', macros)
         if trace_me:
-            print '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-='
+            print('-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=')
         return macros
 
     def _shell(self, line):
@@ -435,7 +438,7 @@ class file:
                         op = test[1]
                         ver = self.macros.expand(test[2])
                     ok = pkg.check(op, ver)
-            except pkgconfig.error, pe:
+            except pkgconfig.error as pe:
                 self._error('pkgconfig: check: %s' % (pe))
             except:
                 raise error.internal('pkgconfig failure')
@@ -459,7 +462,7 @@ class file:
                             fflags += [f]
                     pkg_flags = ' '.join(fflags)
                 log.trace('pkgconfig: %s: %s' % (flags, pkg_flags))
-            except pkgconfig.error, pe:
+            except pkgconfig.error as pe:
                 self._error('pkgconfig: %s: %s' % (flags, pe))
             except:
                 raise error.internal('pkgconfig failure')
@@ -1127,7 +1130,7 @@ class file:
         try:
             log.trace('config: %s: _open: %s' % (self.name, path.host(configname)))
             config = open(path.host(configname), 'r')
-        except IOError, err:
+        except IOError as err:
             raise error.general('error opening config file: %s' % (path.host(configname)))
 
         self.configpath += [configname]
@@ -1171,7 +1174,7 @@ class file:
         self.load_depth -= 1
 
     def defined(self, name):
-        return self.macros.has_key(name)
+        return name in self.macros
 
     def define(self, name):
         if name in self.macros:
@@ -1229,14 +1232,14 @@ def run():
         opts = options.load(sys.argv, defaults = 'defaults.mc')
         log.trace('config: count %d' % (len(opts.config_files())))
         for config_file in opts.config_files():
-            s = file(config_file, opts)
-            print s
+            s = open(config_file, opts)
+            print(s)
             del s
-    except error.general, gerr:
-        print gerr
+    except error.general as gerr:
+        print(gerr)
         sys.exit(1)
-    except error.internal, ierr:
-        print ierr
+    except error.internal as ierr:
+        print(ierr)
         sys.exit(1)
     except KeyboardInterrupt:
         log.notice('abort: user terminated')

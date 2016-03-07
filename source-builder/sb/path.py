@@ -1,6 +1,6 @@
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2010-2015 Chris Johns (chrisj@rtems.org)
+# Copyright 2010-2016 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -22,6 +22,8 @@
 # we convert to the native format when performing operations at the Python
 # level. This allows macro expansion to work.
 #
+
+from __future__ import print_function
 
 import log
 import os
@@ -119,18 +121,18 @@ def mkdir(path):
         if windows:
             try:
                 os.makedirs(host(path))
-            except IOError, err:
+            except IOError as err:
                 raise error.general('cannot make directory: %s' % (path))
-            except OSError, err:
+            except OSError as err:
                 raise error.general('cannot make directory: %s' % (path))
-            except WindowsError, err:
+            except WindowsError as err:
                 raise error.general('cannot make directory: %s' % (path))
         else:
             try:
                 os.makedirs(host(path))
-            except IOError, err:
+            except IOError as err:
                 raise error.general('cannot make directory: %s' % (path))
-            except OSError, err:
+            except OSError as err:
                 raise error.general('cannot make directory: %s' % (path))
 
 def removeall(path):
@@ -172,7 +174,7 @@ def copy(src, dst):
     hdst = host(dst)
     try:
         shutil.copy(hsrc, hdst)
-    except OSError, why:
+    except OSError as why:
         if windows:
             if WindowsError is not None and isinstance(why, WindowsError):
                 pass
@@ -191,19 +193,19 @@ def copy_tree(src, dst):
         names = []
 
     if trace:
-        print 'path.copy_tree:'
-        print '   src: %s' % (src)
-        print '  hsrc: %s' % (hsrc)
-        print '   dst: %s' % (dst)
-        print '  hdst: %s' % (hdst)
-        print ' names: %r' % (names)
+        print('path.copy_tree:')
+        print('   src: %s' % (src))
+        print('  hsrc: %s' % (hsrc))
+        print('   dst: %s' % (dst))
+        print('  hdst: %s' % (hdst))
+        print(' names: %r' % (names))
 
     if not os.path.isdir(hdst):
         if trace:
-            print ' mkdir: %s' % (hdst)
+            print(' mkdir: %s' % (hdst))
         try:
             os.makedirs(hdst)
-        except OSError, why:
+        except OSError as why:
             raise error.general('copying tree: cannot create target directory %s: %s' % \
                                 (hdst, str(why)))
 
@@ -230,15 +232,15 @@ def copy_tree(src, dst):
                 copy_tree(srcname, dstname)
             else:
                     shutil.copy2(host(srcname), host(dstname))
-        except shutil.Error, err:
+        except shutil.Error as err:
             raise error.general('copying tree: %s -> %s: %s' % \
                                 (hsrc, hdst, str(err)))
-        except EnvironmentError, why:
+        except EnvironmentError as why:
             raise error.general('copying tree: %s -> %s: %s' % \
                                 (srcname, dstname, str(why)))
     try:
         shutil.copystat(hsrc, hdst)
-    except OSError, why:
+    except OSError as why:
         if windows:
             if WindowsError is not None and isinstance(why, WindowsError):
                 pass
@@ -246,17 +248,17 @@ def copy_tree(src, dst):
             raise error.general('copying tree: %s -> %s: %s' % (hsrc, hdst, str(why)))
 
 if __name__ == '__main__':
-    print host('/a/b/c/d-e-f')
-    print host('//a/b//c/d-e-f')
-    print shell('/w/x/y/z')
-    print basename('/as/sd/df/fg/me.txt')
-    print dirname('/as/sd/df/fg/me.txt')
-    print join('/d', 'g', '/tyty/fgfg')
+    print(host('/a/b/c/d-e-f'))
+    print(host('//a/b//c/d-e-f'))
+    print(shell('/w/x/y/z'))
+    print(basename('/as/sd/df/fg/me.txt'))
+    print(dirname('/as/sd/df/fg/me.txt'))
+    print(join('/d', 'g', '/tyty/fgfg'))
     windows = True
-    print host('/a/b/c/d-e-f')
-    print host('//a/b//c/d-e-f')
-    print shell('/w/x/y/z')
-    print shell('w:/x/y/z')
-    print basename('x:/sd/df/fg/me.txt')
-    print dirname('x:/sd/df/fg/me.txt')
-    print join('s:/d/e\\f/g', '/h', '/tyty/zxzx', '\\mm\\nn/p')
+    print(host('/a/b/c/d-e-f'))
+    print(host('//a/b//c/d-e-f'))
+    print(shell('/w/x/y/z'))
+    print(shell('w:/x/y/z'))
+    print(basename('x:/sd/df/fg/me.txt'))
+    print(dirname('x:/sd/df/fg/me.txt'))
+    print(join('s:/d/e\\f/g', '/h', '/tyty/zxzx', '\\mm\\nn/p'))

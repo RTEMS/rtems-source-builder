@@ -1,6 +1,6 @@
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2010-2013 Chris Johns (chrisj@rtems.org)
+# Copyright 2010-2016 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -20,6 +20,8 @@
 #
 # Provide some basic access to the cvs command.
 #
+
+from __future__ import print_function
 
 import os
 
@@ -151,8 +153,8 @@ if __name__ == '__main__':
     if not path.exists(ldir):
         path.mkdir(ldir)
         c.checkout(':pserver:anoncvs@sourceware.org:/cvs/src', module = 'newlib')
-    print c.cvs_version()
-    print c.valid()
-    print c.status()
+    print(c.cvs_version())
+    print(c.valid())
+    print(c.status())
     c.reset()
-    print c.clean()
+    print(c.clean())

@@ -17,6 +17,8 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+from __future__ import print_function
+
 #
 # Various errors we can raise.
 #
@@ -46,9 +48,9 @@ class exit(error):
 if __name__ == '__main__':
     try:
         raise general('a general error')
-    except general, gerr:
-        print 'caught:', gerr
+    except general as gerr:
+        print('caught:', gerr)
     try:
         raise internal('an internal error')
-    except internal, ierr:
-        print 'caught:', ierr
+    except internal as ierr:
+        print('caught:', ierr)

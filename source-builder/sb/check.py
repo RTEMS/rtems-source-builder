@@ -1,6 +1,6 @@
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2010-2012 Chris Johns (chrisj@rtems.org)
+# Copyright 2010-2016 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -20,6 +20,8 @@
 #
 # Check the defaults for a specific host.
 #
+
+from __future__ import print_function
 
 import os
 
@@ -130,7 +132,7 @@ def host_setup(opts):
 
     sane = True
 
-    for d in opts.defaults.keys():
+    for d in list(opts.defaults.keys()):
         try:
             (test, constraint, value) = opts.defaults.get(d)
         except:
@@ -164,16 +166,16 @@ def run():
         _opts = options.load(args = sys.argv)
         log.notice('RTEMS Source Builder - Check, %s' % (version.str()))
         if host_setup(_opts):
-            print 'Environment is ok'
+            print('Environment is ok')
         else:
-            print 'Environment is not correctly set up'
-    except error.general, gerr:
-        print gerr
+            print('Environment is not correctly set up')
+    except error.general as gerr:
+        print(gerr)
         sys.exit(1)
-    except error.internal, ierr:
-        print ierr
+    except error.internal as ierr:
+        print(ierr)
         sys.exit(1)
-    except error.exit, eerr:
+    except error.exit as eerr:
         pass
     except KeyboardInterrupt:
         log.notice('abort: user terminated')

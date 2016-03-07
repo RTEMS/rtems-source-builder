@@ -18,6 +18,8 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
+from __future__ import print_function
+
 import datetime
 import operator
 import os
@@ -46,7 +48,7 @@ def _grep(file, pattern):
         f = open(path.host(file), 'r')
         matches = [rege.match(l) != None for l in f.readlines()]
         f.close()
-    except IOError, err:
+    except IOError as err:
         raise error.general('reading: %s' % (file))
     return True in matches
 
@@ -91,10 +93,10 @@ class command:
                 else:
                     cmd = self.cmd
                 self.output = subprocess.check_output(cmd, cwd = path.host(self.cwd))
-            except subprocess.CalledProcessError, cpe:
+            except subprocess.CalledProcessError as cpe:
                 self.exit_code = cpe.returncode
                 self.output = cpe.output
-            except OSError, ose:
+            except OSError as ose:
                 raise error.general('bootstrap failed: %s in %s: %s' % \
                                         (' '.join(cmd), path.host(self.cwd), (str(ose))))
             except KeyboardInterrupt:
@@ -114,7 +116,7 @@ class command:
 
     def reraise(self):
         if self.result is not None:
-            raise self.result[0], self.result[1], self.result[2]
+            raise self.result[0](self.result[1]).with_traceback(self.result[2])
 
 class autoreconf:
 
@@ -145,7 +147,7 @@ class autoreconf:
                 b.write('  esac' + os.linesep)
                 b.write('])' + os.linesep)
                 b.close()
-            except IOError, err:
+            except IOError as err:
                 raise error.general('writing: %s' % (acinclude))
 
     def is_alive(self):
@@ -164,7 +166,7 @@ class autoreconf:
                         t = open(path.host(stamp_h), 'w')
                         t.write('timestamp')
                         t.close()
-                    except IOError, err:
+                    except IOError as err:
                         raise error.general('writing: %s' % (stamp_h))
 
 def generate(topdir, jobs):
@@ -212,7 +214,7 @@ class ampolish3:
                 for l in self.command.output:
                     p.write(l)
                 p.close()
-            except IOError, err:
+            except IOError as err:
                 raise error.general('writing: %s' % (self.preinstall))
 
 def preinstall(topdir, jobs):
@@ -275,15 +277,15 @@ def run(args):
             preinstall(topdir, opts.jobs(opts.defaults['_ncpus']))
         else:
             generate(topdir, opts.jobs(opts.defaults['_ncpus']))
-    except error.general, gerr:
-        print gerr
-        print >> sys.stderr, 'Bootstrap FAILED'
+    except error.general as gerr:
+        print(gerr)
+        print('Bootstrap FAILED', file = sys.stderr)
         sys.exit(1)
-    except error.internal, ierr:
-        print ierr
-        print >> sys.stderr, 'Bootstrap FAILED'
+    except error.internal as ierr:
+        print(ierr)
+        print('Bootstrap FAILED', file = sys.stderr)
         sys.exit(1)
-    except error.exit, eerr:
+    except error.exit as eerr:
         pass
     except KeyboardInterrupt:
         log.notice('abort: user terminated')

@@ -22,6 +22,8 @@
 # installed not to be package unless you run a packager around this.
 #
 
+from __future__ import print_function
+
 import copy
 import datetime
 import os
@@ -43,10 +45,10 @@ try:
     import sources
     import version
 except KeyboardInterrupt:
-    print 'user terminated'
+    print('user terminated', file = sys.stderr)
     sys.exit(1)
 except:
-    print 'error: unknown application load error'
+    print('error: unknown application load error', file = sys.stderr)
     sys.exit(1)
 
 _line_len = 78
@@ -104,7 +106,7 @@ class formatter(object):
         return
 
     def buildset_start(self, nest_level, name):
-        self.line('=-' * (_line_len / 2))
+        self.line('=-' * int(_line_len / 2))
         self.line('Build Set: (%d) %s' % (nest_level, name))
 
     def buildset_end(self, nest_level, name):
@@ -216,7 +218,7 @@ class asciidoc_formatter(formatter):
 
     def buildset_start(self, nest_level, name):
         h = '%s' % (name)
-        self.line('=%s %s' % ('=' * nest_level, h))
+        self.line('=%s %s' % ('=' * int(nest_level), h))
 
     def info(self, nest_level, name, info, separated):
         end = ''
@@ -266,9 +268,9 @@ class html_formatter(asciidoc_formatter):
         return '.html'
 
     def post_process(self):
-        import StringIO
-        infile = StringIO.StringIO(self.content)
-        outfile = StringIO.StringIO()
+        import io
+        infile = io.StringIO(self.content)
+        outfile = io.StringIO()
         try:
             import asciidocapi
         except:
@@ -647,12 +649,12 @@ class report:
             tree['file'] += [_config.file_name()]
             if len(sources):
                 if 'sources' in tree:
-                    tree['sources'] = dict(tree['sources'].items() + sources.items())
+                    tree['sources'] = dict(list(tree['sources'].items()) + list(sources.items()))
                 else:
                     tree['sources'] = sources
             if len(patches):
                 if 'patches' in tree:
-                    tree['patches'] = dict(tree['patches'].items() + patches.items())
+                    tree['patches'] = dict(list(tree['patches'].items()) + list(patches.items()))
                 else:
                     tree['patches'] = patches
         self.config_start(name, _config)
@@ -682,7 +684,7 @@ class report:
             if len(files):
                 for f in range(0, len(files) - 1):
                     self.output('; %s  |- %s' % (prefix, files[f]))
-                if 'bset' in tree and len(tree['bset'].keys()):
+                if 'bset' in tree and len(list(tree['bset'].keys())):
                     c = '|'
                 else:
                     c = '+'
@@ -717,7 +719,7 @@ class report:
             self.output(' %s = %s' % (source[0], hash))
 
     def generate_ini(self):
-        nodes = sorted([node for node in self.tree.keys() if node != 'bset'])
+        nodes = sorted([node for node in list(self.tree.keys()) if node != 'bset'])
         self.output(';')
         self.output('; Configuration Tree:')
         for node in range(0, len(nodes)):
@@ -742,7 +744,7 @@ class report:
                 o.write(self.out)
                 o.close()
                 del o
-            except IOError, err:
+            except IOError as err:
                 raise error.general('writing output file: %s: %s' % (name, err))
 
     def generate(self, name, tree = None, opts = None, macros = None):
@@ -787,7 +789,7 @@ def run(args):
         opts = options.load(args, optargs)
         if opts.get_arg('--output') and len(opts.params()) > 1:
             raise error.general('--output can only be used with a single config')
-        print 'RTEMS Source Builder, Reporter, %s' % (version.str())
+        print('RTEMS Source Builder, Reporter, %s' % (version.str()))
         opts.log_info()
         if not check.host_setup(opts):
             log.warning('forcing build with known host setup problems')
@@ -827,13 +829,13 @@ def run(args):
             del r
         else:
             raise error.general('invalid config type: %s' % (config))
-    except error.general, gerr:
-        print gerr
+    except error.general as gerr:
+        print(gerr)
         sys.exit(1)
-    except error.internal, ierr:
-        print ierr
+    except error.internal as ierr:
+        print(ierr)
         sys.exit(1)
-    except error.exit, eerr:
+    except error.exit as eerr:
         pass
     except KeyboardInterrupt:
         log.notice('abort: user terminated')

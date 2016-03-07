@@ -121,7 +121,7 @@ def load():
                      '__chown':        ('exe',     'required', '/usr/sbin/chown') },
         }
 
-    if variations.has_key(distro):
+    if distro in variations:
         for v in variations[distro]:
             if path.exists(variations[distro][v][2]):
                 defines[v] = variations[distro][v]

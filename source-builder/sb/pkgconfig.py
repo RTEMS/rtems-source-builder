@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2014 Chris Johns (chrisj@rtems.org)
+# Copyright 2014-2016 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -33,6 +33,8 @@
 # Pkg-config in python. It attempts to provide a few simple features
 # provided by the full pkg-config so packages can configure and build.
 #
+
+from __future__ import print_function
 
 import copy
 import os
@@ -196,7 +198,7 @@ class package(object):
     @staticmethod
     def dump_loaded():
         for n in sorted(package.loaded):
-            print package.loaded[n]._str()
+            print(package.loaded[n]._str())
 
     def __init__(self, name = None, prefix = None,
                  libs_scan = False, output = None, src = None):
@@ -458,7 +460,7 @@ class package(object):
                         lhs = l[:d].lower()
                         rhs = l[d + 1:]
                         if tm:
-                            print('define: ' + str(define) + ', lhs: ' + lhs + ', ' + rhs)
+                            print(('define: ' + str(define) + ', lhs: ' + lhs + ', ' + rhs))
                         if define:
                             self.defines[lhs] = rhs
                         else:

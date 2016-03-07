@@ -1,6 +1,6 @@
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2010-2012 Chris Johns (chrisj@rtems.org)
+# Copyright 2010-2016 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -23,6 +23,9 @@
 # Note, the subprocess module is only in Python 2.4 or higher.
 #
 
+from __future__ import print_function
+
+import functools
 import os
 import re
 import sys
@@ -81,7 +84,7 @@ def arg_subst(command, substs):
 def arg_subst_str(command, subst):
     cmd = arg_subst(command, subst)
     def add(x, y): return x + ' ' + str(y)
-    return reduce(add, cmd, '')
+    return functools.reduce(add, cmd, '')
 
 class execute:
     """Execute commands or scripts. The 'output' is a funtion
@@ -105,6 +108,9 @@ class execute:
             count = 0
             while True:
                 line = fh.readline()
+                # str and bytes are the same type in Python2
+                if type(line) is not str and type(line) is bytes:
+                    line = line.decode(sys.stdout.encoding)
                 count += 1
                 if len(line) == 0:
                     break
@@ -155,7 +161,7 @@ class execute:
             s = command
             if type(command) is list:
                 def add(x, y): return x + ' ' + str(y)
-                s = reduce(add, command, '')[1:]
+                s = functools.reduce(add, command, '')[1:]
             what = 'spawn'
             if shell:
                 what = 'shell'
@@ -191,7 +197,7 @@ class execute:
             exit_code = self.capture(proc)
             if self.verbose:
                 log.output('exit: ' + str(exit_code))
-        except OSError, ose:
+        except OSError as ose:
             exit_code = ose.errno
             if self.verbose:
                 log.output('exit: ' + str(ose))
@@ -325,9 +331,9 @@ if __name__ == "__main__":
         ec, proc = e.command(commands['pipe'][0], commands['pipe'][1],
                              capture = False, stdin = subprocess.PIPE)
         if ec == 0:
-            print 'piping input into ' + commands['pipe'][0] + ': ' + \
-                  commands['pipe'][2]
-            proc.stdin.write(commands['pipe'][2])
+            print('piping input into ' + commands['pipe'][0] + ': ' + \
+                  commands['pipe'][2])
+            proc.stdin.write(bytes(commands['pipe'][2], sys.stdin.encoding))
             proc.stdin.close()
             e.capture(proc)
             del proc
@@ -352,10 +358,10 @@ if __name__ == "__main__":
                                    ('date %0 %1', ['-u', '+%d %D %S'])]
     commands['unix']['pipe'] = ('grep', 'hello', 'hello world')
 
-    print arg_list('cmd a1 a2 "a3 is a string" a4')
-    print arg_list('cmd b1 b2 "b3 is a string a4')
-    print arg_subst(['nothing', 'xx-%0-yyy', '%1', '%2-something'],
-                    ['subst0', 'subst1', 'subst2'])
+    print(arg_list('cmd a1 a2 "a3 is a string" a4'))
+    print(arg_list('cmd b1 b2 "b3 is a string a4'))
+    print(arg_subst(['nothing', 'xx-%0-yyy', '%1', '%2-something'],
+                    ['subst0', 'subst1', 'subst2']))
 
     e = execute(error_prefix = 'ERR: ', verbose = True)
     if sys.platform == "win32":
