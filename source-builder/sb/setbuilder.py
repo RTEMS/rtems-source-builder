@@ -197,7 +197,7 @@ class buildset:
         if (self.opts.get_arg('--bset-tar-file') or self.opts.canadian_cross()) \
            and not _build.macros.get('%{_disable_packaging}'):
             path.mkdir(tardir)
-            tar = path.join(tardir, _build.config.expand('%s.tar.bz2' % (self.bset_pkg)))
+            tar = path.join(tardir, _build.config.expand('%s.tar.bz2' % (_build.main_package().name())))
             log.notice('tarball: %s' % (os.path.relpath(path.host(tar))))
             if not self.opts.dry_run():
                 tmproot = _build.config.expand('%{_tmproot}')
