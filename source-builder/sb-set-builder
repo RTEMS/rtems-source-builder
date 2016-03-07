@@ -18,12 +18,17 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+from __future__ import print_function
+
 import sys, os
 base = os.path.dirname(sys.argv[0])
 sys.path.insert(0, base + '/sb')
+
+import setbuilder
+
 try:
     import setbuilder
     setbuilder.run()
 except ImportError:
-    print >> sys.stderr, "Incorrect Set Bulder installation"
+    print("Incorrect Source Builder installation", file = sys.stderr)
     sys.exit(1)

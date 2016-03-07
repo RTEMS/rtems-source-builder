@@ -1,6 +1,6 @@
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2010-2013 Chris Johns (chrisj@rtems.org)
+# Copyright 2010-2016 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -20,6 +20,8 @@
 #
 # Determine the defaults and load the specific file.
 #
+
+from __future__ import print_function
 
 import datetime
 import glob
@@ -41,9 +43,10 @@ import version
 basepath = 'sb'
 
 #
-# Save the host state.
+# Save the host and POSIX state.
 #
 host_windows = False
+host_posix = True
 
 class command_line:
     """Process the command line in a common way for all Tool Builder commands."""
@@ -96,7 +99,7 @@ class command_line:
     def __str__(self):
         def _dict(dd):
             s = ''
-            ddl = dd.keys()
+            ddl = list(dd.keys())
             ddl.sort()
             for d in ddl:
                 s += '  ' + d + ': ' + str(dd[d]) + '\n'
@@ -189,44 +192,44 @@ class command_line:
         self.help()
 
     def help(self):
-        print '%s: [options] [args]' % (self.command_name)
-        print 'RTEMS Source Builder, an RTEMS Tools Project (c) 2012-2015 Chris Johns'
-        print 'Options and arguments:'
-        print '--force                : Force the build to proceed'
-        print '--quiet                : Quiet output (not used)'
-        print '--trace                : Trace the execution'
-        print '--dry-run              : Do everything but actually run the build'
-        print '--warn-all             : Generate warnings'
-        print '--no-clean             : Do not clean up the build tree'
-        print '--always-clean         : Always clean the build tree, even with an error'
-        print '--keep-going           : Do not stop on an error.'
-        print '--regression           : Set --no-install, --keep-going and --always-clean'
-        print '--jobs                 : Run with specified number of jobs, default: num CPUs.'
-        print '--host                 : Set the host triplet'
-        print '--build                : Set the build triplet'
-        print '--target               : Set the target triplet'
-        print '--prefix path          : Tools build prefix, ie where they are installed'
-        print '--topdir path          : Top of the build tree, default is $PWD'
-        print '--configdir path       : Path to the configuration directory, default: ./config'
-        print '--builddir path        : Path to the build directory, default: ./build'
-        print '--sourcedir path       : Path to the source directory, default: ./source'
-        print '--tmppath path         : Path to the temp directory, default: ./tmp'
-        print '--macros file[,[file]  : Macro format files to load after the defaults'
-        print '--log file             : Log file where all build out is written too'
-        print '--url url[,url]        : URL to look for source'
-        print '--no-download          : Disable the source downloader'
-        print '--no-install           : Do not install the packages to the prefix'
-        print '--targetcflags flags   : List of C flags for the target code'
-        print '--targetcxxflags flags : List of C++ flags for the target code'
-        print '--libstdcxxflags flags : List of C++ flags to build the target libstdc++ code'
-        print '--with-<label>         : Add the --with-<label> to the build'
-        print '--without-<label>      : Add the --without-<label> to the build'
-        print '--rtems-tools path     : Path to an install RTEMS tool set'
-        print '--rtems-bsp arc/bsp    : Standard RTEMS architecure and BSP specifier'
-        print '--rtems-version ver    : The RTEMS major/minor version string'
+        print('%s: [options] [args]' % (self.command_name))
+        print('RTEMS Source Builder, an RTEMS Tools Project (c) 2012-2015 Chris Johns')
+        print('Options and arguments:')
+        print('--force                : Force the build to proceed')
+        print('--quiet                : Quiet output (not used)')
+        print('--trace                : Trace the execution')
+        print('--dry-run              : Do everything but actually run the build')
+        print('--warn-all             : Generate warnings')
+        print('--no-clean             : Do not clean up the build tree')
+        print('--always-clean         : Always clean the build tree, even with an error')
+        print('--keep-going           : Do not stop on an error.')
+        print('--regression           : Set --no-install, --keep-going and --always-clean')
+        print('--jobs                 : Run with specified number of jobs, default: num CPUs.')
+        print('--host                 : Set the host triplet')
+        print('--build                : Set the build triplet')
+        print('--target               : Set the target triplet')
+        print('--prefix path          : Tools build prefix, ie where they are installed')
+        print('--topdir path          : Top of the build tree, default is $PWD')
+        print('--configdir path       : Path to the configuration directory, default: ./config')
+        print('--builddir path        : Path to the build directory, default: ./build')
+        print('--sourcedir path       : Path to the source directory, default: ./source')
+        print('--tmppath path         : Path to the temp directory, default: ./tmp')
+        print('--macros file[,[file]  : Macro format files to load after the defaults')
+        print('--log file             : Log file where all build out is written too')
+        print('--url url[,url]        : URL to look for source')
+        print('--no-download          : Disable the source downloader')
+        print('--no-install           : Do not install the packages to the prefix')
+        print('--targetcflags flags   : List of C flags for the target code')
+        print('--targetcxxflags flags : List of C++ flags for the target code')
+        print('--libstdcxxflags flags : List of C++ flags to build the target libstdc++ code')
+        print('--with-<label>         : Add the --with-<label> to the build')
+        print('--without-<label>      : Add the --without-<label> to the build')
+        print('--rtems-tools path     : Path to an install RTEMS tool set')
+        print('--rtems-bsp arc/bsp    : Standard RTEMS architecure and BSP specifier')
+        print('--rtems-version ver    : The RTEMS major/minor version string')
         if self.optargs:
             for a in self.optargs:
-                print '%-22s : %s' % (a, self.optargs[a])
+                print('%-22s : %s' % (a, self.optargs[a]))
         raise error.exit()
 
     def process(self):
@@ -483,7 +486,7 @@ class command_line:
         #
         config = path.shell(config)
         if '*' in config or '?' in config:
-            print config
+            print(config)
             configdir = path.dirname(config)
             configbase = path.basename(config)
             if len(configbase) == 0:
@@ -562,6 +565,7 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc'):
     """
 
     global host_windows
+    global host_posix
 
     #
     # The path to this command.
@@ -586,12 +590,17 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc'):
             import windows
             overrides = windows.load()
             host_windows = True
+            host_posix = False
         except:
             raise error.general('failed to load Windows host support')
     elif os.name == 'posix':
         uname = os.uname()
         try:
-            if uname[0].startswith('CYGWIN_NT'):
+            if uname[0].startswith('MINGW64_NT'):
+                import windows
+                overrides = windows.load()
+                host_windows = True
+            elif uname[0].startswith('CYGWIN_NT'):
                 import windows
                 overrides = windows.load()
             elif uname[0] == 'Darwin':
@@ -642,13 +651,13 @@ def run(args):
         log.notice(str(_opts.defaults))
         log.notice('with-opt1: %r' % (_opts.with_arg('opt1')))
         log.notice('without-opt2: %r' % (_opts.with_arg('opt2')))
-    except error.general, gerr:
-        print gerr
+    except error.general as gerr:
+        print(gerr)
         sys.exit(1)
-    except error.internal, ierr:
-        print ierr
+    except error.internal as ierr:
+        print(ierr)
         sys.exit(1)
-    except error.exit, eerr:
+    except error.exit as eerr:
         pass
     except KeyboardInterrupt:
         _notice(opts, 'abort: user terminated')

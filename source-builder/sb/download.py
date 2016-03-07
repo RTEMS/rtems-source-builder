@@ -22,12 +22,20 @@
 # installed not to be package unless you run a packager around this.
 #
 
+from __future__ import print_function
+
 import hashlib
 import os
 import stat
 import sys
-import urllib2
-import urlparse
+try:
+    import urllib.request as urllib_request
+    import urllib.parse as urllib_parse
+    import urllib.error as urllib_error
+except ImportError:
+    import urllib as urllib_request
+    import urllib as urllib_parse
+    import urllib as urllib_error
 
 import cvs
 import error
@@ -49,11 +57,11 @@ def _do_download(opts):
 
 def _humanize_bytes(bytes, precision = 1):
     abbrevs = (
-        (1 << 50L, 'PB'),
-        (1 << 40L, 'TB'),
-        (1 << 30L, 'GB'),
-        (1 << 20L, 'MB'),
-        (1 << 10L, 'kB'),
+        (1 << 50, 'PB'),
+        (1 << 40, 'TB'),
+        (1 << 30, 'GB'),
+        (1 << 20, 'MB'),
+        (1 << 10, 'kB'),
         (1, ' bytes')
     )
     if bytes == 1:
@@ -82,7 +90,7 @@ def _hash_check(file_, absfile, macros, remove = True):
             hasher = hashlib.new(hash[0])
             _in = open(path.host(absfile), 'rb')
             hasher.update(_in.read())
-        except IOError, err:
+        except IOError as err:
             log.notice('hash: %s: read error: %s' % (file_, str(err)))
             failed = True
         except:
@@ -103,7 +111,7 @@ def _hash_check(file_, absfile, macros, remove = True):
             if path.exists(absfile):
                 try:
                     os.remove(path.host(absfile))
-                except IOError, err:
+                except IOError as err:
                     raise error.general('hash: %s: remove: %s' % (absfile, str(err)))
                 except:
                     raise error.general('hash: %s: remove error' % (file_))
@@ -317,7 +325,7 @@ def _http_downloader(url, local, config, opts):
     # Hack for GitHub.
     #
     if url.startswith('https://api.github.com'):
-        url = urlparse.urljoin(url, config.expand('tarball/%{version}'))
+        url = urllib_parse.urljoin(url, config.expand('tarball/%{version}'))
     dst = os.path.relpath(path.host(local))
     log.notice('download: %s -> %s' % (url, dst))
     failed = False
@@ -335,14 +343,15 @@ def _http_downloader(url, local, config, opts):
             try:
                 _in = None
                 _ssl_context = None
+                _urllib_url = url
                 try:
                     import ssl
                     _ssl_context = ssl._create_unverified_context()
-                    _in = urllib2.urlopen(url, context = _ssl_context)
+                    _in = urllib_request.urlopen(_urllib_url, context = _ssl_context)
                 except:
                     _ssl_context = None
                 if _ssl_context is None:
-                    _in = urllib2.urlopen(url)
+                    _in = urllib_request.urlopen(_urllib_url)
                 if url != _in.geturl():
                     log.notice(' redirect: %s' % (_in.geturl()))
                 _out = open(path.host(local), 'wb')
@@ -372,12 +381,12 @@ def _http_downloader(url, local, config, opts):
             except:
                 log.stdout_raw('\n')
                 raise
-        except IOError, err:
+        except IOError as err:
             log.notice('download: %s: error: %s' % (url, str(err)))
             if path.exists(local):
                 os.remove(path.host(local))
             failed = True
-        except ValueError, err:
+        except ValueError as err:
             log.notice('download: %s: error: %s' % (url, str(err)))
             if path.exists(local):
                 os.remove(path.host(local))
@@ -570,7 +579,7 @@ def get_file(url, local, opts, config):
         #
         # Split up the URL we are being asked to download.
         #
-        url_path = urlparse.urlsplit(url)[2]
+        url_path = urllib_parse.urlsplit(url)[2]
         slash = url_path.rfind('/')
         if slash < 0:
             url_file = url_path
@@ -580,7 +589,7 @@ def get_file(url, local, opts, config):
         for base in url_bases:
             if base[-1:] != '/':
                 base += '/'
-            next_url = urlparse.urljoin(base, url_file)
+            next_url = urllib_parse.urljoin(base, url_file)
             log.trace('url: %s' %(next_url))
             urls.append(next_url)
     urls += url.split()

@@ -1,6 +1,6 @@
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2010-2015 Chris Johns (chrisj@rtems.org)
+# Copyright 2010-2016 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -21,6 +21,8 @@
 # To release the RSB create a git archive and then add a suitable VERSION file
 # to the top directory.
 #
+
+from __future__ import print_function
 
 import sys
 
@@ -48,8 +50,8 @@ def _load_released_version_config():
     top = _top()
     for ver in [top, '..']:
         if path.exists(path.join(ver, 'VERSION')):
-            import ConfigParser
-            v = ConfigParser.SafeConfigParser()
+            import configparser
+            v = configparser.SafeConfigParser()
             v.read(path.join(ver, 'VERSION'))
             return v
     return None
@@ -107,4 +109,4 @@ def load_release_hashes(macros):
                 sources.hash((hs[0], hash[0], hs[1]), macros, hash_error)
 
 if __name__ == '__main__':
-    print 'Version: %s' % (str())
+    print('Version: %s' % (str()))

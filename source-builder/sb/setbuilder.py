@@ -1,6 +1,6 @@
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2010-2013 Chris Johns (chrisj@rtems.org)
+# Copyright 2010-2016 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -22,6 +22,8 @@
 # set lists the various tools. These are specific tool configurations.
 #
 
+from __future__ import print_function
+
 import copy
 import datetime
 import glob
@@ -41,10 +43,11 @@ try:
     import sources
     import version
 except KeyboardInterrupt:
-    print 'abort: user terminated'
+    print('abort: user terminated', file = sys.stderr)
     sys.exit(1)
 except:
-    print 'error: unknown application load error'
+    raise
+    print('error: unknown application load error', file = sys.stderr)
     sys.exit(1)
 
 class buildset:
@@ -225,7 +228,7 @@ class buildset:
         try:
             log.trace('_bset: %s: open: %s' % (self.bset, bsetname))
             bset = open(path.host(bsetname), 'r')
-        except IOError, err:
+        except IOError as err:
             raise error.general('error opening bset file: %s' % (bsetname))
 
         configs = []
@@ -363,7 +366,7 @@ class buildset:
                         builds += [b]
                     else:
                         raise error.general('invalid config type: %s' % (configs[s]))
-                except error.general, gerr:
+                except error.general as gerr:
                     have_errors = True
                     if b is not None:
                         if self.build_failure is None:
@@ -405,7 +408,7 @@ class buildset:
                         b.cleanup()
             for b in builds:
                 del b
-        except error.general, gerr:
+        except error.general as gerr:
             if not build_error:
                 log.stderr(str(gerr))
             raise
@@ -447,10 +450,10 @@ def list_bset_cfg_files(opts, configs):
         else:
             ext = '.bset'
         for p in configs['paths']:
-            print 'Examining: %s' % (os.path.relpath(p))
+            print('Examining: %s' % (os.path.relpath(p)))
         for c in configs['files']:
             if c.endswith(ext):
-                print '    %s' % (c)
+                print('    %s' % (c))
         return True
     return False
 
@@ -497,18 +500,18 @@ def run():
             c = 0
             for d in sorted(set(deps)):
                 c += 1
-                print 'dep[%d]: %s' % (c, d)
-    except error.general, gerr:
+                print('dep[%d]: %s' % (c, d))
+    except error.general as gerr:
         if not setbuilder_error:
             log.stderr(str(gerr))
         log.stderr('Build FAILED')
         ec = 1
-    except error.internal, ierr:
+    except error.internal as ierr:
         if not setbuilder_error:
             log.stderr(str(ierr))
         log.stderr('Internal Build FAILED')
         ec = 1
-    except error.exit, eerr:
+    except error.exit as eerr:
         pass
     except KeyboardInterrupt:
         log.notice('abort: user terminated')

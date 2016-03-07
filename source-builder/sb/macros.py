@@ -21,6 +21,8 @@
 # Macro tables.
 #
 
+from __future__ import print_function
+
 import re
 import os
 import string
@@ -41,7 +43,7 @@ class macros:
         def __iter__(self):
             return self
 
-        def next(self):
+        def __next__(self):
             if self.index < len(self.keys):
                 key = self.keys[self.index]
                 self.index += 1
@@ -50,6 +52,19 @@ class macros:
 
         def iterkeys(self):
             return self.keys
+
+    def _unicode_to_str(self, us):
+        try:
+            if type(us) == unicode:
+                return us.encode('ascii', 'replace')
+        except:
+            pass
+        try:
+            if type(us) == bytes:
+                return us.encode('ascii', 'replace')
+        except:
+            pass
+        return us
 
     def __init__(self, name = None, original = None, sbdir = '.'):
         self.files = []
@@ -124,7 +139,7 @@ class macros:
         return text
 
     def __iter__(self):
-        return macros.macro_iterator(self.keys())
+        return macros.macro_iterator(list(self.keys()))
 
     def __getitem__(self, key):
         macro = self.get(key)
@@ -133,14 +148,20 @@ class macros:
         return macro[2]
 
     def __setitem__(self, key, value):
+        key = self._unicode_to_str(key)
         if type(key) is not str:
             raise TypeError('bad key type (want str): %s' % (type(key)))
+        if type(value) is not tuple:
+            value = self._unicode_to_str(value)
         if type(value) is str:
             value = ('none', 'none', value)
         if type(value) is not tuple:
             raise TypeError('bad value type (want tuple): %s' % (type(value)))
         if len(value) != 3:
             raise TypeError('bad value tuple (len not 3): %d' % (len(value)))
+        value = (self._unicode_to_str(value[0]),
+                 self._unicode_to_str(value[1]),
+                 self._unicode_to_str(value[2]))
         if type(value[0]) is not str:
             raise TypeError('bad value tuple type field: %s' % (type(value[0])))
         if type(value[1]) is not str:
@@ -163,11 +184,11 @@ class macros:
         return self.has_key(key)
 
     def __len__(self):
-        return len(self.keys())
+        return len(list(self.keys()))
 
     def keys(self, globals = True):
         if globals:
-            keys = self.macros['global'].keys()
+            keys = list(self.macros['global'].keys())
         else:
             keys = []
         for rm in self.get_read_maps():
@@ -182,7 +203,7 @@ class macros:
     def has_key(self, key):
         if type(key) is not str:
             raise TypeError('bad key type (want str): %s' % (type(key)))
-        if self.key_filter(key) not in self.keys():
+        if self.key_filter(key) not in list(self.keys()):
             return False
         return True
 
@@ -195,7 +216,7 @@ class macros:
             self.macros.pop(_map, None)
 
     def maps(self):
-        return self.macros.keys()
+        return list(self.macros.keys())
 
     def map_keys(self, _map):
         if _map in self.macros:
@@ -226,7 +247,7 @@ class macros:
 
         trace_me = False
         if trace_me:
-            print '[[[[]]]] parsing macros'
+            print('[[[[]]]] parsing macros')
         macros = { 'global': {} }
         map = 'global'
         lc = 0
@@ -238,11 +259,12 @@ class macros:
             #print 'l:%s' % (l[:-1])
             if len(l) == 0:
                 continue
+            l = self._unicode_to_str(l)
             l_remaining = l
             for c in l:
                 if trace_me:
-                    print ']]]]]]]] c:%s(%d) s:%s t:"%s" m:%r M:%s' % \
-                        (c, ord(c), state, token, macro, map)
+                    print(']]]]]]]] c:%s(%d) s:%s t:"%s" m:%r M:%s' % \
+                        (c, ord(c), state, token, macro, map))
                 l_remaining = l_remaining[1:]
                 if c is '#' and not state.startswith('value'):
                     break
@@ -345,7 +367,10 @@ class macros:
                 else:
                     raise error.internal('bad state: %s' % (state))
                 if state is 'macro':
-                    macros[map][macro[0].lower()] = (macro[1], macro[2], macro[3])
+                    macros[map][self._unicode_to_str(macro[0].lower())] = \
+                                (self._unicode_to_str(macro[1]),
+                                 self._unicode_to_str(macro[2]),
+                                 self._unicode_to_str(macro[3]))
                     macro = []
                     token = ''
                     state = 'key'
@@ -365,7 +390,7 @@ class macros:
                     mc.close()
                     self.files += [n]
                     return
-                except IOError, err:
+                except IOError as err:
                     pass
         raise error.general('opening macro file: %s' % \
                                 (path.host(self.expand(name))))
@@ -481,22 +506,22 @@ class macros:
 if __name__ == "__main__":
     import copy
     import sys
-    m = macros(name = 'defaults.mc')
+    m = macros()
     d = copy.copy(m)
     m['test1'] = 'something'
-    if d.has_key('test1'):
-        print 'error: copy failed.'
+    if 'test1' in d:
+        print('error: copy failed.')
         sys.exit(1)
     m.parse("[test]\n" \
             "test1: none, undefine, ''\n" \
             "name:  none, override, 'pink'\n")
-    print 'set test:', m.set_read_map('test')
+    print('set test:', m.set_read_map('test'))
     if m['name'] != 'pink':
-        print 'error: override failed. name is %s' % (m['name'])
+        print('error: override failed. name is %s' % (m['name']))
         sys.exit(1)
-    if m.has_key('test1'):
-        print 'error: map undefine failed.'
+    if 'test1' in m:
+        print('error: map undefine failed.')
         sys.exit(1)
-    print 'unset test:', m.unset_read_map('test')
-    print m
-    print m.keys()
+    print('unset test:', m.unset_read_map('test'))
+    print(m)
+    print(list(m.keys()))

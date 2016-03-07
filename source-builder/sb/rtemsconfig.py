@@ -1,6 +1,6 @@
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2013 Chris Johns (chrisj@rtems.org)
+# Copyright 2013-2016 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -17,6 +17,8 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
+
+from __future__ import print_function
 
 import datetime
 import operator
@@ -46,7 +48,7 @@ def _grep(file, pattern):
         f = open(path.host(file), 'r')
         matches = [rege.match(l) != None for l in f.readlines()]
         f.close()
-    except IOError, err:
+    except IOError as err:
         raise error.general('error reading: %s' % (file))
     return True in matches
 
@@ -86,7 +88,7 @@ class command:
         try:
             cmd = [self.opts.defaults.expand(c) for c in self.cmd]
             self.output = subprocess.check_output(cmd, cwd = self.cwd)
-        except subprocess.CalledProcessError, cpe:
+        except subprocess.CalledProcessError as cpe:
             self.exit_code = cpe.returncode
             self.output = cpe.output
         self.end_time = datetime.datetime.now()
@@ -168,7 +170,7 @@ class bsp_config:
         return _keys
 
     def find(self, name):
-        _keys = self.keys()
+        _keys = list(self.keys())
         nl = name.lower()
         if nl in _keys and not nl in bsp_config.filter_out:
             return self.configs[_keys[nl]]
@@ -193,20 +195,20 @@ def run(args):
         if opts.get_arg('--list'):
             log.notice('RTEMS Source Builder - RTEMS Configuration, %s' % (version.str()))
             opts.log_info()
-            configs = bsp.keys()
+            configs = list(bsp.keys())
             for c in sorted(configs.keys()):
-                print c
+                print(c)
         else:
             for p in opts.params():
-                print bsp.find(p)
+                print(bsp.find(p))
 
-    except error.general, gerr:
-        print gerr
+    except error.general as gerr:
+        print(gerr)
         sys.exit(1)
-    except error.internal, ierr:
-        print ierr
+    except error.internal as ierr:
+        print(ierr)
         sys.exit(1)
-    except error.exit, eerr:
+    except error.exit as eerr:
         pass
     except KeyboardInterrupt:
         log.notice('abort: user terminated')

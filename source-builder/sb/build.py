@@ -22,6 +22,8 @@
 # installed not to be package unless you run a packager around this.
 #
 
+from __future__ import print_function
+
 import copy
 import getopt
 import glob
@@ -29,8 +31,6 @@ import os
 import shutil
 import stat
 import sys
-import urllib2
-import urlparse
 
 try:
     import check
@@ -45,10 +45,10 @@ try:
     import sources
     import version
 except KeyboardInterrupt:
-    print 'abort: user terminated'
+    print('abort: user terminated')
     sys.exit(1)
 except:
-    print 'error: unknown application load error'
+    print('error: unknown application load error')
     sys.exit(1)
 
 class script:
@@ -81,7 +81,7 @@ class script:
             os.chmod(path.host(name), stat.S_IRWXU | \
                          stat.S_IRGRP | stat.S_IXGRP | \
                          stat.S_IROTH | stat.S_IXOTH)
-        except IOError, err:
+        except IOError as err:
             raise error.general('creating script: ' + name)
         except:
             if s is not None:
@@ -128,11 +128,11 @@ class build:
             self.config = config.file(name, opts, self.macros)
             self.script = script()
             self.macros['buildname'] = self._name_(self.macros['name'])
-        except error.general, gerr:
+        except error.general as gerr:
             log.notice(str(gerr))
             log.stderr('Build FAILED')
             raise
-        except error.internal, ierr:
+        except error.internal as ierr:
             log.notice(str(ierr))
             log.stderr('Internal Build FAILED')
             raise
@@ -232,7 +232,7 @@ class build:
         args = args[1:]
         try:
             opts, args = getopt.getopt(args[1:], 'qDcn:ba')
-        except getopt.GetoptError, ge:
+        except getopt.GetoptError as ge:
             raise error.general('source setup error: %s' % str(ge))
         quiet = False
         unpack_before_chdir = True
@@ -473,12 +473,12 @@ class build:
                     self.script.write(sn)
                     log.notice('building: %s%s' % (cxc_label, name))
                     self.run(sn)
-            except error.general, gerr:
+            except error.general as gerr:
                 log.notice(str(gerr))
                 log.stderr('Build FAILED')
                 self._generate_report_('Build: %s' % (gerr))
                 raise
-            except error.internal, ierr:
+            except error.internal as ierr:
                 log.notice(str(ierr))
                 log.stderr('Internal Build FAILED')
                 self._generate_report_('Build: %s' % (ierr))
@@ -546,22 +546,22 @@ def run(args):
         if opts.get_arg('--list-configs'):
             configs = get_configs(opts)
             for p in configs['paths']:
-                print 'Examining: %s' % (os.path.relpath(p))
+                print('Examining: %s' % (os.path.relpath(p)))
                 for c in configs['files']:
                     if c.endswith('.cfg'):
-                        print '    %s' % (c)
+                        print('    %s' % (c))
         else:
             for config_file in opts.config_files():
                 b = build(config_file, True, opts)
                 b.make()
                 b = None
-    except error.general, gerr:
+    except error.general as gerr:
         log.stderr('Build FAILED')
         ec = 1
-    except error.internal, ierr:
+    except error.internal as ierr:
         log.stderr('Internal Build FAILED')
         ec = 1
-    except error.exit, eerr:
+    except error.exit as eerr:
         pass
     except KeyboardInterrupt:
         log.notice('abort: user terminated')

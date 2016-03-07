@@ -30,7 +30,7 @@ import execute
 def load():
     # Default to the native Windows Python.
     uname = 'win32'
-    if os.environ.has_key('PROCESSOR_ARCHITECTURE'):
+    if 'PROCESSOR_ARCHITECTURE' in os.environ:
         if os.environ['PROCESSOR_ARCHITECTURE'] == 'AMD64':
             hosttype = 'x86_64'
             machsize = '64'
@@ -41,30 +41,30 @@ def load():
         hosttype = 'x86_64'
         machsize = '32'
 
-    # See if this is actually Cygwin Python
-    if os.name == 'posix':
-        try:
-            uname = os.uname()
-            hosttype = uname[4]
-            uname = uname[0]
-            if uname.startswith('CYGWIN'):
-                uname = 'cygwin'
-                host_triple = hosttype + '-pc-' + uname
-                build_triple = hosttype + '-pc-' + uname
-            else:
-                raise error.general('invalid POSIX python')
-        except:
-            pass
-    else:
-        host_triple = '%s-w%s-mingw32' % (hosttype, machsize)
-        build_triple = '%s-w%s-mingw32' % (hosttype, machsize)
+    uname = 'mingw32'
+    machine = 'w%s' % (machsize)
 
-    if os.environ.has_key('NUMBER_OF_PROCESSORS'):
+    # See if this is actually MSYS2/Cygwin Python
+    if os.name == 'posix':
+        _uname = os.uname()
+        if _uname[0].startswith('MINGW'):
+            pass
+        elif _uname[0].startswith('CYGWIN'):
+            hosttype = _uname[4]
+            uname = 'cygwin'
+            machine = 'pc'
+        else:
+            raise error.general('invalid POSIX python for Windows')
+
+    host_triple = '%s-%s-%s' % (hosttype, machine, uname)
+    build_triple = '%s-%s-%s' % (hosttype, machine, uname)
+
+    if 'NUMBER_OF_PROCESSORS' in os.environ:
         ncpus = os.environ['NUMBER_OF_PROCESSORS']
     else:
         ncpus = '1'
 
-    if os.environ.has_key('MSYSTEM'):
+    if 'MSYSTEM' in os.environ:
         os.environ.pop('NUMBER_OF_PROCESSORS')
 
     version = uname[2]

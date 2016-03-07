@@ -1,6 +1,6 @@
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2010-2013 Chris Johns (chrisj@rtems.org)
+# Copyright 2010-2016 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -20,6 +20,8 @@
 #
 # Provide some basic access to the git command.
 #
+
+from __future__ import print_function
 
 import os
 
@@ -201,10 +203,10 @@ if __name__ == '__main__':
     import sys
     opts = options.load(sys.argv)
     g = repo('.', opts)
-    print g.git_version()
-    print g.valid()
-    print g.status()
-    print g.clean()
-    print g.remotes()
-    print g.email()
-    print g.head()
+    print(g.git_version())
+    print(g.valid())
+    print(g.status())
+    print(g.clean())
+    print(g.remotes())
+    print(g.email())
+    print(g.head())
