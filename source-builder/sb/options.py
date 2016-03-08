@@ -618,6 +618,8 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc'):
             elif uname[0] == 'SunOS':
                 import solaris
                 overrides = solaris.load()
+        except error.general as ge:
+            raise error.general('failed to load %s host support: %s' % (uname[0], ge))
         except:
             raise error.general('failed to load %s host support' % (uname[0]))
     else:
