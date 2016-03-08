@@ -24,6 +24,7 @@
 import error
 import pprint
 import os
+import sys
 
 import execute
 
@@ -125,6 +126,56 @@ def load():
         '_buildshell':       ('exe',     'required', '%{__sh}'),
         '___setup_shell':    ('exe',     'required', '%{__sh}')
         }
+
+    #
+    # Locate a suitable python to use with GDB. Python Windows is more
+    # complicated than most hosts. There are 7 possible pythons on Windows and
+    # we can use only 4 which are split on machine size. The types are:
+    #
+    #  1. Python27 - python.org, cannot use cause built with MSVC.
+    #  2. Python35 - python.org, cannot use cause built with MSVC.
+    #  3. MSYS/Python - MSYS2, cannot use cause it is a MSYS executable.
+    #  4. W64/Python2 - Ok if machsize is 64
+    #  5. W64/Python3 - gdb-7.9 needs python2.
+    #  6. W64/Python2 - Ok if machsize is 32
+    #  7. W64/Python3 - gdb-7.9 needs python2.
+    #
+    if sys.platform == 'win32' and 'MSC' in sys.version:
+        raise error.general('python.org Pythons are built with MSC and cannot be linked with GDB')
+
+    #
+    # Search the MSYS2 install tree for a suitable python.
+    #
+    if sys.platform == 'msys':
+        e = execute.capture_execution()
+        exit_code, proc, output = e.shell("sh -c mount")
+        if exit_code != 0:
+            raise error.general('cannot get MSYS mount points')
+        install_point = None
+        for l in output.split('\n'):
+            if ' on / ' in l:
+                install_point = l.split()[0]
+                break
+        if install_point is None:
+            raise error.general('cannot locate MSYS root mount point')
+        if install_point[1] != ':':
+            raise error.general('invalid MSYS root mount point: %s' % install_point)
+        install_point = '/%s%s' % (install_point[0], install_point[2:])
+        bin = '/mingw%s/bin' % (machsize)
+        bin_list = os.listdir(bin)
+        exe = None
+        for python in ['python2.exe']:
+            for f in bin_list:
+                if f == python:
+                    exe = install_point + os.path.join(bin, f)
+                    break;
+            if exe is not None:
+                break
+        if exe is None:
+            raise error.general('no valid python found; you need a mingw%s python2 installed' % (machsize))
+        defines['with_python_path'] = exe
+
+
     return defines
 
 if __name__ == '__main__':
