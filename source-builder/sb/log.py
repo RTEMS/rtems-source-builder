@@ -62,7 +62,7 @@ def _output(text = os.linesep, log = None):
         sys.stdout.flush()
 
 def stdout_raw(text = os.linesep):
-    print(text, end=' ')
+    print(text, end = '')
     sys.stdout.flush()
 
 def stderr(text = os.linesep, log = None):

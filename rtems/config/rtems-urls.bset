@@ -13,8 +13,3 @@
 %define rtems_gcc_patches      %{rtems_git_tools}/gcc
 %define rtems_newlib_patches   %{rtems_git_tools}/newlib
 %define rtems_gdb_patches      %{rtems_git_tools}/gdb
-
-#
-# Releases paths on the FTP server.
-#
-%define rtems_release_url https://ftp.rtems.org/pub/rtems/releases/%{rtems_version}

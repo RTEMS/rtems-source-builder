@@ -336,7 +336,7 @@ def _http_downloader(url, local, config, opts):
         _chunk = None
         _last_percent = 200.0
         _last_msg = ''
-        _wipe_output = False
+        _have_status_output = False
         try:
             try:
                 _in = None
@@ -367,17 +367,16 @@ def _http_downloader(url, local, config, opts):
                         extras = (len(_last_msg) - len(_msg))
                         log.stdout_raw('%s%s' % (_msg, ' ' * extras + '\b' * extras))
                         _last_msg = _msg
+                        _have_status_output = True
                     _chunk = _in.read(_chunk_size)
                     if not _chunk:
                         break
                     _out.write(_chunk)
                     _have += len(_chunk)
-                if _wipe_output:
-                    log.stdout_raw('\r%s\r' % (' ' * len(_last_msg)))
-                else:
-                    log.stdout_raw('\n')
+                log.stdout_raw('\n\r')
             except:
-                log.stdout_raw('\n')
+                if _have_status_output:
+                    log.stdout_raw('\n\r')
                 raise
         except IOError as err:
             log.notice('download: %s: error: %s' % (url, str(err)))
@@ -557,11 +556,26 @@ def get_file(url, local, opts, config):
         raise error.general('source not found: %s' % (path.host(local)))
     #
     # Check if a URL has been provided on the command line. If the package is
-    # release push to the start the RTEMS URL.
+    # released push to the start the RTEMS URL unless overrided by the command
+    # line option --with-release-url. The variant --without-release-url can
+    # override the released check.
     #
     url_bases = opts.urls()
+    rtems_release_url_value = config.macros.expand('%{rtems_release_url}/%{rsb_version}/sources')
+    rtems_release_url = None
     if version.released():
-        rtems_release_url = config.macros.expand('%{rtems_release_url}/%{rsb_version}/sources')
+        rtems_release_url = rtems_release_url_value
+    with_rel_url = opts.with_arg('release-url')
+    if with_rel_url[0] == 'with_release-url':
+        if with_rel_url[1] == 'yes':
+            rtems_release_url = rtems_release_url_value
+        elif with_rel_url[1] == 'no':
+            pass
+        else:
+            rtems_release_url = with_rel_url[1]
+    elif with_rel_url[0] == 'without_release-url' and with_rel_url[1] == 'no':
+        rtems_release_url = rtems_release_url_value
+    if rtems_release_url is not None:
         log.trace('release url: %s' % (rtems_release_url))
         #
         # If the URL being fetched is under the release path do not add the
