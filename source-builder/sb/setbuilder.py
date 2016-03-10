@@ -46,7 +46,6 @@ except KeyboardInterrupt:
     print('abort: user terminated', file = sys.stderr)
     sys.exit(1)
 except:
-    raise
     print('error: unknown application load error', file = sys.stderr)
     sys.exit(1)
 
