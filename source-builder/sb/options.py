@@ -460,7 +460,9 @@ class command_line:
             return None
         return self.parse_args(arg)
 
-    def with_arg(self, label):
+    def with_arg(self, label, default = 'not-found'):
+        # the default if there is no option for without.
+        result = default
         for pre in ['with', 'without']:
             arg_str = '--%s-%s' % (pre, label)
             arg_label = '%s_%s' % (pre, label)
@@ -471,10 +473,6 @@ class command_line:
                 else:
                     result = arg[1]
                 break
-            if pre == 'with':
-                result = 'yes'
-            else:
-                result = 'no'
         return [arg_label, result]
 
     def get_config_files(self, config):
