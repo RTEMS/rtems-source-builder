@@ -33,7 +33,7 @@ try:
     import urllib.parse as urllib_parse
 except ImportError:
     import urllib as urllib_request
-    import urparse as urllib_parse
+    import urlparse as urllib_parse
 
 import cvs
 import error
