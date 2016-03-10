@@ -24,8 +24,6 @@ import sys, os
 base = os.path.dirname(sys.argv[0])
 sys.path.insert(0, base + '/sb')
 
-import setbuilder
-
 try:
     import setbuilder
     setbuilder.run()

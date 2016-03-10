@@ -50,7 +50,10 @@ def _load_released_version_config():
     top = _top()
     for ver in [top, '..']:
         if path.exists(path.join(ver, 'VERSION')):
-            import configparser
+            try:
+                import configparser
+            except ImportError:
+                import ConfigParser as configparser
             v = configparser.SafeConfigParser()
             v.read(path.join(ver, 'VERSION'))
             return v
