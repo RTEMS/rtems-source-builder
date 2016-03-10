@@ -573,8 +573,8 @@ def get_file(url, local, opts, config):
             pass
         else:
             rtems_release_url = with_rel_url[1]
-    elif with_rel_url[0] == 'without_release-url' and with_rel_url[1] == 'no':
-        rtems_release_url = rtems_release_url_value
+    elif with_rel_url[0] == 'without_release-url' and with_rel_url[1] == 'yes':
+        rtems_release_url = None
     if rtems_release_url is not None:
         log.trace('release url: %s' % (rtems_release_url))
         #
