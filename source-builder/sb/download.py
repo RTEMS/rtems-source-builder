@@ -31,11 +31,9 @@ import sys
 try:
     import urllib.request as urllib_request
     import urllib.parse as urllib_parse
-    import urllib.error as urllib_error
 except ImportError:
     import urllib as urllib_request
-    import urllib as urllib_parse
-    import urllib as urllib_error
+    import urparse as urllib_parse
 
 import cvs
 import error
