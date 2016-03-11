@@ -242,7 +242,7 @@ class buildset:
                 log.trace('_bset: %s: %03d: %s' % (self.bset, lc, l))
                 ls = l.split()
                 if ls[0][-1] == ':' and ls[0][:-1] == 'package':
-                    self.bset_pkg = self.macros.expand(ls[1].strip())
+                    self.bset_pkg = ls[1].strip()
                     self.macros['package'] = self.bset_pkg
                 elif ls[0][0] == '%':
                     def err(msg):
