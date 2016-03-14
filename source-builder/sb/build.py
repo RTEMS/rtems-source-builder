@@ -112,7 +112,8 @@ class build:
 
     def _generate_report_(self, header, footer = None):
         label, result = self.opts.with_arg('error-report')
-        if label.startswith('without') and result == 'no':
+        if (label.startswith('without') and result != 'yes') or \
+           (label.startswith('with') and result != 'no'):
             ereport.generate('rsb-report-%s.txt' % self.macros['name'],
                              self.opts, header, footer)
 
