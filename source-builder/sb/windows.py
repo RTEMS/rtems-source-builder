@@ -96,7 +96,7 @@ def load():
         '__chmod':           ('exe',     'required', 'chmod'),
         '__chown':           ('exe',     'required', 'chown'),
         '__cp':              ('exe',     'required', 'cp'),
-        '__cvs':             ('exe',     'required', 'cvs'),
+        '__cvs':             ('exe',     'optional', 'cvs'),
         '__cxx':             ('exe',     'required', 'g++'),
         '__flex':            ('exe',     'required', 'flex'),
         '__git':             ('exe',     'required', 'git'),

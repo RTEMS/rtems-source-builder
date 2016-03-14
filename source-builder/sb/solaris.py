@@ -61,7 +61,7 @@ def load():
         '__bison':          ('exe',     'required', '/usr/bin/bison'),
         '__git':            ('exe',     'required', '/usr/bin/git'),
         '__svn':            ('exe',     'required', '/usr/bin/svn'),
-        '__cvs':            ('exe',     'required', '/usr/bin/cvs'),
+        '__cvs':            ('exe',     'optional', '/usr/bin/cvs'),
         '__xz':             ('exe',     'optional', '/usr/bin/xz'),
         '__make':           ('exe',     'required', 'gmake'),
         '__patch_opts':     ('none',     'none',    '-E'),
