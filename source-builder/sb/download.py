@@ -566,6 +566,9 @@ def get_file(url, local, opts, config):
     if version.released():
         rtems_release_url = rtems_release_url_value
     with_rel_url = opts.with_arg('release-url')
+    if with_rel_url[1] == 'not-found':
+        if config.defined('without_release_url'):
+            with_rel_url = ('without_release-url', 'yes')
     if with_rel_url[0] == 'with_release-url':
         if with_rel_url[1] == 'yes':
             rtems_release_url = rtems_release_url_value
