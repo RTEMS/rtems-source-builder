@@ -87,8 +87,9 @@ def log(s, lf = True):
             print(s, file = out)
         else:
             if out != sys.stdout and trace_stdout:
-                print(s, end = '', flush = True)
-            print(out, s, end = '', flush = True)
+                print(s, end = '')
+                sys.stdout.flush()
+            print(s, end = '', file = out)
 
 def run(argv):
 

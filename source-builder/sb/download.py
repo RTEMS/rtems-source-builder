@@ -561,9 +561,13 @@ def get_file(url, local, opts, config):
     # override the released check.
     #
     url_bases = opts.urls()
-    rtems_release_url_value = config.macros.expand('%{rtems_release_url}/%{rsb_version}/sources')
+    try:
+        rtems_release_url_value = config.macros.expand('%{rtems_release_url}/%{rsb_version}/sources')
+    except:
+        rtems_release_url_value = None
+        log.output('RTEMS release URL could not be expanded')
     rtems_release_url = None
-    if version.released():
+    if version.released() and rtems_release_url_value:
         rtems_release_url = rtems_release_url_value
     with_rel_url = opts.with_arg('release-url')
     if with_rel_url[1] == 'not-found':
@@ -571,6 +575,8 @@ def get_file(url, local, opts, config):
             with_rel_url = ('without_release-url', 'yes')
     if with_rel_url[0] == 'with_release-url':
         if with_rel_url[1] == 'yes':
+            if rtems_release_url_value is None:
+                raise error.general('no valid release URL')
             rtems_release_url = rtems_release_url_value
         elif with_rel_url[1] == 'no':
             pass
