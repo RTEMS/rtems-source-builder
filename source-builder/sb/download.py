@@ -32,7 +32,7 @@ try:
     import urllib.request as urllib_request
     import urllib.parse as urllib_parse
 except ImportError:
-    import urllib as urllib_request
+    import urllib2 as urllib_request
     import urlparse as urllib_parse
 
 import cvs
@@ -68,6 +68,13 @@ def _humanize_bytes(bytes, precision = 1):
         if bytes >= factor:
             break
     return '%.*f%s' % (precision, float(bytes) / factor, suffix)
+
+def _sensible_url(url, used = 0):
+    space = 150 - used - 15
+    if len(url) > space:
+        size = (space - 5) / 2
+        url = url[:size] + ' ... ' + url[-size:]
+    return url
 
 def _hash_check(file_, absfile, macros, remove = True):
     failed = False
@@ -325,7 +332,8 @@ def _http_downloader(url, local, config, opts):
     if url.startswith('https://api.github.com'):
         url = urllib_parse.urljoin(url, config.expand('tarball/%{version}'))
     dst = os.path.relpath(path.host(local))
-    log.notice('download: %s -> %s' % (url, dst))
+    log.output('download: %s -> %s' % (url, dst))
+    log.notice('download: %s -> %s' % (_sensible_url(url, len(dst)), dst))
     failed = False
     if _do_download(opts):
         _in = None
@@ -337,24 +345,29 @@ def _http_downloader(url, local, config, opts):
         _last_percent = 200.0
         _last_msg = ''
         _have_status_output = False
+        _url = url
         try:
             try:
                 _in = None
                 _ssl_context = None
-                _urllib_url = url
+                # See #2656
+                _req = urllib_request.Request(_url)
+                _req.add_header('User-Agent', 'Wget/1.16.3 (freebsd10.1)')
                 try:
                     import ssl
                     _ssl_context = ssl._create_unverified_context()
-                    _in = urllib_request.urlopen(_urllib_url, context = _ssl_context)
+                    _in = urllib_request.urlopen(_req, context = _ssl_context)
                 except:
                     _ssl_context = None
                 if _ssl_context is None:
-                    _in = urllib_request.urlopen(_urllib_url)
-                if url != _in.geturl():
-                    log.notice(' redirect: %s' % (_in.geturl()))
+                    _in = urllib_request.urlopen(_req)
+                if _url != _in.geturl():
+                    _url = _in.geturl()
+                    log.output(' redirect: %s' % (_url))
+                    log.notice(' redirect: %s' % (_sensible_url(_url)))
                 _out = open(path.host(local), 'wb')
                 try:
-                    _length = int(_in.info().getheader('Content-Length').strip())
+                    _length = int(_in.info()['Content-Length'].strip())
                 except:
                     pass
                 while True:
@@ -379,17 +392,17 @@ def _http_downloader(url, local, config, opts):
                     log.stdout_raw('\n\r')
                 raise
         except IOError as err:
-            log.notice('download: %s: error: %s' % (url, str(err)))
+            log.notice('download: %s: error: %s' % (_sensible_url(_url), str(err)))
             if path.exists(local):
                 os.remove(path.host(local))
             failed = True
         except ValueError as err:
-            log.notice('download: %s: error: %s' % (url, str(err)))
+            log.notice('download: %s: error: %s' % (_sensible_url(_url), str(err)))
             if path.exists(local):
                 os.remove(path.host(local))
             failed = True
         except:
-            msg = 'download: %s: error' % (url)
+            msg = 'download: %s: error' % (_sensible_url(_url))
             log.stderr(msg)
             log.notice(msg)
             if _in is not None:
