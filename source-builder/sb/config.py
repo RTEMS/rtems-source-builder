@@ -420,6 +420,10 @@ class file:
         return line
 
     def _pkgconfig_check(self, test):
+        # Hack to by pass pkgconfig checks when just wanting to download the
+        # source.
+        if self.macros['_dry_run'] == '1' and self.macros['with_download'] == '1':
+            return '0'
         ok = False
         if type(test) == str:
             test = test.split()
