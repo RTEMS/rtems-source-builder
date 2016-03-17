@@ -574,6 +574,14 @@ class file:
                         s = s.replace(m, '0')
                     expanded = True
                     mn = None
+                elif m.startswith('%{!defined'):
+                    n = self._label(m[10:-1].strip())
+                    if n in self.macros:
+                        s = s.replace(m, '0')
+                    else:
+                        s = s.replace(m, '1')
+                    expanded = True
+                    mn = None
                 elif m.startswith('%{path '):
                     pl = m[7:-1].strip().split()
                     ok = False
@@ -752,13 +760,45 @@ class file:
         def add(x, y):
             return x + ' ' + str(y)
 
-        istrue = False
-        if isvalid:
-            if len(ls) == 2:
-                s = ls[1]
-            else:
-                s = (ls[1] + ' ' + ls[2])
-            ifls = s.split()
+        if len(ls) == 1:
+            self._error('invalid if expression: ' + reduce(add, ls, ''))
+
+        cistrue = True # compound istrue
+        sls = reduce(add, ls[1:], '').split()
+        cls = sls
+
+        while len(cls) > 0 and isvalid:
+
+            join_op = 'none'
+
+            if cls[0] == '||' or cls[0] == '&&':
+                if cls[0] == '||':
+                    join_op = 'or'
+                elif cls[0] == '&&':
+                    join_op = 'and'
+                cls = cls[1:]
+            ori = 0
+            andi = 0
+            i = len(cls)
+            if '||' in cls:
+                ori = cls.index('||')
+            if '&&' in cls:
+                andi = cls.index('&&')
+            if ori > 0 or andi > 0:
+                if ori < andi:
+                    i = ori
+                else:
+                    i = andi
+                if ori == 0:
+                    i = andi
+            ls = cls[:i]
+            if len(ls) == 0:
+                self._error('invalid if expression: ' + reduce(add, sls, ''))
+            cls = cls[i:]
+
+            istrue = False
+
+            ifls = ls
             if len(ifls) == 1:
                 #
                 # Check if '%if %{x} == %{nil}' has both parts as nothing
@@ -835,10 +875,22 @@ class file:
                         istrue = False
                 else:
                     self._error('invalid %if operator: ' + reduce(add, ls, ''))
-            if invert:
-                istrue = not istrue
-            log.trace('config: %s: _if:  %s %s' % (self.name, ifls, str(istrue)))
-        return self._ifs(config, ls, '%if', istrue, isvalid, dir, info)
+
+            if join_op == 'or':
+                if istrue:
+                    cistrue = True
+            elif join_op == 'and':
+                if not istrue:
+                    cistrue = False
+            else:
+                cistrue = istrue
+
+            log.trace('config: %s: _if:  %s %s %s %s' % (self.name, ifls, str(cistrue),
+                                                         join_op, str(istrue)))
+
+        if invert:
+            cistrue = not cistrue
+        return self._ifs(config, ls, '%if', cistrue, isvalid, dir, info)
 
     def _ifos(self, config, ls, isvalid, dir, info):
         isos = False
@@ -922,6 +974,9 @@ class file:
                 elif ls[0] == '%error':
                     if isvalid:
                         return ('data', ['%%error %s' % (self._name_line_msg(l[7:]))])
+                elif ls[0] == '%log':
+                    if isvalid:
+                        return ('data', ['%%log %s' % (self._name_line_msg(l[4:]))])
                 elif ls[0] == '%warning':
                     if isvalid:
                         return ('data', ['%%warning %s' % (self._name_line_msg(l[9:]))])
@@ -1019,9 +1074,11 @@ class file:
             if l.startswith('%error'):
                 l = self._expand(l)
                 raise error.general('config error: %s' % (l[7:]))
+            elif l.startswith('%log'):
+                l = self._expand(l)
+                log.output(l[4:])
             elif l.startswith('%warning'):
                 l = self._expand(l)
-                log.stderr('warning: %s' % (l[9:]))
                 log.warning(l[9:])
             if not directive:
                 l = self._expand(l)

@@ -60,6 +60,8 @@ class buildset:
             self.macros = copy.copy(opts.defaults)
         else:
             self.macros = copy.copy(macros)
+        log.trace('_bset: %s: macro defaults' % (bset))
+        log.trace(str(self.macros))
         self.bset = bset
         _target = self.macros.expand('%{_target}')
         if len(_target):

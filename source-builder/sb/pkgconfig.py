@@ -214,6 +214,7 @@ class package(object):
         if prefix:
             self._log('prefix: %s' % (prefix))
             if type(prefix) is str:
+                self.prefix = []
                 for p in prefix.split(os.pathsep):
                     self.prefix += [path.shell(p)]
             elif type(prefix) is list:

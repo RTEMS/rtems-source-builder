@@ -132,6 +132,7 @@ def host_setup(opts):
 
     sane = True
 
+    log.trace('--- check host set up : start"')
     for d in list(opts.defaults.keys()):
         try:
             (test, constraint, value) = opts.defaults.get(d)
@@ -152,6 +153,7 @@ def host_setup(opts):
             log.trace('%c %15s: %r -> "%s"' % (tag, d, opts.defaults.get(d), value))
             if sane and not ok:
                 sane = False
+    log.trace('--- check host set up : end"')
 
     return sane
 
