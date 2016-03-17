@@ -111,5 +111,8 @@ def load_release_hashes(macros):
                     raise error.general('invalid release hash in VERSION')
                 sources.hash((hs[0], hash[0], hs[1]), macros, hash_error)
 
+def version():
+    return _version
+
 if __name__ == '__main__':
     print('Version: %s' % (str()))

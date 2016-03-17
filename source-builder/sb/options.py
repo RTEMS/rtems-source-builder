@@ -254,6 +254,13 @@ class command_line:
                     else:
                         value = '='.join(los[1:])
                     long_opt[1](lo, long_opt[0], value)
+                else:
+                    if a.startswith('--with'):
+                        if len(los) != 1:
+                            value = los[1]
+                        else:
+                            value = '1'
+                        self.defaults[los[0][2:].replace('-', '_').lower()] = ('none', 'none', value)
             else:
                 self.opts['params'].append(a)
             arg += 1
@@ -548,7 +555,7 @@ class command_line:
                 raise error.general('invalid --rtems-bsp option')
             rtems_version = self.parse_args('--rtems-version')
             if rtems_version is None:
-                rtems_version = '%d.%d' % (version.major, version.minor)
+                rtems_version = version.version()
             else:
                 rtems_version = rtems_version[1]
             self.args.append('--target=%s-rtems%s' % (ab[0], rtems_version))
