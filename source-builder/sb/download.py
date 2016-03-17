@@ -70,9 +70,12 @@ def _humanize_bytes(bytes, precision = 1):
     return '%.*f%s' % (precision, float(bytes) / factor, suffix)
 
 def _sensible_url(url, used = 0):
-    space = 150 - used - 15
+    if used < 140:
+        space = 150 - used - 15
+    else:
+        space = 20
     if len(url) > space:
-        size = (space - 5) / 2
+        size = int((space - 5) / 2)
         url = url[:size] + ' ... ' + url[-size:]
     return url
 
