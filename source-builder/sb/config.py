@@ -781,20 +781,26 @@ class file:
                 elif cls[0] == '&&':
                     join_op = 'and'
                 cls = cls[1:]
+                log.trace('config: %s: _if: joining: %s' % (self.name, join_op))
             ori = 0
             andi = 0
             i = len(cls)
             if '||' in cls:
                 ori = cls.index('||')
+                log.trace('config: %s: _if: OR found at %i' % (self.name, ori))
             if '&&' in cls:
                 andi = cls.index('&&')
+                log.trace('config: %s: _if: AND found at %i' % (self.name, andi))
             if ori > 0 or andi > 0:
-                if ori < andi:
+                if ori == 0:
+                    i = andii
+                elif andi == 0:
                     i = ori
+                elif ori < andi:
+                    i = andi
                 else:
                     i = andi
-                if ori == 0:
-                    i = andi
+                log.trace('config: %s: _if: next OP found at %i' % (self.name, i))
             ls = cls[:i]
             if len(ls) == 0:
                 self._error('invalid if expression: ' + reduce(add, sls, ''))
