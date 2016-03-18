@@ -70,13 +70,10 @@ def _humanize_bytes(bytes, precision = 1):
     return '%.*f%s' % (precision, float(bytes) / factor, suffix)
 
 def _sensible_url(url, used = 0):
-    if used < 140:
-        space = 150 - used - 15
-    else:
-        space = 20
+    space = 200
     if len(url) > space:
-        size = int((space - 5) / 2)
-        url = url[:size] + ' ... ' + url[-size:]
+        size = int(space - 14)
+        url = url[:size] + '...<see log>'
     return url
 
 def _hash_check(file_, absfile, macros, remove = True):
