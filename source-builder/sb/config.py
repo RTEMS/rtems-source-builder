@@ -808,7 +808,9 @@ class file:
 
             istrue = False
 
+            s = ' '.join(ls)
             ifls = ls
+
             if len(ifls) == 1:
                 #
                 # Check if '%if %{x} == %{nil}' has both parts as nothing
