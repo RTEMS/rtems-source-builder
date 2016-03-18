@@ -793,7 +793,7 @@ class file:
                 log.trace('config: %s: _if: AND found at %i' % (self.name, andi))
             if ori > 0 or andi > 0:
                 if ori == 0:
-                    i = andii
+                    i = andi
                 elif andi == 0:
                     i = ori
                 elif ori < andi:
