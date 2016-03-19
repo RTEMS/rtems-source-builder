@@ -221,12 +221,11 @@ class package:
 class file:
     """Parse a config file."""
 
-    _directive = [ '%description',
+    _directive = [ '%include',
+                   '%description',
                    '%prep',
                    '%build',
                    '%clean',
-                   '%install',
-                   '%include',
                    '%install',
                    '%testing' ]
 
@@ -276,6 +275,7 @@ class file:
         self._packages = {}
         self.in_error = False
         self.lc = 0
+        self.if_depth = 0
         self.conditionals = {}
         self._packages = {}
         self.package = 'main'
@@ -680,7 +680,8 @@ class file:
         else:
             if ls[1] == 'select':
                 self.macros.lock_read_map()
-                log.trace('config: %s: _disable_select: %s' % (self.name, ls[1]))
+                log.trace('config: %s: %3d: _disable_select: %s' % (self.name, self.lc,
+                                                                     ls[1]))
             else:
                 log.warning('invalid disable statement: %s' % (ls[1]))
 
@@ -689,8 +690,9 @@ class file:
             log.warning('invalid select statement')
         else:
             r = self.macros.set_read_map(ls[1])
-            log.trace('config: %s: _select: %s %s %r' % \
-                          (self.name, r, ls[1], self.macros.maps()))
+            log.trace('config: %s: %3d: _select: %s %s %r' % \
+                          (self.name, self.lc,
+                           r, ls[1], self.macros.maps()))
 
     def _sources(self, ls):
         return sources.process(ls[0][1:], ls[1:], self.macros, self._error)
@@ -727,6 +729,9 @@ class file:
                 del self.macros[mn]
 
     def _ifs(self, config, ls, label, iftrue, isvalid, dir, info):
+        log.trace('config: %s: %3d: _ifs[%i]: dir=%s %i %r' % \
+                  (self.name, self.lc, self.if_depth, str(dir), len(ls), ls))
+        in_dir = dir
         in_iftrue = True
         data = []
         while True:
@@ -744,7 +749,16 @@ class file:
                     self._error(label + ' without %endif')
                     raise error.general('terminating build')
                 if r[1] == '%endif':
-                    log.trace('config: %s: _ifs: %s %s' % (self.name, r[1], this_isvalid))
+                    log.trace('config: %s: %3d: _ifs[%i]: %%endif: dir=%s %s %s %r' % \
+                              (self.name, self.lc, self.if_depth,
+                               str(dir), r[1], this_isvalid, data))
+                    if in_dir is None:
+                        if dir is not None:
+                            dir, info, data = self._process_directive(r, dir, info, data)
+                    else:
+                        if in_dir != dir:
+                            self._error('directives cannot change scope across if statements')
+
                     return data
                 if r[1] == '%else':
                     in_iftrue = False
@@ -771,6 +785,11 @@ class file:
         sls = reduce(add, ls[1:], '').split()
         cls = sls
 
+        log.trace('config: %s: %3d: _if[%i]: %s' % (self.name, self.lc,
+                                                    self.if_depth, sls))
+
+        self.if_depth += 1
+
         while len(cls) > 0 and isvalid:
 
             join_op = 'none'
@@ -781,16 +800,22 @@ class file:
                 elif cls[0] == '&&':
                     join_op = 'and'
                 cls = cls[1:]
-                log.trace('config: %s: _if: joining: %s' % (self.name, join_op))
+                log.trace('config: %s: %3d: _if[%i]: joining: %s' % (self.name, self.lc,
+                                                                     self.if_depth,
+                                                                     join_op))
             ori = 0
             andi = 0
             i = len(cls)
             if '||' in cls:
                 ori = cls.index('||')
-                log.trace('config: %s: _if: OR found at %i' % (self.name, ori))
+                log.trace('config: %s: %3d: _if[%i}: OR found at %i' % (self.name, self.lc,
+                                                                        self.if_depth,
+                                                                        ori))
             if '&&' in cls:
                 andi = cls.index('&&')
-                log.trace('config: %s: _if: AND found at %i' % (self.name, andi))
+                log.trace('config: %s: %3d: _if[%i]: AND found at %i' % (self.name, self.lc,
+                                                                         self.if_depth,
+                                                                         andi))
             if ori > 0 or andi > 0:
                 if ori == 0:
                     i = andi
@@ -800,7 +825,9 @@ class file:
                     i = andi
                 else:
                     i = andi
-                log.trace('config: %s: _if: next OP found at %i' % (self.name, i))
+                log.trace('config: %s: %3d: _if[%i]: next OP found at %i' % (self.name, self.lc,
+                                                                             self.if_depth,
+                i))
             ls = cls[:i]
             if len(ls) == 0:
                 self._error('invalid if expression: ' + reduce(add, sls, ''))
@@ -897,12 +924,22 @@ class file:
             else:
                 cistrue = istrue
 
-            log.trace('config: %s: _if:  %s %s %s %s' % (self.name, ifls, str(cistrue),
-                                                         join_op, str(istrue)))
+            log.trace('config: %s: %3d: _if[%i]:  %s %s %s %s' % (self.name, self.lc,
+                                                                  self.if_depth,
+                                                                  ifls, str(cistrue),
+                                                                  join_op, str(istrue)))
 
         if invert:
             cistrue = not cistrue
-        return self._ifs(config, ls, '%if', cistrue, isvalid, dir, info)
+
+        ifs_return = self._ifs(config, ls, '%if', cistrue, isvalid, dir, info)
+
+        self.if_depth -= 1
+
+        log.trace('config: %s: %3d: _if[%i]: %r' % (self.name, self.lc,
+                                                    self.if_depth, ifs_return))
+
+        return ifs_return
 
     def _ifos(self, config, ls, isvalid, dir, info):
         isos = False
@@ -947,7 +984,7 @@ class file:
             l = _clean(l)
             if len(l) == 0:
                 continue
-            log.trace('config: %s: %03d: %s %s' % \
+            log.trace('config: %s: %0d: %s %s' % \
                           (self.name, self.lc, str(isvalid), l))
             lo = l
             if isvalid:
@@ -1001,12 +1038,12 @@ class file:
                 elif ls[0] == '%if':
                     d = self._if(config, ls, isvalid, dir, info)
                     if len(d):
-                        log.trace('config: %s: %%if: %s' % (self.name, d))
+                        log.trace('config: %s: %3d: %%if: %s' % (self.name, self.lc, d))
                         return ('data', d)
                 elif ls[0] == '%ifn':
                     d = self._if(config, ls, isvalid, dir, info, True)
                     if len(d):
-                        log.trace('config: %s: %%ifn: %s' % (self.name, d))
+                        log.trace('config: %s: %3d: %%ifn: %s' % (self.name, self.lc, d))
                         return ('data', d)
                 elif ls[0] == '%ifos':
                     d = self._ifos(config, ls, isvalid, dir, info)
@@ -1049,6 +1086,8 @@ class file:
                     if isvalid:
                         for d in self._directive:
                             if ls[0].strip() == d:
+                                log.trace('config: %s: %0d: _parse: directive: %s' % \
+                                          (self.name, self.lc, ls[0].strip()))
                                 return ('directive', ls[0].strip(), ls[1:])
                         log.warning("unknown directive: '" + ls[0] + "'")
                         return ('data', [lo])
@@ -1081,6 +1120,8 @@ class file:
         return (directive, info, data)
 
     def _process_data(self, results, directive, info, data):
+        log.trace('config: %s: %3d: _process_data: result=#%r# directive=#%s# info=#%r# data=#%r#' % \
+                  (self.name, self.lc, results, directive, info, data))
         new_data = []
         for l in results[1]:
             if l.startswith('%error'):
@@ -1095,7 +1136,7 @@ class file:
             if not directive:
                 l = self._expand(l)
                 ls = self.tags.split(l, 1)
-                log.trace('config: %s: _tag: %s %s' % (self.name, l, ls))
+                log.trace('config: %s: %3d: _tag: %s %s' % (self.name, self.lc, l, ls))
                 if len(ls) > 1:
                     info = ls[0].lower()
                     if info[-1] == ':':
@@ -1109,7 +1150,7 @@ class file:
                     log.warning("invalid format: '%s'" % (info_data[:-1]))
             else:
                 l = self._expand(l)
-                log.trace('config: %s: _data: %s %s' % (self.name, l, new_data))
+                log.trace('config: %s: %3d: _data: %s %s' % (self.name, self.lc, l, new_data))
                 new_data.append(l)
         return (directive, info, data + new_data)
 
@@ -1125,6 +1166,7 @@ class file:
         self.package = _package
 
     def _directive_extend(self, dir, data):
+        log.trace('config: %s: %3d: _directive_extend: %s: %r' % (self.name, self.lc, dir, data))
         self._packages[self.package].directive_extend(dir, data)
 
     def _info_append(self, info, data):

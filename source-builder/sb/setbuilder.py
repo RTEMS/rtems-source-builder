@@ -365,6 +365,11 @@ class buildset:
                         else:
                             deps += b.config.includes()
                         builds += [b]
+                        #
+                        # Dump post build macros.
+                        #
+                        log.trace('_bset: macros post-build')
+                        log.trace(str(macros))
                     else:
                         raise error.general('invalid config type: %s' % (configs[s]))
                 except error.general as gerr:
