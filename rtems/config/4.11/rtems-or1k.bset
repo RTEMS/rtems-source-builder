@@ -16,12 +16,12 @@
 #
 
 #gcc
-%patch add gcc -p1 https://raw.githubusercontent.com/heshamelmatary/or1k-rtems/master/patches/gcc-4.8.3-or1k-rtems-29072014.diff
-%hash  md5 gcc-4.8.3-or1k-rtems-29072014.diff 97be92fbe69a355625633a8d128fb5f5 
+%patch add gcc -p1 https://github.com/openrisc/or1k-gcc/releases/download/or1k-4.9.3-release/gcc-4.9.3-or1k.patch
+%hash  md5 gcc-4.9.3-or1k.patch 83cddff103da7a2afc888b5ea6a78a0f
 
 #gdb
-%patch add gdb -p1 https://raw.githubusercontent.com/heshamelmatary/or1k-rtems/master/patches/gdb-7.7-or1k-rtems.diff
-%hash  md5 gdb-7.7-or1k-rtems.diff 7565167e02652ff300dd31015499633e
+%patch add gdb -p1 https://github.com/openrisc/binutils-gdb/releases/download/gdb-7.9.0-or1k-release/gdb-7.9.0-or1k.patch
+%hash  md5 gdb-7.9.0-or1k.patch 0cae263fba62324cdd1f40125daca2c9
 
 #
 # or1k specific configurations
@@ -37,7 +37,7 @@
 #
 4.11/rtems-autotools
 devel/expat-2.1.0-1
-tools/rtems-binutils-2.25-1
-tools/rtems-gcc-4.8.3-newlib-2.2.0-20150423-1.cfg
+tools/rtems-binutils-2.26-1
+tools/rtems-gcc-4.9.3-newlib-2.2.0-20150423-1.cfg
 tools/rtems-tools-4.11-1
-tools/rtems-gdb-7.7-1
+tools/rtems-gdb-7.9-1
