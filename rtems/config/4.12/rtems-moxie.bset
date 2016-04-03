@@ -5,4 +5,7 @@
 %define rtems_arch moxie
 %define win32-gdb-disable-sim
 %define with_libgomp
+
+# Moxie needs dtc to build gdb, then pick up the rest of the set
+devel/dtc-1.4.1-1
 %include 4.12/rtems-default.bset
