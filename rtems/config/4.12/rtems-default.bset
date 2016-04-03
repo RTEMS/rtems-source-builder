@@ -3,7 +3,7 @@
 4.12/rtems-autotools
 devel/expat-2.1.0-1
 tools/rtems-binutils-2.26-1
-tools/rtems-gcc-6-20160228-newlib-2.3.0.20160226-1
+tools/rtems-gcc-6-20160327-newlib-2.4.0-1
 tools/rtems-gdb-7.11-1
 tools/rtems-tools-4.12-1
 tools/rtems-kernel-4.12
