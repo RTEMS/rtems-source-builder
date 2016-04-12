@@ -45,6 +45,10 @@ def load():
     uname = 'mingw32'
     machine = 'w%s' % (machsize)
 
+    # Set the C/C++ compilers we want to use.
+    cc = '%s-%s-%s-gcc' % (hosttype, machine, uname)
+    cxx = '%s-%s-%s-g++' % (hosttype, machine, uname)
+
     # See if this is actually MSYS2/Cygwin Python
     if os.name == 'posix':
         _uname = os.uname()
@@ -54,6 +58,8 @@ def load():
             hosttype = _uname[4]
             uname = 'cygwin'
             machine = 'pc'
+            cc = 'gcc'
+            cxx = 'g++'
         else:
             raise error.general('invalid POSIX python for Windows')
 
@@ -91,13 +97,13 @@ def load():
         '__bzip2':           ('exe',     'required', 'bzip2'),
         '__bison':           ('exe',     'required', 'bison'),
         '__cat':             ('exe',     'required', 'cat'),
-        '__cc':              ('exe',     'required', 'gcc'),
+        '__cc':              ('exe',     'required', cc),
         '__chgrp':           ('exe',     'required', 'chgrp'),
         '__chmod':           ('exe',     'required', 'chmod'),
         '__chown':           ('exe',     'required', 'chown'),
         '__cp':              ('exe',     'required', 'cp'),
         '__cvs':             ('exe',     'optional', 'cvs'),
-        '__cxx':             ('exe',     'required', 'g++'),
+        '__cxx':             ('exe',     'required', cxx),
         '__flex':            ('exe',     'required', 'flex'),
         '__git':             ('exe',     'required', 'git'),
         '__grep':            ('exe',     'required', 'grep'),
