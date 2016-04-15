@@ -1,0 +1,15 @@
+#
+# Build set for freetype
+#
+
+%define release 1
+
+#
+# The RTEMS Package defines
+#
+%include rtems-package.bset
+
+#
+# Build freetype.
+#
+graphics/freetype-2.4.10-1.cfg

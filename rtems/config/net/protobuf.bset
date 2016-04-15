@@ -1,0 +1,15 @@
+#
+# Build set for Google Protocol Buffers
+#
+
+%define release 1
+
+#
+# The RTEMS Package defines
+#
+%include rtems-package.bset
+
+#
+# Build Protocol Buffers.
+#
+net/protobuf-2.6.1-1

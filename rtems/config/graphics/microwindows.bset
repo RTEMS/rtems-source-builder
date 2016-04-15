@@ -1,0 +1,16 @@
+#
+# Build set for Nano-X Window System
+#
+
+%define release 1
+
+#
+# The RTEMS Package defines
+#
+%include rtems-package.bset
+
+#
+# Build microwindows.
+#
+graphics/freetype2
+graphics/microwindows-0.93-dev-1.cfg

@@ -1,0 +1,13 @@
+#
+# Build Set Base defines for RTEMS Packages
+#
+
+#
+# Get the version of RTEMS
+#
+%include rtems-version.bset
+
+#
+# Pick up the RTEMS URLs.
+#
+%include rtems-urls.bset

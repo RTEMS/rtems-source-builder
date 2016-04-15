@@ -198,19 +198,20 @@ export SB_ORIG_PATH=${PATH}
 %{?_prefix:SB_PREFIX_CLEAN=$(echo "%{_prefix}" | %{__sed} -e 's/^\///')}
 SB_SOURCE_DIR="%{_sourcedir}"
 SB_BUILD_DIR="%{_builddir}"
-# host == build, use build; host != build , host uses host and build uses build
+# host == build, use build; host != build, host uses host and build uses build
+SB_HOST_CPPFLAGS="%{host_includes}"
 SB_HOST_CFLAGS="%{host_cflags} %{host_includes}"
 SB_HOST_CXXFLAGS="%{host_cxxflags} %{host_includes}"
-SB_HOST_LDFLAGS="%{?host_ldflags:%{host_ldflags}}%{?_tmproot:-L%{_tmproot}/${SB_PREFIX_CLEAN}/lib}"
+SB_HOST_LDFLAGS="%{?host_ldflags:%{host_ldflags}} %{?_tmproot:-L%{_tmproot}/${SB_PREFIX_CLEAN}/lib}"
 SB_BUILD_CFLAGS="%{build_cflags} %{?_tmproot:-I%{_tmproot}/${SB_PREFIX_CLEAN}/include}"
 SB_BUILD_CXXFLAGS="%{build_cxxflags} %{?_tmproot:-I%{_tmproot}/${SB_PREFIX_CLEAN}/include}"
-SB_BUILD_LDFLAGS="%{?build_ldflags:%{build_ldflags}}%{?_tmproot:-L%{_tmproot}/${SB_PREFIX_CLEAN}/lib}"
+SB_BUILD_LDFLAGS="%{?build_ldflags:%{build_ldflags}} %{?_tmproot:-L%{_tmproot}/${SB_PREFIX_CLEAN}/lib}"
 SB_CFLAGS="${SB_BUILD_CFLAGS} %{build_includes}"
 SB_CXXFLAGS="${SB_BUILD_CXXFLAGS} %{build_includes}"
 SB_ARCH="%{_arch}"
 SB_OS="%{_os}"
 export SB_SOURCE_DIR SB_BUILD_DIR SB_ARCH SB_OS
-export SB_HOST_CFLAGS SB_HOST_CXXFLAGS SB_HOST_LDFLAGS
+export SB_HOST_CPPFLAGS SB_HOST_CFLAGS SB_HOST_CXXFLAGS SB_HOST_LDFLAGS
 export SB_BUILD_CFLAGS SB_BUILD_CXXFLAGS SB_BUILD_LDFLAGS
 export SB_CFLAGS SB_CXXFLAGS
 # Documentation
@@ -298,7 +299,9 @@ FFLAGS="${FFLAGS:-${SB_CFLAGS}}" ; export FFLAGS ;
 # Build script support.
 build_directory:     none,    none,     '''
 if test "%{_build}" != "%{_host}" ; then
-  if test -z "%{_target}" ; then
+  # Cross-build (Xc) if no target or the host and target match.
+  # Canadian-cross (Cxc) if build, host and target are all different.
+  if test -z "%{_target}" -o "%{_host}" == "%{_target}" ; then
     build_dir="build-xc"
   else
     build_dir="build-cxc"
@@ -316,10 +319,12 @@ if test "%{_build}" != "%{_host}" ; then
   # Cross build
   CC=$(echo "%{_host}-%{_host_cc}" | sed -e 's,-std=gnu99 ,,')
   CXX=$(echo "%{_host}-%{_host_cxx}" | sed -e 's,-std=gnu99 ,,')
+  CPPFLAGS="${SB_HOST_CPPFLAGS}"
   CFLAGS="${SB_HOST_CFLAGS}"
   CXXFLAGS="${SB_HOST_CXXFLAGS}"
   LDFLAGS="${SB_HOST_LDFLAGS}"
   # Host
+  CPPFLAGS_FOR_HOST="${SB_HOST_CPPFLAGS}"
   CFLAGS_FOR_HOST="${SB_HOST_CFLAGS}"
   CXXFLAGS_FOR_HOST="${SB_HOST_CXXFLAGS}"
   LDFLAGS_FOR_HOST="${SB_HOST_LDFLAGS}"
@@ -340,8 +345,8 @@ else
   CC_FOR_BUILD=${CC}
   CXX_FOR_BUILD=${CXX}
 fi
-export CC CXX CFLAGS CXXFLAGS LDFLAGS
-export CC_FOR_HOST CXX_FOR_HOST CFLAGS_FOR_HOST CXXFLAGS_FOR_HOST LDFLAGS_FOR_HOST
+export CC CXX CPPFLAGS CFLAGS CXXFLAGS LDFLAGS
+export CC_FOR_HOST CXX_FOR_HOST CPPFLAGS_FOR_HOST CFLAGS_FOR_HOST CXXFLAGS_FOR_HOST LDFLAGS_FOR_HOST
 export CC_FOR_BUILD CXX_FOR_BUILD CFLAGS_FOR_BUILD CXXFLAGS_FOR_BUILD LDFLAGS_FOR_BUILD'''
 
 # Build/build flags.
