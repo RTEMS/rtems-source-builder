@@ -462,7 +462,7 @@ class file:
                 if pkg_flags and self.pkgconfig_filter_flags:
                     fflags = []
                     for f in pkg_flags.split():
-                        if not f.startswith('-f') and not f.startswith('-W'):
+                        if not f.startswith('-W'):
                             fflags += [f]
                     pkg_flags = ' '.join(fflags)
                 log.trace('pkgconfig: %s: %s' % (flags, pkg_flags))
