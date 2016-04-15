@@ -209,8 +209,33 @@ class build:
             if sm is None:
                 raise error.internal('source macro not found: %s in %s (%s)' % \
                                          (s, name, _map))
-            url = self.config.expand(sm[2])
-            src = download.parse_url(url, '_sourcedir', self.config, self.opts)
+            opts = []
+            url = []
+            for sp in sm[2].split():
+                if len(url) == 0 and sp[0] == '-':
+                    opts += [sp]
+                else:
+                    url += [sp]
+            if len(url) == 0:
+                raise error.general('source URL not found: %s' % (' '.join(args)))
+            #
+            # Look for --rsb-file as an option we use as a local file name.
+            # This can be used if a URL has no reasonable file name the
+            # download URL parser can figure out.
+            #
+            file_override = None
+            if len(opts) > 0:
+                for o in opts:
+                    if o.startswith('--rsb-file'):
+                       os_ = o.split('=')
+                       if len(os_) != 2:
+                           raise error.general('invalid --rsb-file option: %s' % (' '.join(args)))
+                       if os_[0] != '--rsb-file':
+                           raise error.general('invalid --rsb-file option: %s' % (' '.join(args)))
+                       file_override = os_[1]
+                opts = [o for o in opts if not o.startswith('--rsb-')]
+            url = self.config.expand(' '.join(url))
+            src = download.parse_url(url, '_sourcedir', self.config, self.opts, file_override)
             download.get_file(src['url'], src['local'], self.opts, self.config)
             if 'symlink' in src:
                 sname = name.replace('-', '_')
@@ -303,6 +328,22 @@ class build:
                     url += [pp]
             if len(url) == 0:
                 raise error.general('patch URL not found: %s' % (' '.join(args)))
+            #
+            # Look for --rsb-file as an option we use as a local file name.
+            # This can be used if a URL has no reasonable file name the
+            # download URL parser can figure out.
+            #
+            file_override = None
+            if len(opts) > 0:
+                for o in opts:
+                    if o.startswith('--rsb-file'):
+                       os_ = o.split('=')
+                       if len(os_) != 2:
+                           raise error.general('invalid --rsb-file option: %s' % (' '.join(args)))
+                       if os_[0] != '--rsb-file':
+                           raise error.general('invalid --rsb-file option: %s' % (' '.join(args)))
+                       file_override = os_[1]
+                opts = [o for o in opts if not o.startswith('--rsb-')]
             if len(opts) == 0:
                 opts = default_opts
             else:
@@ -312,12 +353,10 @@ class build:
             #
             # Parse the URL first in the source builder's patch directory.
             #
-            patch = download.parse_url(url, '_patchdir', self.config, self.opts)
+            patch = download.parse_url(url, '_patchdir', self.config, self.opts, file_override)
             #
-            # If not in the source builder package check the source directory.
+            # Download the patch
             #
-            if not path.exists(patch['local']):
-                patch = download.parse_url(url, '_patchdir', self.config, self.opts)
             download.get_file(patch['url'], patch['local'], self.opts, self.config)
             if 'compressed' in patch:
                 patch['script'] = patch['compressed'] + ' ' +  patch['local']
