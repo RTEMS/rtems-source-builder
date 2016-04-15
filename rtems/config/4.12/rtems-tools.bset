@@ -10,8 +10,8 @@
 %define rtems_arch tools
 
 #
-# The RTEMS 4.12 base defines.
+# The RTEMS base defines.
 #
-%include rtems-4.12-base.bset
+%include rtems-base.bset
 
 tools/rtems-tools-4.12-1

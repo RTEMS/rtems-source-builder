@@ -7,9 +7,9 @@
 %define rtems_arch or1k
 
 #
-# The RTEMS 4.12 base defines.
+# The RTEMS base defines.
 #
-%include rtems-4.12-base.bset
+%include rtems-base.bset
 
 #
 # or1k specific patches
@@ -41,4 +41,3 @@ tools/rtems-binutils-2.26-1
 tools/rtems-gcc-4.9.3-newlib-2.4.0-1.cfg
 tools/rtems-tools-4.12-1
 tools/rtems-gdb-7.11-1
-

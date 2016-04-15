@@ -33,9 +33,9 @@
 %hash md5 f05996c7c42e6b2781946acbab153a481ce3fd0b.zip 05a4b208151a079bfbe2bed9c592ab43
 
 #
-# The RTEMS 4.12 base defines.
+# The RTEMS base defines.
 #
-%include rtems-4.12-base.bset
+%include rtems-base.bset
 
 #
 # Tools configuration.
