@@ -1078,7 +1078,7 @@ A package requires 3 files to be created:
 
 . The second file is an RTEMS version specific configuration file and it
   includes the RSB RTEMS BSP support. These configuration files reside in the
-  +rtems/config+ tree again under the FreeBSP port's path name. For example the
+  +rtems/config+ tree again under the FreeBSD port's path name. For example the
   NTP package is found in the +net+ directory of the FreeBSD ports tree so the
   NTP configuration path is +$$rtems/config/net/ntp-4.2.6p5-1.cfg$$+ for that
   specific version. The configuration file name typically provides version
