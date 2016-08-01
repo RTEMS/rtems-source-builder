@@ -826,7 +826,7 @@ Packages being built by the RSB need patches from time to time and the RSB
 supports patching upstream packages. The patches are held in a seperate
 directory called +patches+ relative to the configuration directory you are
 building. For example +%{\_topdir}/patches:%{\_sbdir}/patches+. Patches are
-declared in the configuraiton files in a similar manner to the package's source
+declared in the configuration files in a similar manner to the package's source
 so please refer to the +%source+ documentation. Patches, like the source, are
 to be made publically available for configurations that live in the RSB package
 and are downloaded on demand.
@@ -900,8 +900,14 @@ To test a patch simply copy it to your local +patches+ directory. The RSB will
 see the patch is present and will not attempt to download it. Once you are
 happy with the patch submit it to the project and a core developer will review
 it and add it to the RTEMS Tools git repository.
-
-File Checksums
+For example, to test a local patch for newlib, add the following two lines to
+the .cfg file in +rtems/config/tools/+ that is included by the bset you use:
+-------------------------------------------------------------
+%patch add newlib file://0001-this-is-a-newlib-patch.patch <1>
+%hash md5 0001-this-is-a-newlib-patch.diff 77d070878112783292461bd6e7db17fb <2>
+-------------------------------------------------------------
+<1> The diff file prepended with +file://+ to tell RSB this is a local file.
+<2> The output from md5sum on the diff file.
 
 Cross and Canadian Cross Building
 ---------------------------------
