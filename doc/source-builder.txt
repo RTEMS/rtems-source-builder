@@ -681,7 +681,7 @@ Project Sets
 
 The RTEMS Source Builder supports project configurations. Project
 configurations can be public or private and can be contained in the RTEMS
-Source Builder project if suitable, other projects they use the RTEM Source
+Source Builder project if suitable, other projects they use the RTEMS Source
 Builder or privately on your local file system.
 
 The configuration file loader searches the macro +_configdir+ and by default
