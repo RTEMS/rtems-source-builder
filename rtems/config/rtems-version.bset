@@ -1,5 +1,0 @@
-#
-# Current version is RTEMS 4.12
-#
-
-%define rtems_version 4.12

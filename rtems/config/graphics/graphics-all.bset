@@ -1,9 +1,0 @@
-#
-# All RTEMS Graphics Build Sets
-#
-
-graphics/libjpeg
-graphics/libpng
-graphics/libtiff
-graphics/t1lib
-graphics/microwindows.bset

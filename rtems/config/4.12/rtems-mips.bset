@@ -1,6 +1,0 @@
-%define release 1
-%define rtems_arch mips
-%define gdb-sim-options --enable-sim-hardware
-%define win32-gdb-disable-sim
-%include 4.12/rtems-default.bset
-tools/rtems-mipstx39-gdb-7.9-1
