@@ -129,6 +129,17 @@ system provides and placing the RTEMS tools path at the front means it is
 searched first and the RTEMS needed versions of the tools are used.
 *************************************************************
 
+.RTEMS Version
+*************************************************************
+RSB and RTEMS have matching `git branch` for each version of RTEMS.
+For example, if you want to build a toolchain for 4.11, then you
+should checkout the 4.11 branch of the RSB:
+-------------------------------------------------------------
+$ git checkout -t origin/4.11
+-------------------------------------------------------------
+Branches are available for the 4.9, 4.10, and 4.11 versions of RTEMS.
+*************************************************************
+
 Setup
 ~~~~~
 
