@@ -3,11 +3,6 @@
 #
 
 #
-# Get the version of RTEMS
-#
-%include rtems-version.bset
-
-#
 # Define the build target.
 #
 %define _target %{rtems_arch}-rtems%{rtems_version}
