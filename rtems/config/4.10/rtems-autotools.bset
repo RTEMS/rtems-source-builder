@@ -1,23 +1,22 @@
 #
-# Tools Set for RTEMS 4.9 Autotools Stable
+# Tools Set for RTEMS 4.10 Autotools Stable
+#
+# Autoconf and automake are not relocatable and cannot be cross-compiled.
+# RTEMS uses autoconf and automake and building RTEMS in the RSB requires
+# bootstrapping and this requires a current autoconf and automake. The RSB
+# provides to support by:
+#
+#  1. Building and installing autoconf and automake with a prefix to a
+#     temporary internal path.
+#  2. Using the temporary internal build, build and install another copy
+#     using the final prefix location.
 #
 
-%define release 1
+#
+# A magic internal path that would break if changes in the defaults.mc
+# macro file are made.
+#
+%define _internal_autotools_path %{_tmppath}/sb-%{_uid}/${SB_PREFIX_CLEAN}
 
-%define rtems_arch none
-
-#
-# The RTEMS 4.9 base defines.
-#
-%include rtems-4.9-base.bset
-
-#
-# The autotoolspackage.
-#
-package: rtems-%{rtems_version}-autotools-%{_host}-%{release}
-
-#
-# Tools configuration.
-#
-devel/autoconf-2.69-1
-devel/automake-1.12.2-1
+4.10/rtems-autotools-internal
+4.10/rtems-autotools-base

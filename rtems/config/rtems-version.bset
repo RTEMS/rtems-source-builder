@@ -1,0 +1,6 @@
+#
+# Vversion of RTEMS 4.10
+#
+
+%define rtems_version 4.10
+%define release       1

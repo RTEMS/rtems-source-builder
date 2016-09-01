@@ -7,30 +7,15 @@
 %define rtems_arch arm
 
 #
-# The RTEMS 4.10 base defines.
+# The RTEMS base defines.
 #
-%include rtems-4.10-base.bset
-
-#
-# The RTEMS 4.10 BSP to build and test
-#
-# Do not build: lm3s3749
-# For automated testing, edb7312 should be configured with:
-#    - ON_SKYEYE=1
-# The GDB based simulators could be used as defaults for testing though.
-# Skyeye includes coverage.
-#
-%define rtems_bsps      all
-%define rtems_test_bsps none
-
-#
-# Disable the tests because the samples do not build.
-#
-%define rtems_tests disable
+%include rtems-base.bset
 
 #
 # Tools configuration.
 #
+4.10/rtems-autotools
+
 devel/expat-2.1.0-1
 tools/rtems-binutils-2.20.1-1
 tools/rtems-gcc-4.4.7-newlib-1.18.0-1
