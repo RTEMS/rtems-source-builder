@@ -3,20 +3,5 @@
 #
 
 %define release 1
-
 %define rtems_arch sh
-
-#
-# The RTEMS 4.10 base defines.
-#
-%include rtems-4.10-base.bset
-%define rtems_bsps      all
-%define rtems_test_bsps simsh1
-
-# Tools configurationt
-#
-devel/expat-2.1.0-1
-tools/rtems-binutils-2.20.1-1
-tools/rtems-gcc-4.4.7-newlib-1.18.0-1
-tools/rtems-gdb-7.3.1-1
-tools/rtems-kernel-4.10.2
+%include 4.10/rtems-defaults.bset

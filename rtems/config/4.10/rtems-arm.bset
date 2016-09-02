@@ -3,21 +3,5 @@
 #
 
 %define release 1
-
 %define rtems_arch arm
-
-#
-# The RTEMS base defines.
-#
-%include rtems-base.bset
-
-#
-# Tools configuration.
-#
-4.10/rtems-autotools
-
-devel/expat-2.1.0-1
-tools/rtems-binutils-2.20.1-1
-tools/rtems-gcc-4.4.7-newlib-1.18.0-1
-tools/rtems-gdb-7.3.1-1
-tools/rtems-kernel-4.10.2
+%include 4.10/rtems-defaults.bset
