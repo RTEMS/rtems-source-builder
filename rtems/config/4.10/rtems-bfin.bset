@@ -2,11 +2,6 @@
 # Tools Set for RTEMS BFIN 4.10 Stable
 #
 
-#
-# GDB simulator fix for the sed command.
-#
-%patch add gdb %{rtems_gdb_patches}/bfin/gdb-7.3.1-bfin-sim-fix-sed-20130319.diff
-
 %define release 1
 %define rtems_arch bfin
 %include 4.10/rtems-defaults.bset
