@@ -4,4 +4,21 @@
 
 %define release 1
 %define rtems_arch h8300
-%include 4.10/rtems-defaults.bset
+
+%define with_iconv 0
+
+#
+# The RTEMS base defines.
+#
+%include rtems-base.bset
+
+#
+# Tools configuration.
+#
+4.10/rtems-autotools
+
+devel/expat-2.1.0-1
+tools/rtems-binutils-2.26-1
+tools/rtems-gcc-4.4.7-newlib-1.18.0-1
+tools/rtems-gdb-7.11-1
+tools/rtems-kernel-4.10
