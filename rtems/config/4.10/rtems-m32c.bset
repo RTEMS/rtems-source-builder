@@ -8,6 +8,11 @@
 %define enable_cxx 0
 %define rtems_cxx  0
 
+#
+# Disable building iconv.
+#
+%define with_iconv 0
+
 %define release 1
 %define rtems_arch m32c
 %include 4.10/rtems-defaults.bset
