@@ -119,6 +119,12 @@ def load():
                      '__chown':        ('exe',     'required', '/usr/bin/chown') },
         'suse'   : { '__chgrp':        ('exe',     'required', '/usr/bin/chgrp'),
                      '__chown':        ('exe',     'required', '/usr/sbin/chown') },
+        'gentoo' : { '__bzip2':        ('exe',     'required', '/bin/bzip2'),
+                     '__chgrp':        ('exe',     'required', '/bin/chgrp'),
+                     '__chown':        ('exe',     'required', '/bin/chown'),
+                     '__gzip':         ('exe',     'required', '/bin/gzip'),
+                     '__grep':         ('exe',     'required', '/bin/grep'),
+                     '__sed':          ('exe',     'required', '/bin/sed') },
         }
 
     if distro in variations:
