@@ -97,13 +97,17 @@ def hash(args, macros, error):
         return
     _map = 'hashes'
     _file = macros.expand(args[1])
-    if _file in macros.map_keys(_map):
-        error('hash already set: %s' % (args[1]))
-        return
-    macros.create_map(_map)
-    macros.set_write_map(_map)
-    macros.define(_file, '%s %s' % (args[0], args[2]))
-    macros.unset_write_map()
+    new_value = '%s %s' % (args[0], args[2])
+    existing_value = get_hash(_file, macros)
+    if existing_value is not None:
+        if existing_value != new_value:
+            error('conflicting hash definitions for: %s' % (args[1]))
+            return
+    else:
+        macros.create_map(_map)
+        macros.set_write_map(_map)
+        macros.define(_file, new_value)
+        macros.unset_write_map()
     return None
 
 def get(label, name, macros, error):
