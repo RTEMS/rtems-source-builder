@@ -26,3 +26,5 @@ package: rtems-%{rtems_version}-%{_target}-%{_host}-%{release}
 # Pick up the RTEMS URLs.
 #
 %include rtems-urls.bset
+
+%include hash.cfg

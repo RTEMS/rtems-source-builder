@@ -15,13 +15,8 @@
 # or1k specific patches
 #
 
-#gcc
 %patch add gcc -p1 https://github.com/openrisc/or1k-gcc/releases/download/or1k-4.9.3-release/gcc-4.9.3-or1k.patch
-%hash  md5 gcc-4.9.3-or1k.patch 83cddff103da7a2afc888b5ea6a78a0f
-
-#gdb
 %patch add gdb -p1 https://github.com/openrisc/binutils-gdb/releases/download/gdb-7.11-or1k-release/gdb-7.11-or1k.patch
-%hash  md5 gdb-7.11.0-or1k.patch 0a36d2c9a59d950c6741cb1500164d53
 
 #
 # or1k specific configurations
@@ -38,6 +33,6 @@
 4.12/rtems-autotools
 devel/expat-2.1.0-1
 tools/rtems-binutils-2.26-1
-tools/rtems-gcc-4.9.3-newlib-2.5.0-1.cfg
+tools/rtems-gcc-4.9.3-newlib-2.5.0.20170228-1.cfg
 tools/rtems-tools-4.12-1
 tools/rtems-gdb-7.11-1
