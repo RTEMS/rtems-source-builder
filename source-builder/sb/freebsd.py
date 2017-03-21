@@ -78,7 +78,8 @@ def load():
 
     # FreeBSD 10 and above no longer have /usr/bin/cvs, but it can (e.g.) be
     # installed to /usr/local/bin/cvs through the devel/cvs port
-    if int(float(version)) >= 10:
+    fb_version = int(float(version))
+    if fb_version >= 10:
         #
         # FreeBSD has switched to clang plus gcc. On 10.0 cc is gcc based and
         # clang is provided however it is not building binutils-2.24.
@@ -110,6 +111,13 @@ def load():
         # Fix the mess iconv is on FreeBSD 10.0.
         #
         defines['iconv_includes'] = ('none', 'none', '-I/usr/local/include -L/usr/local/lib')
+
+        #
+        # On 11.0+ makeinfo and install-info have moved to /usr/local/...
+        #
+        if fb_version >= 11:
+            defines['__install_info'] = ('exe', 'optional', '/usr/local/bin/install-info')
+            defines['__makeinfo']     = ('exe', 'required', '/usr/local/bin/makeinfo')
     else:
         for gv in ['49', '48', '47']:
             gcc = '%s-portbld-freebsd%s-gcc%s' % (cpu, version, gv)
