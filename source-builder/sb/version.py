@@ -26,6 +26,7 @@ from __future__ import print_function
 
 import sys
 
+import download
 import error
 import git
 import path
@@ -55,7 +56,10 @@ def _load_released_version_config():
             except ImportError:
                 import ConfigParser as configparser
             v = configparser.SafeConfigParser()
-            v.read(path.join(ver, 'VERSION'))
+            try:
+                v.read(path.join(ver, 'VERSION'))
+            except:
+                raise error.general('Invalid VERSION file')
             return v
     return None
 
@@ -64,7 +68,10 @@ def _load_released_version():
     global _version_str
     v = _load_released_version_config()
     if v is not None:
-        _version_str = v.get('version', 'release')
+        try:
+            _version_str = v.get('version', 'release')
+        except:
+            raise error.general('Invalid VERSION file')
         _released = True
     return _released
 
@@ -94,8 +101,8 @@ def str():
             _load_git_version()
     return _version_str
 
-def load_release_hashes(macros):
-    def hash_error(msg):
+def load_release_settings(macros):
+    def setting_error(msg):
         raise error.general(msg)
 
     if released():
@@ -105,11 +112,16 @@ def load_release_hashes(macros):
                 hashes = v.items('hashes')
             except:
                 hashes = []
+            try:
+                release_path = v.get('version', 'release_path', raw = True)
+            except:
+                release_path = None
             for hash in hashes:
                 hs = hash[1].split()
                 if len(hs) != 2:
                     raise error.general('invalid release hash in VERSION')
-                sources.hash((hs[0], hash[0], hs[1]), macros, hash_error)
+                sources.hash((hs[0], hash[0], hs[1]), macros, setting_error)
+            download.set_release_path(release_path, macros)
 
 def version():
     return _version

@@ -301,6 +301,11 @@ parsers = { 'http': _http_parser,
             'cvs':  _cvs_parser,
             'file': _file_parser }
 
+def set_release_path(release_path, macros):
+    if release_path is None:
+        release_path = '%{rtems_release_url}/%{rsb_version}/sources'
+    macros.define('release_path', release_path)
+
 def parse_url(url, pathkey, config, opts, file_override = None):
     #
     # Split the source up into the parts we need.
@@ -591,7 +596,7 @@ def get_file(url, local, opts, config):
     #
     url_bases = opts.urls()
     try:
-        rtems_release_url_value = config.macros.expand('%{rtems_release_url}/%{rsb_version}/sources')
+        rtems_release_url_value = config.macros.expand('%{release_path}')
     except:
         rtems_release_url_value = None
         log.output('RTEMS release URL could not be expanded')
