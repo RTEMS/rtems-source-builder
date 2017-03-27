@@ -38,6 +38,6 @@
 4.12/rtems-autotools
 devel/expat-2.1.0-1
 tools/rtems-binutils-2.23.1-1
-tools/rtems-gcc-4.9.2-newlib-2.5.0.20170228-1.cfg
+tools/rtems-gcc-4.9.2-newlib-2.5.0.20170323-1.cfg
 tools/rtems-gdb-7.8.1-1
 tools/rtems-tools-4.12-1
