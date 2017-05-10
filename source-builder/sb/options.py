@@ -265,9 +265,13 @@ class command_line:
                 self.opts['params'].append(a)
             arg += 1
 
-    def post_process(self):
+    def post_process(self, logfile = True):
         # Handle the log first.
-        log.default = log.log(self.logfiles())
+        if logfile:
+            logfiles = self.logfiles()
+        else:
+            logfiles = None
+        log.default = log.log(streams = logfiles)
         if self.trace():
             log.tracing = True
         if self.quiet():
@@ -561,7 +565,7 @@ class command_line:
             self.args.append('--target=%s-rtems%s' % (ab[0], rtems_version))
             self.args.append('--with-rtems-bsp=%s' % (ab[1]))
 
-def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc'):
+def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc', logfile = True):
     """
     Copy the defaults, get the host specific values and merge them overriding
     any matching defaults, then create an options object to handle the command
@@ -638,7 +642,7 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc'):
     o.sb_git()
     o.rtems_options()
     o.process()
-    o.post_process()
+    o.post_process(logfile)
 
     #
     # Load the release settings
