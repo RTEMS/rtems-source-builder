@@ -1,5 +1,5 @@
 #
-# KSH architecture
+# SH architecture
 #
 %define release 1
 %define rtems_arch sh
