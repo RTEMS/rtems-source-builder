@@ -26,6 +26,7 @@ from __future__ import print_function
 
 import hashlib
 import os
+import re
 import stat
 import sys
 try:
@@ -180,12 +181,9 @@ def _http_parser(source, pathkey, config, opts):
                 raise error.general('gitweb.cgi path missing p or h: %s' % (url))
             source['file'] = '%s-%s.patch' % (p, h)
         #
-        # Check the source file name for any extra request query data and remove if
-        # found. Some hosts do not like file names containing them.
+        # Wipe out everything special in the file name.
         #
-        if '?' in source['file']:
-            qmark = source['file'].find('?')
-            source['file'] = source['file'][:qmark]
+        source['file'] = re.sub(r'[^a-zA-Z0-9.\-]+', '-', source['file'])
     #
     # Check local path
     #
