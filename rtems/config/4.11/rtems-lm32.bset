@@ -14,9 +14,8 @@
 #
 # Fix the simulator UART interface.
 #
-%patch add gdb %{rtems_gdb_patches}/lm32/gdb-7.9-lm32uart.diff
-%hash  md5 gdb-7.9-lm32uart.diff eb9476a92bea7a20812ac129013b6ae3
-
+%patch add gdb https://devel.rtems.org/raw-attachment/ticket/3030/gdb-7.9-lm32uart-2.diff
+%hash  sha256 gdb-7.9-lm32uart-2.diff 7a266c1800829dcb5e493073ef98ad7d7f38a69715b93154dfaaffd34073dff3
 
 #
 # Tools configuration.
