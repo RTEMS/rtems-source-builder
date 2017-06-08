@@ -26,6 +26,7 @@ from __future__ import print_function
 
 import hashlib
 import os
+import re
 import stat
 import sys
 try:
@@ -130,57 +131,62 @@ def _hash_check(file_, absfile, macros, remove = True):
 
 def _local_path(source, pathkey, config):
     for p in config.define(pathkey).split(':'):
-        local = path.join(path.abspath(p), source['file'])
+        local_prefix = path.abspath(p)
+        local = path.join(local_prefix, source['file'])
         if source['local'] is None:
-            source['local_prefix'] = path.abspath(p)
+            source['local_prefix'] = local_prefix
             source['local'] = local
         if path.exists(local):
-            source['local_prefix'] = path.abspath(p)
+            source['local_prefix'] = local_prefix
             source['local'] = local
             _hash_check(source['file'], local, config.macros)
             break
 
 def _http_parser(source, pathkey, config, opts):
     #
-    # Hack for gitweb.cgi patch downloads. We rewrite the various fields.
+    # If the file has not been overrided attempt to recover a possible file name.
     #
-    if 'gitweb.cgi' in source['url']:
-        url = source['url']
-        if '?' not in url:
-            raise error.general('invalid gitweb.cgi request: %s' % (url))
-        req = url.split('?')[1]
-        if len(req) == 0:
-            raise error.general('invalid gitweb.cgi request: %s' % (url))
+    if 'file-override' not in source['options']:
         #
-        # The gitweb.cgi request should have:
-        #    p=<what>
-        #    a=patch
-        #    h=<hash>
-        # so extract the p and h parts to make the local name.
+        # Hack for gitweb.cgi patch downloads. We rewrite the various fields.
         #
-        p = None
-        a = None
-        h = None
-        for r in req.split(';'):
-            if '=' not in r:
-                raise error.general('invalid gitweb.cgi path: %s' % (url))
-            rs = r.split('=')
-            if rs[0] == 'p':
-                p = rs[1].replace('.', '-')
-            elif rs[0] == 'a':
-                a = rs[1]
-            elif rs[0] == 'h':
-                h = rs[1]
-        if p is None or h is None:
-            raise error.general('gitweb.cgi path missing p or h: %s' % (url))
-        source['file'] = '%s-%s.patch' % (p, h)
-    #
-    # Check the source file name for any extra request query data and remove if
-    # found. Some hosts do not like file names containing them.
-    #
-    if '?' in source['file']:
-        qmark = source['file'].find('?')
-        source['file'] = source['file'][:qmark]
+        if 'gitweb.cgi' in source['url']:
+            url = source['url']
+            if '?' not in url:
+                raise error.general('invalid gitweb.cgi request: %s' % (url))
+            req = url.split('?')[1]
+            if len(req) == 0:
+                raise error.general('invalid gitweb.cgi request: %s' % (url))
+            #
+            # The gitweb.cgi request should have:
+            #    p=<what>
+            #    a=patch
+            #    h=<hash>
+            # so extract the p and h parts to make the local name.
+            #
+            p = None
+            a = None
+            h = None
+            for r in req.split(';'):
+                if '=' not in r:
+                    raise error.general('invalid gitweb.cgi path: %s' % (url))
+                rs = r.split('=')
+                if rs[0] == 'p':
+                    p = rs[1].replace('.', '-')
+                elif rs[0] == 'a':
+                    a = rs[1]
+                elif rs[0] == 'h':
+                    h = rs[1]
+            if p is None or h is None:
+                raise error.general('gitweb.cgi path missing p or h: %s' % (url))
+            source['file'] = '%s-%s.patch' % (p, h)
+        #
+        # Check the source file name for any extra request query data and remove if
+        # found. Some hosts do not like file names containing them.
+        #
+        if '?' in source['file']:
+            qmark = source['file'].find('?')
+            source['file'] = source['file'][:qmark]
     #
     # Check local path
     #
@@ -301,17 +307,27 @@ def set_release_path(release_path, macros):
         release_path = '%{rtems_release_url}/%{rsb_version}/sources'
     macros.define('release_path', release_path)
 
-def parse_url(url, pathkey, config, opts):
+def parse_url(url, pathkey, config, opts, file_override = None):
     #
     # Split the source up into the parts we need.
     #
     source = {}
     source['url'] = url
+    source['options'] = []
     colon = url.find(':')
     if url[colon + 1:colon + 3] != '//':
         raise error.general('malforned URL (no protocol prefix): %s' % (url))
     source['path'] = url[:colon + 3] + path.dirname(url[colon + 3:])
-    source['file'] = path.basename(url)
+    if file_override is None:
+        source['file'] = path.basename(url)
+    else:
+        bad_chars = [c for c in ['/', '\\', '?', '*'] if c in file_override]
+        if len(bad_chars) > 0:
+            raise error.general('bad characters in file name: %s' % (file_override))
+
+        log.output('download: file-override: %s' % (file_override))
+        source['file'] = file_override
+        source['options'] += ['file-override']
     source['name'], source['ext'] = path.splitext(source['file'])
     if source['name'].endswith('.tar'):
         source['name'] = source['name'][:-4]
@@ -337,7 +353,7 @@ def _http_downloader(url, local, config, opts):
     if url.startswith('https://api.github.com'):
         url = urllib_parse.urljoin(url, config.expand('tarball/%{version}'))
     dst = os.path.relpath(path.host(local))
-    log.output('download: %s -> %s' % (url, dst))
+    log.output('download: (full) %s -> %s' % (url, dst))
     log.notice('download: %s -> %s' % (_sensible_url(url, len(dst)), dst))
     failed = False
     if _do_download(opts):
@@ -363,6 +379,7 @@ def _http_downloader(url, local, config, opts):
                     _ssl_context = ssl._create_unverified_context()
                     _in = urllib_request.urlopen(_req, context = _ssl_context)
                 except:
+                    log.output('download: no ssl context')
                     _ssl_context = None
                 if _ssl_context is None:
                     _in = urllib_request.urlopen(_req)
