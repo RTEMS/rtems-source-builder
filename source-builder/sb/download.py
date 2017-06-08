@@ -184,6 +184,10 @@ def _http_parser(source, pathkey, config, opts):
         # Wipe out everything special in the file name.
         #
         source['file'] = re.sub(r'[^a-zA-Z0-9.\-]+', '-', source['file'])
+        max_file_len = 127
+        if len(source['file']) > max_file_len:
+            raise error.general('file name length is greater than %i (maybe use --rsb-file=FILE option): %s' % \
+                                (max_file_len, source['file']))
     #
     # Check local path
     #
