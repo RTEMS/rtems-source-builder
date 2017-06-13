@@ -17,6 +17,13 @@
 %define with_iconv 0
 
 #
+# Simulator does not build on Windows.
+#
+%if %{_host_os} == win32
+ %define gdb-disable-sim 1
+%endif
+
+#
 # Tools configuration.
 #
 4.11/rtems-autotools
