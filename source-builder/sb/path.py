@@ -179,7 +179,7 @@ def copy(src, dst):
             if WindowsError is not None and isinstance(why, WindowsError):
                 pass
         else:
-            raise error.general('copying tree: %s -> %s: %s' % (hsrc, hdst, str(why)))
+            raise error.general('copying tree (1): %s -> %s: %s' % (hsrc, hdst, str(why)))
 
 def copy_tree(src, dst):
     trace = False
@@ -233,10 +233,10 @@ def copy_tree(src, dst):
             else:
                     shutil.copy2(host(srcname), host(dstname))
         except shutil.Error as err:
-            raise error.general('copying tree: %s -> %s: %s' % \
+            raise error.general('copying tree (2): %s -> %s: %s' % \
                                 (hsrc, hdst, str(err)))
         except EnvironmentError as why:
-            raise error.general('copying tree: %s -> %s: %s' % \
+            raise error.general('copying tree (3): %s -> %s: %s' % \
                                 (srcname, dstname, str(why)))
     try:
         shutil.copystat(hsrc, hdst)
@@ -245,7 +245,7 @@ def copy_tree(src, dst):
             if WindowsError is not None and isinstance(why, WindowsError):
                 pass
         else:
-            raise error.general('copying tree: %s -> %s: %s' % (hsrc, hdst, str(why)))
+            raise error.general('copying tree (4): %s -> %s: %s' % (hsrc, hdst, str(why)))
 
 if __name__ == '__main__':
     print(host('/a/b/c/d-e-f'))
