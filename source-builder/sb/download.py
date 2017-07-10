@@ -325,7 +325,6 @@ def parse_url(url, pathkey, config, opts, file_override = None):
         bad_chars = [c for c in ['/', '\\', '?', '*'] if c in file_override]
         if len(bad_chars) > 0:
             raise error.general('bad characters in file name: %s' % (file_override))
-
         log.output('download: file-override: %s' % (file_override))
         source['file'] = file_override
         source['options'] += ['file-override']
@@ -601,7 +600,6 @@ def get_file(url, local, opts, config):
         rtems_release_url_value = config.macros.expand('%{release_path}')
     except:
         rtems_release_url_value = None
-        log.output('RTEMS release URL could not be expanded')
     rtems_release_url = None
     if version.released() and rtems_release_url_value:
         rtems_release_url = rtems_release_url_value
@@ -644,6 +642,12 @@ def get_file(url, local, opts, config):
             url_file = url_path[slash + 1:]
         log.trace('url_file: %s' %(url_file))
         for base in url_bases:
+            #
+            # Hack to fix #3064 where --rsb-file is being used. This code is a
+            # mess and should be refactored.
+            #
+            if version.released() and base == rtems_release_url:
+                url_file = path.basename(local)
             if base[-1:] != '/':
                 base += '/'
             next_url = urllib_parse.urljoin(base, url_file)
