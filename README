@@ -11,11 +11,21 @@ set'. The RTEMS Source Builder is not limited to this role but designed to fit
 with-in this specific niche. It can be used outside of the RTEMS project and we
 welcome this happening in other open source or commercial projects.
 
-The project is part of the RTEMS Project. See http://www.rtems.org/ for
-details. The master repositiory is
-http://git.rtems.org/rtems-source-builder.git/.
+The project is part of the RTEMS Project. The project's websites are:
 
-Documentation is in the 'doc' directory and available as HTML at https://docs.rtems.org/rsb/.
+ RTEMS Project Website:
+   https://www.rtems.org/
+
+ GIT Source Repository:
+   https://git.rtems.org/rtems-source-builder.git/
+
+ Documentation:
+   https://docs.rtems.org/branches/master/rsb/index.html
+
+ Bugs:
+   https://devel.rtems.org/query?component=RSB
+
+Please refer to the LICENSE file for license details.
 
 Contributions, suggestions, and bug reports are welcome.
 
