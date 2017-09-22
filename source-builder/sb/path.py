@@ -96,7 +96,9 @@ def listdir(path):
 
 def exists(paths):
     def _exists(p):
-        return os.path.basename(p) in listdir(dirname(p))
+        if '/' not in host(p):
+            p = shell(join(os.getcwd(), host(p)))
+        return basename(p) in ['.'] + listdir(dirname(p))
 
     if type(paths) == list:
         results = []
