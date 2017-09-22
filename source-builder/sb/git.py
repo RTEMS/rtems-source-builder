@@ -70,9 +70,9 @@ class repo:
         if len(gvs) < 3:
             raise error.general('invalid version string from git: %s' % (output))
         vs = gvs[2].split('.')
-        if len(vs) != 4:
+        if len(vs) not in [3, 4]:
             raise error.general('invalid version number from git: %s' % (gvs[2]))
-        return (int(vs[0]), int(vs[1]), int(vs[2]), int(vs[3]))
+        return tuple(map(int, vs))
 
     def clone(self, url, _path):
         ec, output = self._run(['clone', url, path.host(_path)], check = True)
@@ -105,14 +105,28 @@ class repo:
     def submodule(self, module):
         ec, output = self._run(['submodule', 'update', '--init', module], check = True)
 
+    def submodules(self):
+        smodules = {}
+        ec, output = self._run(['submodule'], check = True)
+        if ec == 0:
+            for l in output.split('\n'):
+                ms = l.split()
+                if len(ms) == 3:
+                    smodules[ms[1]] = (ms[0], ms[2][1:-1])
+        return smodules
+
     def clean(self, args = []):
         if type(args) == str:
             args = [args]
         ec, output = self._run(['clean'] + args, check = True)
 
-    def status(self):
+    def status(self, submodules_always_clean = False):
         _status = {}
         if path.exists(self.path):
+            if submodules_always_clean:
+                submodules = self.submodules()
+            else:
+                submodules = {}
             ec, output = self._run(['status'])
             if ec == 0:
                 state = 'none'
@@ -133,16 +147,22 @@ class repo:
                         if l[0].isspace():
                             l = l.strip()
                             if l[0] != '(':
-                                if state not in _status:
-                                    _status[state] = []
-                                l = l[1:]
                                 if ':' in l:
                                     l = l.split(':')[1]
-                                _status[state] += [l.strip()]
+                                if len(l.strip()) > 0:
+                                    l = l.strip()
+                                    ls = l.split()
+                                    if state != 'unstaged' or ls[0] not in submodules:
+                                        if state not in _status:
+                                            _status[state] = [l]
+                                        else:
+                                            _status[state] += [l]
         return _status
 
     def dirty(self):
         _status = self.status()
+        _status.pop('untracked', None)
+        _status.pop('detached', None)
         return not (len(_status) == 1 and 'branch' in _status)
 
     def valid(self):
@@ -200,13 +220,17 @@ class repo:
         return hash
 
 if __name__ == '__main__':
+    import os.path
     import sys
-    opts = options.load(sys.argv)
+    defaults = path.join(path.dirname(path.dirname(path.shell(sys.argv[0]))), 'defaults.mc')
+    opts = options.load(sys.argv, defaults = defaults)
     g = repo('.', opts)
-    print(g.git_version())
-    print(g.valid())
-    print(g.status())
-    print(g.clean())
-    print(g.remotes())
-    print(g.email())
-    print(g.head())
+    print('g.git_version():', g.git_version())
+    print('g.valid():', g.valid())
+    print('g.submodules():', g.submodules())
+    print('g.status():', g.status())
+    print('g.status():', g.status(True))
+    print('g.dirty():', g.dirty())
+    print('g.remotes():', g.remotes())
+    print('g.email():', g.email())
+    print('g.head():', g.head())
