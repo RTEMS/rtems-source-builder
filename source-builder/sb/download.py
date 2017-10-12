@@ -90,6 +90,8 @@ def _hash_check(file_, absfile, macros, remove = True):
             hashlib_algorithms = ['md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512']
         if hash[0] not in hashlib_algorithms:
             raise error.general('invalid hash algorithm for %s: %s' % (file_, hash[0]))
+        if hash[0] in ['md5', 'sha1']:
+            raise error.general('hash: %s: insecure: %s' % (file_, hash[0]))
         hasher = None
         _in = None
         try:
