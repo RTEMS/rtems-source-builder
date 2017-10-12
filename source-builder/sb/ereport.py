@@ -1,6 +1,6 @@
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2010-2014 Chris Johns (chrisj@rtems.org)
+# Copyright 2010-2017 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-testing'.
@@ -21,36 +21,40 @@
 # Create an error log.
 #
 
+from __future__ import print_function
+
 import os
 
 import error
 import log
 
 def generate(name, opts, header = None, footer = None):
-    r = ['RTEMS Tools Project - Source Builder Error Report'] + []
-    if header:
-        r += [' %s' % (header)]
-    r += [opts.info()]
-    if opts.defaults.get_value('%{_sbgit_valid}') == '1':
-        r += [' %s/%s' % (opts.defaults.get_value('%{_sbgit_remotes}'),
-                          opts.defaults.get_value('%{_sbgit_id}'))]
-    else:
-        r += [' RSB: not a valid repo']
-    if os.name == 'nt':
-        r += [' Windows']
-    else:
-        r += [' %s' % (' '.join(os.uname()))]
-    r += []
-    r += ['Tail of the build log:']
-    r += log.tail()
-    if footer:
-        r += [footer]
-    try:
-        name = name.replace('/', '-')
-        l = open(name, 'w')
-        l.write(os.linesep.join(r))
-        l.close()
-        log.notice('  See error report: %s' % (name))
-    except:
-        log.stderr('error: failure to create error report')
-        raise
+    label, result = opts.with_arg('error-report')
+    if (label.startswith('without_') and result != 'yes') or \
+       (label.startswith('with_') and result != 'no'):
+        r = ['RTEMS Tools Project - Source Builder Error Report'] + []
+        if header:
+            r += [' %s' % (header)]
+        r += [opts.info()]
+        if opts.defaults.get_value('%{_sbgit_valid}') == '1':
+            r += [' %s/%s' % (opts.defaults.get_value('%{_sbgit_remotes}'),
+                              opts.defaults.get_value('%{_sbgit_id}'))]
+        else:
+            r += [' RSB: not a valid repo']
+        if os.name == 'nt':
+            r += [' Windows']
+        else:
+            r += [' %s' % (' '.join(os.uname()))]
+        r += []
+        r += ['Tail of the build log:']
+        r += log.tail()
+        if footer:
+            r += [footer]
+        try:
+            name = name.replace('/', '-')
+            with open(name, 'w') as l:
+                l.write(os.linesep.join(r))
+            log.notice('  See error report: %s' % (name))
+        except:
+            log.stderr('error: failure to create error report')
+            raise

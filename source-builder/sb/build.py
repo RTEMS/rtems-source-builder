@@ -111,11 +111,8 @@ class build:
             return name
 
     def _generate_report_(self, header, footer = None):
-        label, result = self.opts.with_arg('error-report')
-        if (label.startswith('without_') and result != 'yes') or \
-           (label.startswith('with_') and result != 'no'):
-            ereport.generate('rsb-report-%s.txt' % self.macros['name'],
-                             self.opts, header, footer)
+        ereport.generate('rsb-report-%s.txt' % self.macros['name'],
+                         self.opts, header, footer)
 
     def __init__(self, name, create_tar_files, opts, macros = None):
         try:
