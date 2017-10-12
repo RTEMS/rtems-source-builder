@@ -27,6 +27,9 @@
 %source set gcc https://github.com/adapteva/epiphany-gcc/archive/f7051762470c42ce7f01baa7edeb113d51c7dd72.zip
 %source set gdb https://github.com/adapteva/epiphany-binutils-gdb/archive/f05996c7c42e6b2781946acbab153a481ce3fd0b.zip
 
+%hash sha256 f7051762470c42ce7f01baa7edeb113d51c7dd72.zip 2b2034fd12f2fd5108205ade66400c175ede8cef8141a38ae03fc78bf2d65325
+%hash sha256 f05996c7c42e6b2781946acbab153a481ce3fd0b.zip 2b2034fd12f2fd5108205ade66400c175ede8cef8141a38ae03fc78bf2d65325
+
 #
 # The RTEMS base defines.
 #
