@@ -281,8 +281,8 @@ class command_line:
 
     def post_process(self, logfile = True):
         # Handle the log first.
-        logctrl = self.get_arg('--without-log')
-        if logctrl is not None and logfile:
+        logctrl = self.parse_args('--without-log')
+        if logctrl is None:
             if logfile:
                 logfiles = self.logfiles()
             else:
