@@ -53,7 +53,7 @@ def load():
         '_prefix':          ('dir',     'optional', '%{_usr}'),
         '__ldconfig':       ('exe',     'none',     ''),
         '__cvs':            ('exe',     'optional', 'cvs'),
-        '__xz':             ('exe',     'required', '%{_usr}/bin/xz'),
+        '__xz':             ('exe',     'required', 'xz'),
         'with_zlib':        ('none',    'none',     '--with-zlib=no'),
         '_forced_static':   ('none',    'none',     ''),
         '_ld_library_path': ('none',    'none',     'DYLD_LIBRARY_PATH')
