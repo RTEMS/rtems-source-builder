@@ -828,6 +828,9 @@ class report:
         self.generate_ini_source(sources)
         self.generate_ini_hash(sources)
 
+    def get_output(self):
+        return self.formatter.post_process()
+
     def write(self, name):
         self.out = self.formatter.post_process()
         if name is not None:
