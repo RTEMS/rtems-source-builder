@@ -18,5 +18,10 @@
 #
 %define _internal_autotools_path %{_tmppath}/sb-%{_uid}/${SB_PREFIX_CLEAN}
 
+#
+# Disable emailing reports of this building for RTEMS.
+#
+%define mail_disable
+
 4.12/rtems-autotools-internal
 4.12/rtems-autotools-base
