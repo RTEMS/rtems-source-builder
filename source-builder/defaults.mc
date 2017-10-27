@@ -366,7 +366,7 @@ __xz:                exe,     required, '/usr/bin/xz'
 
 # Mail Support
 _mail_smtp_host:   none,         none, 'localhost'
-_mail_tools_to:    none,         none, 'rtems-tooltestresults@rtems.org'
+_mail_tools_to:    none,         none, 'build@rtems.org'
 
 # Newlib ICONV encodings
 _newlib_iconv_encodings: none,      none, '''big5,cp775,cp850,cp852,cp855,\

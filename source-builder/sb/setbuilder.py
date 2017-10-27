@@ -527,8 +527,9 @@ def run():
             if to_addr is not None:
                 mail['to'] = to_addr[1]
             else:
-                mail['to'] = pts.defaults.expand('%{_mail_tools_to}')
+                mail['to'] = opts.defaults.expand('%{_mail_tools_to}')
             mail['from'] = mail['mail'].from_address()
+            print(mail)
         log.notice('RTEMS Source Builder - Set Builder, %s' % (version.str()))
         opts.log_info()
         if not check.host_setup(opts):
