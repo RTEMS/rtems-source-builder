@@ -1,6 +1,6 @@
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2010-2012 Chris Johns (chrisj@rtems.org)
+# Copyright 2010-2017 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-testing'.
@@ -32,6 +32,11 @@ import error
 # A global log.
 #
 default = None
+
+#
+# A global capture handler.
+#
+capture = None
 
 #
 # Global parameters.
@@ -69,6 +74,8 @@ def stderr(text = os.linesep, log = None):
     for l in text.replace(chr(13), '').splitlines():
         print(l, file = sys.stderr)
         sys.stderr.flush()
+    if capture is not None:
+        capture(text)
 
 def output(text = os.linesep, log = None):
     if not quiet:
@@ -79,6 +86,8 @@ def notice(text = os.linesep, log = None):
         for l in text.replace(chr(13), '').splitlines():
             print(l)
         sys.stdout.flush()
+        if capture is not None:
+            capture(text)
     _output(text, log)
 
 def trace(text = os.linesep, log = None):
@@ -104,7 +113,7 @@ def tail(log = None):
 
 class log:
     """Log output to stdout or a file."""
-    def __init__(self, streams = None, tail_size = 200):
+    def __init__(self, streams = None, tail_size = 400):
         self.tail = []
         self.tail_size = tail_size
         self.fhs = [None, None]
