@@ -529,7 +529,6 @@ def run():
             else:
                 mail['to'] = opts.defaults.expand('%{_mail_tools_to}')
             mail['from'] = mail['mail'].from_address()
-            print(mail)
         log.notice('RTEMS Source Builder - Set Builder, %s' % (version.str()))
         opts.log_info()
         if not check.host_setup(opts):
