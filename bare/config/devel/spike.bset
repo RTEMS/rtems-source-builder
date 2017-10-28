@@ -1,0 +1,7 @@
+#
+# Build set for RISC-V's simulator
+#
+
+%define release 1
+
+devel/spike-1.1.0
