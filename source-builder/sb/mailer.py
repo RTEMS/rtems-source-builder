@@ -92,9 +92,13 @@ class mail:
         from_addr = self.from_address()
         msg = "From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n" % \
             (from_addr, to_addr, subject) + body
+        if type(to_addr) is str:
+            to_addr = to_addr.split(',')
+        if type(to_addr) is not list:
+            raise error.general('invalid to_addr type')
         try:
             s = smtplib.SMTP(self.smtp_host())
-            s.sendmail(from_addr, [to_addr], msg)
+            s.sendmail(from_addr, to_addr, msg)
         except smtplib.SMTPException as se:
             raise error.general('sending mail: %s' % (str(se)))
         except socket.error as se:
