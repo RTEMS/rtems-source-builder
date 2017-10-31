@@ -12,7 +12,9 @@
 4.12/rtems-or1k
 4.12/rtems-powerpc
 4.12/rtems-riscv32
+4.12/rtems-riscv64
 4.12/rtems-sh
 4.12/rtems-sparc
 4.12/rtems-sparc64
 4.12/rtems-v850
+4.12/rtems-x86_64
