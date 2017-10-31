@@ -64,6 +64,18 @@ def _make_path(p, *args):
         p = path.join(p, arg)
     return os.path.abspath(path.host(p))
 
+def platform(mode = 'all'):
+    import platform
+    if mode == 'system':
+        return platform.system()
+    compact = platform.platform(aliased = True)
+    if mode == 'compact':
+        return compact
+    extended = ' '.join(platform.uname())
+    if mode == 'extended':
+        return extended
+    return '%s (%s)' % (short, extended)
+
 class formatter(object):
     def __init__(self):
         self.content = ''

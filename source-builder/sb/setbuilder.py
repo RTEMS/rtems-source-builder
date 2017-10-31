@@ -30,6 +30,7 @@ import glob
 import operator
 import os
 import sys
+import textwrap
 
 try:
     import build
@@ -341,7 +342,8 @@ class buildset:
         log.trace('_bset: %s: make' % (self.bset))
         log.notice('Build Set: %s' % (self.bset))
 
-        mail_subject = '%s on %s' % (self.bset, self.macros.expand('%{_host}'))
+        mail_subject = '%s on %s' % (self.bset,
+                                     self.macros.expand('%{_host}'))
 
         current_path = os.environ['PATH']
 
@@ -472,10 +474,12 @@ class buildset:
                 self.write_mail_header('Build Time: %s' % (build_time), True)
                 self.write_mail_header('', True)
                 if self.build_failure is not None:
-                    mail_subject = 'Build : FAILED %s (%s)' % \
+                    mail_subject = 'FAILED %s (%s)' % \
                         (mail_subject, self.build_failure)
                 else:
-                    mail_subject = 'Build : PASSED %s' % (mail_subject)
+                    mail_subject = 'PASSED %s' % (mail_subject)
+                mail_subject = 'Build %s: %s' % (reports.platform(mode = 'system'),
+                                                 mail_subject)
                 self.write_mail_header(mail['header'], True)
                 self.write_mail_header('')
                 log.notice('Mailing report: %s' % (mail['to']))
@@ -534,9 +538,13 @@ def run():
         if not check.host_setup(opts):
             raise error.general('host build environment is not set up correctly')
         if mail:
-            mail['header'] = os.linesep.join(mail['output'].get())
+            mail['header'] = os.linesep.join(mail['output'].get()) + os.linesep
             mail['header'] += os.linesep
-            mail['header'] += opts.info() + os.linesep
+            mail['header'] += 'Host: '  + reports.platform('compact') + os.linesep
+            indent = '       '
+            for l in textwrap.wrap(reports.platform('extended'),
+                                   width = 80 - len(indent)):
+                mail['header'] += indent + l + os.linesep
         configs = build.get_configs(opts)
         if opts.get_arg('--list-deps'):
             deps = []
