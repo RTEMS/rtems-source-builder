@@ -1,5 +1,5 @@
 #
-# Current version is RTEMS 4.12
+# Current version is RTEMS 5
 #
 
-%define rtems_version 4.12
+%define rtems_version 5

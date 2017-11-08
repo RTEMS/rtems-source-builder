@@ -1,0 +1,17 @@
+#
+# Tools Set for RTEMS 5 Tools Stable
+#
+
+%define release 1
+
+#
+# We need an arch defined for the common RTEMS files to work.
+#
+%define rtems_arch tools
+
+#
+# The RTEMS base defines.
+#
+%include rtems-base.bset
+
+tools/rtems-tools-5-1

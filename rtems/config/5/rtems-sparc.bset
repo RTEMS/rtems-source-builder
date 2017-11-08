@@ -1,0 +1,4 @@
+%define release 1
+%define rtems_arch sparc
+%define with_libgomp
+%include 5/rtems-default.bset

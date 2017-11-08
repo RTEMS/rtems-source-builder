@@ -1,0 +1,3 @@
+%define release 1
+%define rtems_arch microblaze
+%include 5/rtems-default.bset

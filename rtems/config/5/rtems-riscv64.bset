@@ -1,0 +1,16 @@
+#
+# RISC-V 64-bit architecture
+#
+%define release 1
+%define rtems_arch riscv64
+%define with_libgomp
+
+%include rtems-base.bset
+
+5/rtems-autotools
+
+devel/expat-2.1.0-1
+tools/rtems-binutils-2.29-1
+tools/rtems-gcc-7.2.0-newlib-2.5.0.20170922-1
+tools/rtems-tools-5-1
+tools/rtems-kernel-5
