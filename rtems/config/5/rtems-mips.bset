@@ -3,4 +3,4 @@
 %define gdb-sim-options --enable-sim-hardware
 %define win32-gdb-disable-sim
 %include 5/rtems-default.bset
-tools/rtems-mipstx39-gdb-7.9-1
+tools/rtems-mipstx39-gdb-8.0.1-1
