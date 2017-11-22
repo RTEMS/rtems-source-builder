@@ -34,6 +34,14 @@ import options
 import path
 import version
 
+def _collect_dirs(path_, dir):
+    confs = []
+    for root, dirs, files in os.walk(path.host(path_), topdown = True):
+        for f in dirs:
+            if f == dir:
+                confs += [path.shell(path.join(root, f))]
+    return confs
+
 def _collect(path_, file):
     confs = []
     for root, dirs, files in os.walk(path.host(path_), topdown = True):
@@ -130,7 +138,7 @@ class autoreconf:
 
     def bspopts(self):
         if _grep(self.configure, 'RTEMS_CHECK_BSPDIR'):
-            bsp_specs = _collect(self.cwd, 'bsp_specs')
+            bsps = _collect_dirs(self.cwd, 'custom')
             try:
                 acinclude = path.join(self.cwd, 'acinclude.m4')
                 b = open(path.host(acinclude), 'w')
@@ -138,8 +146,9 @@ class autoreconf:
                 b.write('AC_DEFUN([RTEMS_CHECK_BSPDIR],' + os.linesep)
                 b.write('[' + os.linesep)
                 b.write('  case "$1" in' + os.linesep)
-                for bs in sorted(bsp_specs):
+                for bs in sorted(bsps):
                     dir = path.dirname(bs)[len(self.cwd) + 1:]
+                    dir = path.dirname(dir)
                     b.write('  %s )%s' % (dir, os.linesep))
                     b.write('    AC_CONFIG_SUBDIRS([%s]);;%s' % (dir, os.linesep))
                 b.write('  *)' + os.linesep)
