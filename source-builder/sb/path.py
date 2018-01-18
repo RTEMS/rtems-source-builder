@@ -92,6 +92,14 @@ def abspath(path):
     path = shell(path)
     return shell(os.path.abspath(host(path)))
 
+def relpath(path, start = None):
+    path = shell(path)
+    if start is None:
+        path = os.path.relpath(host(path))
+    else:
+        path = os.path.relpath(host(path), start)
+    return shell(path)
+
 def splitext(path):
     path = shell(path)
     root, ext = os.path.splitext(host(path))
