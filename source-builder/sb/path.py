@@ -53,6 +53,11 @@ def host(path):
                 path = u'\\'.join([u'\\\\?', path])
     return path
 
+def is_abspath(path):
+    if path is not None:
+        return '/' == path[0]
+    return False
+
 def shell(path):
     if path is not None:
         if windows:
@@ -67,9 +72,11 @@ def shell(path):
     return path
 
 def basename(path):
-    return shell(os.path.basename(path))
+    path = shell(path)
+    return shell(os.path.basename(host(path)))
 
 def dirname(path):
+    path = shell(path)
     return shell(os.path.dirname(path))
 
 def join(path, *args):
@@ -82,13 +89,24 @@ def join(path, *args):
     return shell(path)
 
 def abspath(path):
+    path = shell(path)
     return shell(os.path.abspath(host(path)))
 
+def relpath(path, start = None):
+    path = shell(path)
+    if start is None:
+        path = os.path.relpath(host(path))
+    else:
+        path = os.path.relpath(host(path), start)
+    return shell(path)
+
 def splitext(path):
+    path = shell(path)
     root, ext = os.path.splitext(host(path))
     return shell(root), ext
 
 def listdir(path):
+    path = shell(path)
     hp = host(path)
     if not os.path.exists(hp):
         return []
@@ -96,37 +114,43 @@ def listdir(path):
 
 def exists(paths):
     def _exists(p):
-        return os.path.basename(p) in listdir(dirname(p))
+        if not is_abspath(p):
+            p = shell(join(os.getcwd(), host(p)))
+        return basename(p) in ['.'] + listdir(dirname(p))
 
     if type(paths) == list:
         results = []
         for p in paths:
-            results += [_exists(p)]
+            results += [_exists(shell(p))]
         return results
-    return _exists(paths)
+    return _exists(shell(paths))
 
 def isdir(path):
+    path = shell(path)
     return os.path.isdir(host(path))
 
 def isfile(path):
+    path = shell(path)
     return os.path.isfile(host(path))
 
 def isabspath(path):
+    path = shell(path)
     return path[0] == '/'
 
 def iswritable(path):
+    path = shell(path)
     return os.access(host(path), os.W_OK)
 
 def ispathwritable(path):
-    path = host(path)
+    path = shell(path)
     while len(path) != 0:
         if exists(path):
             return iswritable(path)
-        path = os.path.dirname(path)
+        path = dirname(path)
     return False
 
 def mkdir(path):
-    path = host(path)
+    path = shell(path)
     if exists(path):
         if not isdir(path):
             raise error.general('path exists and is not a directory: %s' % (path))
@@ -149,6 +173,7 @@ def mkdir(path):
                 raise error.general('cannot make directory: %s' % (path))
 
 def chdir(path):
+    path = shell(path)
     os.chdir(host(path))
 
 def removeall(path):
@@ -185,6 +210,7 @@ def removeall(path):
             _remove(dir)
             _remove_node(dir)
 
+    path = shell(path)
     hpath = host(path)
 
     if os.path.exists(hpath):
@@ -192,12 +218,15 @@ def removeall(path):
         _remove_node(path)
 
 def expand(name, paths):
+    path = shell(path)
     l = []
     for p in paths:
-        l += [join(p, name)]
+        l += [join(shell(p), name)]
     return l
 
 def copy(src, dst):
+    src = shell(src)
+    dst = shell(dst)
     hsrc = host(src)
     hdst = host(dst)
     try:
@@ -207,7 +236,7 @@ def copy(src, dst):
             if WindowsError is not None and isinstance(why, WindowsError):
                 pass
         else:
-            raise error.general('copying tree: %s -> %s: %s' % (hsrc, hdst, str(why)))
+            raise error.general('copying tree (1): %s -> %s: %s' % (hsrc, hdst, str(why)))
 
 def copy_tree(src, dst):
     trace = False
@@ -215,8 +244,8 @@ def copy_tree(src, dst):
     hsrc = host(src)
     hdst = host(dst)
 
-    if exists(hsrc):
-        names = listdir(hsrc)
+    if exists(src):
+        names = listdir(src)
     else:
         names = []
 
@@ -243,7 +272,7 @@ def copy_tree(src, dst):
         try:
             if os.path.islink(srcname):
                 linkto = os.readlink(srcname)
-                if exists(dstname):
+                if exists(shell(dstname)):
                     if os.path.islink(dstname):
                         dstlinkto = os.readlink(dstname)
                         if linkto != dstlinkto:
@@ -262,10 +291,10 @@ def copy_tree(src, dst):
                 shutil.copyfile(host(srcname), host(dstname))
                 shutil.copystat(host(srcname), host(dstname))
         except shutil.Error as err:
-            raise error.general('copying tree: %s -> %s: %s' % \
+            raise error.general('copying tree (2): %s -> %s: %s' % \
                                 (hsrc, hdst, str(err)))
         except EnvironmentError as why:
-            raise error.general('copying tree: %s -> %s: %s' % \
+            raise error.general('copying tree (3): %s -> %s: %s' % \
                                 (srcname, dstname, str(why)))
     try:
         shutil.copystat(hsrc, hdst)
@@ -274,7 +303,7 @@ def copy_tree(src, dst):
             if WindowsError is not None and isinstance(why, WindowsError):
                 pass
         else:
-            raise error.general('copying tree: %s -> %s: %s' % (hsrc, hdst, str(why)))
+            raise error.general('copying tree (4): %s -> %s: %s' % (hsrc, hdst, str(why)))
 
 if __name__ == '__main__':
     print(host('/a/b/c/d-e-f'))
