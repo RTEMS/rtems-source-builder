@@ -40,6 +40,7 @@ tracing = False
 quiet = False
 
 def set_default_once(log):
+    global default
     if default is None:
         default = log
 

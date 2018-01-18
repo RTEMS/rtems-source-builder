@@ -263,7 +263,7 @@ def check_orphans(opts):
 def run():
     import sys
     try:
-        _opts = options.load(args = sys.argv)
+        _opts = options.load(args = sys.argv, logfile = False)
         log.notice('RTEMS Source Builder - Check, %s' % (version.str()))
 
         orphans = _opts.parse_args('--check-orphans', error = False, extra = False)
