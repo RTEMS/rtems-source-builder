@@ -54,34 +54,35 @@ class command_line:
     def __init__(self, argv, optargs, _defaults, command_path):
         self._long_opts = {
             # key                 macro                handler            param  defs   init
-            '--prefix'         : ('_prefix',           self._lo_path,     True,  None,  False),
-            '--topdir'         : ('_topdir',           self._lo_path,     True,  None,  False),
-            '--configdir'      : ('_configdir',        self._lo_path,     True,  None,  False),
-            '--builddir'       : ('_builddir',         self._lo_path,     True,  None,  False),
-            '--sourcedir'      : ('_sourcedir',        self._lo_path,     True,  None,  False),
-            '--tmppath'        : ('_tmppath',          self._lo_path,     True,  None,  False),
-            '--jobs'           : ('_jobs',             self._lo_jobs,     True,  'max', True),
-            '--log'            : ('_logfile',          self._lo_string,   True,  None,  False),
-            '--url'            : ('_url_base',         self._lo_string,   True,  None,  False),
-            '--no-download'    : ('_disable_download', self._lo_bool,     False, '0',   True),
-            '--macros'         : ('_macros',           self._lo_string,   True,  None,  False),
-            '--targetcflags'   : ('_targetcflags',     self._lo_string,   True,  None,  False),
-            '--targetcxxflags' : ('_targetcxxflags',   self._lo_string,   True,  None,  False),
-            '--libstdcxxflags' : ('_libstdcxxflags',   self._lo_string,   True,  None,  False),
-            '--force'          : ('_force',            self._lo_bool,     False, '0',   True),
-            '--quiet'          : ('_quiet',            self._lo_bool,     False, '0',   True),
-            '--trace'          : ('_trace',            self._lo_bool,     False, '0',   True),
-            '--dry-run'        : ('_dry_run',          self._lo_bool,     False, '0',   True),
-            '--warn-all'       : ('_warn_all',         self._lo_bool,     False, '0',   True),
-            '--no-clean'       : ('_no_clean',         self._lo_bool,     False, '0',   True),
-            '--keep-going'     : ('_keep_going',       self._lo_bool,     False, '0',   True),
-            '--always-clean'   : ('_always_clean',     self._lo_bool,     False, '0',   True),
-            '--no-install'     : ('_no_install',       self._lo_bool,     False, '0',   True),
-            '--regression'     : ('_regression',       self._lo_bool,     False, '0',   True),
-            '--host'           : ('_host',             self._lo_triplets, True,  None,  False),
-            '--build'          : ('_build',            self._lo_triplets, True,  None,  False),
-            '--target'         : ('_target',           self._lo_triplets, True,  None,  False),
-            '--help'           : (None,                self._lo_help,     False, None,  False)
+            '--prefix'               : ('_prefix',           self._lo_path,     True,  None,  False),
+            '--topdir'               : ('_topdir',           self._lo_path,     True,  None,  False),
+            '--configdir'            : ('_configdir',        self._lo_path,     True,  None,  False),
+            '--builddir'             : ('_builddir',         self._lo_path,     True,  None,  False),
+            '--sourcedir'            : ('_sourcedir',        self._lo_path,     True,  None,  False),
+            '--tmppath'              : ('_tmppath',          self._lo_path,     True,  None,  False),
+            '--jobs'                 : ('_jobs',             self._lo_jobs,     True,  'max', True),
+            '--log'                  : ('_logfile',          self._lo_string,   True,  None,  False),
+            '--url'                  : ('_url_base',         self._lo_string,   True,  None,  False),
+            '--no-download'          : ('_disable_download', self._lo_bool,     False, '0',   True),
+            '--macros'               : ('_macros',           self._lo_string,   True,  None,  False),
+            '--source-only-download' : ('_source_download',  self._lo_bool,     False, '0',   True),
+            '--targetcflags'         : ('_targetcflags',     self._lo_string,   True,  None,  False),
+            '--targetcxxflags'       : ('_targetcxxflags',   self._lo_string,   True,  None,  False),
+            '--libstdcxxflags'       : ('_libstdcxxflags',   self._lo_string,   True,  None,  False),
+            '--force'                : ('_force',            self._lo_bool,     False, '0',   True),
+            '--quiet'                : ('_quiet',            self._lo_bool,     False, '0',   True),
+            '--trace'                : ('_trace',            self._lo_bool,     False, '0',   True),
+            '--dry-run'              : ('_dry_run',          self._lo_bool,     False, '0',   True),
+            '--warn-all'             : ('_warn_all',         self._lo_bool,     False, '0',   True),
+            '--no-clean'             : ('_no_clean',         self._lo_bool,     False, '0',   True),
+            '--keep-going'           : ('_keep_going',       self._lo_bool,     False, '0',   True),
+            '--always-clean'         : ('_always_clean',     self._lo_bool,     False, '0',   True),
+            '--no-install'           : ('_no_install',       self._lo_bool,     False, '0',   True),
+            '--regression'           : ('_regression',       self._lo_bool,     False, '0',   True),
+            '--host'                 : ('_host',             self._lo_triplets, True,  None,  False),
+            '--build'                : ('_build',            self._lo_triplets, True,  None,  False),
+            '--target'               : ('_target',           self._lo_triplets, True,  None,  False),
+            '--help'                 : (None,                self._lo_help,     False, None,  False)
             }
 
         self.command_path = command_path
@@ -222,6 +223,7 @@ class command_line:
         print('--targetcflags flags   : List of C flags for the target code')
         print('--targetcxxflags flags : List of C++ flags for the target code')
         print('--libstdcxxflags flags : List of C++ flags to build the target libstdc++ code')
+        print('--source-only-download : Only download the source')
         print('--with-<label>         : Add the --with-<label> to the build')
         print('--without-<label>      : Add the --without-<label> to the build')
         print('--rtems-tools path     : Path to an install RTEMS tool set')
@@ -265,9 +267,27 @@ class command_line:
                 self.opts['params'].append(a)
             arg += 1
 
-    def post_process(self):
+    def pre_process(self):
+        arg = 0
+        while arg < len(self.args):
+            a = self.args[arg]
+            if a == '--source-only-download':
+                self.args += ['--dry-run',
+                              '--quiet',
+                              '--without-log',
+                              '--without-error-report',
+                              '--without-release-url']
+            arg += 1
+
+    def post_process(self, logfile = True):
         # Handle the log first.
-        log.default = log.log(self.logfiles())
+        logctrl = self.parse_args('--without-log')
+        if logctrl is None:
+            if logfile:
+                logfiles = self.logfiles()
+            else:
+                logfiles = None
+            log.default = log.log(streams = logfiles)
         if self.trace():
             log.tracing = True
         if self.quiet():
@@ -561,7 +581,7 @@ class command_line:
             self.args.append('--target=%s-rtems%s' % (ab[0], rtems_version))
             self.args.append('--with-rtems-bsp=%s' % (ab[1]))
 
-def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc'):
+def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc', logfile = True):
     """
     Copy the defaults, get the host specific values and merge them overriding
     any matching defaults, then create an options object to handle the command
@@ -637,8 +657,9 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc'):
     o.sb_released()
     o.sb_git()
     o.rtems_options()
+    o.pre_process()
     o.process()
-    o.post_process()
+    o.post_process(logfile)
 
     #
     # Load the release settings
