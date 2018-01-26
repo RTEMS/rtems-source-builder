@@ -9,25 +9,18 @@
 #
 # Get GNU tools from external repositories.
 #
-%define binutils_external 1
-%define gcc_external 1
 %define gdb_external 1
 
 #
 # Expanded names of the GNU tools
 #
-%define binutils_expand_name epiphany-binutils-gdb-b6c483b4a98424731e6e44558cb4b9863751fb1b
-%define gcc_expand_name epiphany-gcc-f7051762470c42ce7f01baa7edeb113d51c7dd72
 %define gdb_expand_name epiphany-binutils-gdb-f05996c7c42e6b2781946acbab153a481ce3fd0b
 
 #
 # Fetch GNU tools from external repos (temporarly).
 #
-%source set binutils https://github.com/adapteva/epiphany-binutils-gdb/archive/b6c483b4a98424731e6e44558cb4b9863751fb1b.zip
-%source set gcc https://github.com/adapteva/epiphany-gcc/archive/f7051762470c42ce7f01baa7edeb113d51c7dd72.zip
 %source set gdb https://github.com/adapteva/epiphany-binutils-gdb/archive/f05996c7c42e6b2781946acbab153a481ce3fd0b.zip
 
-%hash sha512 f7051762470c42ce7f01baa7edeb113d51c7dd72.zip ae26ec61f90978dec724234a6c89d63a0a1437c0d9dcc2d81462199e96daa557feef0f3655b3782ea4be0b90957e677ba835e6c22166ff80e9e322307450ef3e
 %hash sha256 f05996c7c42e6b2781946acbab153a481ce3fd0b.zip 2b2034fd12f2fd5108205ade66400c175ede8cef8141a38ae03fc78bf2d65325
 
 #
@@ -40,7 +33,7 @@
 #
 5/rtems-autotools
 devel/expat-2.1.0-1
-tools/rtems-binutils-2.23.1-1
-tools/rtems-gcc-4.9.2-newlib-2.5.0.20170922-1.cfg
+tools/rtems-binutils-2.29-1
+tools/rtems-gcc
 tools/rtems-gdb-7.8.1-1
 tools/rtems-tools-5-1
