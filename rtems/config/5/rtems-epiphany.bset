@@ -33,7 +33,7 @@
 #
 5/rtems-autotools
 devel/expat-2.1.0-1
-tools/rtems-binutils-2.29-1
+tools/rtems-binutils
 tools/rtems-gcc
 tools/rtems-gdb-7.8.1-1
 tools/rtems-tools-5-1
