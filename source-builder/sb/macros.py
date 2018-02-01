@@ -447,6 +447,9 @@ class macros:
             if key in self.macros[map]:
                 del self.macros[map][key]
 
+    def defined(self, key, globals = True, maps = None):
+        return self.get(key, globals, maps) is not None
+
     def expand(self, _str):
         """Simple basic expander of config file macros."""
         expanded = True

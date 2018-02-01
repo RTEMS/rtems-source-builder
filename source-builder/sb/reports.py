@@ -24,6 +24,7 @@
 
 from __future__ import print_function
 
+import base64
 import copy
 import datetime
 import os
@@ -62,6 +63,18 @@ def _make_path(p, *args):
     for arg in args:
         p = path.join(p, arg)
     return os.path.abspath(path.host(p))
+
+def platform(mode = 'all'):
+    import platform
+    if mode == 'system':
+        return platform.system()
+    compact = platform.platform(aliased = True)
+    if mode == 'compact':
+        return compact
+    extended = ' '.join(platform.uname())
+    if mode == 'extended':
+        return extended
+    return '%s (%s)' % (short, extended)
 
 class formatter(object):
     def __init__(self):
@@ -139,127 +152,212 @@ class formatter(object):
     def post_process(self):
         return self.content
 
-class asciidoc_formatter(formatter):
+class markdown_formatter(formatter):
     def __init__(self):
-        super(asciidoc_formatter, self).__init__()
+        super(markdown_formatter, self).__init__()
+        self.level_current = 1
+        self.level_path = '0.'
+        self.levels = { '0.': 0 }
+        self.cols = [20, 55]
+
+    def _heading(self, heading, level):
+        return '%s %s' % ('#' * level, heading)
+
+    def _strong(self, s):
+        return '__' + s + '__'
+
+    def _bold(self, s):
+        return '__' + s + '__'
+
+    def _italic(self, s):
+        return '_' + s + '_'
+
+    def _table_line(self):
+        l = '|'
+        for c in self.cols:
+            l += '-' * c + '|'
+        return l
+
+    def _table_row(self, cols):
+        if len(cols) != len(self.cols):
+            raise error.general('invalid table column count')
+        l = '|'
+        for c in range(0, len(cols)):
+            l += '%-*s|' % (self.cols[c], cols[c])
+        return l
+
+    def _btext(self, level, text):
+        return '> ' * (level - 1) + text
+
+    def _bline(self, level, text):
+        self.line(self._btext(level, text))
+
+    def _level(self, nest_level):
+        if nest_level > self.level_current:
+            self.level_path += '%d.' % (self.levels[self.level_path])
+        if nest_level < self.level_current:
+            self.level_path = self.level_path[:-2]
+        if self.level_path not in self.levels:
+            self.levels[self.level_path] = 0
+        self.level_current = nest_level
+        self.levels[self.level_path] += 1
+        return '%s%d.' % (self.level_path[2:], self.levels[self.level_path])
 
     def format(self):
-        return 'asciidoc'
+        return 'markdown'
 
     def ext(self):
-        return '.txt'
+        return '.md'
 
     def introduction(self, name, now, intro_text):
-        h = 'RTEMS Source Builder Report'
-        self.line(h)
-        self.line('=' * len(h))
-        self.line(':doctype: book')
-        self.line(':toc2:')
-        self.line(':toclevels: 5')
-        self.line(':icons:')
-        self.line(':numbered:')
-        self.line(':data-uri:')
+        self.line('- - -')
+        self.line(self._heading('RTEMS Source Builder Report', 1))
+        self.line(self._strong(_title))
         self.line('')
-        self.line(_title)
-        self.line(now)
-        self.line('')
-        image = _make_path(self.sbpath, options.basepath, 'images', 'rtemswhitebg.jpg')
-        self.line('image:%s["RTEMS",width="20%%"]' % (image))
+        self.line(self._bold('Generated: ' + now))
         self.line('')
         if intro_text:
             self.line('%s' % ('\n'.join(intro_text)))
+            self.line('')
+        self.line('')
+        self.line('- - -')
+        self.line(self._heading('Table Of Contents', 2))
+        self.line('')
+        self.line('[TOC]')
+        self.line('')
 
     def release_status(self, release_string):
         self.line('')
-        self.line("'''")
+        self.line(self._heading(_release_status_text, 2))
         self.line('')
-        self.line('.%s' % (_release_status_text))
         self.line('*Version*: %s;;' % (release_string))
-        self.line('')
-        self.line("'''")
         self.line('')
 
     def git_status(self, valid, dirty, head, remotes):
         self.line('')
-        self.line("'''")
-        self.line('')
-        self.line('.%s' % (_git_status_text))
+        self.line('- - -')
+        self.line(self._heading(_git_status_text, 2))
         if valid:
-            self.line('*Remotes*:;;')
+            self.line(self._strong('Remotes:'))
+            self.line('')
+            rc = 1
             for r in remotes:
                 if 'url' in remotes[r]:
                     text = remotes[r]['url']
                 else:
                     text = 'no URL found'
-                text = '%s: %s' % (r, text)
-                self.line('. %s' % (text))
-            self.line('*Status*:;;')
+                self.line('%d. %s: %s' % (rc, r, text))
+                rc += 1
+            self.line('')
+            self.line(self._strong('Status:'))
+            self.line('')
             if dirty:
-                self.line('_Repository is dirty_')
+                self.line('> ' + self._italic('Repository is dirty'))
             else:
-                self.line('Clean')
-            self.line('*Head*:;;')
-            self.line('Commit: %s' % (head))
+                self.line('> Clean')
+            self.line('>')
+            self.line('> ' + self._bold('Head: ') + head)
         else:
-            self.line('_Not a valid GIT repository_')
-        self.line('')
-        self.line("'''")
+            self.line('> ' + self._italic('Not a valid GIT repository'))
         self.line('')
 
     def config(self, nest_level, name, _config):
-        self.line('*Package*: _%s_ +' % (name))
-        self.line('*Config*: %s' % (_config.file_name()))
-        self.line('')
+        self._bline(nest_level, self._bold('Package:'))
+        self._bline(nest_level, '')
+        self._bline(nest_level + 1, self._table_row([self._bold('Item'),
+                                                     self._bold('Description')]))
+        self._bline(nest_level + 1, self._table_line())
+        self._bline(nest_level + 1, self._table_row(['Package', name]))
+        self._bline(nest_level + 1, self._table_row(['Config',
+                                                     _config.file_name()]))
 
     def config_end(self, nest_level, name):
-        self.line('')
-        self.line("'''")
-        self.line('')
+        self._bline(nest_level + 1, '')
 
     def buildset_start(self, nest_level, name):
-        h = '%s' % (name)
-        self.line('=%s %s' % ('=' * int(nest_level), h))
+        if nest_level == 1:
+            self.line('- - -')
+            self._bline(nest_level,
+                        self._heading('RTEMS Source Builder Packages', 2))
+        self._bline(nest_level,
+                    self._heading('%s Build %s' % (self._level(nest_level), name), 3))
 
     def info(self, nest_level, name, info, separated):
-        end = ''
-        if separated:
-            self.line('*%s:*::' % (name))
-            self.line('')
-        else:
-            self.line('*%s:* ' % (name))
-            end = ' +'
-        spaces = ''
-        for l in info:
-            self.line('%s%s%s' % (spaces, l, end))
-        if separated:
-            self.line('')
+        self._bline(nest_level + 1,
+                    self._table_row([name, ' '.join(info)]))
 
     def directive(self, nest_level, name, data):
-        self.line('')
-        self.line('*%s*:' % (name))
-        self.line('--------------------------------------------')
+        self._bline(nest_level, '')
+        self._bline(nest_level, self._bold(name + ':'))
         for l in data:
-            self.line(l)
-        self.line('--------------------------------------------')
+            self._bline(nest_level + 1, ' ' * 4 + l)
 
     def files(self, nest_level, singular, plural, _files):
-        self.line('')
-        self.line('*' + plural + ':*::')
+        self._bline(nest_level, '')
+        self._bline(nest_level, self._bold(plural + ':'))
+        self._bline(nest_level, '')
         if len(_files) == 0:
-            self.line('No ' + plural.lower())
+            self._bline(nest_level + 1, 'No ' + plural.lower())
+        fc = 0
         for name in _files:
             for s in _files[name]:
-                self.line('. %s' % (s[0]))
+                fc += 1
                 if s[1] is None:
-                    h = 'No checksum'
+                    h = self._bold('No checksum')
                 else:
                     hash = s[1].split()
                     h = '%s: %s' % (hash[0], hash[1])
-                self.line('+\n%s\n' % (h))
+                self._bline(nest_level,
+                            '%d. [%s](%s "%s %s")<br/>' % (fc, s[0], s[0],
+                                                           name, singular.lower()))
+                self._bline(nest_level,
+                            '    <span class=checksum>%s</span>' % (h))
 
-class html_formatter(asciidoc_formatter):
+class html_formatter(markdown_formatter):
     def __init__(self):
         super(html_formatter, self).__init__()
+        self.html_header = '<!DOCTYPE html>' + os.linesep + \
+                           '<html lang="en">' + os.linesep + \
+                           '<head>' + os.linesep + \
+                           '<title>RTEMS RSB - @BUILD@</title>' + os.linesep + \
+                           '<meta http-equiv="content-type" content="text/html; charset=UTF-8" />' + os.linesep + \
+                           '<meta name="created" content="@NOW@" />' + os.linesep + \
+                           '<meta name="description" content="RTEMS RSB Report" />' + os.linesep + \
+                           '<meta name="keywords" content="RTEMS RSB" />' + os.linesep + \
+                           '<meta charset="utf-8">' + os.linesep + \
+                           '<meta http-equiv="X-UA-Compatible" content="IE=edge">' + os.linesep + \
+                           '<meta name="viewport" content="width=device-width, initial-scale=1">' + os.linesep + \
+                           '<style type="text/css">' + os.linesep + \
+                           'body {' + os.linesep + \
+                           ' font-family: arial, helvetica, serif;' + os.linesep + \
+                           ' font-style: normal;' + os.linesep + \
+                           ' font-weight: 400;' + os.linesep + \
+                           '}' + os.linesep + \
+                           'h1, h2 { margin: 10px 5px 10px 5px; }' + os.linesep + \
+                           'h1 { font-size: 28px; }' + os.linesep + \
+                           'h2 { font-size: 22px;}' + os.linesep + \
+                           'h3 { font-size: 18px; }' + os.linesep + \
+                           'p, ol, blockquote, h3, table, pre { margin: 1px 20px 2px 7px; }' + os.linesep + \
+                           'table, th, td, pre { border: 1px solid gray; border-spacing: 0px; }' + os.linesep + \
+                           'table { width: 100%; }' + os.linesep + \
+                           'th, td { padding: 1px; }' + os.linesep + \
+                           'pre { padding: 4px; }' + os.linesep + \
+                           '.checksum { font-size: 12px; }' + os.linesep + \
+                           '</style>' + os.linesep + \
+                           '</head>' + os.linesep + \
+                           '<body>' + os.linesep
+        self.html_footer = '</body>' + os.linesep + \
+                           '</html>' + os.linesep
+
+    def _logo(self):
+        logo = _make_path(self.sbpath, options.basepath, 'images', 'rtemswhitebg.jpg')
+        try:
+            with open(logo, "rb") as image:
+                b64 = base64.b64encode(image.read())
+        except:
+            raise error.general('installation error: no logo found')
+        logo = '<img alt="RTEMS Project" height="100" src="data:image/png;base64,' + b64 + '" />'
+        return logo
 
     def format(self):
         return 'html'
@@ -267,24 +365,30 @@ class html_formatter(asciidoc_formatter):
     def ext(self):
         return '.html'
 
+    def introduction(self, name, now, intro_text):
+        self.name = name
+        self.now = now
+        super(html_formatter, self).introduction(name, now, intro_text)
+
     def post_process(self):
-        import io
-        infile = io.StringIO(self.content)
-        outfile = io.StringIO()
         try:
-            import asciidocapi
+            import markdown
         except:
-            raise error.general('installation error: no asciidocapi found')
-        asciidoc_py = _make_path(self.sbpath, options.basepath, 'asciidoc', 'asciidoc.py')
+            raise error.general('installation error: no markdown found')
         try:
-            asciidoc = asciidocapi.AsciiDocAPI(asciidoc_py)
+            out = markdown.markdown(self.content,
+                                    output_format = 'html5',
+                                    extensions = ['markdown.extensions.toc',
+                                                  'markdown.extensions.tables',
+                                                  'markdown.extensions.sane_lists',
+                                                  'markdown.extensions.smarty'])
         except:
-            raise error.general('application error: asciidocapi failed')
-        asciidoc.execute(infile, outfile)
-        out = outfile.getvalue()
-        infile.close()
-        outfile.close()
-        return out
+            raise
+            raise error.general('application error: markdown failed')
+        header = self.html_header.replace('@BUILD@', self.name).replace('@NOW@', self.now)
+        footer = self.html_footer
+        logo = self._logo()
+        return header + logo + out + footer
 
 class text_formatter(formatter):
     def __init__(self):
@@ -503,8 +607,8 @@ class report:
         if type(formatter) == str:
             if formatter == 'text':
                 self.formatter = text_formatter()
-            elif formatter == 'asciidoc':
-                self.formatter = asciidoc_formatter()
+            elif formatter == 'markdown':
+                self.formatter = markdown_formatter()
             elif formatter == 'html':
                 self.formatter = html_formatter()
             elif formatter == 'ini':
@@ -736,6 +840,9 @@ class report:
         self.generate_ini_source(sources)
         self.generate_ini_hash(sources)
 
+    def get_output(self):
+        return self.formatter.post_process()
+
     def write(self, name):
         self.out = self.formatter.post_process()
         if name is not None:
@@ -784,9 +891,9 @@ def run(args):
     try:
         optargs = { '--list-bsets':   'List available build sets',
                     '--list-configs': 'List available configurations',
-                    '--format':       'Output format (text, html, asciidoc, ini, xml)',
+                    '--format':       'Output format (text, html, markdown, ini, xml)',
                     '--output':       'File name to output the report' }
-        opts = options.load(args, optargs)
+        opts = options.load(args, optargs, logfile = False)
         if opts.get_arg('--output') and len(opts.params()) > 1:
             raise error.general('--output can only be used with a single config')
         print('RTEMS Source Builder, Reporter, %s' % (version.str()))
@@ -805,8 +912,8 @@ def run(args):
                     raise error.general('invalid format option: %s' % ('='.join(format_opt)))
                 if format_opt[1] == 'text':
                     pass
-                elif format_opt[1] == 'asciidoc':
-                    formatter = asciidoc_formatter()
+                elif format_opt[1] == 'markdown':
+                    formatter = markdown_formatter()
                 elif format_opt[1] == 'html':
                     formatter = html_formatter()
                 elif format_opt[1] == 'ini':
@@ -824,7 +931,7 @@ def run(args):
                     outname = output
                 config = build.find_config(_config, configs)
                 if config is None:
-                    raise error.general('config file not found: %s' % (inname))
+                    raise error.general('config file not found: %s' % (_config))
                 r.create(config, outname)
             del r
         else:
