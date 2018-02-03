@@ -54,7 +54,7 @@ def host(path):
     return path
 
 def is_abspath(path):
-    if path is not None:
+    if path is not None and len(path) > 0:
         return '/' == path[0]
     return False
 
@@ -218,7 +218,6 @@ def removeall(path):
         _remove_node(path)
 
 def expand(name, paths):
-    path = shell(path)
     l = []
     for p in paths:
         l += [join(shell(p), name)]
