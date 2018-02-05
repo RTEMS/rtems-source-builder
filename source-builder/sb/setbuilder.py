@@ -30,6 +30,7 @@ import glob
 import operator
 import os
 import sys
+import textwrap
 
 try:
     import build
@@ -48,6 +49,23 @@ except KeyboardInterrupt:
 except:
     print('error: unknown application load error', file = sys.stderr)
     sys.exit(1)
+
+class log_capture(object):
+    def __init__(self):
+        self.log = []
+        log.capture = self.capture
+
+    def __str__(self):
+        return os.linesep.join(self.log)
+
+    def capture(self, text):
+        self.log += [l for l in text.replace(chr(13), '').splitlines()]
+
+    def get(self):
+        return self.log
+
+    def clear(self):
+        self.log = []
 
 class buildset:
     """Build a set builds a set of packages."""
@@ -71,30 +89,43 @@ class buildset:
         self.bset_pkg = '%s-%s-set' % (pkg_prefix, self.bset)
         self.mail_header = ''
         self.mail_report = ''
+        self.mail_report_0subject = ''
         self.build_failure = None
 
-    def write_mail_header(self, text, prepend = False):
-        if len(text) == 0 or text[-1] != '\n' or text[-1] != '\r':
+    def write_mail_header(self, text = '', prepend = False):
+        if type(text) is list:
+            text = os.linesep.join(text)
+        text = text.replace('\r', '').replace('\n', os.linesep)
+        if len(text) == 0 or text[-1] != os.linesep:
             text += os.linesep
         if prepend:
             self.mail_header = text + self.mail_header
         else:
             self.mail_header += text
 
+    def get_mail_header(self):
+        return self.mail_header
+
     def write_mail_report(self, text, prepend = False):
-        if len(text) == 0 or text[-1] != '\n' or text[-1] != '\r':
+        if type(text) is list:
+            text = os.linesep.join(text)
+        text = text.replace('\r', '').replace('\n', os.linesep)
+        if len(text) == 0 or text[-1] != os.linesep:
             text += os.linesep
         if prepend:
             self.mail_report = text + self.mail_report
         else:
             self.mail_report += text
 
+    def get_mail_report(self):
+        return self.mail_report
+
     def copy(self, src, dst):
         log.output('copy: %s => %s' % (path.host(src), path.host(dst)))
         if not self.opts.dry_run():
             path.copy_tree(src, dst)
 
-    def report(self, _config, _build, opts, macros, format = None):
+    def report(self, _config, _build, opts, macros, format = None, mail = None):
         if len(_build.main_package().name()) > 0 \
            and not _build.macros.get('%{_disable_reporting}') \
            and (not _build.opts.get_arg('--no-report') \
@@ -139,13 +170,13 @@ class buildset:
                     _build.mkdir(outpath)
                     r.write(outname)
                 del r
-            if _build.opts.get_arg('--mail'):
+            if mail:
                 r = reports.report('text', self.configs,
                                    copy.copy(opts), copy.copy(macros))
                 r.introduction(_build.config.file_name())
                 r.generate(_build.config.file_name())
                 r.epilogue(_build.config.file_name())
-                self.write_mail_report(r.out)
+                self.write_mail_report(r.get_output())
                 del r
 
     def root_copy(self, src, dst):
@@ -299,17 +330,20 @@ class buildset:
             configs = self.parse(bset)
         return configs
 
-    def build(self, deps = None, nesting_count = 0):
+    def build(self, deps = None, nesting_count = 0, mail = None):
 
         build_error = False
 
         nesting_count += 1
 
+        if mail:
+            mail['output'].clear()
+
         log.trace('_bset: %s: make' % (self.bset))
         log.notice('Build Set: %s' % (self.bset))
 
-        if self.opts.get_arg('--mail'):
-            mail_report_subject = '%s %s' % (self.bset, self.macros.expand('%{_host}'))
+        mail_subject = '%s on %s' % (self.bset,
+                                     self.macros.expand('%{_host}'))
 
         current_path = os.environ['PATH']
 
@@ -317,6 +351,9 @@ class buildset:
 
         mail_report = False
         have_errors = False
+
+        if mail:
+            mail['output'].clear()
 
         try:
             configs = self.load()
@@ -337,14 +374,17 @@ class buildset:
                     if configs[s].endswith('.bset'):
                         log.trace('_bset: == %2d %s' % (nesting_count + 1, '=' * 75))
                         bs = buildset(configs[s], self.configs, opts, macros)
-                        bs.build(deps, nesting_count)
+                        bs.build(deps, nesting_count, mail)
                         del bs
                     elif configs[s].endswith('.cfg'):
-                        mail_report = self.opts.get_arg('--mail')
+                        if mail:
+                            mail_report = True
                         log.trace('_bset: -- %2d %s' % (nesting_count + 1, '-' * 75))
                         try:
-                            b = build.build(configs[s], self.opts.get_arg('--pkg-tar-files'),
-                                            opts, macros)
+                            b = build.build(configs[s],
+                                            self.opts.get_arg('--pkg-tar-files'),
+                                            opts,
+                                            macros)
                         except:
                             build_error = True
                             raise
@@ -354,12 +394,14 @@ class buildset:
                             self.build_package(configs[s], b)
                             self.report(configs[s], b,
                                         copy.copy(self.opts),
-                                        copy.copy(self.macros))
-                            # Always product an XML report.
+                                        copy.copy(self.macros),
+                                        mail = mail)
+                            # Always produce an XML report.
                             self.report(configs[s], b,
                                         copy.copy(self.opts),
                                         copy.copy(self.macros),
-                                        format = 'xml')
+                                        format = 'xml',
+                                        mail = mail)
                             if s == len(configs) - 1 and not have_errors:
                                 self.bset_tar(b)
                         else:
@@ -428,25 +470,29 @@ class buildset:
             end = datetime.datetime.now()
             os.environ['PATH'] = current_path
             build_time = str(end - start)
-            if mail_report:
-                to_addr = self.opts.get_arg('--mail-to')
-                if to_addr is not None:
-                    to_addr = to_addr[1]
-                else:
-                    to_addr = self.macros.expand('%{_mail_tools_to}')
-                log.notice('Mailing report: %s' % (to_addr))
-                self.write_mail_header('Build Time %s' % (build_time), True)
-                self.write_mail_header('')
-                m = mailer.mail(self.opts)
+            if mail_report and not self.macros.defined('mail_disable'):
+                self.write_mail_header('Build Time: %s' % (build_time), True)
+                self.write_mail_header('', True)
                 if self.build_failure is not None:
-                    mail_report_subject = 'Build: FAILED %s (%s)' %\
-                        (mail_report_subject, self.build_failure)
-                    pass_fail = 'FAILED'
+                    mail_subject = 'FAILED %s (%s)' % \
+                        (mail_subject, self.build_failure)
                 else:
-                    mail_report_subject = 'Build: PASSED %s' % (mail_report_subject)
-                if not self.opts.dry_run():
-                    m.send(to_addr, mail_report_subject,
-                           self.mail_header + self.mail_report)
+                    mail_subject = 'PASSED %s' % (mail_subject)
+                mail_subject = 'Build %s: %s' % (reports.platform(mode = 'system'),
+                                                 mail_subject)
+                self.write_mail_header(mail['header'], True)
+                self.write_mail_header('')
+                log.notice('Mailing report: %s' % (mail['to']))
+                body = self.get_mail_header()
+                body += 'Output' + os.linesep
+                body += '======' + os.linesep + os.linesep
+                body += os.linesep.join(mail['output'].get())
+                body += os.linesep + os.linesep
+                body += 'Report' + os.linesep
+                body += '======' + os.linesep + os.linesep
+                body += self.get_mail_report()
+                if not opts.dry_run():
+                    mail['mail'].send(mail['to'], mail_subject, body)
             log.notice('Build Set: Time %s' % (build_time))
 
 def list_bset_cfg_files(opts, configs):
@@ -467,6 +513,7 @@ def run():
     import sys
     ec = 0
     setbuilder_error = False
+    mail = None
     try:
         optargs = { '--list-configs':  'List available configurations',
                     '--list-bsets':    'List available build sets',
@@ -477,10 +524,27 @@ def run():
                     '--report-format': 'The report format (text, html, asciidoc).' }
         mailer.append_options(optargs)
         opts = options.load(sys.argv, optargs)
+        if opts.get_arg('--mail'):
+            mail = { 'mail'  : mailer.mail(opts),
+                     'output': log_capture() }
+            to_addr = opts.get_arg('--mail-to')
+            if to_addr is not None:
+                mail['to'] = to_addr[1]
+            else:
+                mail['to'] = opts.defaults.expand('%{_mail_tools_to}')
+            mail['from'] = mail['mail'].from_address()
         log.notice('RTEMS Source Builder - Set Builder, %s' % (version.str()))
         opts.log_info()
         if not check.host_setup(opts):
             raise error.general('host build environment is not set up correctly')
+        if mail:
+            mail['header'] = os.linesep.join(mail['output'].get()) + os.linesep
+            mail['header'] += os.linesep
+            mail['header'] += 'Host: '  + reports.platform('compact') + os.linesep
+            indent = '       '
+            for l in textwrap.wrap(reports.platform('extended'),
+                                   width = 80 - len(indent)):
+                mail['header'] += indent + l + os.linesep
         configs = build.get_configs(opts)
         if opts.get_arg('--list-deps'):
             deps = []
@@ -496,12 +560,14 @@ def run():
                not opts.no_install() and \
                not path.ispathwritable(prefix):
                 raise error.general('prefix is not writable: %s' % (path.host(prefix)))
+
             for bset in opts.params():
                 setbuilder_error = True
                 b = buildset(bset, configs, opts)
-                b.build(deps)
+                b.build(deps, mail = mail)
                 b = None
                 setbuilder_error = False
+
         if deps is not None:
             c = 0
             for d in sorted(set(deps)):
@@ -521,6 +587,10 @@ def run():
         pass
     except KeyboardInterrupt:
         log.notice('abort: user terminated')
+        ec = 1
+    except:
+        raise
+        log.notice('abort: unknown error')
         ec = 1
     sys.exit(ec)
 
