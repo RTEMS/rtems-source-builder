@@ -15,7 +15,8 @@ package: rtems-%{rtems_version}-%{_target}-%{_host}-%{release}
 #
 # Project custom message
 #
-%define gcc_version_message RTEMS %{rtems_version}, RSB %{_sbgit_id}, Newlib %{newlib_version}
+%define rtems_gcc_version %{rtems_version}
+%define gcc_version_message RTEMS %{rtems_gcc_version}, RSB %{_sbgit_id}, Newlib %{newlib_version}
 
 #
 # Pick up the RTEMS URLs.
