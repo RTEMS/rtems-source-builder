@@ -273,6 +273,7 @@ class command_line:
             a = self.args[arg]
             if a == '--source-only-download':
                 self.args += ['--dry-run',
+                              '--with-download',
                               '--quiet',
                               '--without-log',
                               '--without-error-report',
