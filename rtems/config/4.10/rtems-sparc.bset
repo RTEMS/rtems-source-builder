@@ -4,4 +4,7 @@
 
 %define release 1
 %define rtems_arch sparc
+
+%define win32-gdb-disable-sim 1
+
 %include 4.10/rtems-defaults.bset
