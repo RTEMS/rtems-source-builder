@@ -59,6 +59,7 @@ class command_line:
             '--configdir'            : ('_configdir',        self._lo_path,     True,  None,  False),
             '--builddir'             : ('_builddir',         self._lo_path,     True,  None,  False),
             '--sourcedir'            : ('_sourcedir',        self._lo_path,     True,  None,  False),
+            '--patchdir'             : ('_patchdir',         self._lo_path,     True,  None,  False),
             '--tmppath'              : ('_tmppath',          self._lo_path,     True,  None,  False),
             '--jobs'                 : ('_jobs',             self._lo_jobs,     True,  'max', True),
             '--log'                  : ('_logfile',          self._lo_string,   True,  None,  False),
@@ -214,6 +215,7 @@ class command_line:
         print('--configdir path       : Path to the configuration directory, default: ./config')
         print('--builddir path        : Path to the build directory, default: ./build')
         print('--sourcedir path       : Path to the source directory, default: ./source')
+        print('--patchdir path        : Path to the patches directory, default: ./patches')
         print('--tmppath path         : Path to the temp directory, default: ./tmp')
         print('--macros file[,[file]  : Macro format files to load after the defaults')
         print('--log file             : Log file where all build out is written too')
