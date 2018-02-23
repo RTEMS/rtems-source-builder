@@ -150,7 +150,7 @@ class macros:
     def __setitem__(self, key, value):
         key = self._unicode_to_str(key)
         if type(key) is not str:
-            raise TypeError('bad key type (want str): %s' % (type(key)))
+            raise TypeError('bad key type (want str): %s (%s)' % (type(key), key))
         if type(value) is not tuple:
             value = self._unicode_to_str(value)
         if type(value) is str:
@@ -396,6 +396,7 @@ class macros:
                                 (path.host(self.expand(name))))
 
     def get(self, key, globals = True, maps = None):
+        key = self._unicode_to_str(key)
         if type(key) is not str:
             raise TypeError('bad key type: %s' % (type(key)))
         key = self.key_filter(key)
@@ -435,11 +436,10 @@ class macros:
         return self.get_attribute(key) == 'override'
 
     def define(self, key, value = '1'):
-        if type(key) is not str:
-            raise TypeError('bad key type: %s' % (type(key)))
         self.__setitem__(key, ('none', 'none', value))
 
     def undefine(self, key):
+        key = self._unicode_to_str(key)
         if type(key) is not str:
             raise TypeError('bad key type: %s' % (type(key)))
         key = self.key_filter(key)
