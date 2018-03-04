@@ -71,7 +71,7 @@ def _humanize_bytes(bytes, precision = 1):
     return '%.*f%s' % (precision, float(bytes) / factor, suffix)
 
 def _sensible_url(url, used = 0):
-    space = 200
+    space = 100
     if len(url) > space:
         size = int(space - 14)
         url = url[:size] + '...<see log>'
