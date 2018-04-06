@@ -1,4 +1,11 @@
 %define release 1
 %define rtems_arch x86_64
 %define with_libgomp
+
+#
+# Add LIB_SPEC to gcc for -qnolinkcmds, -qrtems, and default linker flags
+#
+%patch add gcc --rsb-file=gcc-99c7ae16793d88d7c16c692fb468ab308cb4d12d.patch https://gcc.gnu.org/git/?p=gcc.git;a=blobdiff_plain;f=gcc/config.gcc;h=99c7ae16793d88d7c16c692fb468ab308cb4d12d;hp=ae19655bf328e29ea4f00966b5060967684a7f1b;hb=602fa1e9d3ea5e87d4d6e17e3e91fc2647e42da3;hpb=7ea6a6472d360c634a00358dbaab2e236e785367
+%hash sha512 gcc-99c7ae16793d88d7c16c692fb468ab308cb4d12d.patch ed519aacb199be54bce514bd6745cf532d66250f0163e8be6b6e630d83ec1a68e086467320f589191dce3a7638bdc867663f38dfc569ee2f27c6b686c040130f
+
 %include 5/rtems-default.bset
