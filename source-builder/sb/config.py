@@ -312,13 +312,15 @@ class file:
             log.output(text)
 
     def _error(self, msg):
-        err = 'error: %s' % (self._name_line_msg(msg))
-        log.stderr(err)
-        log.output(err)
-        self.in_error = True
         if not self.opts.dry_run():
-            log.stderr('warning: switched to dry run due to errors')
-            self.opts.set_dry_run()
+            if self.opts.keep_going():
+                err = 'error: %s' % (self._name_line_msg(msg))
+                log.stderr(err)
+                log.output(err)
+                self.in_error = True
+                log.stderr('warning: switched to dry run due to errors')
+                self.opts.set_dry_run()
+        raise error.general(self._name_line_msg(msg))
 
     def _label(self, name):
         if name.startswith('%{') and name[-1] is '}':
