@@ -34,6 +34,7 @@ import string
 import error
 
 windows = os.name == 'nt'
+win_maxpath = 254
 
 def host(path):
     if path is not None:
@@ -46,13 +47,21 @@ def host(path):
                 path[1] in string.ascii_uppercase):
                 path = '%s:%s' % (path[1], path[2:])
             path = path.replace('/', '\\')
-            if not path.startswith('\\\\?\\') and len(path) > 254:
-                path = '\\\\?\\' + path
+            if len(path) > win_maxpath:
+                if path.startswith('\\\\?\\'):
+                    path = path[4:]
+                path = u'\\'.join([u'\\\\?', path])
     return path
+
+def is_abspath(path):
+    if path is not None and len(path) > 0:
+        return '/' == path[0]
+    return False
 
 def shell(path):
     if path is not None:
         if windows:
+            path = path.encode('ascii', 'ignore')
             if path.startswith('\\\\?\\'):
                 path = path[4:]
             if len(path) > 1 and path[1] == ':':
@@ -63,9 +72,11 @@ def shell(path):
     return path
 
 def basename(path):
-    return shell(os.path.basename(path))
+    path = shell(path)
+    return shell(os.path.basename(host(path)))
 
 def dirname(path):
+    path = shell(path)
     return shell(os.path.dirname(path))
 
 def join(path, *args):
@@ -78,42 +89,68 @@ def join(path, *args):
     return shell(path)
 
 def abspath(path):
+    path = shell(path)
     return shell(os.path.abspath(host(path)))
 
+def relpath(path, start = None):
+    path = shell(path)
+    if start is None:
+        path = os.path.relpath(host(path))
+    else:
+        path = os.path.relpath(host(path), start)
+    return shell(path)
+
 def splitext(path):
+    path = shell(path)
     root, ext = os.path.splitext(host(path))
     return shell(root), ext
 
+def listdir(path):
+    path = shell(path)
+    hp = host(path)
+    if not os.path.exists(hp):
+        return []
+    return os.listdir(hp)
+
 def exists(paths):
+    def _exists(p):
+        if not is_abspath(p):
+            p = shell(join(os.getcwd(), host(p)))
+        return basename(p) in ['.'] + listdir(dirname(p))
+
     if type(paths) == list:
         results = []
         for p in paths:
-            results += [os.path.exists(host(p))]
+            results += [_exists(shell(p))]
         return results
-    return os.path.exists(host(paths))
+    return _exists(shell(paths))
 
 def isdir(path):
+    path = shell(path)
     return os.path.isdir(host(path))
 
 def isfile(path):
+    path = shell(path)
     return os.path.isfile(host(path))
 
 def isabspath(path):
+    path = shell(path)
     return path[0] == '/'
 
 def iswritable(path):
+    path = shell(path)
     return os.access(host(path), os.W_OK)
 
 def ispathwritable(path):
-    path = host(path)
-    while len(path) != 0:
-        if os.path.exists(path):
+    path = shell(path)
+    while len(path) > 1:
+        if exists(path):
             return iswritable(path)
-        path = os.path.dirname(path)
+        path = dirname(path)
     return False
 
 def mkdir(path):
-    path = host(path)
+    path = shell(path)
     if exists(path):
         if not isdir(path):
             raise error.general('path exists and is not a directory: %s' % (path))
@@ -135,41 +172,60 @@ def mkdir(path):
             except OSError as err:
                 raise error.general('cannot make directory: %s' % (path))
 
+def chdir(path):
+    path = shell(path)
+    os.chdir(host(path))
+
 def removeall(path):
     #
     # Perform the removal of the directory tree manually so we can
-    # make sure on Windows the files and correctly encoded to avoid
-    # the size limit.
+    # make sure on Windows the files are correctly encoded to avoid
+    # the file name size limit. On Windows the os.walk fails once we
+    # get to the max path length on Windows.
     #
-    path = host(path)
-    for root, dirs, files in os.walk(path, topdown = False):
-        for name in files:
-            file = host(os.path.join(root, name))
-            if not os.path.islink(file) and not os.access(file, os.W_OK):
-                os.chmod(file, stat.S_IWUSR)
-            os.unlink(file)
-        for name in dirs:
-            dir = host(os.path.join(root, name))
-            if os.path.islink(dir):
-                os.unlink(dir)
+    def _isdir(path):
+        hpath = host(path)
+        return os.path.isdir(hpath) and not os.path.islink(hpath)
+
+    def _remove_node(path):
+        hpath = host(path)
+        if not os.path.islink(hpath) and not os.access(hpath, os.W_OK):
+            os.chmod(hpath, stat.S_IWUSR)
+        if _isdir(path):
+            os.rmdir(hpath)
+        else:
+            os.unlink(hpath)
+
+    def _remove(path):
+        dirs = []
+        for name in listdir(path):
+            path_ = join(path, name)
+            hname = host(path_)
+            if _isdir(path_):
+                dirs += [name]
             else:
-                if not os.access(dir, os.W_OK):
-                    os.chmod(dir, stat.S_IWUSR)
-                os.rmdir(dir)
-    if not os.path.islink(path) and not os.access(path, os.W_OK):
-        os.chmod(path, stat.S_IWUSR)
-    if os.path.islink(path):
-        os.unlink(path)
-    else:
-        os.rmdir(path)
+                _remove_node(path_)
+        for name in dirs:
+            dir = join(path, name)
+            _remove(dir)
+            _remove_node(dir)
+
+    path = shell(path)
+    hpath = host(path)
+
+    if os.path.exists(hpath):
+        _remove(path)
+        _remove_node(path)
 
 def expand(name, paths):
     l = []
     for p in paths:
-        l += [join(p, name)]
+        l += [join(shell(p), name)]
     return l
 
 def copy(src, dst):
+    src = shell(src)
+    dst = shell(dst)
     hsrc = host(src)
     hdst = host(dst)
     try:
@@ -179,7 +235,7 @@ def copy(src, dst):
             if WindowsError is not None and isinstance(why, WindowsError):
                 pass
         else:
-            raise error.general('copying tree: %s -> %s: %s' % (hsrc, hdst, str(why)))
+            raise error.general('copying tree (1): %s -> %s: %s' % (hsrc, hdst, str(why)))
 
 def copy_tree(src, dst):
     trace = False
@@ -187,17 +243,17 @@ def copy_tree(src, dst):
     hsrc = host(src)
     hdst = host(dst)
 
-    if os.path.exists(hsrc):
-        names = os.listdir(hsrc)
+    if exists(src):
+        names = listdir(src)
     else:
         names = []
 
     if trace:
         print('path.copy_tree:')
-        print('   src: %s' % (src))
-        print('  hsrc: %s' % (hsrc))
-        print('   dst: %s' % (dst))
-        print('  hdst: %s' % (hdst))
+        print('   src: "%s"' % (src))
+        print('  hsrc: "%s"' % (hsrc))
+        print('   dst: "%s"' % (dst))
+        print('  hdst: "%s"' % (hdst))
         print(' names: %r' % (names))
 
     if not os.path.isdir(hdst):
@@ -215,7 +271,7 @@ def copy_tree(src, dst):
         try:
             if os.path.islink(srcname):
                 linkto = os.readlink(srcname)
-                if os.path.exists(dstname):
+                if exists(shell(dstname)):
                     if os.path.islink(dstname):
                         dstlinkto = os.readlink(dstname)
                         if linkto != dstlinkto:
@@ -231,12 +287,13 @@ def copy_tree(src, dst):
             elif os.path.isdir(srcname):
                 copy_tree(srcname, dstname)
             else:
-                    shutil.copy2(host(srcname), host(dstname))
+                shutil.copyfile(host(srcname), host(dstname))
+                shutil.copystat(host(srcname), host(dstname))
         except shutil.Error as err:
-            raise error.general('copying tree: %s -> %s: %s' % \
+            raise error.general('copying tree (2): %s -> %s: %s' % \
                                 (hsrc, hdst, str(err)))
         except EnvironmentError as why:
-            raise error.general('copying tree: %s -> %s: %s' % \
+            raise error.general('copying tree (3): %s -> %s: %s' % \
                                 (srcname, dstname, str(why)))
     try:
         shutil.copystat(hsrc, hdst)
@@ -245,7 +302,7 @@ def copy_tree(src, dst):
             if WindowsError is not None and isinstance(why, WindowsError):
                 pass
         else:
-            raise error.general('copying tree: %s -> %s: %s' % (hsrc, hdst, str(why)))
+            raise error.general('copying tree (4): %s -> %s: %s' % (hsrc, hdst, str(why)))
 
 if __name__ == '__main__':
     print(host('/a/b/c/d-e-f'))
