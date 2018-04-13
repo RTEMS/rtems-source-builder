@@ -143,7 +143,7 @@ def iswritable(path):
 
 def ispathwritable(path):
     path = shell(path)
-    while len(path) != 0:
+    while len(path) > 1:
         if exists(path):
             return iswritable(path)
         path = dirname(path)
