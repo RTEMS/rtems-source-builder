@@ -14,4 +14,9 @@
 %patch add gcc --rsb-file=gcc-f8fd78279d353f6959e75ac25571c1b7b2dec110.patch https://gcc.gnu.org/git/?p=gcc.git;a=blobdiff_plain;f=libgcc/config.host;h=f8fd78279d353f6959e75ac25571c1b7b2dec110;hp=11b4acaff55e00ee6bd3c182e9da5dc597ac57c4;hb=ab55f7db3694293e4799d58f7e1a556c0eae863a;hpb=344c180cca810c50f38fd545bb9a102fb39306b7
 %hash sha512 gcc-f8fd78279d353f6959e75ac25571c1b7b2dec110.patch aef76f9d45a53096a021521375fc302a907f78545cc57683a7a00ec61608b8818115720f605a6b1746f479c8568963b380138520e259cbb9e8951882c2f1567f
 
+#
+# Binutils PEI target for UEFI support
+#
+%patch add binutils --rsb-file=binutils-f8ca72b332396939c7c04a8774ce4c54f5a82d42.patch https://sourceware.org/git/gitweb.cgi?p=binutils-gdb.git;a=blobdiff_plain;f=bfd/config.bfd;h=f8ca72b332396939c7c04a8774ce4c54f5a82d42;hp=0db8ed4562b2c11ce51e6a3b138c317f4014a1aa;hb=421acf18739edb54111b64d2b328ea2e7bf19889;hpb=f7c6f42310233479ea6339430b7c1ca1f9ec68e1
+%hash sha512 binutils-f8ca72b332396939c7c04a8774ce4c54f5a82d42.patch f8af6906871a95a6fb234d0c72c44e9b1823ed835ec91bd84b466aad1f2f5f021ff5fb37835e6132899dcaa6c7e52e3e73f5a2dc9f0efab97aa6fffce2f06d9e
 %include 5/rtems-default.bset
