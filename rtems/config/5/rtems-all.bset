@@ -12,8 +12,7 @@
 5/rtems-nios2
 5/rtems-or1k
 5/rtems-powerpc
-5/rtems-riscv32
-5/rtems-riscv64
+5/rtems-riscv
 5/rtems-sh
 5/rtems-sparc
 5/rtems-sparc64
