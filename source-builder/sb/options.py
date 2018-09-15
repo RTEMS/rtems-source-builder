@@ -265,6 +265,8 @@ class command_line:
                         else:
                             value = '1'
                         self.defaults[los[0][2:].replace('-', '_').lower()] = ('none', 'none', value)
+                    else:
+                        raise error.general('unknown option: %s' % (lo))
             else:
                 self.opts['params'].append(a)
             arg += 1

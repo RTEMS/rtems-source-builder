@@ -517,6 +517,7 @@ def run():
     try:
         optargs = { '--list-configs':  'List available configurations',
                     '--list-bsets':    'List available build sets',
+                    '--list-configs':  'List available configuration files.',
                     '--list-deps':     'List the dependent files.',
                     '--bset-tar-file': 'Create a build set tar file',
                     '--pkg-tar-files': 'Create package tar files',
