@@ -467,11 +467,16 @@ class buildset:
                 for p in builds[0].config.expand('%{_patchdir}').split(':'):
                     size_patches += path.get_size(p)
                 size_total = size_sources + size_patches + size_installed
-                build_size = 'usage: %s' % (build.humanize_number(size_build_max + size_installed, 'B'))
-                build_size += ' total: %s' % (build.humanize_number(size_total, 'B'))
-                build_size += ' (sources: %s' % (build.humanize_number(size_sources, 'B'))
-                build_size += ', patches: %s' % (build.humanize_number(size_patches, 'B'))
-                build_size += ', installed %s)' % (build.humanize_number(size_installed, 'B'))
+                build_max_size_human = build.humanize_number(size_build_max + size_installed, 'B')
+                build_total_size_human = build.humanize_number(size_total, 'B')
+                build_sources_size_human = build.humanize_number(size_sources, 'B')
+                build_patches_size_human = build.humanize_number(size_patches, 'B')
+                build_installed_size_human = build.humanize_number(size_installed, 'B')
+                build_size = 'usage: %s' % (build_max_size_human)
+                build_size += ' total: %s' % (build_total_size_human)
+                build_size += ' (sources: %s' % (build_sources_size_human)
+                build_size += ', patches: %s' % (build_patches_size_human)
+                build_size += ', installed %s)' % (build_installed_size_human)
             #
             # Cleaning ...
             #
@@ -521,7 +526,15 @@ class buildset:
                 body = self.get_mail_header()
                 body += 'Sizes' + os.linesep
                 body += '=====' + os.linesep + os.linesep
-
+                if len(builds) > 1:
+                    body += 'Maximum build usage: ' + build_max_size_human + os.linesep
+                    body += 'Total size: ' + build_total_size_human + os.linesep
+                    body += 'Installed : ' + build_installed_size_human + os.linesep
+                    body += 'Sources: ' + build_sources_size_human + os.linesep
+                    body += 'Sources: ' + build_patches_size_human + os.linesep
+                else:
+                    body += 'No packages built'
+                body += os.linesep
                 body += 'Output' + os.linesep
                 body += '======' + os.linesep + os.linesep
                 body += os.linesep.join(mail['output'].get())
