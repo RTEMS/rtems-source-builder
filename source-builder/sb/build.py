@@ -1,6 +1,6 @@
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2010-2013 Chris Johns (chrisj@rtems.org)
+# Copyright 2010-2018 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -50,6 +50,13 @@ except KeyboardInterrupt:
 except:
     print('error: unknown application load error')
     sys.exit(1)
+
+def humanize_number(num, suffix):
+    for unit in ['','K','M','G','T','P','E','Z']:
+        if abs(num) < 1024.0:
+            return "%5.3f%s%s" % (num, unit, suffix)
+        num /= 1024.0
+    return "%.3f%s%s" % (size, 'Y', suffix)
 
 class script:
     """Create and manage a shell script."""
@@ -124,7 +131,8 @@ class build:
             log.notice('config: ' + name)
             self.set_macros(macros)
             self.config = config.file(name, opts, self.macros)
-            self.script = script()
+            self.script_build = script()
+            self.script_clean = script()
             self.macros['buildname'] = self._name_(self.macros['name'])
         except error.general as gerr:
             log.notice(str(gerr))
@@ -288,21 +296,21 @@ class build:
                         raise error.general('setup source tag not found: %d' % (source_tag))
                 else:
                     name = opt_name
-            self.script.append(self.config.expand('cd %{_builddir}'))
+            self.script_build.append(self.config.expand('cd %{_builddir}'))
             if not deleted_dir and  delete_before_unpack:
-                self.script.append(self.config.expand('%{__rm} -rf ' + name))
+                self.script_build.append(self.config.expand('%{__rm} -rf ' + name))
                 deleted_dir = True
             if not created_dir and create_dir:
-                self.script.append(self.config.expand('%{__mkdir_p} ' + name))
+                self.script_build.append(self.config.expand('%{__mkdir_p} ' + name))
                 created_dir = True
             if not changed_dir and (not unpack_before_chdir or create_dir):
-                self.script.append(self.config.expand('cd ' + name))
+                self.script_build.append(self.config.expand('cd ' + name))
                 changed_dir = True
-            self.script.append(self.config.expand(source['script']))
+            self.script_build.append(self.config.expand(source['script']))
         if not changed_dir and (unpack_before_chdir and not create_dir):
-            self.script.append(self.config.expand('cd ' + name))
+            self.script_build.append(self.config.expand('cd ' + name))
             changed_dir = True
-        self.script.append(self.config.expand('%{__setup_post}'))
+        self.script_build.append(self.config.expand('%{__setup_post}'))
 
     def patch_setup(self, package, args):
         name = args[1]
@@ -360,7 +368,7 @@ class build:
             else:
                 patch['script'] = '%{__cat} ' + patch['local']
             patch['script'] += ' | %%{__patch} %s' % (opts)
-            self.script.append(self.config.expand(patch['script']))
+            self.script_build.append(self.config.expand(patch['script']))
 
     def run(self, command, shell_opts = '', cwd = None):
         e = execute.capture_execution(log = log.default, dump = self.opts.quiet())
@@ -378,7 +386,7 @@ class build:
             self.mkdir(builddir)
 
     def prep(self, package):
-        self.script.append('echo "==> %prep:"')
+        self.script_build.append('echo "==> %prep:"')
         _prep = package.prep()
         if _prep:
             for l in _prep:
@@ -400,59 +408,78 @@ class build:
                         sources.hash(args[1:], self.macros, err)
                         self.hash(package, args)
                     else:
-                        self.script.append(' '.join(args))
+                        self.script_build.append(' '.join(args))
 
     def build(self, package):
-        self.script.append('echo "==> clean %{buildroot}: ${SB_BUILD_ROOT}"')
-        self.script.append('%s ${SB_BUILD_ROOT}' %
-                           (self.config.expand('%{__rmdir}')))
-        self.script.append('%s ${SB_BUILD_ROOT}' %
-                           (self.config.expand('%{__mkdir_p}')))
-        self.script.append('echo "==> %build:"')
+        self.script_build.append('echo "==> clean %{buildroot}: ${SB_BUILD_ROOT}"')
+        self.script_build.append('%s ${SB_BUILD_ROOT}' %
+                                 (self.config.expand('%{__rmdir}')))
+        self.script_build.append('%s ${SB_BUILD_ROOT}' %
+                                 (self.config.expand('%{__mkdir_p}')))
+        self.script_build.append('echo "==> %build:"')
         _build = package.build()
         if _build:
             for l in _build:
-                self.script.append(l)
+                self.script_build.append(l)
 
     def install(self, package):
-        self.script.append('echo "==> %install:"')
+        self.script_build.append('echo "==> %install:"')
         _install = package.install()
         if _install:
             for l in _install:
                 args = l.split()
-                self.script.append(' '.join(args))
+                self.script_build.append(' '.join(args))
 
     def files(self, package):
         if self.create_tar_files \
            and not self.macros.get('%{_disable_packaging'):
-            self.script.append('echo "==> %files:"')
+            self.script_build.append('echo "==> %files:"')
             inpath = path.abspath(self.config.expand('%{buildroot}'))
             tardir = path.abspath(self.config.expand('%{_tardir}'))
-            self.script.append(self.config.expand('if test -d %s; then' % (inpath)))
-            self.script.append(self.config.expand('  %%{__mkdir_p} %s' % tardir))
-            self.script.append(self.config.expand('  cd ' + inpath))
+            self.script_build.append(self.config.expand('if test -d %s; then' % (inpath)))
+            self.script_build.append(self.config.expand('  %%{__mkdir_p} %s' % tardir))
+            self.script_build.append(self.config.expand('  cd ' + inpath))
             tar = path.join(tardir, package.long_name() + '.tar.bz2')
             cmd = self.config.expand('  %{__tar} -cf - . ' + '| %{__bzip2} > ' + tar)
-            self.script.append(cmd)
-            self.script.append(self.config.expand('  cd %{_builddir}'))
-            self.script.append('fi')
+            self.script_build.append(cmd)
+            self.script_build.append(self.config.expand('  cd %{_builddir}'))
+            self.script_build.append('fi')
 
     def clean(self, package):
-        self.script.append('echo "==> %clean:"')
+        self.script_clean.reset()
+        self.script_clean.append(self.config.expand('%{___build_template}'))
+        self.script_clean.append('echo "=> ' + package.name() + ': CLEAN"')
+        self.script_clean.append('echo "==> %clean:"')
         _clean = package.clean()
         if _clean is not None:
             for l in _clean:
                 args = l.split()
-                self.script.append(' '.join(args))
+                self.script_clean.append(' '.join(args))
+
+    def sizes(self, package):
+        def _sizes(package, what, path):
+            package.set_size(what, path)
+            s = humanize_number(package.get_size(what), 'B')
+            log.trace('size: %s (%s): %s (%d)' % (what, path, s, package.get_size(what)))
+            return s
+        s = {}
+        for p in [('build', '%{_builddir}'),
+                  ('build', '%{buildroot}'),
+                  ('installed', '%{buildroot}')]:
+            hs = _sizes(package, p[0], self.config.expand(p[1]))
+            s[p[0]] = hs
+        log.notice('sizes: %s: %s (installed: %s)' % (package.name(),
+                                                      s['build'],
+                                                      s['installed']))
 
     def build_package(self, package):
         if self.canadian_cross():
             if not self.config.defined('%{allow_cxc}'):
                 raise error.general('Canadian Cross is not allowed')
-            self.script.append('echo "==> Candian-cross build/target:"')
-            self.script.append('SB_CXC="yes"')
+            self.script_build.append('echo "==> Candian-cross build/target:"')
+            self.script_build.append('SB_CXC="yes"')
         else:
-            self.script.append('SB_CXC="no"')
+            self.script_build.append('SB_CXC="no"')
         self.build(package)
         self.install(package)
         self.files(package)
@@ -498,18 +525,24 @@ class build:
                 log.trace('---- macro maps %s' % ('-' * 55))
                 log.trace('%s' % (str(self.config.macros)))
                 log.trace('-' * 70)
-                self.script.reset()
-                self.script.append(self.config.expand('%{___build_template}'))
-                self.script.append('echo "=> ' + name + ':"')
+                self.script_build.reset()
+                self.script_build.append(self.config.expand('%{___build_template}'))
+                self.script_build.append('echo "=> ' + name + ': BUILD"')
                 self.prep(package)
                 self.build_package(package)
                 if not self.opts.dry_run():
                     self.builddir()
-                    sn = path.join(self.config.expand('%{_builddir}'), 'doit')
-                    log.output('write script: ' + sn)
-                    self.script.write(sn)
+                    build_sn = path.join(self.config.expand('%{_builddir}'), 'do-build')
+                    log.output('write script: ' + build_sn)
+                    self.script_build.write(build_sn)
+                    clean_sn = path.join(self.config.expand('%{_builddir}'), 'do-clean')
+                    log.output('write script: ' + clean_sn)
+                    self.script_clean.write(clean_sn)
                     log.notice('building: %s%s' % (cxc_label, name))
-                    self.run(sn)
+                    self.run(build_sn)
+                    self.sizes(package)
+                    log.notice('cleaning: %s%s' % (cxc_label, name))
+                    self.run(clean_sn)
             except error.general as gerr:
                 log.notice(str(gerr))
                 log.stderr('Build FAILED')
@@ -535,6 +568,18 @@ class build:
         packages = self.config.packages()
         package = packages['main']
         return package.disabled()
+
+    def get_build_size(self):
+        package = self.main_package()
+        if package.disabled():
+            return 0
+        return package.get_size('build')
+
+    def get_installed_size(self):
+        package = self.main_package()
+        if package.disabled():
+            return 0
+        return package.get_size('installed')
 
 def get_configs(opts):
 

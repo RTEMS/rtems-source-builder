@@ -1,6 +1,6 @@
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2010-2016 Chris Johns (chrisj@rtems.org)
+# Copyright 2010-2018 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -73,6 +73,7 @@ class package:
         self.config = config
         self.directives = {}
         self.infos = {}
+        self.sizes = {}
 
     def __str__(self):
 
@@ -217,6 +218,16 @@ class package:
 
     def disabled(self):
         return len(self.name()) == 0
+
+    def set_size(self, what, path_):
+        if what not in self.sizes:
+            self.sizes[what] = 0
+        self.sizes[what] += path.get_size(path_)
+
+    def get_size(self, what):
+        if what in self.sizes:
+            return self.sizes[what]
+        return 0
 
 class file:
     """Parse a config file."""

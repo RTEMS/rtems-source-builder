@@ -1,6 +1,6 @@
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2010-2016 Chris Johns (chrisj@rtems.org)
+# Copyright 2010-2018 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -447,13 +447,48 @@ class buildset:
                         self.install(b.name(),
                                      b.config.expand('%{buildroot}'),
                                      b.config.expand('%{_prefix}'))
-
+            #
+            # Sizes ...
+            #
+            if len(builds) > 1:
+                size_build = 0
+                size_installed = 0
+                size_build_max = 0
+                for b in builds:
+                    s = b.get_build_size()
+                    size_build += s
+                    if s > size_build_max:
+                        size_build_max = s
+                    size_installed += b.get_installed_size()
+                size_sources = 0
+                for p in builds[0].config.expand('%{_sourcedir}').split(':'):
+                    size_sources += path.get_size(p)
+                size_patches = 0
+                for p in builds[0].config.expand('%{_patchdir}').split(':'):
+                    size_patches += path.get_size(p)
+                size_total = size_sources + size_patches + size_installed
+                build_size = 'usage: %s' % (build.humanize_number(size_build_max + size_installed, 'B'))
+                build_size += ' total: %s' % (build.humanize_number(size_total, 'B'))
+                build_size += ' (sources: %s' % (build.humanize_number(size_sources, 'B'))
+                build_size += ', patches: %s' % (build.humanize_number(size_patches, 'B'))
+                build_size += ', installed %s)' % (build.humanize_number(size_installed, 'B'))
+            #
+            # Cleaning ...
+            #
             if deps is None and \
                     (not self.opts.no_clean() or self.opts.always_clean()):
                 for b in builds:
                     if not b.disabled():
                         log.notice('cleaning: %s' % (b.name()))
                         b.cleanup()
+            #
+            # Log the build size message
+            #
+            if len(builds) > 1:
+                log.notice('Build Sizes: %s' % (build_size))
+            #
+            # Clear out the builds ...
+            #
             for b in builds:
                 del b
         except error.general as gerr:
@@ -484,6 +519,9 @@ class buildset:
                 self.write_mail_header('')
                 log.notice('Mailing report: %s' % (mail['to']))
                 body = self.get_mail_header()
+                body += 'Sizes' + os.linesep
+                body += '=====' + os.linesep + os.linesep
+
                 body += 'Output' + os.linesep
                 body += '======' + os.linesep + os.linesep
                 body += os.linesep.join(mail['output'].get())
