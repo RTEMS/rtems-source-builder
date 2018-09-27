@@ -237,12 +237,13 @@ class command_line:
         raise error.exit()
 
     def process(self):
+        for a in self.args:
+            if a == '-?' or a == '--help':
+                self.help()
         arg = 0
         while arg < len(self.args):
             a = self.args[arg]
-            if a == '-?':
-                self.help()
-            elif a.startswith('--'):
+            if a.startswith('--'):
                 los = a.split('=')
                 lo = los[0]
                 if lo in self._long_opts:
@@ -266,8 +267,11 @@ class command_line:
                             value = '1'
                         self.defaults[los[0][2:].replace('-', '_').lower()] = ('none', 'none', value)
                     else:
-                        raise error.general('unknown option: %s' % (lo))
+                        if lo not in self.optargs:
+                            raise error.general('unknown option: %s' % (lo))
             else:
+                if a.startswith('-'):
+                    raise error.general('not short options; only "-?"')
                 self.opts['params'].append(a)
             arg += 1
 
