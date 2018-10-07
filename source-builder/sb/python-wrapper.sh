@@ -1,4 +1,3 @@
-#! /bin/sh
 #
 # RTEMS Tools Project (http://www.rtems.org/)
 # Copyright 2018 Chris Johns (chrisj@rtems.org)
@@ -17,11 +16,24 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-#
 set -e
-base=$(dirname $0)
-PYTHON_CMD=${base}/sb/cmd-defaults.py
-if test -f ${base}/sb/python-wrapper.sh; then
-  . ${base}/sb/python-wrapper.sh
+if test ! -f $PYTHON_CMD; then
+  echo "error: python command not found: $PYTHON_CMD"
+  exit 5
 fi
-echo "error: python wrapper not found"
+for py in python2 python3 python
+do
+  set +e
+  py_cmd=$(command -v $py)
+  set -e
+  if test -n "$RTEMS_PYTHON_OVERRIDE"; then
+    if test "$RTEMS_PYTHON_OVERRIDE" != "$py"; then
+      py_cmd=""
+    fi
+  fi
+  if test -n "$py_cmd"; then
+    exec $py_cmd $PYTHON_CMD $0 $*
+  fi
+done
+echo "error: no valid python found"
+exit 5

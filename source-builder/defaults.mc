@@ -65,9 +65,11 @@ _uid:                none,    convert,  '%(%{__id_u} -n)'
 # the tools will run on and build is the host building the tools.
 host_cflags:         none,    convert,  '-O2 -pipe'
 host_cxxflags:       none,    convert,  '-O2 -pipe'
+host_ldflags:        none,    convert,  ''
 host_includes:       none,    convert,  ''
 build_cflags:        none,    convert,  '-O2 -pipe'
 build_cxxflags:      none,    convert,  '-O2 -pipe'
+build_ldflags:       none,    convert,  ''
 build_includes:      none,    convert,  ''
 
 # Extra path a platform can override.
@@ -202,10 +204,10 @@ SB_BUILD_DIR="%{_builddir}"
 SB_HOST_CPPFLAGS="%{host_includes}"
 SB_HOST_CFLAGS="%{host_cflags} %{host_includes}"
 SB_HOST_CXXFLAGS="%{host_cxxflags} %{host_includes}"
-SB_HOST_LDFLAGS="%{?host_ldflags:%{host_ldflags}} %{?_tmproot:-L%{_tmproot}/${SB_PREFIX_CLEAN}/lib}"
+SB_HOST_LDFLAGS="%{host_ldflags} %{?_tmproot:-L%{_tmproot}/${SB_PREFIX_CLEAN}/lib}"
 SB_BUILD_CFLAGS="%{build_cflags} %{?_tmproot:-I%{_tmproot}/${SB_PREFIX_CLEAN}/include}"
 SB_BUILD_CXXFLAGS="%{build_cxxflags} %{?_tmproot:-I%{_tmproot}/${SB_PREFIX_CLEAN}/include}"
-SB_BUILD_LDFLAGS="%{?build_ldflags:%{build_ldflags}} %{?_tmproot:-L%{_tmproot}/${SB_PREFIX_CLEAN}/lib}"
+SB_BUILD_LDFLAGS="%{build_ldflags} %{?_tmproot:-L%{_tmproot}/${SB_PREFIX_CLEAN}/lib}"
 SB_CFLAGS="${SB_BUILD_CFLAGS} %{build_includes}"
 SB_CXXFLAGS="${SB_BUILD_CXXFLAGS} %{build_includes}"
 SB_ARCH="%{_arch}"

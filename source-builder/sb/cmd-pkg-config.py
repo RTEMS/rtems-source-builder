@@ -1,0 +1,220 @@
+#
+# RTEMS Tools Project (http://www.rtems.org/)
+# Copyright 2014-2016 Chris Johns (chrisj@rtems.org)
+# All rights reserved.
+#
+# This file is part of the RTEMS Tools package in 'rtems-tools'.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+# this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation
+# and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+from __future__ import print_function
+
+import os
+import sys
+
+base = os.path.dirname(sys.argv[0])
+
+try:
+    import argparse
+except:
+    sys.path.insert(0, base + '/sb/imports')
+    try:
+        import argparse
+    except:
+        print("Incorrect Source Builder installation", file = sys.stderr)
+        sys.exit(1)
+
+import pkgconfig
+
+#
+# Make trace true to get a file of what happens and what is being asked.
+#
+trace = True
+trace_stdout = False
+logfile = 'pkg-config.log'
+out = None
+srcfd = None
+
+#
+# Write all the package source parsed to a single file.
+#
+trace_src = True
+if trace_src:
+    srcfd = open('pkg-src.txt', 'w')
+
+def src(text):
+    if srcfd:
+        srcfd.writelines(text)
+
+def log(s, lf = True):
+    global trace, logfile, out
+    if trace:
+        if out is None:
+            if logfile:
+                out = open(logfile, 'a')
+            else:
+                out = sys.stdout
+        if lf:
+            if out != sys.stdout and trace_stdout:
+                print(s)
+            print(s, file = out)
+        else:
+            if out != sys.stdout and trace_stdout:
+                print(s, end = '')
+                sys.stdout.flush()
+            print(s, end = '', file = out)
+
+def run(argv):
+
+    class version_action(argparse.Action):
+        def __call__(self, parser, namespace, values, option_string = None):
+            parts = values[0].strip().split('.')
+            for p in parts:
+                if not p.isdigit():
+                    raise error('invalid version value: %s' % (values))
+            setattr(namespace, self.dest, '.'.join(parts))
+
+    ec = 0
+
+    opts = argparse.ArgumentParser(prog = 'pkg-config', description = 'Package Configuration.')
+    opts.add_argument('libraries', metavar='lib', type = str,  help = 'a library', nargs = '*')
+    opts.add_argument('--modversion', dest = 'modversion', action = 'store', default = None,
+                      help = 'Requests that the version information of the libraries.')
+    opts.add_argument('--print-errors', dest = 'print_errors', action = 'store_true',
+                      default = False,
+                      help = 'Print any errors.')
+    opts.add_argument('--short-errors', dest = 'short_errors', action = 'store_true',
+                      default = False,
+                      help = 'Make error messages short.')
+    opts.add_argument('--silence-errors', dest = 'silence_errors', action = 'store_true',
+                      default = False,
+                      help = 'Do not print any errors.')
+    opts.add_argument('--errors-to-stdout', dest = 'errors_to_stdout', action = 'store_true',
+                      default = False,
+                      help = 'Print errors to stdout rather than stderr.')
+    opts.add_argument('--cflags', dest = 'cflags', action = 'store_true',
+                      default = False,
+                      help = 'This prints pre-processor and compile flags required to' \
+                             ' compile the package(s)')
+    opts.add_argument('--libs', dest = 'libs', action = 'store_true',
+                      default = False,
+                      help = 'This option is identical to "--cflags", only it prints the' \
+                             ' link flags.')
+    opts.add_argument('--libs-only-L', dest = 'libs_only_L', action = 'store_true',
+                      default = False,
+                      help = 'This prints the -L/-R part of "--libs".')
+    opts.add_argument('--libs-only-l', dest = 'libs_only_l', action = 'store_true',
+                      default = False,
+                      help = 'This prints the -l part of "--libs".')
+    opts.add_argument('--variable', dest = 'variable', action = 'store',
+                      nargs = 1, default = None,
+                      help = 'This returns the value of a variable.')
+    opts.add_argument('--define-variable', dest = 'define_variable', action = 'store',
+                      nargs = 1, default = None,
+                      help = 'This sets a global value for a variable')
+    opts.add_argument('--uninstalled', dest = 'uninstalled', action = 'store_true',
+                      default = False,
+                      help = 'Ignored')
+    opts.add_argument('--atleast-pkgconfig-version', dest = 'atleast_pkgconfig_version',
+                      action = 'store', nargs = 1, default = None,
+                      help = 'Check the version of package config. Always ok.')
+    opts.add_argument('--exists', dest = 'exists', action = 'store_true',
+                      default = False,
+                      help = 'Test if a library is present')
+    opts.add_argument('--atleast-version', dest = 'atleast_version',
+                      action = version_action, nargs = 1, default = None,
+                      help = 'The package is at least this version.')
+    opts.add_argument('--exact-version', dest = 'exact_version', action = version_action,
+                       nargs = 1, default = None,
+                        help = 'The package is the exact version.')
+    opts.add_argument('--max-version', dest = 'max_version', action = version_action,
+                      nargs = 1, default = None,
+                      help = 'The package is no later than this version.')
+    opts.add_argument('--msvc-syntax', dest = 'msvc_syntax', action = 'store_true',
+                      default = False,
+                      help = 'Ignored')
+    opts.add_argument('--dont-define-prefix', dest = 'dont_define_prefix', action = 'store_true',
+                      default = False,
+                      help = 'Ignored')
+    opts.add_argument('--prefix-variable', dest = 'prefix', action = 'store',
+                      nargs = 1, default = pkgconfig.default_prefix(),
+                      help = 'Define the prefix.')
+    opts.add_argument('--static', dest = 'static', action = 'store_true',
+                      default = False,
+                      help = 'Output libraries suitable for static linking')
+    opts.add_argument('--dump', dest = 'dump', action = 'store_true',
+                      default = False,
+                      help = 'Dump the package if one is found.')
+
+    args = opts.parse_args(argv[1:])
+
+    if (args.exists and (args.exact_version or args.max_version)) or \
+            (args.exact_version and (args.exists or args.max_version)) or \
+            (args.max_version and (args.exists or args.exact_version)):
+        raise error('only one of --exists, --exact-version, or --max-version')
+
+    if args.dont_define_prefix:
+        args.prefix = pkgconfig.default_prefix(False)
+
+    exists = False
+
+    ec = 1
+
+    if args.atleast_pkgconfig_version:
+        ec = 0
+    else:
+        ec, pkg, flags = pkgconfig.check_package(args.libraries, args, log, src)
+        if ec == 0:
+            if args.cflags:
+                if len(flags['cflags']):
+                    print(flags['cflags'])
+                    log('cflags: %s' % (flags['cflags']))
+                else:
+                    log('cflags: empty')
+            if args.libs:
+                if len(flags['libs']):
+                    print(flags['libs'])
+                    log('libs: %s' % (flags['libs']))
+                else:
+                    log('libs: empty')
+
+    #pkgconfig.package.dump_loaded()
+
+    return ec
+
+try:
+    log('-' * 40)
+    log('pkg-config', lf = False)
+    for a in sys.argv[1:]:
+        log(' "%s"' % (a), lf = False)
+    log('')
+    ec = run(sys.argv)
+    log('ec = %d' % (ec))
+except ImportError:
+    print("incorrect package config installation", file = sys.stderr)
+    sys.exit(1)
+except pkgconfig.error as e:
+    print('error: %s' % (e), file = sys.stderr)
+    sys.exit(1)
+sys.exit(ec)

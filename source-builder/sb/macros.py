@@ -53,7 +53,8 @@ class macros:
         def iterkeys(self):
             return self.keys
 
-    def _unicode_to_str(self, us):
+    @staticmethod
+    def _unicode_to_str(us):
         try:
             if type(us) == unicode:
                 return us.encode('ascii', 'replace')
@@ -174,14 +175,14 @@ class macros:
                             'override', 'undefine', 'convert']:
             raise TypeError('bad value tuple (attrib field): %s' % (value[1]))
         if value[1] == 'convert':
-            value = self.expand(value)
+            value = (value[0], value[1], self.expand(value[2]))
         self.macros[self.write_map][self.key_filter(key)] = value
 
     def __delitem__(self, key):
         self.undefine(key)
 
     def __contains__(self, key):
-        return self.has_key(key)
+        return self.has_key(self._unicode_to_str(key))
 
     def __len__(self):
         return len(list(self.keys()))
@@ -201,6 +202,7 @@ class macros:
         return sorted(set(keys))
 
     def has_key(self, key):
+        key = self._unicode_to_str(key)
         if type(key) is not str:
             raise TypeError('bad key type (want str): %s' % (type(key)))
         if self.key_filter(key) not in list(self.keys()):
@@ -452,6 +454,7 @@ class macros:
 
     def expand(self, _str):
         """Simple basic expander of config file macros."""
+        _str = self._unicode_to_str(_str)
         expanded = True
         while expanded:
             expanded = False

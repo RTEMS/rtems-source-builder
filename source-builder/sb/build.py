@@ -69,7 +69,15 @@ class script:
         self.lc = 0
 
     def append(self, text):
+        is_str = False
         if type(text) is str:
+            is_str = True
+        try:
+            if type(text) is unicode:
+                is_str = True
+        except:
+            pass
+        if is_str:
             text = text.splitlines()
         if not log.quiet:
             i = 0

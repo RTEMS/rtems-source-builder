@@ -1,7 +1,6 @@
-#! /bin/sh
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2018 Chris Johns (chrisj@rtems.org)
+# Copyright 2010-2012 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -17,11 +16,14 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-#
-set -e
-base=$(dirname $0)
-PYTHON_CMD=${base}/sb/cmd-defaults.py
-if test -f ${base}/sb/python-wrapper.sh; then
-  . ${base}/sb/python-wrapper.sh
-fi
-echo "error: python wrapper not found"
+
+from __future__ import print_function
+
+import sys, os
+
+try:
+    import check
+    check.run()
+except ImportError:
+    print("Incorrect Source Builder installation", file = sys.stderr)
+    sys.exit(1)

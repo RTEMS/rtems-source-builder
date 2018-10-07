@@ -1,0 +1,169 @@
+#! /bin/sh
+#
+# RTEMS Tools Project (http://www.rtems.org/)
+# Copyright 2018 Chris Johns (chrisj@rtems.org)
+# All rights reserved.
+#
+# This file is part of the RTEMS Tools package in 'rtems-tools'.
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+#
+# Host Build Dependence
+#
+# This script finds a file that is part of the compiler's default
+# build environment. The file can be header or a library.
+#
+# Header files:
+#  - Get the list of include directories from the compiler.
+#  - Search the include paths for the header file.
+#
+# Library:
+#  - Ask the compiler to print the library paths, add on any user
+#    paths and search with a wilecard.
+#
+
+set -e
+
+op=
+name=
+includes=
+libraries=
+compile=
+verbose=no
+debug=no
+
+if [ $# -eq 0 ]; then
+    echo 'Usage: rtems-build-dep [-c compiler] [-H header] [-I header-paths]
+                       [-l library] [-L library-paths] [-v] [-d]'
+    exit 2
+fi
+while [ $# > 0 ]
+do
+    case "$1"
+    in
+	-c)
+	    if [ $# -eq 1 ]; then
+		echo 'error: no compiler (-c) provided'
+		exit 2
+	    fi
+	    compiler="$2"; shift;
+            shift;;
+	-H)
+	    if [ $# -eq 1 ]; then
+		echo 'error: no header (-H) provided'
+		exit 2
+	    fi
+	    op="header"
+            name="$2"; shift;
+            shift;;
+	-I)
+	    if [ $# -eq 1 ]; then
+		echo 'error: no header path (-I) provided'
+		exit 2
+	    fi
+            includes="$2"; shift;
+            shift;;
+	-l)
+	    if [ $# -eq 1 ]; then
+		echo 'error: no library (-l) provided'
+		exit 2
+	    fi
+	    op="library"
+            name="$2"; shift;
+            shift;;
+	-L)
+	    if [ $# -eq 1 ]; then
+		echo 'error: no library path (-L) provided'
+		exit 2
+	    fi
+            libraries="$2"; shift;
+            shift;;
+	-v)
+	    verbose=yes
+            shift;;
+	-d)
+	    debug=yes
+            shift;;
+	*)
+	    break;
+    esac
+done
+
+if [ ${debug} = yes ]; then
+    set -x
+fi
+
+if [ -z "${op}" ]; then
+    echo "error: no header or library file to find found."
+    exit 2
+fi
+if [ -z "${compiler}" ]; then
+    echo "error: no compiler provided."
+    exit 2
+fi
+if [ -z "${name}" ]; then
+    echo "error: no name found."
+    exit 2
+fi
+
+#
+# Header file.
+#
+if [ ${op} = "header" ]; then
+    inc_paths=$(echo | ${compiler} ${includes} -xc -E -v - 2>&1 | \
+	       awk 'BEGIN {flag=0;} /starts here/{flag=1;next}/End/{flag=0}flag')
+    for p in ${inc_paths}
+    do
+	if [ ${verbose} = yes ]; then
+	    echo "Include: ${p}"
+	fi
+	if [ -f "${p}/${name}" ]; then
+	    echo "found"
+	    exit 0
+	fi
+    done
+    echo "not-found"
+    exit 0
+fi
+
+#
+# Library file
+#
+if [ ${op} = "library" ]; then
+    if [ "${OS}" = "Windows_NT" ]; then
+	sep=';'
+    else
+	sep=':'
+    fi
+    lib_paths_1=$(${compiler} -print-search-dirs 2>&1 | \
+		      grep libraries | \
+		      sed -e 's/libraries:.*=//' | \
+		      awk 'BEGIN {FS="'${sep}'"} {for (i=0;++i<=NF;) print $i;}')
+    lib_paths_2=$(echo ${libraries} | \
+		      awk 'BEGIN {FS="-L"} {for (i=0;++i<=NF;) if (length($i) > 0) print $i;}')
+    for p in ${lib_paths_1} ${lib_paths_2}
+    do
+	if [ ${verbose} = yes ]; then
+	    echo "Library: ${p}/${name}"
+	fi
+	if ls ${p}/${name} 1> /dev/null 2>&1; then
+	    echo "found"
+	    exit 0
+	fi
+    done
+    echo "not-found"
+    exit 0
+fi
+
+exit 1

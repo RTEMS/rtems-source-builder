@@ -30,10 +30,13 @@ import os
 import shutil
 import stat
 import string
+import sys
 
 import error
 
+windows_posix = sys.platform == 'msys'
 windows = os.name == 'nt'
+
 win_maxpath = 254
 
 def host(path):
@@ -54,13 +57,15 @@ def host(path):
     return path
 
 def shell(path):
+    if isinstance(path, bytes):
+        path = path.decode('ascii')
     if path is not None:
-        if windows:
-            path = path.encode('ascii', 'ignore')
+        if windows or windows_posix:
+            path = path.encode('ascii', 'ignore').decode('ascii')
             if path.startswith('\\\\?\\'):
                 path = path[4:]
             if len(path) > 1 and path[1] == ':':
-                path = '/%s%s' % (path[0], path[2:])
+                path = '/%s%s' % (path[0].lower(), path[2:])
             path = path.replace('\\', '/')
         while '//' in path:
             path = path.replace('//', '/')

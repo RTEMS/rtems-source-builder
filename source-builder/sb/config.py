@@ -557,7 +557,7 @@ class file:
                 elif m.startswith('%{expand'):
                     colon = m.find(':')
                     if colon < 8:
-                        log.warning('malformed expand macro, no colon found')
+                        log.warning(self._name_line_msg('malformed expand macro, no colon found'))
                     else:
                         e = self._expand(m[colon + 1:-1].strip())
                         s = s.replace(m, self._label(e))
@@ -576,7 +576,7 @@ class file:
                     mn = None
                 elif m.startswith('%{echo'):
                     if not m.endswith('}'):
-                        log.warning("malformed conditional macro '%s'" % (m))
+                        log.warning(self._name_line_msg("malformed conditional macro '%s'" % (m)))
                         mn = None
                     else:
                         e = self._expand(m[6:-1].strip())
@@ -648,7 +648,7 @@ class file:
                     colon = m[start:].find(':')
                     if colon < 0:
                         if not m.endswith('}'):
-                            log.warning("malformed conditional macro '%s'" % (m))
+                            log.warning(self._name_line_msg("malformed conditional macro '%s'" % (m)))
                             mn = None
                         else:
                             mn = self._label(m[start:-1])
@@ -690,18 +690,18 @@ class file:
 
     def _disable(self, config, ls):
         if len(ls) != 2:
-            log.warning('invalid disable statement')
+            log.warning(self._name_line_msg('invalid disable statement'))
         else:
             if ls[1] == 'select':
                 self.macros.lock_read_map()
                 log.trace('config: %s: %3d: _disable_select: %s' % (self.name, self.lc,
                                                                      ls[1]))
             else:
-                log.warning('invalid disable statement: %s' % (ls[1]))
+                log.warning(self._name_line_msg('invalid disable statement: %s' % (ls[1])))
 
     def _select(self, config, ls):
         if len(ls) != 2:
-            log.warning('invalid select statement')
+            log.warning(self._name_line_msg('invalid select statement'))
         else:
             r = self.macros.set_read_map(ls[1])
             log.trace('config: %s: %3d: _select: %s %s %r' % \
@@ -716,7 +716,7 @@ class file:
 
     def _define(self, config, ls):
         if len(ls) <= 1:
-            log.warning('invalid macro definition')
+            log.warning(self._name_line_msg('invalid macro definition'))
         else:
             d = self._label(ls[1])
             if self.disable_macro_reassign:
@@ -727,7 +727,7 @@ class file:
                     else:
                         self.macros[d] = ' '.join([f.strip() for f in ls[2:]])
                 else:
-                    log.warning("macro '%s' already defined" % (d))
+                    log.warning(self._name_line_msg("macro '%s' already defined" % (d)))
             else:
                 if len(ls) == 2:
                     self.macros[d] = '1'
@@ -736,7 +736,7 @@ class file:
 
     def _undefine(self, config, ls):
         if len(ls) <= 1:
-            log.warning('invalid macro definition')
+            log.warning(self._name_line_msg('invalid macro definition'))
         else:
             mn = self._label(ls[1])
             if mn in self.macros:
@@ -841,7 +841,7 @@ class file:
                     i = andi
                 log.trace('config: %s: %3d: _if[%i]: next OP found at %i' % (self.name, self.lc,
                                                                              self.if_depth,
-                i))
+                                                                             i))
             ls = cls[:i]
             if len(ls) == 0:
                 self._error('invalid if expression: ' + reduce(add, sls, ''))
@@ -965,6 +965,16 @@ class file:
                     break
         return self._ifs(config, ls, '%ifos', isos, isvalid, dir, info)
 
+    def _ifnos(self, config, ls, isvalid, dir, info):
+        isnos = True
+        if isvalid:
+            os = self.define('_os')
+            for l in ls:
+                if l in os:
+                    isnos = False
+                    break
+        return self._ifs(config, ls, '%ifnos', isnos, isvalid, dir, info)
+
     def _ifarch(self, config, positive, ls, isvalid, dir, info):
         isarch = False
         if isvalid:
@@ -1063,6 +1073,10 @@ class file:
                     d = self._ifos(config, ls, isvalid, dir, info)
                     if len(d):
                         return ('data', d)
+                elif ls[0] == '%ifnos':
+                    d = self._ifnos(config, ls, isvalid, dir, info)
+                    if len(d):
+                        return ('data', d)
                 elif ls[0] == '%ifarch':
                     d = self._ifarch(config, True, ls, isvalid, dir, info)
                     if len(d):
@@ -1074,11 +1088,11 @@ class file:
                 elif ls[0] == '%endif':
                     if roc:
                         return ('control', '%endif', '%endif')
-                    log.warning("unexpected '" + ls[0] + "'")
+                    log.warning(self._name_line_msg("unexpected '" + ls[0] + "'"))
                 elif ls[0] == '%else':
                     if roc:
                         return ('control', '%else', '%else')
-                    log.warning("unexpected '" + ls[0] + "'")
+                    log.warning(self._name_line_msg("unexpected '" + ls[0] + "'"))
                 elif ls[0].startswith('%defattr'):
                     return ('data', [l])
                 elif ls[0] == '%bcond_with':
@@ -1103,7 +1117,7 @@ class file:
                                 log.trace('config: %s: %0d: _parse: directive: %s' % \
                                           (self.name, self.lc, ls[0].strip()))
                                 return ('directive', ls[0].strip(), ls[1:])
-                        log.warning("unknown directive: '" + ls[0] + "'")
+                        log.warning(self._name_line_msg("unknown directive: '" + ls[0] + "'"))
                         return ('data', [lo])
             else:
                 return ('data', [lo])
@@ -1124,7 +1138,7 @@ class file:
                 _package = results[2][0]
             else:
                 if results[2][0].strip() != '-n':
-                    log.warning("unknown directive option: '%s'" % (' '.join(results[2])))
+                    log.warning(self._name_line_msg("unknown directive option: '%s'" % (' '.join(results[2]))))
                 _package = results[2][1].strip()
             self._set_package(_package)
         if directive and directive != results[1]:
@@ -1146,7 +1160,7 @@ class file:
                 log.output(l[4:])
             elif l.startswith('%warning'):
                 l = self._expand(l)
-                log.warning(l[9:])
+                log.warning(self._name_line_msg(l[9:]))
             if not directive:
                 l = self._expand(l)
                 ls = self.tags.split(l, 1)
@@ -1161,7 +1175,7 @@ class file:
                 if info is not None:
                     self._info_append(info, info_data)
                 else:
-                    log.warning("invalid format: '%s'" % (info_data[:-1]))
+                    log.warning(self._name_line_msg("invalid format: '%s'" % (info_data[:-1])))
             else:
                 l = self._expand(l)
                 log.trace('config: %s: %3d: _data: %s %s' % (self.name, self.lc, l, new_data))
@@ -1275,7 +1289,7 @@ class file:
                 elif r[0] == 'control':
                     if r[1] == '%end':
                         break
-                    log.warning("unexpected '%s'" % (r[1]))
+                    log.warning(self._name_line_msg("unexpected '%s'" % (r[1])))
                 elif r[0] == 'directive':
                     if r[1] == '%include':
                         self.load(r[2][0])

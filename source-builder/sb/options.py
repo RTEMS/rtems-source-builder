@@ -602,9 +602,14 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc', logfile = Tru
     global host_posix
 
     #
+    # Adjust the args to remove the wrapper.
+    #
+    args = args[1:]
+
+    #
     # The path to this command.
     #
-    command_path = path.dirname(args[0])
+    command_path = path.dirname(path.abspath(args[0]))
     if len(command_path) == 0:
         command_path = '.'
 

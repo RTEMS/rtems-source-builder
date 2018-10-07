@@ -57,6 +57,8 @@ def load():
         '_host_cpu':        ('none',    'none',     cpu),
         '_host_alias':      ('none',    'none',     '%{nil}'),
         '_host_arch':       ('none',    'none',     cpu),
+        'host_includes':    ('none',    'convert',  '-I%{_usr}/include'),
+        'host_ldflags':     ('none',    'convert',  '-L%{_usr}/lib'),
         '_usr':             ('dir',     'required', '/usr/local'),
         '_var':             ('dir',     'optional', '/usr/local/var'),
         '__bash':           ('exe',     'optional', '/usr/local/bin/bash'),
@@ -67,7 +69,7 @@ def load():
         '__xz':             ('exe',     'optional', '/usr/bin/xz'),
         '__make':           ('exe',     'required', 'gmake'),
         '__patch_opts':     ('none',     'none',    '-E')
-        }
+    }
 
     defines['_build']        = defines['_host']
     defines['_build_vendor'] = defines['_host_vendor']
@@ -110,7 +112,7 @@ def load():
         #
         # Fix the mess iconv is on FreeBSD 10.0.
         #
-        defines['iconv_includes'] = ('none', 'none', '-I/usr/local/include -L/usr/local/lib')
+        defines['iconv_includes'] = ('none', 'none', '%{_host_includes} %{_host_ldflags}')
 
         #
         # On 11.0+ makeinfo and install-info have moved to /usr/local/...
