@@ -271,7 +271,7 @@ class command_line:
                             raise error.general('unknown option: %s' % (lo))
             else:
                 if a.startswith('-'):
-                    raise error.general('not short options; only "-?"')
+                    raise error.general('short options not supported; only "-?"')
                 self.opts['params'].append(a)
             arg += 1
 
