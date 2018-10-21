@@ -531,7 +531,7 @@ class buildset:
                     body += 'Total size: ' + build_total_size_human + os.linesep
                     body += 'Installed : ' + build_installed_size_human + os.linesep
                     body += 'Sources: ' + build_sources_size_human + os.linesep
-                    body += 'Sources: ' + build_patches_size_human + os.linesep
+                    body += 'Patches: ' + build_patches_size_human + os.linesep
                 else:
                     body += 'No packages built'
                 body += os.linesep
