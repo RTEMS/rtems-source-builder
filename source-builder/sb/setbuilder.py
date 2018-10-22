@@ -322,6 +322,7 @@ class buildset:
         else:
             exbset = self.macros.expand(self.bset)
             self.macros['_bset'] = exbset
+            self.macros['_bset_tmp'] = build.short_name(exbset)
             root, ext = path.splitext(exbset)
             if exbset.endswith('.bset'):
                 bset = exbset

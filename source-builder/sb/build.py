@@ -58,6 +58,19 @@ def humanize_number(num, suffix):
         num /= 1024.0
     return "%.3f%s%s" % (size, 'Y', suffix)
 
+def short_name(name):
+    #
+    # If on Windows use short names to keep the build paths as short as possible.
+    #
+    if options.host_windows:
+        buildname = ''
+        add = True
+        for n in name.split('-'):
+            buildname += n[0]
+        return buildname
+    else:
+        return name
+
 class script:
     """Create and manage a shell script."""
 
@@ -108,23 +121,6 @@ class script:
 class build:
     """Build a package given a config file."""
 
-    def _name_(self, name):
-        #
-        # If on Windows use shorter names to keep the build paths.
-        #
-        if options.host_windows:
-            buildname = ''
-            add = True
-            for c in name:
-                if c == '-':
-                    add = True
-                elif add:
-                    buildname += c
-                    add = False
-            return buildname
-        else:
-            return name
-
     def _generate_report_(self, header, footer = None):
         ereport.generate('rsb-report-%s.txt' % self.macros['name'],
                          self.opts, header, footer)
@@ -141,7 +137,7 @@ class build:
             self.config = config.file(name, opts, self.macros)
             self.script_build = script()
             self.script_clean = script()
-            self.macros['buildname'] = self._name_(self.macros['name'])
+            self.macros['buildname'] = short_name(self.macros['name'])
         except error.general as gerr:
             log.notice(str(gerr))
             log.stderr('Build FAILED')
