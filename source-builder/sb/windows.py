@@ -158,7 +158,7 @@ def load():
     #
     # Search the MSYS2 install tree for a suitable python.
     #
-    if sys.platform == 'msys' or True:
+    if sys.platform == 'msys':
         e = execute.capture_execution()
         exit_code, proc, output = e.shell("sh -c mount")
         if exit_code != 0:
