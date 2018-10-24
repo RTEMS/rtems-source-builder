@@ -78,6 +78,7 @@ def load():
     defines = {
         '_ncpus':            ('none',    'none',     ncpus),
         '_os':               ('none',    'none',     'win32'),
+        '_windows_os':       ('none',    'none',     uname),
         '_build':            ('triplet', 'required', build_triple),
         '_build_vendor':     ('none',    'none',     'microsoft'),
         '_build_os':         ('none',    'none',     'win32'),
