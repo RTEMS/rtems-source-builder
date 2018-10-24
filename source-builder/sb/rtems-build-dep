@@ -121,7 +121,7 @@ fi
 # Header file.
 #
 if [ ${op} = "header" ]; then
-    inc_paths=$(echo | ${compiler} ${includes} -xc -E -v - 2>&1 | \
+    inc_paths=$(echo | LC_ALL=C ${compiler} ${includes} -xc -E -v - 2>&1 | tr -d '\r' | \
 	       awk 'BEGIN {flag=0;} /starts here/{flag=1;next}/End/{flag=0}flag')
     for p in ${inc_paths}
     do
@@ -146,7 +146,7 @@ if [ ${op} = "library" ]; then
     else
 	sep=':'
     fi
-    lib_paths_1=$(${compiler} -print-search-dirs 2>&1 | \
+    lib_paths_1=$(LC_ALL=C ${compiler} -print-search-dirs 2>&1 | tr -d '\r' | \
 		      grep libraries | \
 		      sed -e 's/libraries:.*=//' | \
 		      awk 'BEGIN {FS="'${sep}'"} {for (i=0;++i<=NF;) print $i;}')
