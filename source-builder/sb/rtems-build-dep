@@ -141,7 +141,7 @@ fi
 # Library file
 #
 if [ ${op} = "library" ]; then
-    if [ "${OS}" = "Windows_NT" ]; then
+    if [ "${OS}" = "Windows_NT" -a "${OSTYPE}" -ne "cygwin" ]; then
 	sep=';'
     else
 	sep=':'
