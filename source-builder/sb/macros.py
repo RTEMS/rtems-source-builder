@@ -123,6 +123,7 @@ class macros:
                 lc = 0
                 for l in ds:
                     lc += 1
+                    l = self._unicode_to_str(l)
                     while len(l):
                         if indent:
                             text += ' %21s %10s %12s' % (' ', ' ', ' ')
