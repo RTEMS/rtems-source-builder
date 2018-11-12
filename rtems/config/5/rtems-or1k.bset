@@ -1,38 +1,16 @@
 #
-# Tools Set for RTEMS or1k 5 Stable
+# or1k architecture
 #
-
 %define release 1
-
 %define rtems_arch or1k
 
-#
-# The RTEMS base defines.
-#
 %include rtems-base.bset
 
-#
-# or1k specific patches
-#
-
-%patch add gcc -p1 https://github.com/openrisc/or1k-gcc/releases/download/or1k-4.9.3-release/gcc-4.9.3-or1k.patch
-%patch add gdb -p1 https://github.com/openrisc/binutils-gdb/releases/download/gdb-7.11-or1k-release/gdb-7.11-or1k.patch
-
-#
-# or1k specific configurations
-#
-
-#
-# Disable GDB simulator. Use the external simulator.
-#
-%define gdb-disable-sim 1
-
-#
-# Tools configuration.
-#
 5/rtems-autotools
+
 devel/expat-2.1.0-1
-tools/rtems-binutils-2.31.1
-tools/rtems-gcc-4.9.3-newlib-2ab57ad59bc35dafffa69cd4da5e228971de069f
+tools/rtems-gdb-ce73f310150418a9a1625ab60a527d959096a9e2
+tools/rtems-binutils-417e50dbcfd4b8dd699f48df5ac9b9a733fd80e2
+tools/rtems-gcc-4c0c3d1029e79b6709b43fed8c5a5944f245516d-newlib-2ab57ad59bc35dafffa69cd4da5e228971de069f
 tools/rtems-tools-5-1
-tools/rtems-gdb-7.11-2
+tools/rtems-kernel-5
