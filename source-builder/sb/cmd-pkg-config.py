@@ -33,7 +33,7 @@ from __future__ import print_function
 import os
 import sys
 
-base = os.path.dirname(sys.argv[0])
+base = os.path.dirname(sys.argv[1])
 
 try:
     import argparse
@@ -206,10 +206,10 @@ def run(argv):
 try:
     log('-' * 40)
     log('pkg-config', lf = False)
-    for a in sys.argv[1:]:
+    for a in sys.argv[2:]:
         log(' "%s"' % (a), lf = False)
     log('')
-    ec = run(sys.argv)
+    ec = run(sys.argv[1:])
     log('ec = %d' % (ec))
 except ImportError:
     print("incorrect package config installation", file = sys.stderr)
