@@ -10,8 +10,8 @@
 5/rtems-autotools
 
 devel/expat-2.1.0-1
+tools/rtems-gdb-ce73f310150418a9a1625ab60a527d959096a9e2
 tools/rtems-binutils-417e50dbcfd4b8dd699f48df5ac9b9a733fd80e2
 tools/rtems-gcc-4c0c3d1029e79b6709b43fed8c5a5944f245516d-newlib-2ab57ad59bc35dafffa69cd4da5e228971de069f
-tools/rtems-gdb-ce73f310150418a9a1625ab60a527d959096a9e2
 tools/rtems-tools-5-1
 tools/rtems-kernel-5
