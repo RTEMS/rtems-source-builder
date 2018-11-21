@@ -112,7 +112,7 @@ def load():
         #
         # Fix the mess iconv is on FreeBSD 10.0.
         #
-        defines['iconv_includes'] = ('none', 'none', '%{_host_includes} %{_host_ldflags}')
+        defines['iconv_includes'] = ('none', 'none', '%{host_includes} %{host_ldflags}')
 
         #
         # On 11.0+ makeinfo and install-info have moved to /usr/local/...
