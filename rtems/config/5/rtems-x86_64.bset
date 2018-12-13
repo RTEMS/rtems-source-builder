@@ -2,16 +2,4 @@
 %define rtems_arch x86_64
 %define with_libgomp
 
-#
-# Add LIB_SPEC to gcc for -qnolinkcmds, -qrtems, and default linker flags
-#
-%patch add gcc --rsb-file=gcc-99c7ae16793d88d7c16c692fb468ab308cb4d12d.patch https://gcc.gnu.org/git/?p=gcc.git;a=blobdiff_plain;f=gcc/config.gcc;h=99c7ae16793d88d7c16c692fb468ab308cb4d12d;hp=ae19655bf328e29ea4f00966b5060967684a7f1b;hb=602fa1e9d3ea5e87d4d6e17e3e91fc2647e42da3;hpb=7ea6a6472d360c634a00358dbaab2e236e785367
-%hash sha512 gcc-99c7ae16793d88d7c16c692fb468ab308cb4d12d.patch ed519aacb199be54bce514bd6745cf532d66250f0163e8be6b6e630d83ec1a68e086467320f589191dce3a7638bdc867663f38dfc569ee2f27c6b686c040130f
-
-#
-# Have gcc build crti.o and crtn.o
-#
-%patch add gcc --rsb-file=gcc-f8fd78279d353f6959e75ac25571c1b7b2dec110.patch https://gcc.gnu.org/git/?p=gcc.git;a=blobdiff_plain;f=libgcc/config.host;h=f8fd78279d353f6959e75ac25571c1b7b2dec110;hp=11b4acaff55e00ee6bd3c182e9da5dc597ac57c4;hb=ab55f7db3694293e4799d58f7e1a556c0eae863a;hpb=344c180cca810c50f38fd545bb9a102fb39306b7
-%hash sha512 gcc-f8fd78279d353f6959e75ac25571c1b7b2dec110.patch aef76f9d45a53096a021521375fc302a907f78545cc57683a7a00ec61608b8818115720f605a6b1746f479c8568963b380138520e259cbb9e8951882c2f1567f
-
 %include 5/rtems-default.bset
