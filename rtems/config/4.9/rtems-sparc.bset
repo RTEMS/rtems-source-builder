@@ -25,4 +25,4 @@ devel/expat-2.1.0-1
 tools/rtems-binutils-2.19.1-1
 tools/rtems-gcc-4.3.2-newlib-1.16.0-1
 tools/rtems-gdb-6.8-1
-tools/rtems-kernel-4.9.6-1
+# tools/rtems-kernel-4.9.6-1
