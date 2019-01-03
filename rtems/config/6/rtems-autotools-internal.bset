@@ -1,0 +1,11 @@
+#
+# Do not use via the command line.
+#
+
+%define _internal_autotools yes
+%define _disable_collecting yes
+%define _disable_packaging  yes
+%define _disable_reporting  yes
+%define _disable_installing yes
+
+%include 6/rtems-autotools-base.bset

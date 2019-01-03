@@ -1,0 +1,15 @@
+%include 6/rtems-base.bset
+
+6/rtems-autotools
+
+#
+# Build gdb first to raise the Python install error as early as possible.
+# GDB needs expat so it needs to be built before.
+#
+
+devel/expat-2.1.0-1
+tools/rtems-gdb-head
+
+tools/rtems-binutils-head
+tools/rtems-gcc-head-newlib-head
+tools/rtems-tools-5-1
