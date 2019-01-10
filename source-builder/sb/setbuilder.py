@@ -361,6 +361,7 @@ class buildset:
 
             log.trace('_bset: %s: configs: %s'  % (self.bset, ','.join(configs)))
 
+            sizes_valid = False
             builds = []
             for s in range(0, len(configs)):
                 b = None
@@ -478,6 +479,7 @@ class buildset:
                 build_size += ' (sources: %s' % (build_sources_size_human)
                 build_size += ', patches: %s' % (build_patches_size_human)
                 build_size += ', installed %s)' % (build_installed_size_human)
+                sizes_valid = True
             #
             # Cleaning ...
             #
@@ -527,7 +529,7 @@ class buildset:
                 body = self.get_mail_header()
                 body += 'Sizes' + os.linesep
                 body += '=====' + os.linesep + os.linesep
-                if len(builds) > 1:
+                if sizes_valid:
                     body += 'Maximum build usage: ' + build_max_size_human + os.linesep
                     body += 'Total size: ' + build_total_size_human + os.linesep
                     body += 'Installed : ' + build_installed_size_human + os.linesep
