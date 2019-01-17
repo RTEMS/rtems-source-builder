@@ -278,6 +278,12 @@ class command_line:
         # Must have a host
         if self.defaults['_build'] == self.defaults['nil']:
             raise error.general('--build not set')
+        # Default prefix
+        prefix = self.parse_args('--prefix')
+        if prefix is None:
+            value = path.join(self.defaults['_prefix'], 'rtems', str(version.version()))
+            self.opts['prefix'] = value
+            self.defaults['_prefix'] = value
         # Manage the regression option
         if self.opts['regression'] != '0':
             self.opts['no-install'] = '1'
