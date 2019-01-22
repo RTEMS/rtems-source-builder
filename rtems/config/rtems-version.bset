@@ -2,4 +2,6 @@
 # Current version is RTEMS 5
 #
 
-%define rtems_version 5
+%if %{!defined rtems_version}
+ %error RTEMS version is not defined
+%endif

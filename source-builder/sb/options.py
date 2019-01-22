@@ -53,7 +53,7 @@ class command_line:
 
     def __init__(self, argv, optargs, _defaults, command_path):
         self._long_opts = {
-            # key                 macro                handler            param  defs   init
+            # key                       macro                handler            param  defs   init
             '--prefix'               : ('_prefix',           self._lo_path,     True,  None,  False),
             '--topdir'               : ('_topdir',           self._lo_path,     True,  None,  False),
             '--configdir'            : ('_configdir',        self._lo_path,     True,  None,  False),
@@ -83,6 +83,9 @@ class command_line:
             '--host'                 : ('_host',             self._lo_triplets, True,  None,  False),
             '--build'                : ('_build',            self._lo_triplets, True,  None,  False),
             '--target'               : ('_target',           self._lo_triplets, True,  None,  False),
+            '--rtems-tools'          : ('_rtems_tools',      self._lo_string,   True,  None,  False),
+            '--rtems-bsp'            : ('_rtems_bsp',        self._lo_string,   True,  None,  False),
+            '--rtems-version'        : ('_rtems_version',    self._lo_string,   True,  None,  False),
             '--help'                 : (None,                self._lo_help,     False, None,  False)
             }
 
@@ -575,6 +578,12 @@ class command_line:
             if self.get_arg('--with-tools') is not None:
                 raise error.general('--rtems-tools and --with-tools cannot be used together')
             self.args.append('--with-tools=%s' % (rtems_tools[1]))
+        rtems_version = self.parse_args('--rtems-version')
+        if rtems_version is None:
+            rtems_version = version.version()
+        else:
+            rtems_version = rtems_version[1]
+        self.defaults['rtems_version'] = rtems_version
         rtems_arch_bsp = self.parse_args('--rtems-bsp')
         if rtems_arch_bsp is not None:
             if self.get_arg('--target') is not None:
@@ -582,11 +591,6 @@ class command_line:
             ab = rtems_arch_bsp[1].split('/')
             if len(ab) != 2:
                 raise error.general('invalid --rtems-bsp option')
-            rtems_version = self.parse_args('--rtems-version')
-            if rtems_version is None:
-                rtems_version = version.version()
-            else:
-                rtems_version = rtems_version[1]
             self.args.append('--target=%s-rtems%s' % (ab[0], rtems_version))
             self.args.append('--with-rtems-bsp=%s' % (ab[1]))
 
