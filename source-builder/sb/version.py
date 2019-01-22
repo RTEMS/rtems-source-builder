@@ -34,7 +34,7 @@ import sources
 #
 # Default to an internal string.
 #
-_version = '4.12'
+_version = '4.9'
 _revision = 'not_released'
 _version_str = '%s.%s' % (_version, _revision)
 _released = False
