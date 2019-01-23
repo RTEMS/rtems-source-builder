@@ -56,7 +56,7 @@ _build:              triplet, required, ''
 _target:             none,    optional, ''
 
 # RTEMS release URL
-rtems_release_url:   none,    none,     'ftp://ftp.rtems.org/pub/rtems/releases/%{rtems_version}'
+rtems_release_url:   none,    none,     'https://ftp.rtems.org/pub/rtems/releases/%{rtems_version}'
 
 # The user
 _uid:                none,    convert,  '%(%{__id_u} -n)'
