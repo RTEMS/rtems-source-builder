@@ -1,4 +1,15 @@
 %define release 1
 %define rtems_arch sparc
 %define with_libgomp
-%include 5/rtems-default.bset
+
+%include rtems-base.bset
+
+5/rtems-autotools
+
+devel/expat-2.1.0-1
+tools/rtems-gdb-ce73f310150418a9a1625ab60a527d959096a9e2
+
+tools/rtems-binutils-2.31.1
+tools/rtems-gcc-7.4.0-newlib-dc6e94551f09d3a983afd571478d63a09d6f66fa
+tools/rtems-tools-5-1
+tools/rtems-kernel-5
