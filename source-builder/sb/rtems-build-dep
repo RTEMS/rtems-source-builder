@@ -48,7 +48,7 @@ if [ $# -eq 0 ]; then
                        [-l library] [-L library-paths] [-v] [-d]'
     exit 2
 fi
-while [ $# > 0 ]
+while [ $# -gt 0 ]
 do
     case "$1"
     in
