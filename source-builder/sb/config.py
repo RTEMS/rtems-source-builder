@@ -959,7 +959,8 @@ class file:
         isos = False
         if isvalid:
             os = self.define('_os')
-            for l in ls:
+            ls = ' '.join(ls).split()
+            for l in ls[1:]:
                 if l in os:
                     isos = True
                     break
@@ -969,7 +970,8 @@ class file:
         isnos = True
         if isvalid:
             os = self.define('_os')
-            for l in ls:
+            ls = ' '.join(ls).split()
+            for l in ls[1:]:
                 if l in os:
                     isnos = False
                     break
@@ -979,7 +981,8 @@ class file:
         isarch = False
         if isvalid:
             arch = self.define('_arch')
-            for l in ls:
+            ls = ' '.join(ls).split()
+            for l in ls[1:]:
                 if l in arch:
                     isarch = True
                     break
