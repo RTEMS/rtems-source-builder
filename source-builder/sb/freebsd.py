@@ -120,6 +120,11 @@ def load():
         if fb_version >= 11:
             defines['__install_info'] = ('exe', 'optional', '/usr/local/bin/install-info')
             defines['__makeinfo']     = ('exe', 'required', '/usr/local/bin/makeinfo')
+        #
+        # On 12.0+ unzip is in /usr/bin
+        #
+        if fb_version >= 12:
+            defines['__unzip'] = ('exe', 'optional', '/usr/bin/unzip')
     else:
         for gv in ['49', '48', '47']:
             gcc = '%s-portbld-freebsd%s-gcc%s' % (cpu, version, gv)
