@@ -33,12 +33,12 @@ class error(Exception):
 class general(error):
     """Raise for a general error."""
     def __init__(self, what):
-        self.set_output('error: ' + what)
+        self.set_output('error: ' + str(what))
 
 class internal(error):
     """Raise for an internal error."""
     def __init__(self, what):
-        self.set_output('internal error: ' + what)
+        self.set_output('internal error: ' + str(what))
 
 class exit(error):
     """Raise for to exit."""

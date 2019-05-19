@@ -116,7 +116,7 @@ class command:
 
     def reraise(self):
         if self.result is not None:
-            raise self.result[0](self.result[1]).with_traceback(self.result[2])
+            raise self.result[0](self.result[1])
 
 class autoreconf:
 
