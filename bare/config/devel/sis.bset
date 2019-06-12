@@ -1,0 +1,8 @@
+#
+# Build set for sis emulator 
+#
+
+%define release 1
+
+devel/sis-2-1
+
