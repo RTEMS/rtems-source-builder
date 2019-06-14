@@ -15,3 +15,4 @@ tools/rtems-binutils-2.32
 tools/rtems-gcc-9.1.0-newlib-5c2a3661c
 tools/rtems-tools-5-1
 tools/rtems-kernel-5
+devel/sis-2-1.cfg

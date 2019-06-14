@@ -2,3 +2,5 @@
 %define rtems_arch sparc
 %define with_libgomp
 %include 5/rtems-default.bset
+devel/sis-2-1.cfg
+
