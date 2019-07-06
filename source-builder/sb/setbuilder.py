@@ -413,7 +413,7 @@ class buildset:
                         # Dump post build macros.
                         #
                         log.trace('_bset: macros post-build')
-                        log.trace(str(macros))
+                        log.trace(str(b.macros))
                     else:
                         raise error.general('invalid config type: %s' % (configs[s]))
                 except error.general as gerr:

@@ -1,0 +1,20 @@
+#
+# Build set for Curl
+#
+
+%define release 1
+
+#
+# RTEMS Version
+#
+%define rtems_version 5
+
+#
+# The RTEMS URL paths.
+#
+%include rtems-urls.bset
+
+#
+# Build Curl
+#
+ftp/curl-7.65.1-1

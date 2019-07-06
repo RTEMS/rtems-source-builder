@@ -64,14 +64,16 @@ _uid:                none,    convert,  '%(%{__id_u} -n)'
 # Default flags that can be overridded to supply specific host or build
 # flags and include paths to the tools. The host is the final platform
 # the tools will run on and build is the host building the tools.
-host_cflags:         none,    convert,  '-O2 -pipe'
-host_cxxflags:       none,    convert,  '-O2 -pipe'
+host_cflags:         none,    convert,  '-O2 -g -pipe'
+host_cxxflags:       none,    convert,  '-O2 -g -pipe'
 host_ldflags:        none,    convert,  ''
 host_includes:       none,    convert,  ''
-build_cflags:        none,    convert,  '-O2 -pipe'
-build_cxxflags:      none,    convert,  '-O2 -pipe'
+host_libs:           none,    convert,  ''
+build_cflags:        none,    convert,  '-O2 -g -pipe'
+build_cxxflags:      none,    convert,  '-O2 -g -pipe'
 build_ldflags:       none,    convert,  ''
 build_includes:      none,    convert,  ''
+build_libs:          none,    convert,  ''
 
 # Extra path a platform can override.
 _extra_path:         none,    none,     '%{_sbdir}'
@@ -203,19 +205,22 @@ SB_SOURCE_DIR="%{_sourcedir}"
 SB_BUILD_DIR="%{_builddir}"
 # host == build, use build; host != build, host uses host and build uses build
 SB_HOST_CPPFLAGS="%{host_includes}"
-SB_HOST_CFLAGS="%{host_cflags} %{host_includes}"
-SB_HOST_CXXFLAGS="%{host_cxxflags} %{host_includes}"
+# Optionally do not add includes to c/cxx flags as newer configure's complain
+SB_HOST_CFLAGS="%{host_cflags} %{!?host_cflags_no_includes %{host_includes}}"
+SB_HOST_CXXFLAGS="%{host_cxxflags} %{!?host_cflags_no_includes %{host_includes}}"
 SB_HOST_LDFLAGS="%{host_ldflags} %{?_tmproot:-L%{_tmproot}/${SB_PREFIX_CLEAN}/lib}"
+SB_HOST_LIBS="%{host_libs}"
 SB_BUILD_CFLAGS="%{build_cflags} %{?_tmproot:-I%{_tmproot}/${SB_PREFIX_CLEAN}/include}"
 SB_BUILD_CXXFLAGS="%{build_cxxflags} %{?_tmproot:-I%{_tmproot}/${SB_PREFIX_CLEAN}/include}"
 SB_BUILD_LDFLAGS="%{build_ldflags} %{?_tmproot:-L%{_tmproot}/${SB_PREFIX_CLEAN}/lib}"
+SB_BUILD_LBS="%{build_libs}"
 SB_CFLAGS="${SB_BUILD_CFLAGS} %{build_includes}"
 SB_CXXFLAGS="${SB_BUILD_CXXFLAGS} %{build_includes}"
 SB_ARCH="%{_arch}"
 SB_OS="%{_os}"
 export SB_SOURCE_DIR SB_BUILD_DIR SB_ARCH SB_OS
-export SB_HOST_CPPFLAGS SB_HOST_CFLAGS SB_HOST_CXXFLAGS SB_HOST_LDFLAGS
-export SB_BUILD_CFLAGS SB_BUILD_CXXFLAGS SB_BUILD_LDFLAGS
+export SB_HOST_CPPFLAGS SB_HOST_CFLAGS SB_HOST_CXXFLAGS SB_HOST_LDFLAGS SB_HOST_LIBS
+export SB_BUILD_CFLAGS SB_BUILD_CXXFLAGS SB_BUILD_LDFLAGS SB_BUILD_LIBS
 export SB_CFLAGS SB_CXXFLAGS
 # Documentation
 SB_DOC_DIR="%{_docdir}"
@@ -326,11 +331,13 @@ if test "%{_build}" != "%{_host}" ; then
   CFLAGS="${SB_HOST_CFLAGS}"
   CXXFLAGS="${SB_HOST_CXXFLAGS}"
   LDFLAGS="${SB_HOST_LDFLAGS}"
+  LIBS="${SB_HOST_LIBS}"
   # Host
   CPPFLAGS_FOR_HOST="${SB_HOST_CPPFLAGS}"
   CFLAGS_FOR_HOST="${SB_HOST_CFLAGS}"
   CXXFLAGS_FOR_HOST="${SB_HOST_CXXFLAGS}"
   LDFLAGS_FOR_HOST="${SB_HOST_LDFLAGS}"
+  LIBS_FOR_HOST="${SB_HOST_LIBS}"
   CXXFLAGS_FOR_HOST="${SB_HOST_CFLAGS}"
   CC_FOR_HOST=$(echo "%{_host_cc} ${SB_HOST_CFLAGS}" | sed -e 's,-std=gnu99 ,,')
   CXX_FOR_HOST=$(echo "%{_host_cxx} ${SB_HOST_CXXFLAGS}" | sed -e 's,-std=gnu99 ,,')
@@ -338,30 +345,33 @@ if test "%{_build}" != "%{_host}" ; then
   CFLAGS_FOR_BUILD="${SB_BUILD_CFLAGS}"
   CXXFLAGS_FOR_BUILD="${SB_BUILD_CXXFLAGS}"
   LDFLAGS_FOR_BUILD="${SB_BUILD_LDFLAGS}"
+  LIBS_FOR_BUILD="${SB_BUILD_LIBS}"
   CXXFLAGS_FOR_BUILD="${SB_BUILD_CFLAGS}"
   CC_FOR_BUILD=$(echo "%{__cc} ${SB_BUILD_CFLAGS}" | sed -e 's,-std=gnu99 ,,')
   CXX_FOR_BUILD=$(echo "%{__cxx} ${SB_BUILD_CXXFLAGS}" | sed -e 's,-std=gnu99 ,,')
 else
   LDFLAGS="${SB_BUILD_LDFLAGS}"
+  LIBS="${SB_BUILD_LIBS}"
   CC=$(echo "%{__cc} ${SB_BUILD_CFLAGS}" | sed -e 's,-std=gnu99 ,,')
   CXX=$(echo "%{__cxx} ${SB_BUILD_CXXFLAGS}" | sed -e 's,-std=gnu99 ,,')
   CC_FOR_BUILD=${CC}
   CXX_FOR_BUILD=${CXX}
 fi
-export CC CXX CPPFLAGS CFLAGS CXXFLAGS LDFLAGS
-export CC_FOR_HOST CXX_FOR_HOST CPPFLAGS_FOR_HOST CFLAGS_FOR_HOST CXXFLAGS_FOR_HOST LDFLAGS_FOR_HOST
-export CC_FOR_BUILD CXX_FOR_BUILD CFLAGS_FOR_BUILD CXXFLAGS_FOR_BUILD LDFLAGS_FOR_BUILD'''
+export CC CXX CPPFLAGS CFLAGS CXXFLAGS LDFLAGS LIBS
+export CC_FOR_HOST CXX_FOR_HOST CPPFLAGS_FOR_HOST CFLAGS_FOR_HOST CXXFLAGS_FOR_HOST LDFLAGS_FOR_HOST LIBS_FOR_HOST
+export CC_FOR_BUILD CXX_FOR_BUILD CFLAGS_FOR_BUILD CXXFLAGS_FOR_BUILD LDFLAGS_FOR_BUILD LIBS_FOR_BUILS'''
 
 # Build/build flags.
 build_build_flags:    none,    none,     '''
 # Build and build flags means force build == host
 # gcc is not ready to be compiled with -std=gnu99
 LDFLAGS="${SB_HOST_LDFLAGS}"
+LIBS="${SB_HOST_LIBS}"
 CC=$(echo "%{__cc} ${SB_CFLAGS}" | sed -e 's,-std=gnu99 ,,')
 CXX=$(echo "%{__cxx} ${SB_CXXFLAGS}" | sed -e 's,-std=gnu99 ,,')
 CC_FOR_BUILD=${CC}
 CXX_FOR_BUILD=${CXX}
-export CC CXX CC_FOR_BUILD CXX_FOR_BUILD CFLAGS LDFLAGS'''
+export CC CXX CC_FOR_BUILD CXX_FOR_BUILD CFLAGS LDFLAGS LIBS'''
 
 # Default package settings
 _forced_static:     none,         none, '-Xlinker -Bstatic ${LIBS_STATIC} -Xlinker -Bdynamic'

@@ -420,10 +420,14 @@ class command_line:
         _host = self.defaults.expand('%{_host}')
         _build = self.defaults.expand('%{_build}')
         _target = self.defaults.expand('%{_target}')
-        if len(_target):
-            return len(_host) and len(_build) and (_target) and \
-                _host != _build and _host != _target
-        return len(_host) and len(_build) and _host != _build
+        #
+        # This has been removed to fix how RTEMS 3rd party libraries
+        # are built. This may break Cxc tools builds.
+        #
+        # if len(_target):
+        #     return len(_host) and len(_build) and (_target) and \
+        #         _host != _build and _host != _target
+        return len(_target) and len(_host) and len(_build) and _host != _build
 
     def user_macros(self):
         #
