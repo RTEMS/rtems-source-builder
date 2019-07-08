@@ -49,13 +49,17 @@ except:
     sys.exit(1)
 
 def _check_bool(value):
+    istrue = None
     if value.isdigit():
         if int(value) == 0:
             istrue = False
         else:
             istrue = True
     else:
-        istrue = None
+        if type(value) is str and len(value) == 2 and value[0] == '!':
+            istrue = _check_bool(value[1])
+            if type(istrue) is bool:
+                istrue = not istrue
     return istrue
 
 def _check_nil(value):
@@ -416,20 +420,41 @@ class file:
         return macros
 
     def _shell(self, line):
-        sl = self.sf.findall(line)
-        if len(sl):
-            e = execute.capture_execution()
-            for s in sl:
+        #
+        # Parse the line and handle nesting '()' pairs.
+        #
+        def _exec(shell_macro):
+            output = ''
+            if len(shell_macro) > 3:
+                e = execute.capture_execution()
                 if options.host_windows:
-                    cmd = '%s -c "%s"' % (self.macros.expand('%{__sh}'), s[2:-1])
+                    cmd = '%s -c "%s"' % (self.macros.expand('%{__sh}'), shell_macro[2:-1])
                 else:
-                    cmd = s[2:-1]
+                    cmd = shell_macro[2:-1]
                 exit_code, proc, output = e.shell(cmd)
                 log.trace('shell-output: %d %s' % (exit_code, output))
-                if exit_code == 0:
-                    line = line.replace(s, output)
-                else:
-                    raise error.general('shell macro failed: %s:%d: %s' % (s, exit_code, output))
+                if exit_code != 0:
+                    raise error.general('shell macro failed: %s: %d: %s' % (cmd,
+                                                                            exit_code,
+                                                                            output))
+            return output
+
+        updating = True
+        while updating:
+            updating = False
+            pos = line.find('%(')
+            if pos >= 0:
+                braces = 0
+                for p in range(pos + 2, len(line)):
+                    if line[p] == '(':
+                        braces += 1
+                    elif line[p] == ')':
+                        if braces > 0:
+                            braces -= 1
+                        else:
+                            line = line[:pos] + _exec(line[pos:p + 1]) + line[p + 1:]
+                            updating = True
+                            break
         return line
 
     def _pkgconfig_check(self, test):
