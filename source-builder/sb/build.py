@@ -203,7 +203,7 @@ class build:
             not _disable_installing and \
             not _canadian_cross
 
-    def source(self, name):
+    def source(self, name, strip_components):
         #
         # Return the list of sources. Merge in any macro defined sources as
         # these may be overridden by user loaded macros.
@@ -246,6 +246,10 @@ class build:
             url = self.config.expand(' '.join(url))
             src = download.parse_url(url, '_sourcedir', self.config, self.opts, file_override)
             download.get_file(src['url'], src['local'], self.opts, self.config)
+            if strip_components > 0:
+                tar_extract = '%%{__tar_extract} --strip-components %d' % (strip_components)
+            else:
+                tar_extract = '%{__tar_extract}'
             if 'symlink' in src:
                 sname = name.replace('-', '_')
                 src['script'] = '%%{__ln_s} %s ${source_dir_%s}' % (src['symlink'], sname)
@@ -255,9 +259,9 @@ class build:
                 #
                 src['script'] = '%s %s' % (src['compressed'], src['local'])
                 if src['compressed-type'] != 'zip':
-                    src['script'] += ' | %{__tar_extract} -'
+                    src['script'] += ' | %s -f -' % (tar_extract)
             else:
-                src['script'] = '%%{__tar_extract} %s' % (src['local'])
+                src['script'] = '%s -f %s' % (tar_extract, src['local'])
             srcs += [src]
         return srcs
 
@@ -266,7 +270,7 @@ class build:
         setup_name = args[1]
         args = args[1:]
         try:
-            opts, args = getopt.getopt(args[1:], 'qDcn:ba')
+            opts, args = getopt.getopt(args[1:], 'qDcn:bas:')
         except getopt.GetoptError as ge:
             raise error.general('source setup error: %s' % str(ge))
         quiet = False
@@ -276,6 +280,7 @@ class build:
         deleted_dir = False
         created_dir = False
         changed_dir = False
+        strip_components = 0
         opt_name = None
         for o in opts:
             if o[0] == '-q':
@@ -290,8 +295,12 @@ class build:
                 unpack_before_chdir = True
             elif o[0] == '-a':
                 unpack_before_chdir = False
+            elif o[0] == '-s':
+                if not o[1].isdigit():
+                    raise error.general('source setup error: invalid strip count: %s' % (o[1]))
+                strip_components = int(o[1])
         name = None
-        for source in self.source(setup_name):
+        for source in self.source(setup_name, strip_components):
             if name is None:
                 if opt_name is None:
                     if source:
@@ -301,7 +310,7 @@ class build:
                 else:
                     name = opt_name
             self.script_build.append(self.config.expand('cd %{_builddir}'))
-            if not deleted_dir and  delete_before_unpack:
+            if not deleted_dir and delete_before_unpack:
                 self.script_build.append(self.config.expand('%{__rm} -rf ' + name))
                 deleted_dir = True
             if not created_dir and create_dir:

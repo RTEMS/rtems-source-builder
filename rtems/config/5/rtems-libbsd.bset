@@ -1,0 +1,8 @@
+#
+# RTEMS LibBSD configuration.
+#
+
+#
+# Build the kernel.
+#
+tools/rtems-libbsd-5

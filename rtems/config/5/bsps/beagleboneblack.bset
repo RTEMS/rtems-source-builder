@@ -1,0 +1,19 @@
+#
+# BeagleBone Black
+#
+# Build into the prefix path:
+#
+#  - ARM tools
+#  - RTEMS Kernel and BSP
+#  - LibBSD
+#  - Packages
+#
+
+%define rtems_target   arm-rtems5
+%define rtems_host     arm-rtems5
+%define with_rtems_bsp beagleboneblack
+
+
+5/rtems-arm
+5/rtems-kernel
+5/rtems-libbsd

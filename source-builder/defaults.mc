@@ -184,7 +184,7 @@ __sed:               exe,     required, '/usr/bin/sed'
 __setup_post:        exe,     none,     '%{__chmod} -R a+rX,g-w,o-w .'
 __sh:                exe,     required, '/bin/sh'
 __tar:               exe,     required, '/usr/bin/tar'
-__tar_extract:       exe,     none,     '%{__tar} -xvvf'
+__tar_extract:       exe,     none,     '%{__tar} -xvv'
 __touch:             exe,     required, '/usr/bin/touch'
 __unzip:             exe,     required, '/usr/bin/unzip'
 __xz:                exe,     required, '/usr/bin/xz'
@@ -390,3 +390,13 @@ iso_ir_111,koi8_r,koi8_ru,koi8_u,koi8_uni,ucs_2,ucs_2_internal,\
 ucs_2be,ucs_2le,ucs_4,ucs_4_internal,ucs_4be,ucs_4le,us_ascii,\
 utf_16,utf_16be,utf_16le,utf_8,win_1250,win_1251,win_1252,\
 win_1253,win_1254,win_1255,win_1256,win_1257,win_1258'''
+
+# Waf build root suffix, only use for win32 mingw ming32 OSs
+#
+# If on Windows we need to add the driver prefix to the built root as waf
+# strips the driver prefix from the prefix path when joining it to the
+# destdir path. Waf is correct in doing this and the RSB is design to match
+# the configure behaviour which treats the whole path including the drive
+# prefix as part of the path as just a path.
+#
+waf_build_root_suffix:   none,  none, ' %(echo %{_prefix} | cut -c 1-2)'

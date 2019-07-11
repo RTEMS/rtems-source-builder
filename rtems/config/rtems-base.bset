@@ -27,3 +27,12 @@ package: rtems-%{rtems_version}-%{_target}-%{_host}-%{release}
 # Pick up the RTEMS URLs.
 #
 %include rtems-urls.bset
+
+#
+# Handle the Waf install root.
+#
+%ifos win32 mingw ming32
+ %define rtems_waf_build_root_suffix %{waf_build_root_suffix}
+%else
+ %define rtems_waf_build_root_suffix %{nil}
+%endif
