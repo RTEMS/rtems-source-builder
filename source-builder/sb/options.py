@@ -99,7 +99,9 @@ class command_line:
         for lo in self._long_opts:
             self.opts[lo[2:]] = self._long_opts[lo][3]
             if self._long_opts[lo][4]:
-                self.defaults[self._long_opts[lo][0]] = ('none', 'none', self._long_opts[lo][3])
+                self.defaults[self._long_opts[lo][0]] = ('none',
+                                                         'none',
+                                                         self._long_opts[lo][3])
 
     def __str__(self):
         def _dict(dd):
@@ -198,7 +200,7 @@ class command_line:
 
     def help(self):
         print('%s: [options] [args]' % (self.command_name))
-        print('RTEMS Source Builder, an RTEMS Tools Project (c) 2012-2015 Chris Johns')
+        print('RTEMS Source Builder, an RTEMS Tools Project (c) 2012-2019 Chris Johns')
         print('Options and arguments:')
         print('--force                : Force the build to proceed')
         print('--quiet                : Quiet output (not used)')
@@ -254,7 +256,8 @@ class command_line:
                     if len(los) == 1:
                         if long_opt[2]:
                             if arg == len(self.args) - 1:
-                                raise error.general('option requires a parameter: %s' % (lo))
+                                raise error.general('option requires a parameter: %s' % \
+                                                    (lo))
                             arg += 1
                             value = self.args[arg]
                         else:
@@ -268,7 +271,8 @@ class command_line:
                             value = los[1]
                         else:
                             value = '1'
-                        self.defaults[los[0][2:].replace('-', '_').lower()] = ('none', 'none', value)
+                        self.defaults[los[0][2:].replace('-', '_').lower()] = \
+                            ('none', 'none', value)
                     else:
                         if lo not in self.optargs:
                             raise error.general('unknown option: %s' % (lo))
@@ -313,7 +317,9 @@ class command_line:
         # Default prefix
         prefix = self.parse_args('--prefix')
         if prefix is None:
-            value = path.join(self.defaults['_prefix'], 'rtems', str(self.defaults['rtems_version']))
+            value = path.join(self.defaults['_prefix'],
+                              'rtems',
+                              str(self.defaults['rtems_version']))
             self.opts['prefix'] = value
             self.defaults['_prefix'] = value
         # Manage the regression option
@@ -337,7 +343,8 @@ class command_line:
         if um:
             checked = path.exists(um)
             if False in checked:
-                raise error.general('macro file not found: %s' % (um[checked.index(False)]))
+                raise error.general('macro file not found: %s' % \
+                                    (um[checked.index(False)]))
             for m in um:
                 self.defaults.load(m)
         # Check if the user has a private set of macros to load
