@@ -575,9 +575,11 @@ class buildset:
                 staging_size = path.get_size(stagingroot)
                 if not self.opts.no_clean() or self.opts.always_clean():
                     log.notice('clean staging: %s' % (self.bset))
-                    log.trace('cleanup: %s' % (stagingroot))
-                    self.rmdir(stagingroot)
-                log.notice('Staging Size: %s' % (build.humanize_number(staging_size)))
+                    log.trace('removing: %s' % (stagingroot))
+                    if not self.opts.dry_run():
+                        if path.exists(stagingroot):
+                            path.removeall(stagingroot)
+                log.notice('Staging Size: %s' % (build.humanize_number(staging_size, 'B')))
         except error.general as gerr:
             if not build_error:
                 log.stderr(str(gerr))

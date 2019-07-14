@@ -410,3 +410,10 @@ win_1253,win_1254,win_1255,win_1256,win_1257,win_1258'''
 # prefix as part of the path as just a path.
 #
 waf_build_root_suffix:   none,  none, ' %(echo %{_prefix} | cut -c 1-2)'
+
+# Makefile.inc support for staging
+rtems_makefile_inc:      none,  none, '''
+export RTEMS_ROOT=%{rtems_bsp_rtems_root}
+export PROJECT_RELEASE=%{rtems_bsp_prefix}
+export RTEMS_MAKEFILE_PATH=%{rtems_bsp_prefix}
+'''
