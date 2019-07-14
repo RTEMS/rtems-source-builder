@@ -625,6 +625,37 @@ class file:
                         s = s.replace(m, '1')
                     expanded = True
                     mn = None
+                elif m.startswith('%{triplet'):
+                    triplet = m[len('%{triplet'):-1].strip().split()
+                    ok = False
+                    if len(triplet) == 2:
+                        macro = self._expand(triplet[0])
+                        value = self._expand(triplet[1])
+                        vorig = value
+                        arch_value = ''
+                        vendor_value = ''
+                        os_value = ''
+                        dash = value.find('-')
+                        if dash >= 0:
+                            arch_value = value[:dash]
+                            value = value[dash + 1:]
+                        dash = value.find('-')
+                        if dash >= 0:
+                            vendor_value = value[:dash]
+                            value = value[dash + 1:]
+                        if len(value):
+                            os_value = value
+                        self.macros[macro] = vorig
+                        self.macros[macro + '_cpu'] = arch_value
+                        self.macros[macro + '_arch'] = arch_value
+                        self.macros[macro + '_vendor'] = vendor_value
+                        self.macros[macro + '_os'] = os_value
+                        ok = True
+                    if ok:
+                        s = s.replace(m, '')
+                    else:
+                        self._error('triplet error: %s' % (' '.join(triplet)))
+                    mn = None
                 elif m.startswith('%{path '):
                     pl = m[7:-1].strip().split()
                     ok = False
