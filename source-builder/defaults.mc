@@ -75,6 +75,19 @@ build_ldflags:       none,    convert,  ''
 build_includes:      none,    convert,  ''
 build_libs:          none,    convert,  ''
 
+#
+# Build and staging paths.
+#
+buildroot:           dir,     none,     '%{_tmppath}/%{buildname}-%{_uid}'
+buildcxcroot:        dir,     none,     '%{_tmppath}/%{buildname}-%{_uid}-cxc'
+buildxcroot:         dir,     none,     '%{_tmppath}/%{buildname}-%{_uid}-xx'
+stagingroot:         dir,     none,     '%{_tmppath}/sb-%{_uid}-staging'
+
+#
+# Install mode can be installing or staging. Defaults to installing.
+#
+install_mode:        none,    none,     'installing'
+
 # Extra path a platform can override.
 _extra_path:         none,    none,     '%{_sbdir}'
 _ld_library_path:    none,    none,     'LD_LIBRARY_PATH'
@@ -96,9 +109,6 @@ _docdir:             dir,     none,     '%{_defaultdocdir}'
 _tmppath:            dir,     none,     '%{_topdir}/build/tmp'
 _tmproot:            dir,     none,     '%{_tmppath}/sb-%{_uid}/%{_bset_tmp}'
 _tmpcxcroot:         dir,     none,     '%{_tmppath}/sb-%{_uid}-cxc/%{_bset_tmp}'
-buildroot:           dir,     none,     '%{_tmppath}/%{buildname}-%{_uid}'
-buildcxcroot:        dir,     none,     '%{_tmppath}/%{buildname}-%{_uid}-cxc'
-buildxcroot:         dir,     none,     '%{_tmppath}/%{buildname}-%{_uid}-xx'
 _datadir:            dir,     none,     '%{_prefix}/share'
 _defaultdocdir:      dir,     none,     '%{_prefix}/share/doc'
 _exeext:             none,    none,     ''
