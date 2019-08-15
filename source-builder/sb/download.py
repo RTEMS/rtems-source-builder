@@ -24,6 +24,7 @@
 
 from __future__ import print_function
 
+import base64
 import hashlib
 import os
 import re
@@ -110,8 +111,13 @@ def _hash_check(file_, absfile, macros, remove = True):
             raise
         if _in is not None:
             _in.close()
-        log.output('checksums: %s: %s => %s' % (file_, hasher.hexdigest(), hash[1]))
-        if hasher.hexdigest() != hash[1]:
+        hash_hex = hasher.hexdigest()
+        hash_base64 = base64.b64encode(hasher.digest()).decode('utf-8')
+        log.output('checksums: %s: (hex: %s) (b64: %s) => %s' % (file_,
+                                                                 hash_hex,
+                                                                 hash_base64,
+                                                                 hash[1]))
+        if hash_hex != hash[1] and hash_base64 != hash[1]:
             log.warning('checksum error: %s' % (file_))
             failed = True
         if failed and remove:
