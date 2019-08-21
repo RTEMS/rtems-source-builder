@@ -10,7 +10,7 @@
 5/rtems-autotools
 
 devel/expat-2.1.0-1
-tools/rtems-gdb-8.2.1-1
+tools/rtems-gdb-8.3-1
 tools/rtems-binutils-2.32
 tools/rtems-gcc-9.2.0-newlib-6661a67
 tools/rtems-tools-5-1
