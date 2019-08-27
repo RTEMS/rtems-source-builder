@@ -129,6 +129,25 @@ class buildset:
     def get_mail_report(self):
         return self.mail_report
 
+    def mail_single_report(self):
+        return self.macros.get('%{mail_single_report}') != 0
+
+    def mail_active(self, mail, nesting_count = 1):
+        return mail is not None and not (self.mail_single_report() and nesting_count > 1)
+
+    def mail_send(self, mail):
+        if True: #not self.opts.dry_run():
+            mail_subject = '%s on %s' % (self.bset, self.macros.expand('%{_host}'))
+            if mail['failure'] is not None:
+                mail_subject = 'FAILED %s (%s)' % (mail_subject, mail['failure'])
+            else:
+                mail_subject = 'PASSED %s' % (mail_subject)
+            mail_subject = 'Build %s: %s' % (reports.platform(mode = 'system'),
+                                             mail_subject)
+            body = mail['log']
+            body += (os.linesep * 2).join(mail['reports'])
+            mail['mail'].send(mail['to'], mail_subject, body)
+
     def copy(self, src, dst):
         log.output('copy: %s => %s' % (path.host(src), path.host(dst)))
         if not self.opts.dry_run():
@@ -360,27 +379,25 @@ class buildset:
 
         nesting_count += 1
 
-        if mail:
+        if self.mail_active(mail, nesting_count):
             mail['output'].clear()
+            mail['log'] = ''
+            mail['reports'] = []
+            mail['failure'] = None
 
         log.trace('_bset: %2d: %s: make' % (nesting_count, self.bset))
         log.notice('Build Set: %s' % (self.bset))
-
-        mail_subject = '%s on %s' % (self.bset,
-                                     self.macros.expand('%{_host}'))
 
         current_path = os.environ['PATH']
 
         start = datetime.datetime.now()
 
-        mail_report  = False
-        have_errors  = False
-
-        if mail:
-            mail['output'].clear()
+        mail_report = False
+        have_errors = False
+        interrupted = False
 
         #
-        # If this is the outter most buildset it's files installed. Nested
+        # If this is the outter most buildset it's files are installed. Nested
         # build sets staged their installed file. The staged files are install
         # when the outtter most build finishes.
         #
@@ -585,49 +602,51 @@ class buildset:
                 log.stderr(str(gerr))
             raise
         except KeyboardInterrupt:
-            mail_report = False
+            interrupted = True
             raise
         except:
             self.build_failure = 'RSB general failure'
+            interrupted = True
             raise
         finally:
             end = datetime.datetime.now()
             os.environ['PATH'] = current_path
             build_time = str(end - start)
-            if mail_report and not self.macros.defined('mail_disable'):
-                self.write_mail_header('Build Time: %s' % (build_time), True)
-                self.write_mail_header('', True)
+            if self.mail_single_report() and nesting_count == 1:
+                mail_report = True
+            if interrupted or self.macros.defined('mail_disable'):
+                mail_report = False
+            if mail_report:
+                if self.installing():
+                    self.write_mail_header('Build Time: %s' % (build_time), True)
+                    self.write_mail_header('', True)
+                    self.write_mail_header(mail['header'], True)
+                    self.write_mail_header('')
+                    log.notice('Mailing report: %s' % (mail['to']))
+                    mail['log'] += self.get_mail_header()
+                    if sizes_valid:
+                        mail['log'] += 'Sizes' + os.linesep
+                        mail['log'] += '=====' + os.linesep + os.linesep
+                        mail['log'] += \
+                            'Maximum build usage: ' + build_max_size_human + os.linesep
+                        mail['log'] += \
+                            'Total size: ' + build_total_size_human + os.linesep
+                        mail['log'] += \
+                            'Installed : ' + build_installed_size_human + os.linesep
+                        mail['log'] += 'Sources: ' + build_sources_size_human + os.linesep
+                        mail['log'] += 'Patches: ' + build_patches_size_human + os.linesep
+                    mail['log'] += os.linesep
+                    mail['log'] += 'Output' + os.linesep
+                    mail['log'] += '======' + os.linesep + os.linesep
+                    mail['log'] += os.linesep.join(mail['output'].get())
+                    mail['log'] += os.linesep + os.linesep
+                    mail['log'] += 'Report' + os.linesep
+                    mail['log'] += '======' + os.linesep + os.linesep
+                mail['reports'] += [self.get_mail_report()]
                 if self.build_failure is not None:
-                    mail_subject = 'FAILED %s (%s)' % \
-                        (mail_subject, self.build_failure)
-                else:
-                    mail_subject = 'PASSED %s' % (mail_subject)
-                mail_subject = 'Build %s: %s' % (reports.platform(mode = 'system'),
-                                                 mail_subject)
-                self.write_mail_header(mail['header'], True)
-                self.write_mail_header('')
-                log.notice('Mailing report: %s' % (mail['to']))
-                body = self.get_mail_header()
-                body += 'Sizes' + os.linesep
-                body += '=====' + os.linesep + os.linesep
-                if sizes_valid:
-                    body += 'Maximum build usage: ' + build_max_size_human + os.linesep
-                    body += 'Total size: ' + build_total_size_human + os.linesep
-                    body += 'Installed : ' + build_installed_size_human + os.linesep
-                    body += 'Sources: ' + build_sources_size_human + os.linesep
-                    body += 'Patches: ' + build_patches_size_human + os.linesep
-                else:
-                    body += 'No packages built'
-                body += os.linesep
-                body += 'Output' + os.linesep
-                body += '======' + os.linesep + os.linesep
-                body += os.linesep.join(mail['output'].get())
-                body += os.linesep + os.linesep
-                body += 'Report' + os.linesep
-                body += '======' + os.linesep + os.linesep
-                body += self.get_mail_report()
-                if not opts.dry_run():
-                    mail['mail'].send(mail['to'], mail_subject, body)
+                    mail['failure'] = self.build_failure
+                if self.mail_active(mail, nesting_count):
+                    self.mail_send(mail)
             log.notice('Build Set: Time %s' % (build_time))
 
 def list_bset_cfg_files(opts, configs):
@@ -661,8 +680,11 @@ def run():
         mailer.append_options(optargs)
         opts = options.load(sys.argv, optargs)
         if opts.get_arg('--mail'):
-            mail = { 'mail'  : mailer.mail(opts),
-                     'output': log_capture() }
+            mail = { 'mail'   : mailer.mail(opts),
+                     'output' : log_capture(),
+                     'log'    : '',
+                     'reports': [],
+                     'failure': None }
             to_addr = opts.get_arg('--mail-to')
             if to_addr is not None:
                 mail['to'] = to_addr[1]

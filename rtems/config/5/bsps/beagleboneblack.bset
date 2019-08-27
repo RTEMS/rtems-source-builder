@@ -9,6 +9,8 @@
 #  - Packages
 #
 
+%define mail_single_report 1
+
 %define with_rtems_bsp beagleboneblack
 %define rtems_target   arm-rtems5
 %define rtems_host     %{rtems_target}
