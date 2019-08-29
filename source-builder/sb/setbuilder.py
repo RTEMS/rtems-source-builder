@@ -616,7 +616,7 @@ class buildset:
                 mail_report = True
             if interrupted or self.macros.defined('mail_disable'):
                 mail_report = False
-            if mail_report:
+            if mail_report and mail is not None:
                 if self.installing():
                     self.write_mail_header('Build Time: %s' % (build_time), True)
                     self.write_mail_header('', True)
