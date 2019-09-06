@@ -421,14 +421,17 @@ class file:
 
     def _shell(self, line):
         #
-        # Parse the line and handle nesting '()' pairs.
+        # Parse the line and handle nesting '()' pairs. If on Windows
+        # handle embedded '"' (double quotes) as the command is run as
+        # a double quoted string.
         #
         def _exec(shell_macro):
             output = ''
             if len(shell_macro) > 3:
                 e = execute.capture_execution()
                 if options.host_windows:
-                    cmd = '%s -c "%s"' % (self.macros.expand('%{__sh}'), shell_macro[2:-1])
+                    shell_cmd = ''.join([c if c != '"' else '\\' + c for c in shell_macro[2:-1]])
+                    cmd = '%s -c "%s"' % (self.macros.expand('%{__sh}'), shell_cmd)
                 else:
                     cmd = shell_macro[2:-1]
                 exit_code, proc, output = e.shell(cmd)
