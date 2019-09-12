@@ -214,6 +214,7 @@ class buildset:
         self.copy(src, dst)
 
     def install(self, mode, name, src, dst):
+        log.trace('_bset:   : %s: copy %s -> %s' % (mode, src, dst))
         log.notice('%s: %s -> %s' % (mode, name, path.host(dst)))
         self.copy(src, dst)
 
