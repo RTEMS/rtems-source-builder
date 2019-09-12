@@ -63,6 +63,7 @@ def load():
         '_var':             ('dir',     'optional', '/usr/local/var'),
         '__bash':           ('exe',     'optional', '/usr/local/bin/bash'),
         '__bison':          ('exe',     'required', '/usr/local/bin/bison'),
+        '__cmake':          ('exe',     'optional', '/usr/local/bin/cmake'),
         '__git':            ('exe',     'required', '/usr/local/bin/git'),
         '__svn':            ('exe',     'optional', '/usr/local/bin/svn'),
         '__unzip':          ('exe',     'optional', '/usr/local/bin/unzip'),

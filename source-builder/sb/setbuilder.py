@@ -405,18 +405,6 @@ class buildset:
         if nesting_count != 1:
             if self.installing():
                 self.macros['install_mode'] = 'staging'
-                #
-                # Prepend staging areas, bin directory tothe
-                # path. Lets the later package depend on the eailier
-                # ones.
-                #
-                pathprepend = ['%{stagingroot}/bin'] + \
-                    macro_expand(self.macros, '%{_pathprepend}').split(':')
-                pathprepend = [pp for pp in pathprepend if len(pp)]
-                if len(pathprepend) == 1:
-                    self.macros['_pathprepend'] = pathprepend[0]
-                else:
-                    self.macros['_pathprepend'] = ':'.join(pathprepend)
 
         #
         # Only the outter build set can have staging to install. Get the staging
@@ -429,6 +417,20 @@ class buildset:
 
             log.trace('_bset: %2d: %s: configs: %s'  % (nesting_count,
                                                         self.bset, ', '.join(configs)))
+
+            if nesting_count == 1 and len(configs) > 1:
+                #
+                # Prepend staging areas, bin directory to the
+                # path. Lets the later package depend on the earlier
+                # ones.
+                #
+                pathprepend = ['%{stagingroot}/bin'] + \
+                    macro_expand(self.macros, '%{_pathprepend}').split(':')
+                pathprepend = [pp for pp in pathprepend if len(pp)]
+                if len(pathprepend) == 1:
+                    self.macros['_pathprepend'] = pathprepend[0]
+                else:
+                    self.macros['_pathprepend'] = ':'.join(pathprepend)
 
             sizes_valid = False
             builds = []
@@ -519,7 +521,7 @@ class buildset:
             log.trace('_bset: %2d: %s: builds: %s' % \
                       (nesting_count, self.install_mode(),
                        ', '.join([b.name() for b in builds])))
-            if deps is None and not have_errors:
+            if deps is None and not self.opts.no_install() and not have_errors:
                 for b in builds:
                     log.trace('_bset:   : %s: %r' % (self.install_mode(),
                                                      b.installable()))
@@ -586,18 +588,22 @@ class buildset:
             # If builds have been staged install into the finaly prefix.
             #
             if have_staging and not self.opts.no_install() and not have_errors:
-                log.trace('_bset: %2d: install staging' % (nesting_count))
                 stagingroot = macro_expand(self.macros, '%{stagingroot}')
-                prefix = macro_expand(self.macros, '%{_prefix}')
-                self.install(self.install_mode(), self.bset, stagingroot, prefix)
-                staging_size = path.get_size(stagingroot)
-                if not self.opts.no_clean() or self.opts.always_clean():
-                    log.notice('clean staging: %s' % (self.bset))
-                    log.trace('removing: %s' % (stagingroot))
-                    if not self.opts.dry_run():
-                        if path.exists(stagingroot):
-                            path.removeall(stagingroot)
-                log.notice('Staging Size: %s' % (build.humanize_number(staging_size, 'B')))
+                have_stagingroot = path.exists(stagingroot)
+                log.trace('_bset: %2d: install staging, present: %s' % \
+                          (nesting_count, have_stagingroot))
+                if have_stagingroot:
+                    prefix = macro_expand(self.macros, '%{_prefix}')
+                    self.install(self.install_mode(), self.bset, stagingroot, prefix)
+                    staging_size = path.get_size(stagingroot)
+                    if not self.opts.no_clean() or self.opts.always_clean():
+                        log.notice('clean staging: %s' % (self.bset))
+                        log.trace('removing: %s' % (stagingroot))
+                        if not self.opts.dry_run():
+                            if path.exists(stagingroot):
+                                path.removeall(stagingroot)
+                    log.notice('Staging Size: %s' % \
+                               (build.humanize_number(staging_size, 'B')))
         except error.general as gerr:
             if not build_error:
                 log.stderr(str(gerr))

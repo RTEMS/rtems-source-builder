@@ -157,6 +157,7 @@ __cc:                exe,     required, 'gcc'
 __chgrp:             exe,     required, '/usr/bin/chgrp'
 __chmod:             exe,     required, '/bin/chmod'
 __chown:             exe,     required, '/usr/sbin/chown'
+__cmake:             exe,     optional, '/usr/bin/cmake'
 __cp:                exe,     required, '/bin/cp'
 __cpp:               exe,     none,     '%{__cc} -E'
 __cvs:               exe,     optional, '/usr/bin/cvs'
@@ -205,7 +206,7 @@ ___build_cmd:        none,    none,     '%{?_sudo:%{_sudo} }%{?_remsh:%{_remsh} 
 ___build_post:       none,    none,     'exit 0'
 
 # Prebuild set up script.
-___build_pre:        none,    none,     '''# ___build_pre in as set up in defaults.py
+___build_pre:        none,    none,     '''# ___build_pre as set up in defaults.py
 # Save the original path away.
 export SB_ORIG_PATH=${PATH}
 # Directories

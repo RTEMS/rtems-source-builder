@@ -52,6 +52,7 @@ def load():
         '_var':             ('dir',     'optional', '/usr/local/var'),
         '_prefix':          ('dir',     'optional', '%{_usr}'),
         '__ldconfig':       ('exe',     'none',     ''),
+        '__cmake':          ('exe',     'optional', 'cmake'),
         '__cvs':            ('exe',     'optional', 'cvs'),
         '__xz':             ('exe',     'required', 'xz'),
         'with_zlib':        ('none',    'none',     '--with-zlib=no'),

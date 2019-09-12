@@ -49,8 +49,8 @@ def add(label, args, macros, error):
 def set(label, args, macros, error):
     args = _args(args)
     if len(args) < 2:
-        error('%%%s requires at least 2 arguments' % (label))
-        return
+        error('%%%s set requires at least 2 arguments' % (label))
+        return []
     _map = '%s-%s' % (label, args[0])
     macros.create_map(_map)
     key = _make_key(label, 0)
@@ -63,12 +63,26 @@ def set(label, args, macros, error):
 def setup(label, args, macros, error):
     args = _args(args)
     if len(args) < 2:
-        error('%%%s requires at least 2 arguments: %s' % (label, ' '.join(args)))
+        error('%%%s setup requires at least 2 arguments: %s' % (label, ' '.join(args)))
     ss = '%%setup %s %s' % (label, ' '.join(args))
     _map = '%s-%s' % (label, args[0])
     if 'setup' in macros.map_keys(_map):
         error('%%%s already setup source: %s' % (label, ' '.join(args)))
-        return
+        return []
+    macros.set_write_map(_map)
+    macros.define('setup', ss)
+    macros.unset_write_map()
+    return [ss]
+
+def download(label, args, macros, error):
+    args = _args(args)
+    if len(args) != 1:
+        error('%%%s download requires 1 argument: %s' % (label, ' '.join(args)))
+    ss = '%%setup %s %s -g' % (label, ' '.join(args))
+    _map = '%s-%s' % (label, args[0])
+    if 'setup' in macros.map_keys(_map):
+        error('%%%s already setup source: %s' % (label, ' '.join(args)))
+        return []
     macros.set_write_map(_map)
     macros.define('setup', ss)
     macros.unset_write_map()
@@ -79,15 +93,14 @@ def process(label, args, macros, error):
         error('invalid source type: %s' % (label))
     args = _args(args)
     log.trace('sources: %s' % (' '.join(args)))
-    if len(args) < 3:
-        error('%%%s requires at least 3 arguments: %s' % (label, ' '.join(args)))
-        return
     if args[0] == 'set':
         return set(label, args[1:], macros, error)
     elif args[0] == 'add':
         return add(label, args[1:], macros, error)
     elif args[0] == 'setup':
         return setup(label, args[1:], macros, error)
+    elif args[0] == 'download':
+        return download(label, args[1:], macros, error)
     error('invalid %%%s command: %s' % (label, args[0]))
 
 def hash(args, macros, error):

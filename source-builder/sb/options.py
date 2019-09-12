@@ -293,6 +293,8 @@ class command_line:
                               '--without-log',
                               '--without-error-report',
                               '--without-release-url']
+            if a == '--dry-run':
+                self.args += ['--without-error-report']
             arg += 1
 
     def post_process(self, logfile = True):

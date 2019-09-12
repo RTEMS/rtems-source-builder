@@ -203,7 +203,7 @@ class build:
             not _disable_installing and \
             not _canadian_cross
 
-    def source(self, name, strip_components):
+    def source(self, name, strip_components, download_only):
         #
         # Return the list of sources. Merge in any macro defined sources as
         # these may be overridden by user loaded macros.
@@ -238,31 +238,37 @@ class build:
                     if o.startswith('--rsb-file'):
                        os_ = o.split('=')
                        if len(os_) != 2:
-                           raise error.general('invalid --rsb-file option: %s' % (' '.join(args)))
+                           raise error.general('invalid --rsb-file option: %s' % \
+                                               (' '.join(args)))
                        if os_[0] != '--rsb-file':
-                           raise error.general('invalid --rsb-file option: %s' % (' '.join(args)))
+                           raise error.general('invalid --rsb-file option: %s' % \
+                                               (' '.join(args)))
                        file_override = os_[1]
                 opts = [o for o in opts if not o.startswith('--rsb-')]
             url = self.config.expand(' '.join(url))
-            src = download.parse_url(url, '_sourcedir', self.config, self.opts, file_override)
+            src = download.parse_url(url, '_sourcedir',
+                                     self.config, self.opts, file_override)
             download.get_file(src['url'], src['local'], self.opts, self.config)
-            if strip_components > 0:
-                tar_extract = '%%{__tar_extract} --strip-components %d' % (strip_components)
-            else:
-                tar_extract = '%{__tar_extract}'
-            if 'symlink' in src:
-                sname = name.replace('-', '_')
-                src['script'] = '%%{__ln_s} %s ${source_dir_%s}' % (src['symlink'], sname)
-            elif 'compressed' in src:
-                #
-                # Zip files unpack as well so do not use tar.
-                #
-                src['script'] = '%s %s' % (src['compressed'], src['local'])
-                if src['compressed-type'] != 'zip':
-                    src['script'] += ' | %s -f -' % (tar_extract)
-            else:
-                src['script'] = '%s -f %s' % (tar_extract, src['local'])
-            srcs += [src]
+            if not download_only:
+                if strip_components > 0:
+                    tar_extract = '%%{__tar_extract} --strip-components %d' % \
+                        (strip_components)
+                else:
+                    tar_extract = '%{__tar_extract}'
+                if 'symlink' in src:
+                    sname = name.replace('-', '_')
+                    src['script'] = '%%{__ln_s} %s ${source_dir_%s}' % \
+                        (src['symlink'], sname)
+                elif 'compressed' in src:
+                    #
+                    # Zip files unpack as well so do not use tar.
+                    #
+                    src['script'] = '%s %s' % (src['compressed'], src['local'])
+                    if src['compressed-type'] != 'zip':
+                        src['script'] += ' | %s -f -' % (tar_extract)
+                else:
+                    src['script'] = '%s -f %s' % (tar_extract, src['local'])
+                srcs += [src]
         return srcs
 
     def source_setup(self, package, args):
@@ -270,7 +276,7 @@ class build:
         setup_name = args[1]
         args = args[1:]
         try:
-            opts, args = getopt.getopt(args[1:], 'qDcn:bas:')
+            opts, args = getopt.getopt(args[1:], 'qDcn:bas:g')
         except getopt.GetoptError as ge:
             raise error.general('source setup error: %s' % str(ge))
         quiet = False
@@ -282,6 +288,7 @@ class build:
         changed_dir = False
         strip_components = 0
         opt_name = None
+        download_only = False
         for o in opts:
             if o[0] == '-q':
                 quiet = True
@@ -297,30 +304,37 @@ class build:
                 unpack_before_chdir = False
             elif o[0] == '-s':
                 if not o[1].isdigit():
-                    raise error.general('source setup error: invalid strip count: %s' % (o[1]))
+                    raise error.general('source setup error: invalid strip count: %s' % \
+                                        (o[1]))
                 strip_components = int(o[1])
+            elif o[0] == '-g':
+                download_only = True
         name = None
-        for source in self.source(setup_name, strip_components):
+        for source in self.source(setup_name, strip_components, download_only):
             if name is None:
                 if opt_name is None:
                     if source:
                         opt_name = source['name']
                     else:
-                        raise error.general('setup source tag not found: %d' % (source_tag))
+                        raise error.general('setup source tag not found: %d' % \
+                                            (source_tag))
                 else:
                     name = opt_name
-            self.script_build.append(self.config.expand('cd %{_builddir}'))
-            if not deleted_dir and delete_before_unpack:
-                self.script_build.append(self.config.expand('%{__rm} -rf ' + name))
-                deleted_dir = True
-            if not created_dir and create_dir:
-                self.script_build.append(self.config.expand('%{__mkdir_p} ' + name))
-                created_dir = True
-            if not changed_dir and (not unpack_before_chdir or create_dir):
-                self.script_build.append(self.config.expand('cd ' + name))
-                changed_dir = True
-            self.script_build.append(self.config.expand(source['script']))
-        if not changed_dir and (unpack_before_chdir and not create_dir):
+            if not download_only:
+                self.script_build.append(self.config.expand('cd %{_builddir}'))
+                if not deleted_dir and delete_before_unpack and name is not None:
+                    self.script_build.append(self.config.expand('%{__rm} -rf ' + name))
+                    deleted_dir = True
+                if not created_dir and create_dir and name is not None:
+                    self.script_build.append(self.config.expand('%{__mkdir_p} ' + name))
+                    created_dir = True
+                if not changed_dir and (not unpack_before_chdir or create_dir) and \
+                   name is not None:
+                    self.script_build.append(self.config.expand('cd ' + name))
+                    changed_dir = True
+                self.script_build.append(self.config.expand(source['script']))
+        if not changed_dir and (unpack_before_chdir and not create_dir) and \
+           name is not None and not download_only:
             self.script_build.append(self.config.expand('cd ' + name))
             changed_dir = True
         self.script_build.append(self.config.expand('%{__setup_post}'))
@@ -345,7 +359,7 @@ class build:
                 else:
                     url += [pp]
             if len(url) == 0:
-                raise error.general('patch URL not found: %s' % (' '.join(args)))
+                raise error.general('patch URL not found: %s' % (' '.join(opts)))
             #
             # Look for --rsb-file as an option we use as a local file name.
             # This can be used if a URL has no reasonable file name the
@@ -357,9 +371,11 @@ class build:
                     if o.startswith('--rsb-file'):
                        os_ = o.split('=')
                        if len(os_) != 2:
-                           raise error.general('invalid --rsb-file option: %s' % (' '.join(args)))
+                           raise error.general('invalid --rsb-file option: %s' % \
+                                               (' '.join(opts)))
                        if os_[0] != '--rsb-file':
-                           raise error.general('invalid --rsb-file option: %s' % (' '.join(args)))
+                           raise error.general('invalid --rsb-file option: %s' % \
+                                               (' '.join(opts)))
                        file_override = os_[1]
                 opts = [o for o in opts if not o.startswith('--rsb-')]
             if len(opts) == 0:
@@ -371,7 +387,8 @@ class build:
             #
             # Parse the URL first in the source builder's patch directory.
             #
-            patch = download.parse_url(url, '_patchdir', self.config, self.opts, file_override)
+            patch = download.parse_url(url, '_patchdir', self.config,
+                                       self.opts, file_override)
             #
             # Download the patch
             #
