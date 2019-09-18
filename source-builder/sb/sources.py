@@ -34,15 +34,21 @@ def add(label, args, macros, error):
     if len(args) < 2:
         error('%%%s requires at least 2 arguments' % (label))
     _map = '%s-%s' % (label, args[0])
+    _value = ' '.join(args[1:])
     macros.create_map(_map)
     index = 0
     while True:
         key = _make_key(label, index)
         if key not in macros.map_keys(_map):
             break
+        macros.set_read_map(_map)
+        value = macros.get_value(key)
+        macros.unset_read_map(_map)
+        if value == _value:
+            error('%%%s duplicate add: %s' % (label, _value))
         index += 1
     macros.set_write_map(_map)
-    macros.define(key, ' '.join(args[1:]))
+    macros.define(key, _value)
     macros.unset_write_map()
     return None
 
