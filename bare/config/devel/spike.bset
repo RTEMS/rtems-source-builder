@@ -4,4 +4,5 @@
 
 %define release 1
 
+devel/dtc-1.4.1-1
 devel/spike-1.1.0
