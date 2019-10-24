@@ -276,7 +276,7 @@ class build:
         setup_name = args[1]
         args = args[1:]
         try:
-            opts, args = getopt.getopt(args[1:], 'qDcn:bas:g')
+            opts, args = getopt.getopt(args[1:], 'qDcn:bas:gE')
         except getopt.GetoptError as ge:
             raise error.general('source setup error: %s' % str(ge))
         quiet = False
@@ -286,6 +286,7 @@ class build:
         deleted_dir = False
         created_dir = False
         changed_dir = False
+        no_errors = False
         strip_components = 0
         opt_name = None
         download_only = False
@@ -302,6 +303,8 @@ class build:
                 unpack_before_chdir = True
             elif o[0] == '-a':
                 unpack_before_chdir = False
+            elif o[0] == '-E':
+                no_errors = True
             elif o[0] == '-s':
                 if not o[1].isdigit():
                     raise error.general('source setup error: invalid strip count: %s' % \
@@ -332,7 +335,28 @@ class build:
                    name is not None:
                     self.script_build.append(self.config.expand('cd ' + name))
                     changed_dir = True
+                #
+                # On Windows tar can fail on links if the link appears in the
+                # tar file before the target of the link exists. We can assume the
+                # tar file is correct, that is all files and links are valid,
+                # so on error redo the untar a second time.
+                #
+                if options.host_windows or no_errors:
+                    self.script_build.append('set +e')
                 self.script_build.append(self.config.expand(source['script']))
+                if options.host_windows or not no_errors:
+                    self.script_build.append('tar_exit=$?')
+                if options.host_windows or no_errors:
+                    self.script_build.append('set -e')
+                if options.host_windows:
+                    if no_errors:
+                        self.script_build.append(' set +e')
+                        self.script_build.append(' ' + self.config.expand(source['script']))
+                        self.script_build.append(' set -e')
+                    else:
+                        self.script_build.append('if test $tar_exit != 0; then')
+                        self.script_build.append(' ' + self.config.expand(source['script']))
+                        self.script_build.append('fi')
         if not changed_dir and (unpack_before_chdir and not create_dir) and \
            name is not None and not download_only:
             self.script_build.append(self.config.expand('cd ' + name))
