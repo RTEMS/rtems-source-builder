@@ -102,6 +102,7 @@ def load():
         '__chgrp':           ('exe',     'required', 'chgrp'),
         '__chmod':           ('exe',     'required', 'chmod'),
         '__chown':           ('exe',     'required', 'chown'),
+        '__cmake':           ('exe',     'optional', 'cmake'),
         '__cp':              ('exe',     'required', 'cp'),
         '__cvs':             ('exe',     'optional', 'cvs'),
         '__cxx':             ('exe',     'required', cxx),
