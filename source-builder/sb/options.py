@@ -249,7 +249,7 @@ class command_line:
         while arg < len(self.args):
             a = self.args[arg]
             if a.startswith('--'):
-                los = a.split('=')
+                los = a.split('=', 1)
                 lo = los[0]
                 if lo in self._long_opts:
                     long_opt = self._long_opts[lo]
@@ -498,7 +498,7 @@ class command_line:
                 lhs = None
                 rhs = None
                 if '=' in self.args[a]:
-                    eqs = self.args[a].split('=')
+                    eqs = self.args[a].split('=', 1)
                     lhs = eqs[0]
                     if len(eqs) > 2:
                         rhs = '='.join(eqs[1:])
