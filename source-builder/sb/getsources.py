@@ -281,6 +281,7 @@ class buildset:
             self.macros = copy.copy(opts.defaults)
         else:
             self.macros = copy.copy(macros)
+        self.macros.define('_rsb_get_source')
         log.trace('_bset: %s: macro defaults' % (bset))
         log.trace(str(self.macros))
         self.bset = bset
