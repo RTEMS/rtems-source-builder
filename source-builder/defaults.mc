@@ -138,6 +138,9 @@ _usrsrc:             dir,     none,     '%{_usr}/src'
 _var:                dir,     none,     '/usr/local/var'
 _varrun:             dir,     none,     '%{_var}/run'
 
+# Get source state
+_rsb_getting_source: none,    none,     '0'
+
 # Defaults, override in platform specific modules.
 ___setup_shell:      exe,     required, '/bin/sh'
 __aclocal:           exe,     optional, 'aclocal'
