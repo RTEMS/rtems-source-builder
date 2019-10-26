@@ -1056,8 +1056,15 @@ class file:
             line = line[0:-1]
             b = line.find('#')
             if b >= 0:
-                line = line[1:b]
+                line = line[1:b] + ('\\' if line[-1] == '\\' else '')
             return line.strip()
+
+        def _clean_and_pack(line, last_line):
+            leading_ws = ' ' if len(line) > 0 and line[0].isspace() else ''
+            line = _clean(line)
+            if len(last_line) > 0:
+                line = last_line + leading_ws + line
+            return line
 
         #
         # Need to add code to count matching '{' and '}' and if they
@@ -1065,11 +1072,16 @@ class file:
         # they match. This closes an opening '{' that is on another
         # line.
         #
+        ll = ''
         for l in config:
             self.lc += 1
-            l = _clean(l)
+            l = _clean_and_pack(l, ll)
             if len(l) == 0:
                 continue
+            if l[-1] == '\\':
+                ll = l[0:-1]
+                continue
+            ll = ''
             if isvalid:
                 indicator = '>'
             else:
