@@ -164,9 +164,14 @@ class options(object):
                                       sbdir = command_path)
         self.opts = { 'params' :  extras }
         self.sb_git()
+        self.rtems_bsp()
         if argopts.download_dir is not None:
-            self.defaults['_sourcedir'] = ('dir', 'optional', path.abspath(argopts.download_dir))
-            self.defaults['_patchdir'] = ('dir', 'optional', path.abspath(argopts.download_dir))
+            self.defaults['_sourcedir'] = ('dir',
+                                           'optional',
+                                           path.abspath(argopts.download_dir))
+            self.defaults['_patchdir'] = ('dir',
+                                          'optional',
+                                          path.abspath(argopts.download_dir))
 
     def parse_args(self, arg, error = True, extra = True):
         for a in range(0, len(self.args)):
@@ -188,6 +193,12 @@ class options(object):
                 return [lhs, rhs]
             a += 1
         return None
+
+    def rtems_bsp(self):
+        self.defaults['rtems_version'] = version.version()
+        self.defaults['_target'] = 'arch-rtems'
+        self.defaults['rtems_host'] = 'rtems-arch'
+        self.defaults['with_rtems_bsp'] = 'rtems-bsp'
 
     def sb_git(self):
         repo = git.repo(self.defaults.expand('%{_sbdir}'), self)
