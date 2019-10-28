@@ -162,6 +162,7 @@ class options(object):
         self.args = argv[1:] + extras
         self.defaults = macros.macros(name = defaults,
                                       sbdir = command_path)
+        self.load_overrides()
         self.opts = { 'params' :  extras }
         self.sb_git()
         self.rtems_bsp()
@@ -172,6 +173,52 @@ class options(object):
             self.defaults['_patchdir'] = ('dir',
                                           'optional',
                                           path.abspath(argopts.download_dir))
+
+    def load_overrides(self):
+        overrides = None
+        if os.name == 'nt':
+            try:
+                import windows
+                overrides = windows.load()
+                host_windows = True
+                host_posix = False
+            except:
+                raise error.general('failed to load Windows host support')
+        elif os.name == 'posix':
+            uname = os.uname()
+            try:
+                if uname[0].startswith('MINGW64_NT'):
+                    import windows
+                    overrides = windows.load()
+                    host_windows = True
+                elif uname[0].startswith('CYGWIN_NT'):
+                    import windows
+                    overrides = windows.load()
+                elif uname[0] == 'Darwin':
+                    import darwin
+                    overrides = darwin.load()
+                elif uname[0] == 'FreeBSD':
+                    import freebsd
+                    overrides = freebsd.load()
+                elif uname[0] == 'NetBSD':
+                    import netbsd
+                    overrides = netbsd.load()
+                elif uname[0] == 'Linux':
+                    import linux
+                    overrides = linux.load()
+                elif uname[0] == 'SunOS':
+                    import solaris
+                    overrides = solaris.load()
+            except error.general as ge:
+                raise error.general('failed to load %s host support: %s' % (uname[0], ge))
+            except:
+                raise error.general('failed to load %s host support' % (uname[0]))
+        else:
+            raise error.general('unsupported host type; please add')
+        if overrides is None:
+            raise error.general('no hosts defaults found; please add')
+        for k in overrides:
+            self.defaults[k] = overrides[k]
 
     def parse_args(self, arg, error = True, extra = True):
         for a in range(0, len(self.args)):
