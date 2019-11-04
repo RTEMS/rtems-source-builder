@@ -11,7 +11,7 @@
 
 devel/expat-2.1.0-1
 tools/rtems-gdb-8.3-1
-tools/rtems-binutils-2.32
+tools/rtems-binutils-2.33.1
 tools/rtems-gcc-9.2.0-newlib-6661a67
 tools/rtems-tools-5-1
 devel/sis-2-1
