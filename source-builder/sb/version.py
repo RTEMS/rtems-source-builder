@@ -112,15 +112,16 @@ def load_release_settings(macros):
                 hashes = v.items('hashes')
             except:
                 hashes = []
-            try:
-                release_path = v.get('version', 'release_path', raw = True)
-            except:
-                release_path = None
             for hash in hashes:
                 hs = hash[1].split()
                 if len(hs) != 2:
                     raise error.general('invalid release hash in VERSION')
                 sources.hash((hs[0], hash[0], hs[1]), macros, setting_error)
+            try:
+                release_path = v.get('version', 'release_path', raw = True)
+                release_path = ','.join([rp.strip() for rp in release_path.split(',')])
+            except:
+                release_path = None
             download.set_release_path(release_path, macros)
 
 def version():

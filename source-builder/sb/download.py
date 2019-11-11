@@ -599,16 +599,19 @@ def get_file(url, local, opts, config):
         raise error.general('source not found: %s' % (path.host(local)))
     #
     # Check if a URL has been provided on the command line. If the package is
-    # released push to the start the RTEMS URL unless overrided by the command
-    # line option --with-release-url. The variant --without-release-url can
-    # override the released check.
+    # released push the release path URLs to the start the RTEMS URL list
+    # unless overriden by the command line option --without-release-url. The
+    # variant --without-release-url can override the released check.
     #
     url_bases = opts.urls()
+    if url_bases is None:
+        url_bases = []
     try:
         rtems_release_url_value = config.macros.expand('%{release_path}')
     except:
         rtems_release_url_value = None
     rtems_release_url = None
+    rtems_release_urls = []
     if version.released() and rtems_release_url_value:
         rtems_release_url = rtems_release_url_value
     with_rel_url = opts.with_arg('release-url')
@@ -627,18 +630,17 @@ def get_file(url, local, opts, config):
     elif with_rel_url[0] == 'without_release-url' and with_rel_url[1] == 'yes':
         rtems_release_url = None
     if rtems_release_url is not None:
-        log.trace('release url: %s' % (rtems_release_url))
-        #
-        # If the URL being fetched is under the release path do not add the
-        # sources release path because it is already there.
-        #
-        if not url.startswith(rtems_release_url):
-            if url_bases is None:
-                url_bases = [rtems_release_url]
-            else:
-                url_bases.append(rtems_release_url)
+        rtems_release_urls = rtems_release_url.split(',')
+        for release_url in rtems_release_urls:
+            log.trace('release url: %s' % (release_url))
+            #
+            # If the URL being fetched is under the release path do not add
+            # the sources release path because it is already there.
+            #
+            if not url.startswith(release_url):
+                url_bases = [release_url] + url_bases
     urls = []
-    if url_bases is not None:
+    if len(url_bases) > 0:
         #
         # Split up the URL we are being asked to download.
         #
@@ -654,7 +656,7 @@ def get_file(url, local, opts, config):
             # Hack to fix #3064 where --rsb-file is being used. This code is a
             # mess and should be refactored.
             #
-            if version.released() and base == rtems_release_url:
+            if version.released() and base in rtems_release_urls:
                 url_file = path.basename(local)
             if base[-1:] != '/':
                 base += '/'
