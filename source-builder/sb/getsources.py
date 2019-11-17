@@ -625,7 +625,7 @@ def run(args = sys.argv):
         argopts = argsp.parse_args(args[2:])
 
         load_log(argopts.log)
-        log.notice('RTEMS Source Builder - Get Sources, %s' % (version.str()))
+        log.notice('RTEMS Source Builder - Get Sources, %s' % (version.string()))
         log.tracing = argopts.trace
 
         opts = load_options(args, argopts)

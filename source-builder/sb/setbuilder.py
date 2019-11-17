@@ -698,7 +698,7 @@ def run():
             else:
                 mail['to'] = macro_expand(opts.defaults, '%{_mail_tools_to}')
             mail['from'] = mail['mail'].from_address()
-        log.notice('RTEMS Source Builder - Set Builder, %s' % (version.str()))
+        log.notice('RTEMS Source Builder - Set Builder, %s' % (version.string()))
         opts.log_info()
         if not check.host_setup(opts):
             raise error.general('host build environment is not set up correctly')

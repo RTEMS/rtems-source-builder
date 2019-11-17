@@ -30,12 +30,14 @@ import re
 import os
 import string
 
+import download
 import error
 import execute
 import git
 import log
 import macros
 import path
+import sources
 import sys
 
 import version
@@ -361,7 +363,7 @@ class command_line:
     def sb_released(self):
         if version.released():
             self.defaults['rsb_released'] = '1'
-        self.defaults['rsb_version'] = version.str()
+        self.defaults['rsb_version'] = version.string()
 
     def sb_git(self):
         repo = git.repo(self.defaults.expand('%{_sbdir}'), self)
@@ -599,7 +601,7 @@ class command_line:
             self.args.append('--with-tools=%s' % (rtems_tools[1]))
         rtems_version = self.parse_args('--rtems-version')
         if rtems_version is None:
-            rtems_version = version.version()
+            rtems_version = str(version.version())
         else:
             rtems_version = rtems_version[1]
         self.defaults['rtems_version'] = rtems_version
@@ -701,14 +703,28 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc', logfile = Tru
     #
     # Load the release settings
     #
-    version.load_release_settings(o.defaults)
-
+    def setting_error(msg):
+        raise error.general(msg)
+    hashes = version.load_release_settings('hashes', error = setting_error)
+    for hash in hashes:
+        hs = hash[1].split()
+        if len(hs) != 2:
+            raise error.general('invalid release hash in VERSION')
+        sources.hash((hs[0], hash[0], hs[1]), o.defaults, setting_error)
+    release_path = version.load_release_setting('version', 'release_path',
+                                                raw = True, error = setting_error)
+    if release_path is not None:
+        try:
+            release_path = ','.join([rp.strip() for rp in release_path.split(',')])
+        except:
+            raise error.general('invalid release path in VERSION')
+        download.set_release_path(release_path, o.defaults)
     return o
 
 def run(args):
     try:
         _opts = load(args = args, defaults = 'defaults.mc')
-        log.notice('RTEMS Source Builder - Defaults, %s' % (version.str()))
+        log.notice('RTEMS Source Builder - Defaults, %s' % (version.string()))
         _opts.log_info()
         log.notice('Options:')
         log.notice(str(_opts))

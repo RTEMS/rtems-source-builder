@@ -672,7 +672,7 @@ def run(args):
     try:
         optargs = { '--list-configs': 'List available configurations' }
         opts = options.load(args, optargs)
-        log.notice('RTEMS Source Builder, Package Builder, %s' % (version.str()))
+        log.notice('RTEMS Source Builder, Package Builder, %s' % (version.string()))
         opts.log_info()
         if not check.host_setup(opts):
             if not opts.force():

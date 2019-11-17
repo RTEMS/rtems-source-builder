@@ -645,7 +645,7 @@ class report:
         pass
 
     def release_status(self):
-        self.formatter.release_status(version.str())
+        self.formatter.release_status(version.string())
 
     def git_status(self):
         r = git.repo('.', self.opts, self.macros)
@@ -896,7 +896,7 @@ def run(args):
         opts = options.load(args, optargs, logfile = False)
         if opts.get_arg('--output') and len(opts.params()) > 1:
             raise error.general('--output can only be used with a single config')
-        print('RTEMS Source Builder, Reporter, %s' % (version.str()))
+        print('RTEMS Source Builder, Reporter, %s' % (version.string()))
         opts.log_info()
         if not check.host_setup(opts):
             log.warning('forcing build with known host setup problems')

@@ -244,7 +244,7 @@ def run(args):
                     del os.environ['ACLOCAL_PATH']
         optargs = { '--rtems':       'The RTEMS source directory',
                     '--preinstall':  'Preinstall AM generation' }
-        log.notice('RTEMS Source Builder - RTEMS Bootstrap, %s' % (version.str()))
+        log.notice('RTEMS Source Builder - RTEMS Bootstrap, %s' % (version.string()))
         opts = options.load(sys.argv, optargs, logfile = False)
         if opts.get_arg('--rtems'):
             topdir = opts.get_arg('--rtems')
