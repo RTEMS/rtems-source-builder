@@ -653,7 +653,11 @@ class buildset:
                 if self.build_failure is not None:
                     mail['failure'] = self.build_failure
                 if self.mail_active(mail, nesting_count):
-                    self.mail_send(mail)
+                    try:
+                        self.mail_send(mail)
+                    except error.general as gerr:
+                        log.notice('Mail Send Failure: %s' % (gerr))
+
             log.notice('Build Set: Time %s' % (build_time))
 
 def list_bset_cfg_files(opts, configs):
