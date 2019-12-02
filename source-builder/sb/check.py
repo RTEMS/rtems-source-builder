@@ -104,20 +104,24 @@ def path_check(opts, silent = False):
     if 'PATH' in os.environ:
         paths = os.environ['PATH'].split(os.pathsep)
         for p in paths:
-            if len(p.strip()) == 0:
+            try:
+                if len(p.strip()) == 0:
+                    if not silent:
+                        log.notice('error: environment PATH contains an empty path')
+                    return False
+                elif not options.host_windows and (p.strip() == '.' or p.strip() == '..'):
+                    if not silent:
+                        log.notice('error: environment PATH invalid path: %s' % (p))
+                    return False
+                elif not path.exists(p):
+                    if not silent and opts.warn_all():
+                        log.notice('warning: environment PATH not found: %s' % (p))
+                elif not path.isdir(p):
+                    if not silent and opts.warn_all():
+                        log.notice('warning: environment PATH not a directory: %s' % (p))
+            except Exception as e:
                 if not silent:
-                    log.notice('error: environment PATH contains an empty path')
-                return False
-            elif not options.host_windows and (p.strip() == '.' or p.strip() == '..'):
-                if not silent:
-                    log.notice('error: environment PATH invalid path: %s' % (p))
-                return False
-            elif not path.exists(p):
-                if not silent and opts.warn_all():
-                    log.notice('warning: environment PATH not found: %s' % (p))
-            elif not path.isdir(p):
-                if not silent and opts.warn_all():
-                    log.notice('warning: environment PATH not a directory: %s' % (p))
+                    log.notice('warning: environment PATH suspicious path: %s' % (e))
     return True
 
 
