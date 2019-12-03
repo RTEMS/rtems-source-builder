@@ -59,7 +59,7 @@ _target:             none,    optional, ''
 rtems_release_url:   none,    none,     'https://ftp.rtems.org/pub/rtems/releases/%{rtems_version}'
 
 # The user
-_uid:                none,    convert,  '%(%{__id_u} -n)'
+_uid:                none,    convert,  '%(%{__id_u})'
 
 # Default flags that can be overridded to supply specific host or build
 # flags and include paths to the tools. The host is the final platform
