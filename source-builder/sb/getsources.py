@@ -249,6 +249,7 @@ class options(object):
 
     def sb_git(self):
         repo = git.repo(self.defaults.expand('%{_sbdir}'), self)
+        repo_mail = None
         if repo.valid():
             repo_valid = '1'
             repo_head = repo.head()
@@ -267,7 +268,6 @@ class options(object):
             repo_clean = '%{nil}'
             repo_remotes = '%{nil}'
             repo_id = 'no-repo'
-            repo_mail = None
         self.defaults['_sbgit_valid'] = repo_valid
         self.defaults['_sbgit_head']  = repo_head
         self.defaults['_sbgit_clean'] = str(repo_clean)
