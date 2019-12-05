@@ -242,7 +242,7 @@ class options(object):
         return None
 
     def rtems_bsp(self):
-        self.defaults['rtems_version'] = version.version()
+        self.defaults['rtems_version'] = str(version.version())
         self.defaults['_target'] = 'arch-rtems'
         self.defaults['rtems_host'] = 'rtems-arch'
         self.defaults['with_rtems_bsp'] = 'rtems-bsp'
@@ -586,7 +586,7 @@ def log_default():
 
 def load_options(argv, argopts, defaults = '%{_sbdir}/defaults.mc'):
     opts = options(argv, argopts, defaults)
-    opts.defaults['rtems_version'] = argopts.rtems_version
+    opts.defaults['rtems_version'] = str(argopts.rtems_version)
     return opts
 
 def run(args = sys.argv):
