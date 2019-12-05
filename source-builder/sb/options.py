@@ -705,14 +705,14 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc', logfile = Tru
     #
     def setting_error(msg):
         raise error.general(msg)
-    hashes = version.load_release_settings('hashes', error = setting_error)
+    hashes = version.load_release_settings('hashes')
     for hash in hashes:
         hs = hash[1].split()
         if len(hs) != 2:
             raise error.general('invalid release hash in VERSION')
         sources.hash((hs[0], hash[0], hs[1]), o.defaults, setting_error)
     release_path = version.load_release_setting('version', 'release_path',
-                                                raw = True, error = setting_error)
+                                                raw = True)
     if release_path is not None:
         try:
             release_path = ','.join([rp.strip() for rp in release_path.split(',')])
