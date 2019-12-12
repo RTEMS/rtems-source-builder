@@ -20,7 +20,7 @@ package: rtems-%{rtems_version}-%{_target}-%{_host}-%{release}
 #
 # Project custom message
 #
-%define rtems_version_message RTEMS %{rtems_version}, RSB %{_sbgit_id}
+%define rtems_version_message RTEMS %{rtems_version}, RSB %{rsb_version}
 
 %define rtems_gcc_version   %{rtems_version}
 %define gcc_version_message %{rtems_version_message}, Newlib %{newlib_version}
