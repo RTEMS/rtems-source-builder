@@ -111,9 +111,11 @@ def load():
         if check.check_exe(cvs, cvs):
             defines['__cvs'] = cvs
         #
-        # Fix the mess iconv is on FreeBSD 10.0.
+        # Fix the mess iconv is on FreeBSD 10.0 and higher.
         #
         defines['iconv_includes'] = ('none', 'none', '%{host_includes} %{host_ldflags}')
+        if fb_version >= 12:
+            defines['iconv_prefix'] = ('none', 'none', '%{_usr}')
 
         #
         # On 11.0+ makeinfo and install-info have moved to /usr/local/...
