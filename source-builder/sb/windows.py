@@ -127,7 +127,7 @@ def load():
         '__rm':              ('exe',     'required', 'rm'),
         '__sed':             ('exe',     'required', 'sed'),
         '__sh':              ('exe',     'required', 'sh'),
-        '__tar':             ('exe',     'required', 'bsdtar'),
+        '__tar':             ('exe',     'required', 'tar'),
         '__touch':           ('exe',     'required', 'touch'),
         '__unzip':           ('exe',     'required', 'unzip'),
         '__xz':              ('exe',     'required', 'xz'),
