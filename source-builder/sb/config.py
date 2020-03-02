@@ -472,6 +472,10 @@ class file:
            ('with_download' in self.macros and self.macros['with_download'] == '1'):
             return '0'
         ok = False
+        log.trace('pkgconfig: check: crossc=%d pkg_crossc=%d prefix=%s' % ( self._cross_compile(),
+                                                                            self.pkgconfig_crosscompile,
+                                                                            self.pkgconfig_prefix))
+        log.trace('pkgconfig: check: test=%s' % (test))
         if type(test) == str:
             test = test.split()
         if not self._cross_compile() or self.pkgconfig_crosscompile:
@@ -667,28 +671,50 @@ class file:
                 elif m.startswith('%{path '):
                     pl = m[7:-1].strip().split()
                     ok = False
-                    if len(pl) == 2:
-                        ok = True
-                        epl = []
-                        for p in pl[1:]:
-                            epl += [self._expand(p)]
-                        p = ' '.join(epl)
-                        if pl[0].lower() == 'prepend':
+                    result = ''
+                    pl_0 = pl[0].lower()
+                    if pl_0 == 'prepend':
+                        if len(pl) == 2:
+                            ok = True
+                            p = ' '.join([self._expand(pp) for pp in pl[1:]])
                             if len(self.macros['_pathprepend']):
                                 self.macros['_pathprepend'] = \
                                     '%s:%s' % (p, self.macros['_pathprepend'])
                             else:
                                 self.macros['_pathprepend'] = p
-                        elif pl[0].lower() == 'postpend':
+                    elif pl_0 == 'postpend':
+                        if len(pl) == 2:
+                            ok = True
+                            p = ' '.join([self._expand(pp) for pp in pl[1:]])
                             if len(self.macros['_pathprepend']):
                                 self.macros['_pathprepend'] = \
                                     '%s:%s' % (self.macros['_pathprepend'], p)
                             else:
                                 self.macros['_pathprepend'] = p
-                        else:
-                            ok = False
+                    elif pl_0 == 'check':
+                        if len(pl) == 3:
+                            pl_1 = pl[1].lower()
+                            p = ' '.join([self._expand(pp) for pp in pl[2:]])
+                            if pl_1 == 'exists':
+                                ok = True
+                                if path.exists(p):
+                                    result = '1'
+                                else:
+                                    result = '0'
+                            elif pl_1 == 'isdir':
+                                ok = True
+                                if path.isdir(p):
+                                    result = '1'
+                                else:
+                                    result = '0'
+                            elif pl_1 == 'isfile':
+                                ok = True
+                                if path.isfile(p):
+                                    result = '1'
+                                else:
+                                    result = '0'
                     if ok:
-                        s = s.replace(m, '')
+                        s = s.replace(m, result)
                     else:
                         self._error('path error: %s' % (' '.join(pl)))
                     mn = None
