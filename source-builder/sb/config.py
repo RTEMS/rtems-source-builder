@@ -419,7 +419,7 @@ class file:
             print('-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=')
         return macros
 
-    def _shell(self, line):
+    def _shell(self, line, nesting = 0):
         #
         # Parse the line and handle nesting '()' pairs. If on Windows
         # handle embedded '"' (double quotes) as the command is run as
@@ -442,6 +442,9 @@ class file:
                                                                             output))
             return output
 
+        if nesting > 200:
+            raise error.general('shell macro failed: too many nesting levels')
+
         updating = True
         while updating:
             updating = False
@@ -455,9 +458,11 @@ class file:
                         if braces > 0:
                             braces -= 1
                         else:
-                            line = line[:pos] + _exec(line[pos:p + 1]) + line[p + 1:]
+                            shell_cmd = '%(' + self._shell(line[pos + 2:p], nesting + 1) + ')'
+                            line = line[:pos] + _exec(shell_cmd) + line[p + 1:]
                             updating = True
                             break
+
         return line
 
     def _pkgconfig_check(self, test):
