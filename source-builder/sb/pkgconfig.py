@@ -214,7 +214,8 @@ class package(object):
             prefix = default_prefix()
         if prefix:
             self._log('prefix: %s' % (prefix))
-            if type(prefix) is str:
+            if type(prefix) is str or type(prefix) is unicode:
+                prefix = str(prefix)
                 self.prefix = []
                 for p in prefix.split(os.pathsep):
                     self.prefix += [path.shell(p)]
