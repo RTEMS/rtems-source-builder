@@ -21,7 +21,7 @@ if test ! -f $PYTHON_CMD; then
   echo "error: python command not found: $PYTHON_CMD"
   exit 5
 fi
-for py in python2 python3 python
+for py in python2 python2.7 python3 python
 do
   set +e
   py_cmd=$(command -v $py)
