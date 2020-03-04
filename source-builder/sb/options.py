@@ -293,8 +293,7 @@ class command_line:
                               '--with-download',
                               '--quiet',
                               '--without-log',
-                              '--without-error-report',
-                              '--without-release-url']
+                              '--without-error-report']
             if a == '--dry-run':
                 self.args += ['--without-error-report']
             arg += 1
