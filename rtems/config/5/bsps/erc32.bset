@@ -1,0 +1,21 @@
+#
+# ERC32
+#
+# Build into the prefix path:
+#
+#  - sparc tools
+#  - RTEMS Kernel and BSP
+#  - LibBSD
+#  - Packages
+#
+
+%define mail_single_report 1
+
+%define with_rtems_bsp erc32
+%define rtems_target   sparc-rtems5
+%define rtems_host     %{rtems_target}
+
+5/rtems-sparc
+5/rtems-kernel
+5/rtems-libbsd
+5/rtems-packages
