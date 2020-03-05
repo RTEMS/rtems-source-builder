@@ -22,29 +22,15 @@
 # RTEMS project's spec files.
 #
 
+import multiprocessing
 import pprint
 import os
 
 import platform
-import execute
 import path
 
 def load():
     uname = os.uname()
-    smp_mflags = ''
-    processors = '/bin/grep processor /proc/cpuinfo'
-    e = execute.capture_execution()
-    exit_code, proc, output = e.shell(processors)
-    ncpus = 0
-    if exit_code == 0:
-        try:
-            for l in output.split('\n'):
-                count = l.split(':')[1].strip()
-                if int(count) > ncpus:
-                    ncpus = int(count)
-        except:
-            pass
-    ncpus = str(ncpus + 1)
     if uname[4].startswith('arm'):
         cpu = 'arm'
     else:
@@ -52,7 +38,7 @@ def load():
 
     version = uname[2]
     defines = {
-        '_ncpus':           ('none',    'none',     ncpus),
+        '_ncpus':           ('none',    'none',     str(multiprocessing.cpu_count())),
         '_os':              ('none',    'none',     'linux'),
         '_host':            ('triplet', 'required', cpu + '-linux-gnu'),
         '_host_vendor':     ('none',    'none',     'gnu'),
