@@ -1,0 +1,8 @@
+%define mail_single_report 1
+
+%define with_rtems_bsp gr712rc
+%define rtems_target   sparc-rtems5
+%define rtems_host     %{rtems_target}
+
+5/rtems-sparc
+5/rtems-kernel

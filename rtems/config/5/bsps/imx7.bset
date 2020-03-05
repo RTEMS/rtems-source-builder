@@ -1,0 +1,10 @@
+%define mail_single_report 1
+
+%define with_rtems_bsp imx7
+%define rtems_target   arm-rtems5
+%define rtems_host     %{rtems_target}
+
+5/rtems-arm
+5/rtems-kernel
+5/rtems-libbsd
+5/rtems-packages
