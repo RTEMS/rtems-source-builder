@@ -9,5 +9,5 @@
 devel/expat-2.1.0-1
 tools/rtems-gdb-8.2.1-1
 tools/rtems-binutils-2.34
-tools/rtems-gcc-9.2.0-newlib-c56f53a
+tools/rtems-gcc-9.3.0-newlib-c56f53a
 tools/rtems-tools-5-1
