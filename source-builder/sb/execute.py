@@ -128,12 +128,20 @@ class execute(object):
                 tmp = bytes('temp', sys.stdin.encoding)
             except:
                 encoding = False
+            input_types = [str, bytes]
+            try:
+                # Unicode is not valid in python3, not added to the list
+                input_types += [unicode]
+            except:
+                pass
             try:
                 while True:
                     if trace_threads:
                         print('execute:_writethread: call input', input)
                     lines = input()
-                    if type(lines) == str or type(lines) == bytes:
+                    if trace_threads:
+                        print('execute:_writethread: input returned:', type(lines))
+                    if type(lines) in input_types:
                         try:
                             if encoding:
                                 lines = bytes(lines, sys.stdin.encoding)
@@ -203,6 +211,9 @@ class execute(object):
                     sd = sd[:-1]
                     if len(sd) > 0:
                         for l in sd:
+                            if trace_threads:
+                                print('execute:_readthread: output-line:',
+                                      count, type(l))
                             _output_line(l + '\n', exe, prefix, out, count)
                             count += 1
                         if count > 10:
@@ -329,17 +340,19 @@ class execute(object):
              timeout = None):
         """Open a command with arguments. Provide the arguments as a list or
         a string."""
-        if self.verbose:
-            s = command
-            if type(command) is list:
-                def add(x, y): return x + ' ' + str(y)
-                s = functools.reduce(add, command, '')[1:]
-            what = 'spawn'
-            if shell:
-                what = 'shell'
-            log.output(what + ': ' + s)
         if self.output is None:
             raise error.general('capture needs an output handler')
+        cs = command
+        if type(command) is list:
+            def add(x, y): return x + ' ' + str(y)
+            cs = functools.reduce(add, command, '')[1:]
+        what = 'spawn'
+        if shell:
+            what = 'shell'
+        cs = what + ': ' + cs
+        if self.verbose:
+            log.output(what + ': ' + cs)
+        log.trace('exe: %s' % (cs))
         if shell and self.shell_exe:
             command = arg_list(command)
             command[:0] = self.shell_exe
