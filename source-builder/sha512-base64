@@ -1,0 +1,2 @@
+#! /bin/sh
+openssl dgst -binary -sha512 $1 | openssl base64 | sed '{N;s/\n//;}'
