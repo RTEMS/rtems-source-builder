@@ -934,8 +934,6 @@ def run(args):
                     raise error.general('config file not found: %s' % (_config))
                 r.create(config, outname)
             del r
-        else:
-            raise error.general('invalid config type: %s' % (config))
     except error.general as gerr:
         print(gerr)
         sys.exit(1)
