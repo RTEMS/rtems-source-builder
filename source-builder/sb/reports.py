@@ -241,13 +241,16 @@ class markdown_formatter(formatter):
             self.line(self._strong('Remotes:'))
             self.line('')
             rc = 1
-            for r in remotes:
-                if 'url' in remotes[r]:
-                    text = remotes[r]['url']
-                else:
-                    text = 'no URL found'
-                self.line('%d. %s: %s' % (rc, r, text))
-                rc += 1
+            if not remotes:
+                self.line('[ remotes removed, contact sender for details ]')
+            else:
+                for r in remotes:
+                    if 'url' in remotes[r]:
+                        text = remotes[r]['url']
+                    else:
+                        text = 'no URL found'
+                    self.line('%d. %s: %s' % (rc, r, text))
+                    rc += 1
             self.line('')
             self.line(self._strong('Status:'))
             self.line('')
@@ -427,14 +430,17 @@ class text_formatter(formatter):
         if valid:
             self.line('%s Remotes:' % (self.cini))
             rc = 0
-            for r in remotes:
-                rc += 1
-                if 'url' in remotes[r]:
-                    text = remotes[r]['url']
-                else:
-                    text = 'no URL found'
-                text = '%s: %s' % (r, text)
-                self.line('%s  %2d: %s' % (self.cini, rc, text))
+            if not remotes:
+                self.line('[ remotes removed, contact sender for details ]')
+            else:
+                for r in remotes:
+                    rc += 1
+                    if 'url' in remotes[r]:
+                        text = remotes[r]['url']
+                    else:
+                        text = 'no URL found'
+                    text = '%s: %s' % (r, text)
+                    self.line('%s  %2d: %s' % (self.cini, rc, text))
             self.line('%s Status:' % (self.cini))
             if dirty:
                 self.line('%s  Repository is dirty' % (self.cini))
@@ -603,7 +609,7 @@ def _merge(_dict, new):
 class report:
     """Report the build details about a package given a config file."""
 
-    def __init__(self, formatter, _configs, opts, macros = None):
+    def __init__(self, formatter, sanitize, _configs, opts, macros = None):
         if type(formatter) == str:
             if formatter == 'text':
                 self.formatter = text_formatter()
@@ -621,6 +627,7 @@ class report:
             self.formatter = formatter
         self.configs = _configs
         self.opts = opts
+        self.sanitize = sanitize
         if macros is None:
             self.macros = opts.defaults
         else:
@@ -649,7 +656,10 @@ class report:
 
     def git_status(self):
         r = git.repo('.', self.opts, self.macros)
-        self.formatter.git_status(r.valid(), r.dirty(), r.head(), r.remotes())
+        if self.sanitize:
+            self.formatter.git_status(r.valid(), r.dirty(), r.head(), None)
+        else:
+            self.formatter.git_status(r.valid(), r.dirty(), r.head(), r.remotes())
 
     def introduction(self, name, intro_text = None):
         now = datetime.datetime.now().ctime()
@@ -892,7 +902,8 @@ def run(args):
         optargs = { '--list-bsets':   'List available build sets',
                     '--list-configs': 'List available configurations',
                     '--format':       'Output format (text, html, markdown, ini, xml)',
-                    '--output':       'File name to output the report' }
+                    '--output':       'File name to output the report',
+                    '--sanitize':     'Remove Remotes information from report'}
         opts = options.load(args, optargs, logfile = False)
         if opts.get_arg('--output') and len(opts.params()) > 1:
             raise error.general('--output can only be used with a single config')
@@ -922,7 +933,10 @@ def run(args):
                     formatter = xml_formatter()
                 else:
                     raise error.general('invalid format: %s' % (format_opt[1]))
-            r = report(formatter, configs, opts)
+            sanitize = False
+            if opts.get_arg('--sanitize'):
+                sanitize = True
+            r = report(formatter, sanitize, configs, opts)
             for _config in opts.params():
                 if output is None:
                     outname = path.splitext(_config)[0] + formatter.ext()

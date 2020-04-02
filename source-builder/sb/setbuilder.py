@@ -189,7 +189,7 @@ class buildset:
                     outname = path.host(path.join(outpath, name))
                 else:
                     outname = None
-                r = reports.report(format, self.configs,
+                r = reports.report(format, False, self.configs,
                                    copy.copy(opts), copy.copy(macros))
                 r.introduction(_build.config.file_name())
                 r.generate(_build.config.file_name())
@@ -199,7 +199,7 @@ class buildset:
                     r.write(outname)
                 del r
             if mail:
-                r = reports.report('text', self.configs,
+                r = reports.report('text', True, self.configs,
                                    copy.copy(opts), copy.copy(macros))
                 r.introduction(_build.config.file_name())
                 r.generate(_build.config.file_name())
