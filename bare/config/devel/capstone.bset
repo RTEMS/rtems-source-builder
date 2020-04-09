@@ -1,0 +1,7 @@
+#
+# Build set for Capstone Disassembler
+#
+
+%define release 1
+
+devel/capstone-4.0.1-1
