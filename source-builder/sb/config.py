@@ -338,7 +338,7 @@ class file:
         raise error.general(self._name_line_msg(msg))
 
     def _label(self, name):
-        if name.startswith('%{') and name[-1] is '}':
+        if name.startswith('%{') and name[-1] == '}':
             return name
         return '%{' + name.lower() + '}'
 
