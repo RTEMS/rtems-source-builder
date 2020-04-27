@@ -55,13 +55,17 @@ def load():
         '__tar':            ('exe',     'required', '/bin/tar')
         }
 
-    # Works for LSB distros
-    try:
-        distro = platform.dist()[0]
-        distro_ver = float(platform.dist()[1])
-    except ValueError:
-        # Non LSB distro found, use failover"
-        pass
+    # platform.dist() was removed in Python 3.8
+    if hasattr(platform, 'dist'):
+        # Works for LSB distros
+        try:
+            distro = platform.dist()[0]
+            distro_ver = float(platform.dist()[1])
+        except ValueError:
+         # Non LSB distro found, use failover"
+         pass
+    else:
+         distro = ''
 
     # Non LSB - fail over to issue
     if distro == '':
