@@ -50,7 +50,7 @@ import pkgconfig
 #
 # Make trace true to get a file of what happens and what is being asked.
 #
-trace = True
+trace = False
 trace_stdout = False
 logfile = 'pkg-config.log'
 out = None
@@ -59,7 +59,7 @@ srcfd = None
 #
 # Write all the package source parsed to a single file.
 #
-trace_src = True
+trace_src = False
 if trace_src:
     srcfd = open('pkg-src.txt', 'w')
 
