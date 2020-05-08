@@ -515,6 +515,15 @@ def _git_downloader(url, local, config, opts):
             log.notice('git: reset: %s' % (us[0]))
             if _do_download(opts):
                 repo.reset(arg)
+                repo.submodule_foreach(['reset'] + arg)
+        elif _as[0] == 'clean':
+            arg = []
+            if len(_as) > 1:
+                arg = ['--%s' % (_as[1])]
+            log.notice('git: clean: %s' % (us[0]))
+            if _do_download(opts):
+                repo.clean(arg)
+                repo.submodule_foreach(['clean'] + arg)
         elif _as[0] == 'protocol':
             pass
         else:

@@ -105,6 +105,14 @@ class repo:
     def submodule(self, module):
         ec, output = self._run(['submodule', 'update', '--init', module], check = True)
 
+    def submodule_foreach(self, args = []):
+        if type(args) == str:
+            args = [args.split(args)]
+        ec, output = self._run(['submodule',
+                                'foreach',
+                                '--recursive',
+                                self.git] + args, check = True)
+
     def submodules(self):
         smodules = {}
         ec, output = self._run(['submodule'], check = True)
