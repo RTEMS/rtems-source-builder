@@ -1,0 +1,4 @@
+%define release 1
+%define rtems_arch riscv
+%define with_libgomp
+%include 7/rtems-default.bset
