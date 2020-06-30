@@ -431,13 +431,12 @@ class command_line:
         _build = self.defaults.expand('%{_build}')
         _target = self.defaults.expand('%{_target}')
         #
-        # This has been removed to fix how RTEMS 3rd party libraries
-        # are built. This may break Cxc tools builds.
+        # The removed fix has been put back. I suspect
+        # this was done as a result of another issue that
+        # has been fixed.
         #
-        # if len(_target):
-        #     return len(_host) and len(_build) and (_target) and \
-        #         _host != _build and _host != _target
-        return len(_target) and len(_host) and len(_build) and _host != _build
+        return len(_target) and len(_host) and len(_build) \
+            and _host != _build and _host != _target
 
     def user_macros(self):
         #
