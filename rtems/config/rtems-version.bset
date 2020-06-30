@@ -1,5 +1,5 @@
 #
-# Current version is RTEMS 5
+# Ensure that the RTEMS version is defined
 #
 
 %if %{!defined rtems_version}
