@@ -12,4 +12,4 @@ tools/rtems-gdb-head
 
 tools/rtems-binutils-head
 tools/rtems-gcc-10-newlib-head
-tools/rtems-tools-5-1
+tools/rtems-tools-6
