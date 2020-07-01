@@ -8,5 +8,5 @@
 %define with_libgomp
 
 # Moxie needs dtc to build gdb, then pick up the rest of the set
-devel/dtc-1.4.1-1
+devel/dtc-1.6.0-1
 %include 5/rtems-default.bset
