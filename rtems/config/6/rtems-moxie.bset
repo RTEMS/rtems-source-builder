@@ -1,6 +1,0 @@
-%define release 1
-%define rtems_arch moxie
-%define win32-gdb-disable-sim
-%define with_libgomp
-devel/dtc-1.4.1-1
-%include 6/rtems-default.bset

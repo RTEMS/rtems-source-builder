@@ -1,6 +1,0 @@
-%define release 1
-%define rtems_arch sparc
-%define with_libgomp
-%define gdb-disable-sim 1
-%include 6/rtems-default.bset
-devel/sis-2-1
