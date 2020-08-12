@@ -134,7 +134,7 @@ def run(args = sys.argv):
         argsp.add_argument('--trace', help = 'Enable trace logging for debugging.',
                            action = 'store_true')
         argsp.add_argument('--not-referenced',
-                           help = 'Write out the list of not config files not referenced.',
+                           help = 'Write out the list of config files not referenced.',
                            action = 'store_true')
         argsp.add_argument('bsets', nargs='*', help = 'Build sets.')
 
@@ -191,38 +191,35 @@ def run(args = sys.argv):
                     if e not in bsets + configs:
                         errs += [e]
                 errors = errs
-            if argopts.not_referenced:
-                output = not_used_configs
-            else:
-                output = ['RSB Dependency Tracker',
-                          '',
-                          'Total buildsets: %d' % (len(all_bsets)),
-                          'Total configs: %d' % (len(all_configs)),
-                          '']
-                if len(errors) > 0:
-                    output += ['Errored File Set (%d):' % (len(errors)),
-                               ''] + \
-                              errors + \
-                              ['']
-                if len(configs) > 0:
-                    output += ['Include Tree(s):',
-                               ''] + \
-                               deps_tree + \
-                               ['']
-                if len(bsets) > 0:
-                    output += ['Buildsets (%d):' % (len(bsets)),
-                               ''] + \
-                               bsets + \
-                               ['']
-                if len(configs) > 0:
-                    output += ['Configurations (%d):' % (len(configs)),
-                               ''] + \
-                               configs + \
-                               ['']
-                if len(not_used_configs) > 0:
-                    output += ['Not referenced (%d): ' % (len(not_used_configs)),
-                               ''] + \
-                               not_used_configs
+            output = ['RSB Dependency Tracker',
+                      '',
+                      'Total buildsets: %d' % (len(all_bsets)),
+                      'Total configs: %d' % (len(all_configs)),
+                      '']
+            if len(errors) > 0:
+                output += ['Errored File Set (%d):' % (len(errors)),
+                           ''] + \
+                           errors + \
+                           ['']
+            if len(configs) > 0:
+                output += ['Include Tree(s):',
+                           ''] + \
+                           deps_tree + \
+                           ['']
+            if len(bsets) > 0:
+                output += ['Buildsets (%d):' % (len(bsets)),
+                           ''] + \
+                           bsets + \
+                           ['']
+            if len(configs) > 0:
+                output += ['Configurations (%d):' % (len(configs)),
+                           ''] + \
+                           configs + \
+                           ['']
+            if argopts.not_referenced and len(not_used_configs) > 0:
+                output += ['Not referenced (%d): ' % (len(not_used_configs)),
+                           ''] + \
+                           not_used_configs
             output = os.linesep.join(output)
             if argopts.output:
                 o = open(argopts.output, "w")
