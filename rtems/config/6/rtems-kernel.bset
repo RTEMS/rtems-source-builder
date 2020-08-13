@@ -12,4 +12,4 @@
 #
 # Build the kernel.
 #
-tools/rtems-kernel-5
+tools/rtems-kernel-6

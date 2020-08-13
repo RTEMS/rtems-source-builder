@@ -1,5 +1,5 @@
 #
-# Xilinx Zynq Zedboard
+# Xilinx Zynq ZC706
 #
 # Build into the prefix path:
 #
@@ -11,11 +11,11 @@
 
 %define mail_single_report 1
 
-%define with_rtems_bsp xilinx_zynq_zedboard
-%define rtems_target   arm-rtems5
+%define with_rtems_bsp xilinx_zynq_zc706
+%define rtems_target   arm-rtems%{rtems_version}
 %define rtems_host     %{rtems_target}
 
-5/rtems-arm
-5/rtems-kernel
-5/rtems-libbsd
-5/rtems-packages
+6/rtems-arm
+6/rtems-kernel
+6/rtems-libbsd
+6/rtems-packages

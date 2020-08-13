@@ -1,5 +1,5 @@
 #
-# Tools Set for RTEMS 5 Tools Stable
+# Tools Set for RTEMS 6 Tools Stable
 #
 
 %define release 1
@@ -14,4 +14,4 @@
 #
 %include rtems-base.bset
 
-tools/rtems-tools-5-1
+tools/rtems-tools-6-1

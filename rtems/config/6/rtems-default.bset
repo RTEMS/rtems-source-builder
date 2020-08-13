@@ -1,3 +1,6 @@
+#
+# Default tools configuration.
+#
 %include 6/rtems-base.bset
 
 6/rtems-autotools

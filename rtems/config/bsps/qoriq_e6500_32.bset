@@ -1,0 +1,10 @@
+%define mail_single_report 1
+
+%define with_rtems_bsp qoriq_e6500_32
+%define rtems_target   powerpc-rtems%{rtems_version}
+%define rtems_host     %{rtems_target}
+
+6/rtems-powerpc
+6/rtems-kernel
+6/rtems-libbsd
+6/rtems-packages

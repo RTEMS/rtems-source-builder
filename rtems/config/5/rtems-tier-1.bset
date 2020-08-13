@@ -1,5 +1,0 @@
-#
-# Tier 1 architectures. Must build.
-#
-5/rtems-arm
-5/rtems-i386
