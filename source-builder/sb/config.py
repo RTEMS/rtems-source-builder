@@ -34,13 +34,13 @@ import re
 import sys
 
 try:
-    import error
-    import execute
-    import log
-    import options
-    import path
-    import pkgconfig
-    import sources
+    from . import error
+    from . import execute
+    from . import log
+    from . import options
+    from . import path
+    from . import pkgconfig
+    from . import sources
 except KeyboardInterrupt:
     print('user terminated', file = sys.stderr)
     sys.exit(1)
@@ -500,6 +500,7 @@ class file:
             except pkgconfig.error as pe:
                 self._error('pkgconfig: check: %s' % (pe))
             except:
+                raise
                 raise error.internal('pkgconfig failure')
         if ok:
             return '1'
@@ -524,6 +525,7 @@ class file:
             except pkgconfig.error as pe:
                 self._error('pkgconfig: %s:  %s' % (flags, pe))
             except:
+                raise
                 raise error.internal('pkgconfig failure')
         if pkg_flags is None:
             pkg_flags = ''

@@ -43,7 +43,7 @@ import re
 import shlex
 import sys
 
-import path
+from . import path
 
 def default_prefix(common = True):
     paths = []
@@ -214,7 +214,12 @@ class package(object):
             prefix = default_prefix()
         if prefix:
             self._log('prefix: %s' % (prefix))
-            if type(prefix) is str or type(prefix) is unicode:
+            try:
+                if type(prefix) is unicode:
+                    prefix = prefix.decode("utf-8", "ignore")
+            except:
+                pass
+            if type(prefix) is str:
                 prefix = str(prefix)
                 self.prefix = []
                 for p in prefix.split(os.pathsep):

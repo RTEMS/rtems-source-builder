@@ -27,9 +27,9 @@ import os
 import smtplib
 import socket
 
-import error
-import options
-import path
+from . import error
+from . import options
+from . import path
 
 def append_options(opts):
     opts['--mail'] = 'Send email report or results.'

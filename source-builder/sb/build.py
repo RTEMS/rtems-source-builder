@@ -33,17 +33,17 @@ import stat
 import sys
 
 try:
-    import check
-    import config
-    import download
-    import error
-    import ereport
-    import execute
-    import log
-    import options
-    import path
-    import sources
-    import version
+    from . import check
+    from . import config
+    from . import download
+    from . import error
+    from . import ereport
+    from . import execute
+    from . import log
+    from . import options
+    from . import path
+    from . import sources
+    from . import version
 except KeyboardInterrupt:
     print('abort: user terminated')
     sys.exit(1)

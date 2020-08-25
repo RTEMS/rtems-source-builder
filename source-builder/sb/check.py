@@ -23,16 +23,16 @@
 
 from __future__ import print_function
 
-import os
-
-import error
-import execute
 import fnmatch
-import log
-import options
-import path
+import os
 import re
-import version
+
+from . import error
+from . import execute
+from . import log
+from . import options
+from . import path
+from . import version
 
 def _check_none(_opts, macro, value, constraint):
     return True

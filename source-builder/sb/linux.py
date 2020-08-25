@@ -26,8 +26,8 @@ import multiprocessing
 import pprint
 import os
 
-import platform
-import path
+from . import platform
+from . import path
 
 def load():
     uname = os.uname()

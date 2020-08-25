@@ -25,8 +25,8 @@ from __future__ import print_function
 
 import os
 
-import error
-import log
+from . import error
+from . import log
 
 def generate(name, opts, header = None, footer = None):
     label, result = opts.with_arg('error-report')

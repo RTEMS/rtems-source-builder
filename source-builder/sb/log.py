@@ -26,7 +26,7 @@ from __future__ import print_function
 import os
 import sys
 
-import error
+from . import error
 
 #
 # A global log.

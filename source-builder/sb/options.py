@@ -29,18 +29,17 @@ import pprint
 import re
 import os
 import string
-
-import download
-import error
-import execute
-import git
-import log
-import macros
-import path
-import sources
 import sys
 
-import version
+from . import download
+from . import error
+from . import execute
+from . import git
+from . import log
+from . import macros
+from . import path
+from . import sources
+from . import version
 
 basepath = 'sb'
 
@@ -625,11 +624,6 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc', logfile = Tru
     global host_posix
 
     #
-    # Adjust the args to remove the wrapper.
-    #
-    args = args[1:]
-
-    #
     # The path to this command.
     #
     command_path = path.dirname(path.abspath(args[0]))
@@ -649,7 +643,7 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc', logfile = Tru
     overrides = None
     if os.name == 'nt':
         try:
-            import windows
+            from . import windows
             overrides = windows.load()
             host_windows = True
             host_posix = False
@@ -659,26 +653,26 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc', logfile = Tru
         uname = os.uname()
         try:
             if uname[0].startswith('MINGW64_NT'):
-                import windows
+                from . import windows
                 overrides = windows.load()
                 host_windows = True
             elif uname[0].startswith('CYGWIN_NT'):
-                import windows
+                from . import windows
                 overrides = windows.load()
             elif uname[0] == 'Darwin':
-                import darwin
+                from . import darwin
                 overrides = darwin.load()
             elif uname[0] == 'FreeBSD':
-                import freebsd
+                from . import freebsd
                 overrides = freebsd.load()
             elif uname[0] == 'NetBSD':
-                import netbsd
+                from . import netbsd
                 overrides = netbsd.load()
             elif uname[0] == 'Linux':
-                import linux
+                from . import linux
                 overrides = linux.load()
             elif uname[0] == 'SunOS':
-                import solaris
+                from . import solaris
                 overrides = solaris.load()
         except error.general as ge:
             raise error.general('failed to load %s host support: %s' % (uname[0], ge))
@@ -721,7 +715,9 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc', logfile = Tru
 
 def run(args):
     try:
-        _opts = load(args = args, defaults = 'defaults.mc')
+        dpath = path.dirname(args[0])
+        _opts = load(args = args,
+                     defaults = path.join(dpath, 'defaults.mc'))
         log.notice('RTEMS Source Builder - Defaults, %s' % (version.string()))
         _opts.log_info()
         log.notice('Options:')

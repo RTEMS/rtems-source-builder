@@ -27,8 +27,8 @@ import re
 import os
 import string
 
-import error
-import path
+from . import error
+from . import path
 
 #
 # Macro tables

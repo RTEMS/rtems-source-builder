@@ -29,15 +29,15 @@ import datetime
 import os
 
 try:
-    import build
-    import check
-    import error
-    import git
-    import log
-    import macros
-    import path
-    import sources
-    import version
+    from . import build
+    from . import check
+    from . import error
+    from . import git
+    from . import log
+    from . import macros
+    from . import path
+    from . import sources
+    from . import version
 except KeyboardInterrupt:
     print('abort: user terminated', file = sys.stderr)
     sys.exit(1)
@@ -160,7 +160,7 @@ def find_bset_config(bset_config, macros):
 #
 class options(object):
     def __init__(self, argv, argopts, defaults, extras):
-        command_path = path.dirname(path.abspath(argv[1]))
+        command_path = path.dirname(path.abspath(argv[0]))
         if len(command_path) == 0:
             command_path = '.'
         self.command_path = command_path
@@ -190,7 +190,7 @@ class options(object):
         overrides = None
         if os.name == 'nt':
             try:
-                import windows
+                from . import windows
                 overrides = windows.load()
                 host_windows = True
                 host_posix = False
@@ -200,26 +200,26 @@ class options(object):
             uname = os.uname()
             try:
                 if uname[0].startswith('MINGW64_NT'):
-                    import windows
+                    from . import windows
                     overrides = windows.load()
                     host_windows = True
                 elif uname[0].startswith('CYGWIN_NT'):
-                    import windows
+                    from . import windows
                     overrides = windows.load()
                 elif uname[0] == 'Darwin':
-                    import darwin
+                    from . import darwin
                     overrides = darwin.load()
                 elif uname[0] == 'FreeBSD':
-                    import freebsd
+                    from . import freebsd
                     overrides = freebsd.load()
                 elif uname[0] == 'NetBSD':
-                    import netbsd
+                    from . import netbsd
                     overrides = netbsd.load()
                 elif uname[0] == 'Linux':
-                    import linux
+                    from . import linux
                     overrides = linux.load()
                 elif uname[0] == 'SunOS':
-                    import solaris
+                    from . import solaris
                     overrides = solaris.load()
             except error.general as ge:
                 raise error.general('failed to load %s host support: %s' % (uname[0], ge))

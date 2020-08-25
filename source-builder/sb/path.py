@@ -25,14 +25,14 @@
 
 from __future__ import print_function
 
-import log
 import os
 import shutil
 import stat
 import string
 import sys
 
-import error
+from . import error
+from . import log
 
 windows_posix = sys.platform == 'msys'
 windows = os.name == 'nt'

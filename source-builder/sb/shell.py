@@ -25,10 +25,10 @@
 from __future__ import print_function
 
 try:
-    import error
-    import execute
-    import log
-    import options
+    from . import error
+    from . import execute
+    from . import log
+    from . import options
 except KeyboardInterrupt:
     print('abort: user terminated', file = sys.stderr)
     sys.exit(1)

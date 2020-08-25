@@ -21,7 +21,7 @@
 # Manage sources and patches
 #
 
-import log
+from . import log
 
 def _args(args):
     return [i for s in [ii.split() for ii in args] for i in s]

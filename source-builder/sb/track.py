@@ -31,12 +31,12 @@ import os
 import sys
 
 try:
-    import build
-    import error
-    import git
-    import log
-    import simhost
-    import version
+    from . import build
+    from . import error
+    from . import git
+    from . import log
+    from . import simhost
+    from . import version
 except KeyboardInterrupt:
     print('abort: user terminated', file = sys.stderr)
     sys.exit(1)
@@ -138,7 +138,7 @@ def run(args = sys.argv):
                            action = 'store_true')
         argsp.add_argument('bsets', nargs='*', help = 'Build sets.')
 
-        argopts = argsp.parse_args(args[2:])
+        argopts = argsp.parse_args(args[1:])
 
         simhost.load_log(argopts.log)
         log.notice('RTEMS Source Builder - Track Dependencies, %s' % (version.string()))

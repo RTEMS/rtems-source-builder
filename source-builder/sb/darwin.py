@@ -24,7 +24,7 @@
 
 import os
 
-import execute
+from . import execute
 
 def load():
     uname = os.uname()

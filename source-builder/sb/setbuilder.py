@@ -33,17 +33,17 @@ import sys
 import textwrap
 
 try:
-    import build
-    import check
-    import error
-    import log
-    import mailer
-    import options
-    import path
-    import reports
-    import shell
-    import sources
-    import version
+    from . import build
+    from . import check
+    from . import error
+    from . import log
+    from . import mailer
+    from . import options
+    from . import path
+    from . import reports
+    from . import shell
+    from . import sources
+    from . import version
 except KeyboardInterrupt:
     print('abort: user terminated', file = sys.stderr)
     sys.exit(1)

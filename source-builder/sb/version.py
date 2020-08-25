@@ -76,9 +76,9 @@ from __future__ import print_function
 import os
 import sys
 
-import error
-import git
-import path
+from . import error
+from . import git
+from . import path
 
 #
 # Default to an internal string.

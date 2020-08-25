@@ -25,11 +25,10 @@ from __future__ import print_function
 
 import os
 
-import error
-import execute
-import log
-import options
-import path
+from . import error
+from . import execute
+from . import log
+from . import path
 
 class repo:
     """An object to manage a git repo."""
@@ -230,7 +229,9 @@ class repo:
 if __name__ == '__main__':
     import os.path
     import sys
-    defaults = path.join(path.dirname(path.dirname(path.shell(sys.argv[0]))), 'defaults.mc')
+    from . import options
+    defaults = path.join(path.dirname(path.dirname(path.shell(sys.argv[0]))),
+                         'defaults.mc')
     opts = options.load(sys.argv, defaults = defaults)
     g = repo('.', opts)
     print('g.git_version():', g.git_version())

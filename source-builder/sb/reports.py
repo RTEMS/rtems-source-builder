@@ -34,17 +34,17 @@ import pprint
 pp = pprint.PrettyPrinter(indent = 2)
 
 try:
-    import build
-    import check
-    import config
-    import error
-    import git
-    import log
-    import options
-    import path
-    import setbuilder
-    import sources
-    import version
+    from . import build
+    from . import check
+    from . import config
+    from . import error
+    from . import git
+    from . import log
+    from . import options
+    from . import path
+    from . import setbuilder
+    from . import sources
+    from . import version
 except KeyboardInterrupt:
     print('user terminated', file = sys.stderr)
     sys.exit(1)

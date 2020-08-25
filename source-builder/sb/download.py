@@ -37,13 +37,13 @@ except ImportError:
     import urllib2 as urllib_request
     import urlparse as urllib_parse
 
-import cvs
-import error
-import git
-import log
-import path
-import sources
-import version
+from . import cvs
+from . import error
+from . import git
+from . import log
+from . import path
+from . import sources
+from . import version
 
 def _do_download(opts):
     download = True

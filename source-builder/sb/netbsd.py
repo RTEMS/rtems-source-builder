@@ -27,8 +27,8 @@
 import pprint
 import os
 
-import check
-import execute
+from . import check
+from . import execute
 
 def load():
     uname = os.uname()

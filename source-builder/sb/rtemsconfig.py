@@ -28,11 +28,11 @@ import sys
 import threading
 import time
 
-import error
-import log
-import options
-import path
-import version
+from . import error
+from . import log
+from . import options
+from . import path
+from . import version
 
 def _collect(path_, file):
     confs = []

@@ -25,11 +25,10 @@ from __future__ import print_function
 
 import os
 
-import error
-import execute
-import log
-import options
-import path
+from . import error
+from . import execute
+from . import log
+from . import path
 
 class repo:
     """An object to manage a cvs repo."""
@@ -147,6 +146,7 @@ class repo:
 
 if __name__ == '__main__':
     import sys
+    from . import options
     opts = options.load(sys.argv, defaults = 'defaults.mc')
     ldir = 'cvs-test-rm-me'
     c = repo(ldir, opts)

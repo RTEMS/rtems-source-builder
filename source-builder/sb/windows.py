@@ -24,9 +24,9 @@
 import os
 import sys
 
-import error
-import execute
-import path
+from . import error
+from . import execute
+from . import path
 
 def load():
     # Default to the native Windows Python.
