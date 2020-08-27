@@ -33,8 +33,7 @@ except KeyboardInterrupt:
     print('abort: user terminated', file = sys.stderr)
     sys.exit(1)
 except:
-    print('error: unknown application load error', file = sys.stderr)
-    sys.exit(1)
+    raise
 
 def expand(macros, line):
     #

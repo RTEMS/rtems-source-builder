@@ -45,8 +45,7 @@ except KeyboardInterrupt:
     print('user terminated', file = sys.stderr)
     sys.exit(1)
 except:
-    print('error: unknown application load error', file = sys.stderr)
-    sys.exit(1)
+    raise
 
 def _check_bool(value):
     istrue = None

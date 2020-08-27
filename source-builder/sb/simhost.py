@@ -42,8 +42,7 @@ except KeyboardInterrupt:
     print('abort: user terminated', file = sys.stderr)
     sys.exit(1)
 except:
-    print('error: unknown application load error', file = sys.stderr)
-    sys.exit(1)
+    raise
 
 #
 # Define host profiles so it can simulated on another host.

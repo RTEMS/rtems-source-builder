@@ -30,9 +30,6 @@ import datetime
 import os
 import sys
 
-import pprint
-pp = pprint.PrettyPrinter(indent = 2)
-
 try:
     from . import build
     from . import check
@@ -42,15 +39,13 @@ try:
     from . import log
     from . import options
     from . import path
-    from . import setbuilder
     from . import sources
     from . import version
 except KeyboardInterrupt:
     print('user terminated', file = sys.stderr)
     sys.exit(1)
 except:
-    print('error: unknown application load error', file = sys.stderr)
-    sys.exit(1)
+    raise
 
 _line_len = 78
 
@@ -865,6 +860,7 @@ class report:
                 raise error.general('writing output file: %s: %s' % (name, err))
 
     def generate(self, name, tree = None, opts = None, macros = None):
+        from . import setbuilder
         self.buildset_start(name)
         if tree is None:
             tree = self.tree
@@ -899,6 +895,7 @@ class report:
 
 def run(args):
     try:
+        from . import setbuilder
         optargs = { '--list-bsets':   'List available build sets',
                     '--list-configs': 'List available configurations',
                     '--format':       'Output format (text, html, markdown, ini, xml)',

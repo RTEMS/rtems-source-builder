@@ -48,8 +48,7 @@ except KeyboardInterrupt:
     print('abort: user terminated')
     sys.exit(1)
 except:
-    print('error: unknown application load error')
-    sys.exit(1)
+    raise
 
 def humanize_number(num, suffix):
     for unit in ['','K','M','G','T','P','E','Z']:

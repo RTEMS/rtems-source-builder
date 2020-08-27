@@ -23,10 +23,10 @@
 #
 
 import multiprocessing
+import platform
 import pprint
 import os
 
-from . import platform
 from . import path
 
 def load():
