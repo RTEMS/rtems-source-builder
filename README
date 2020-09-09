@@ -20,7 +20,7 @@ The project is part of the RTEMS Project. The project's websites are:
    https://git.rtems.org/rtems-source-builder.git/
 
  Documentation:
-   https://docs.rtems.org/branches/master/rsb/index.html
+   https://docs.rtems.org/branches/master/user/rsb/index.html
 
  Bugs:
    https://devel.rtems.org/query?component=RSB
