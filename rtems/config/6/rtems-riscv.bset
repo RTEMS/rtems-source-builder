@@ -2,3 +2,4 @@
 %define rtems_arch riscv
 %define with_libgomp
 %include 6/rtems-default.bset
+devel/sis-2-1
