@@ -1,4 +1,8 @@
 %define release 1
 %define rtems_arch i386
 %define with_libgomp
+
+%patch add gcc https://devel.rtems.org/raw-attachment/ticket/2830/gcc-7.5.0-i386march-1.diff
+%hash sha256 gcc-7.5.0-i386march-1.diff e6664ff45e8ae8bfcf292bed1bbace1d5be6f1c3bd625cdb141bbe24c986f5d7
+
 %include 5/rtems-default.bset
