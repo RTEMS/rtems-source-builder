@@ -103,6 +103,22 @@ class package(object):
         dst.nodes = copy.copy(src.nodes)
 
     @staticmethod
+    def _is_string(us):
+        if type(us) == str:
+            return True
+        try:
+            if type(us) == unicode:
+                return True
+        except:
+            pass
+        try:
+            if type(us) == bytes:
+                return True
+        except:
+            pass
+        return False
+
+    @staticmethod
     def is_version(v):
         for n in v.split('.'):
             if not n.isdigit():
@@ -214,7 +230,7 @@ class package(object):
             prefix = default_prefix()
         if prefix:
             self._log('prefix: %s' % (prefix))
-            if type(prefix) is str or type(prefix) is unicode:
+            if self._is_string(prefix):
                 prefix = str(prefix)
                 self.prefix = []
                 for p in prefix.split(os.pathsep):
