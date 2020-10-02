@@ -27,7 +27,7 @@
 %patch add newlib %{rtems_newlib_patches}/arm/newlib-ARM-Optimize-IEEE-754-sqrt-implementation.diff
 %hash sha512 newlib-ARM-Optimize-IEEE-754-sqrt-implementation.diff 1bfdbd4a052eb42d559f430644de44943d524c22ed83c6ebf522659bfb3046535fd5bb28bd2866a47146210cad0afff1aa5cccba1bf503b2609eb05409b61734
 %patch add newlib -p1 https://sourceware.org/git/gitweb.cgi?p=newlib-cygwin.git;a=patch;h=f70d9ae6adc6ed7952806056349ba9f8ba3c65c8
-%hash sha512 newlib-cygwin-git-f70d9ae6adc6ed7952806056349ba9f8ba3c65c8.patch 915d233ae124a8fd6552aa320eb2b9910bb1417d378bad3cc43ee6dcb1b649fb7ea964a056e0afcf71b115c692af6c2ee99472f05b34b0024dd761041fdeb0db
+%hash sha512 newlib-cygwin-git-f70d9ae6adc6ed7952806056349ba9f8ba3c65c8.patch 2865fbc76bff3dafaf1d2ef9efec3e776d65423680b6e015a510394af22934519a05e3c8d64fe95b5ecf0adacdc47a8f86c7f5c881b338ba2de6c12dc9fa3dfe
 
 #
 # Tools configuration.
