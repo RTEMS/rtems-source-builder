@@ -102,7 +102,7 @@ def load():
         # bracket depth build build the gcc ARM compiler.
         #
         defines['build_cflags'] = '-O2 -pipe -fbracket-depth=1024'
-        defines['build_cxxflags'] = '-O2 -pipe -fbracket-depth=1024'
+        defines['build_cxxflags'] = '-O2 -pipe -fbracket-depth=1024 -Wno-deprecated -Wno-reserved-user-defined-literal'
         cvs = 'cvs'
         if check.check_exe(cvs, cvs):
             defines['__cvs'] = cvs
