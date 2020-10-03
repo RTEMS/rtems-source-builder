@@ -21,7 +21,7 @@
 # Manage sources and patches
 #
 
-import log
+from . import log
 
 def _args(args):
     return [i for s in [ii.split() for ii in args] for i in s]
@@ -34,23 +34,29 @@ def add(label, args, macros, error):
     if len(args) < 2:
         error('%%%s requires at least 2 arguments' % (label))
     _map = '%s-%s' % (label, args[0])
+    _value = ' '.join(args[1:])
     macros.create_map(_map)
     index = 0
     while True:
         key = _make_key(label, index)
         if key not in macros.map_keys(_map):
             break
+        macros.set_read_map(_map)
+        value = macros.get_value(key)
+        macros.unset_read_map(_map)
+        if value == _value:
+            error('%%%s duplicate add: %s' % (label, _value))
         index += 1
     macros.set_write_map(_map)
-    macros.define(key, ' '.join(args[1:]))
+    macros.define(key, _value)
     macros.unset_write_map()
     return None
 
 def set(label, args, macros, error):
     args = _args(args)
     if len(args) < 2:
-        error('%%%s requires at least 2 arguments' % (label))
-        return
+        error('%%%s set requires at least 2 arguments' % (label))
+        return []
     _map = '%s-%s' % (label, args[0])
     macros.create_map(_map)
     key = _make_key(label, 0)
@@ -63,12 +69,26 @@ def set(label, args, macros, error):
 def setup(label, args, macros, error):
     args = _args(args)
     if len(args) < 2:
-        error('%%%s requires at least 2 arguments: %s' % (label, ' '.join(args)))
+        error('%%%s setup requires at least 2 arguments: %s' % (label, ' '.join(args)))
     ss = '%%setup %s %s' % (label, ' '.join(args))
     _map = '%s-%s' % (label, args[0])
     if 'setup' in macros.map_keys(_map):
         error('%%%s already setup source: %s' % (label, ' '.join(args)))
-        return
+        return []
+    macros.set_write_map(_map)
+    macros.define('setup', ss)
+    macros.unset_write_map()
+    return [ss]
+
+def download(label, args, macros, error):
+    args = _args(args)
+    if len(args) != 1:
+        error('%%%s download requires 1 argument: %s' % (label, ' '.join(args)))
+    ss = '%%setup %s %s -g' % (label, ' '.join(args))
+    _map = '%s-%s' % (label, args[0])
+    if 'setup' in macros.map_keys(_map):
+        error('%%%s already setup source: %s' % (label, ' '.join(args)))
+        return []
     macros.set_write_map(_map)
     macros.define('setup', ss)
     macros.unset_write_map()
@@ -79,15 +99,14 @@ def process(label, args, macros, error):
         error('invalid source type: %s' % (label))
     args = _args(args)
     log.trace('sources: %s' % (' '.join(args)))
-    if len(args) < 3:
-        error('%%%s requires at least 3 arguments: %s' % (label, ' '.join(args)))
-        return
     if args[0] == 'set':
         return set(label, args[1:], macros, error)
     elif args[0] == 'add':
         return add(label, args[1:], macros, error)
     elif args[0] == 'setup':
         return setup(label, args[1:], macros, error)
+    elif args[0] == 'download':
+        return download(label, args[1:], macros, error)
     error('invalid %%%s command: %s' % (label, args[0]))
 
 def hash(args, macros, error):
@@ -97,13 +116,17 @@ def hash(args, macros, error):
         return
     _map = 'hashes'
     _file = macros.expand(args[1])
-    if _file in macros.map_keys(_map):
-        error('hash already set: %s' % (args[1]))
-        return
-    macros.create_map(_map)
-    macros.set_write_map(_map)
-    macros.define(_file, '%s %s' % (args[0], args[2]))
-    macros.unset_write_map()
+    new_value = '%s %s' % (args[0], args[2])
+    existing_value = get_hash(_file, macros)
+    if existing_value is not None:
+        if existing_value != new_value:
+            error('conflicting hash definitions for: %s' % (args[1]))
+            return
+    else:
+        macros.create_map(_map)
+        macros.set_write_map(_map)
+        macros.define(_file, new_value)
+        macros.unset_write_map()
     return None
 
 def get(label, name, macros, error):

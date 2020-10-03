@@ -1,6 +1,6 @@
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2010-2013 Chris Johns (chrisj@rtems.org)
+# Copyright 2010-2018 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -33,23 +33,42 @@ import stat
 import sys
 
 try:
-    import check
-    import config
-    import download
-    import error
-    import ereport
-    import execute
-    import log
-    import options
-    import path
-    import sources
-    import version
+    from . import check
+    from . import config
+    from . import download
+    from . import error
+    from . import ereport
+    from . import execute
+    from . import log
+    from . import options
+    from . import path
+    from . import sources
+    from . import version
 except KeyboardInterrupt:
     print('abort: user terminated')
     sys.exit(1)
 except:
-    print('error: unknown application load error')
-    sys.exit(1)
+    raise
+
+def humanize_number(num, suffix):
+    for unit in ['','K','M','G','T','P','E','Z']:
+        if abs(num) < 1024.0:
+            return "%5.3f%s%s" % (num, unit, suffix)
+        num /= 1024.0
+    return "%.3f%s%s" % (size, 'Y', suffix)
+
+def short_name(name):
+    #
+    # If on Windows use short names to keep the build paths as short as possible.
+    #
+    if options.host_windows:
+        buildname = ''
+        add = True
+        for n in name.split('-'):
+            buildname += n[0]
+        return buildname
+    else:
+        return name
 
 class script:
     """Create and manage a shell script."""
@@ -62,7 +81,15 @@ class script:
         self.lc = 0
 
     def append(self, text):
+        is_str = False
         if type(text) is str:
+            is_str = True
+        try:
+            if type(text) is unicode:
+                is_str = True
+        except:
+            pass
+        if is_str:
             text = text.splitlines()
         if not log.quiet:
             i = 0
@@ -93,29 +120,9 @@ class script:
 class build:
     """Build a package given a config file."""
 
-    def _name_(self, name):
-        #
-        # If on Windows use shorter names to keep the build paths.
-        #
-        if options.host_windows:
-            buildname = ''
-            add = True
-            for c in name:
-                if c == '-':
-                    add = True
-                elif add:
-                    buildname += c
-                    add = False
-            return buildname
-        else:
-            return name
-
     def _generate_report_(self, header, footer = None):
-        label, result = self.opts.with_arg('error-report')
-        if (label.startswith('without_') and result != 'yes') or \
-           (label.startswith('with_') and result != 'no'):
-            ereport.generate('rsb-report-%s.txt' % self.macros['name'],
-                             self.opts, header, footer)
+        ereport.generate('rsb-report-%s.txt' % self.macros['name'],
+                         self.opts, header, footer)
 
     def __init__(self, name, create_tar_files, opts, macros = None):
         try:
@@ -127,8 +134,9 @@ class build:
             log.notice('config: ' + name)
             self.set_macros(macros)
             self.config = config.file(name, opts, self.macros)
-            self.script = script()
-            self.macros['buildname'] = self._name_(self.macros['name'])
+            self.script_build = script()
+            self.script_clean = script()
+            self.macros['buildname'] = short_name(self.macros['name'])
         except error.general as gerr:
             log.notice(str(gerr))
             log.stderr('Build FAILED')
@@ -194,7 +202,7 @@ class build:
             not _disable_installing and \
             not _canadian_cross
 
-    def source(self, name):
+    def source(self, name, strip_components, download_only):
         #
         # Return the list of sources. Merge in any macro defined sources as
         # these may be overridden by user loaded macros.
@@ -229,27 +237,37 @@ class build:
                     if o.startswith('--rsb-file'):
                        os_ = o.split('=')
                        if len(os_) != 2:
-                           raise error.general('invalid --rsb-file option: %s' % (' '.join(args)))
+                           raise error.general('invalid --rsb-file option: %s' % \
+                                               (' '.join(args)))
                        if os_[0] != '--rsb-file':
-                           raise error.general('invalid --rsb-file option: %s' % (' '.join(args)))
+                           raise error.general('invalid --rsb-file option: %s' % \
+                                               (' '.join(args)))
                        file_override = os_[1]
                 opts = [o for o in opts if not o.startswith('--rsb-')]
             url = self.config.expand(' '.join(url))
-            src = download.parse_url(url, '_sourcedir', self.config, self.opts, file_override)
+            src = download.parse_url(url, '_sourcedir',
+                                     self.config, self.opts, file_override)
             download.get_file(src['url'], src['local'], self.opts, self.config)
-            if 'symlink' in src:
-                sname = name.replace('-', '_')
-                src['script'] = '%%{__ln_s} %s ${source_dir_%s}' % (src['symlink'], sname)
-            elif 'compressed' in src:
-                #
-                # Zip files unpack as well so do not use tar.
-                #
-                src['script'] = '%s %s' % (src['compressed'], src['local'])
-                if src['compressed-type'] != 'zip':
-                    src['script'] += ' | %{__tar_extract} -'
-            else:
-                src['script'] = '%%{__tar_extract} %s' % (src['local'])
-            srcs += [src]
+            if not download_only:
+                if strip_components > 0:
+                    tar_extract = '%%{__tar_extract} --strip-components %d' % \
+                        (strip_components)
+                else:
+                    tar_extract = '%{__tar_extract}'
+                if 'symlink' in src:
+                    sname = name.replace('-', '_')
+                    src['script'] = '%%{__ln_s} %s ${source_dir_%s}' % \
+                        (src['symlink'], sname)
+                elif 'compressed' in src:
+                    #
+                    # Zip files unpack as well so do not use tar.
+                    #
+                    src['script'] = '%s %s' % (src['compressed'], src['local'])
+                    if src['compressed-type'] != 'zip':
+                        src['script'] += ' | %s -f -' % (tar_extract)
+                else:
+                    src['script'] = '%s -f %s' % (tar_extract, src['local'])
+                srcs += [src]
         return srcs
 
     def source_setup(self, package, args):
@@ -257,7 +275,7 @@ class build:
         setup_name = args[1]
         args = args[1:]
         try:
-            opts, args = getopt.getopt(args[1:], 'qDcn:ba')
+            opts, args = getopt.getopt(args[1:], 'qDcn:bas:gE')
         except getopt.GetoptError as ge:
             raise error.general('source setup error: %s' % str(ge))
         quiet = False
@@ -267,7 +285,10 @@ class build:
         deleted_dir = False
         created_dir = False
         changed_dir = False
+        no_errors = False
+        strip_components = 0
         opt_name = None
+        download_only = False
         for o in opts:
             if o[0] == '-q':
                 quiet = True
@@ -281,31 +302,65 @@ class build:
                 unpack_before_chdir = True
             elif o[0] == '-a':
                 unpack_before_chdir = False
+            elif o[0] == '-E':
+                no_errors = True
+            elif o[0] == '-s':
+                if not o[1].isdigit():
+                    raise error.general('source setup error: invalid strip count: %s' % \
+                                        (o[1]))
+                strip_components = int(o[1])
+            elif o[0] == '-g':
+                download_only = True
         name = None
-        for source in self.source(setup_name):
+        for source in self.source(setup_name, strip_components, download_only):
             if name is None:
                 if opt_name is None:
                     if source:
                         opt_name = source['name']
                     else:
-                        raise error.general('setup source tag not found: %d' % (source_tag))
+                        raise error.general('setup source tag not found: %d' % \
+                                            (source_tag))
                 else:
                     name = opt_name
-            self.script.append(self.config.expand('cd %{_builddir}'))
-            if not deleted_dir and  delete_before_unpack:
-                self.script.append(self.config.expand('%{__rm} -rf ' + name))
-                deleted_dir = True
-            if not created_dir and create_dir:
-                self.script.append(self.config.expand('%{__mkdir_p} ' + name))
-                created_dir = True
-            if not changed_dir and (not unpack_before_chdir or create_dir):
-                self.script.append(self.config.expand('cd ' + name))
-                changed_dir = True
-            self.script.append(self.config.expand(source['script']))
-        if not changed_dir and (unpack_before_chdir and not create_dir):
-            self.script.append(self.config.expand('cd ' + name))
+            if not download_only:
+                self.script_build.append(self.config.expand('cd %{_builddir}'))
+                if not deleted_dir and delete_before_unpack and name is not None:
+                    self.script_build.append(self.config.expand('%{__rm} -rf ' + name))
+                    deleted_dir = True
+                if not created_dir and create_dir and name is not None:
+                    self.script_build.append(self.config.expand('%{__mkdir_p} ' + name))
+                    created_dir = True
+                if not changed_dir and (not unpack_before_chdir or create_dir) and \
+                   name is not None:
+                    self.script_build.append(self.config.expand('cd ' + name))
+                    changed_dir = True
+                #
+                # On Windows tar can fail on links if the link appears in the
+                # tar file before the target of the link exists. We can assume the
+                # tar file is correct, that is all files and links are valid,
+                # so on error redo the untar a second time.
+                #
+                if options.host_windows or no_errors:
+                    self.script_build.append('set +e')
+                self.script_build.append(self.config.expand(source['script']))
+                if options.host_windows or not no_errors:
+                    self.script_build.append('tar_exit=$?')
+                if options.host_windows or no_errors:
+                    self.script_build.append('set -e')
+                if options.host_windows:
+                    if no_errors:
+                        self.script_build.append(' set +e')
+                        self.script_build.append(' ' + self.config.expand(source['script']))
+                        self.script_build.append(' set -e')
+                    else:
+                        self.script_build.append('if test $tar_exit != 0; then')
+                        self.script_build.append(' ' + self.config.expand(source['script']))
+                        self.script_build.append('fi')
+        if not changed_dir and (unpack_before_chdir and not create_dir) and \
+           name is not None and not download_only:
+            self.script_build.append(self.config.expand('cd ' + name))
             changed_dir = True
-        self.script.append(self.config.expand('%{__setup_post}'))
+        self.script_build.append(self.config.expand('%{__setup_post}'))
 
     def patch_setup(self, package, args):
         name = args[1]
@@ -327,7 +382,7 @@ class build:
                 else:
                     url += [pp]
             if len(url) == 0:
-                raise error.general('patch URL not found: %s' % (' '.join(args)))
+                raise error.general('patch URL not found: %s' % (' '.join(opts)))
             #
             # Look for --rsb-file as an option we use as a local file name.
             # This can be used if a URL has no reasonable file name the
@@ -339,9 +394,11 @@ class build:
                     if o.startswith('--rsb-file'):
                        os_ = o.split('=')
                        if len(os_) != 2:
-                           raise error.general('invalid --rsb-file option: %s' % (' '.join(args)))
+                           raise error.general('invalid --rsb-file option: %s' % \
+                                               (' '.join(opts)))
                        if os_[0] != '--rsb-file':
-                           raise error.general('invalid --rsb-file option: %s' % (' '.join(args)))
+                           raise error.general('invalid --rsb-file option: %s' % \
+                                               (' '.join(opts)))
                        file_override = os_[1]
                 opts = [o for o in opts if not o.startswith('--rsb-')]
             if len(opts) == 0:
@@ -353,7 +410,8 @@ class build:
             #
             # Parse the URL first in the source builder's patch directory.
             #
-            patch = download.parse_url(url, '_patchdir', self.config, self.opts, file_override)
+            patch = download.parse_url(url, '_patchdir', self.config,
+                                       self.opts, file_override)
             #
             # Download the patch
             #
@@ -363,7 +421,7 @@ class build:
             else:
                 patch['script'] = '%{__cat} ' + patch['local']
             patch['script'] += ' | %%{__patch} %s' % (opts)
-            self.script.append(self.config.expand(patch['script']))
+            self.script_build.append(self.config.expand(patch['script']))
 
     def run(self, command, shell_opts = '', cwd = None):
         e = execute.capture_execution(log = log.default, dump = self.opts.quiet())
@@ -381,7 +439,7 @@ class build:
             self.mkdir(builddir)
 
     def prep(self, package):
-        self.script.append('echo "==> %prep:"')
+        self.script_build.append('echo "==> %prep:"')
         _prep = package.prep()
         if _prep:
             for l in _prep:
@@ -403,59 +461,78 @@ class build:
                         sources.hash(args[1:], self.macros, err)
                         self.hash(package, args)
                     else:
-                        self.script.append(' '.join(args))
+                        self.script_build.append(' '.join(args))
 
     def build(self, package):
-        self.script.append('echo "==> clean %{buildroot}: ${SB_BUILD_ROOT}"')
-        self.script.append('%s ${SB_BUILD_ROOT}' %
-                           (self.config.expand('%{__rmdir}')))
-        self.script.append('%s ${SB_BUILD_ROOT}' %
-                           (self.config.expand('%{__mkdir_p}')))
-        self.script.append('echo "==> %build:"')
+        self.script_build.append('echo "==> clean %{buildroot}: ${SB_BUILD_ROOT}"')
+        self.script_build.append('%s ${SB_BUILD_ROOT}' %
+                                 (self.config.expand('%{__rmdir}')))
+        self.script_build.append('%s ${SB_BUILD_ROOT}' %
+                                 (self.config.expand('%{__mkdir_p}')))
+        self.script_build.append('echo "==> %build:"')
         _build = package.build()
         if _build:
             for l in _build:
-                self.script.append(l)
+                self.script_build.append(l)
 
     def install(self, package):
-        self.script.append('echo "==> %install:"')
+        self.script_build.append('echo "==> %install:"')
         _install = package.install()
         if _install:
             for l in _install:
                 args = l.split()
-                self.script.append(' '.join(args))
+                self.script_build.append(' '.join(args))
 
     def files(self, package):
         if self.create_tar_files \
            and not self.macros.get('%{_disable_packaging'):
-            self.script.append('echo "==> %files:"')
+            self.script_build.append('echo "==> %files:"')
             inpath = path.abspath(self.config.expand('%{buildroot}'))
             tardir = path.abspath(self.config.expand('%{_tardir}'))
-            self.script.append(self.config.expand('if test -d %s; then' % (inpath)))
-            self.script.append(self.config.expand('  %%{__mkdir_p} %s' % tardir))
-            self.script.append(self.config.expand('  cd ' + inpath))
+            self.script_build.append(self.config.expand('if test -d %s; then' % (inpath)))
+            self.script_build.append(self.config.expand('  %%{__mkdir_p} %s' % tardir))
+            self.script_build.append(self.config.expand('  cd ' + inpath))
             tar = path.join(tardir, package.long_name() + '.tar.bz2')
             cmd = self.config.expand('  %{__tar} -cf - . ' + '| %{__bzip2} > ' + tar)
-            self.script.append(cmd)
-            self.script.append(self.config.expand('  cd %{_builddir}'))
-            self.script.append('fi')
+            self.script_build.append(cmd)
+            self.script_build.append(self.config.expand('  cd %{_builddir}'))
+            self.script_build.append('fi')
 
     def clean(self, package):
-        self.script.append('echo "==> %clean:"')
+        self.script_clean.reset()
+        self.script_clean.append(self.config.expand('%{___build_template}'))
+        self.script_clean.append('echo "=> ' + package.name() + ': CLEAN"')
+        self.script_clean.append('echo "==> %clean:"')
         _clean = package.clean()
         if _clean is not None:
             for l in _clean:
                 args = l.split()
-                self.script.append(' '.join(args))
+                self.script_clean.append(' '.join(args))
+
+    def sizes(self, package):
+        def _sizes(package, what, path):
+            package.set_size(what, path)
+            s = humanize_number(package.get_size(what), 'B')
+            log.trace('size: %s (%s): %s (%d)' % (what, path, s, package.get_size(what)))
+            return s
+        s = {}
+        for p in [('build', '%{_builddir}'),
+                  ('build', '%{buildroot}'),
+                  ('installed', '%{buildroot}')]:
+            hs = _sizes(package, p[0], self.config.expand(p[1]))
+            s[p[0]] = hs
+        log.notice('sizes: %s: %s (installed: %s)' % (package.name(),
+                                                      s['build'],
+                                                      s['installed']))
 
     def build_package(self, package):
         if self.canadian_cross():
             if not self.config.defined('%{allow_cxc}'):
                 raise error.general('Canadian Cross is not allowed')
-            self.script.append('echo "==> Candian-cross build/target:"')
-            self.script.append('SB_CXC="yes"')
+            self.script_build.append('echo "==> Candian-cross build/target:"')
+            self.script_build.append('SB_CXC="yes"')
         else:
-            self.script.append('SB_CXC="no"')
+            self.script_build.append('SB_CXC="no"')
         self.build(package)
         self.install(package)
         self.files(package)
@@ -501,18 +578,24 @@ class build:
                 log.trace('---- macro maps %s' % ('-' * 55))
                 log.trace('%s' % (str(self.config.macros)))
                 log.trace('-' * 70)
-                self.script.reset()
-                self.script.append(self.config.expand('%{___build_template}'))
-                self.script.append('echo "=> ' + name + ':"')
+                self.script_build.reset()
+                self.script_build.append(self.config.expand('%{___build_template}'))
+                self.script_build.append('echo "=> ' + name + ': BUILD"')
                 self.prep(package)
                 self.build_package(package)
                 if not self.opts.dry_run():
                     self.builddir()
-                    sn = path.join(self.config.expand('%{_builddir}'), 'doit')
-                    log.output('write script: ' + sn)
-                    self.script.write(sn)
+                    build_sn = path.join(self.config.expand('%{_builddir}'), 'do-build')
+                    log.output('write script: ' + build_sn)
+                    self.script_build.write(build_sn)
+                    clean_sn = path.join(self.config.expand('%{_builddir}'), 'do-clean')
+                    log.output('write script: ' + clean_sn)
+                    self.script_clean.write(clean_sn)
                     log.notice('building: %s%s' % (cxc_label, name))
-                    self.run(sn)
+                    self.run(build_sn)
+                    self.sizes(package)
+                    log.notice('cleaning: %s%s' % (cxc_label, name))
+                    self.run(clean_sn)
             except error.general as gerr:
                 log.notice(str(gerr))
                 log.stderr('Build FAILED')
@@ -539,6 +622,22 @@ class build:
         package = packages['main']
         return package.disabled()
 
+    def get_build_size(self):
+        package = self.main_package()
+        if package.disabled():
+            return 0
+        return package.get_size('build')
+
+    def get_installed_size(self):
+        package = self.main_package()
+        if package.disabled():
+            return 0
+        return package.get_size('installed')
+
+    def includes(self):
+        if self.config:
+            return self.config.includes()
+
 def get_configs(opts):
 
     def _scan(_path, ext):
@@ -552,10 +651,17 @@ def get_configs(opts):
         return configs
 
     configs = { 'paths': [], 'files': [] }
-    for cp in opts.defaults.expand('%{_configdir}').split(':'):
+    paths = opts.defaults.expand('%{_configdir}').split(':')
+    root = path.host(os.path.commonprefix(paths))
+    configs['root'] = root
+    configs['localpaths'] = [lp[len(root):] for lp in paths]
+    for cp in paths:
         hcp = path.host(path.abspath(cp))
         configs['paths'] += [hcp]
-        configs['files'] += _scan(hcp, ['.cfg', '.bset'])
+        hpconfigs = sorted(set(_scan(hcp, ['.cfg', '.bset'])))
+        hcplocal = hcp[len(root):]
+        configs[hcplocal] = [path.join(hcplocal, c) for c in hpconfigs]
+        configs['files'] += hpconfigs
     configs['files'] = sorted(set(configs['files']))
     return configs
 
@@ -576,7 +682,7 @@ def run(args):
     try:
         optargs = { '--list-configs': 'List available configurations' }
         opts = options.load(args, optargs)
-        log.notice('RTEMS Source Builder, Package Builder, %s' % (version.str()))
+        log.notice('RTEMS Source Builder, Package Builder, %s' % (version.string()))
         opts.log_info()
         if not check.host_setup(opts):
             if not opts.force():

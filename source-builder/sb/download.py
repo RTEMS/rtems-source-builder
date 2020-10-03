@@ -24,6 +24,7 @@
 
 from __future__ import print_function
 
+import base64
 import hashlib
 import os
 import re
@@ -36,13 +37,13 @@ except ImportError:
     import urllib2 as urllib_request
     import urlparse as urllib_parse
 
-import cvs
-import error
-import git
-import log
-import path
-import sources
-import version
+from . import cvs
+from . import error
+from . import git
+from . import log
+from . import path
+from . import sources
+from . import version
 
 def _do_download(opts):
     download = True
@@ -108,8 +109,13 @@ def _hash_check(file_, absfile, macros, remove = True):
             raise
         if _in is not None:
             _in.close()
-        log.output('checksums: %s: %s => %s' % (file_, hasher.hexdigest(), hash[1]))
-        if hasher.hexdigest() != hash[1]:
+        hash_hex = hasher.hexdigest()
+        hash_base64 = base64.b64encode(hasher.digest()).decode('utf-8')
+        log.output('checksums: %s: (hex: %s) (b64: %s) => %s' % (file_,
+                                                                 hash_hex,
+                                                                 hash_base64,
+                                                                 hash[1]))
+        if hash_hex != hash[1] and hash_base64 != hash[1]:
             log.warning('checksum error: %s' % (file_))
             failed = True
         if failed and remove:
@@ -181,12 +187,13 @@ def _http_parser(source, pathkey, config, opts):
                 raise error.general('gitweb.cgi path missing p or h: %s' % (url))
             source['file'] = '%s-%s.patch' % (p, h)
         #
-        # Check the source file name for any extra request query data and remove if
-        # found. Some hosts do not like file names containing them.
+        # Wipe out everything special in the file name.
         #
-        if '?' in source['file']:
-            qmark = source['file'].find('?')
-            source['file'] = source['file'][:qmark]
+        source['file'] = re.sub(r'[^a-zA-Z0-9.\-]+', '-', source['file'])
+        max_file_len = 127
+        if len(source['file']) > max_file_len:
+            raise error.general('file name length is greater than %i (maybe use --rsb-file=FILE option): %s' % \
+                                (max_file_len, source['file']))
     #
     # Check local path
     #
@@ -327,6 +334,9 @@ def parse_url(url, pathkey, config, opts, file_override = None):
         log.output('download: file-override: %s' % (file_override))
         source['file'] = file_override
         source['options'] += ['file-override']
+    question_mark = source['file'].find('?')
+    if question_mark >= 0:
+        source['file'] = source['file'][:question_mark]
     source['name'], source['ext'] = path.splitext(source['file'])
     if source['name'].endswith('.tar'):
         source['name'] = source['name'][:-4]
@@ -506,6 +516,15 @@ def _git_downloader(url, local, config, opts):
             log.notice('git: reset: %s' % (us[0]))
             if _do_download(opts):
                 repo.reset(arg)
+                repo.submodule_foreach(['reset'] + arg)
+        elif _as[0] == 'clean':
+            arg = []
+            if len(_as) > 1:
+                arg = ['--%s' % (_as[1])]
+            log.notice('git: clean: %s' % (us[0]))
+            if _do_download(opts):
+                repo.clean(arg)
+                repo.submodule_foreach(['clean'] + arg)
         elif _as[0] == 'protocol':
             pass
         else:
@@ -590,16 +609,19 @@ def get_file(url, local, opts, config):
         raise error.general('source not found: %s' % (path.host(local)))
     #
     # Check if a URL has been provided on the command line. If the package is
-    # released push to the start the RTEMS URL unless overrided by the command
-    # line option --with-release-url. The variant --without-release-url can
-    # override the released check.
+    # released push the release path URLs to the start the RTEMS URL list
+    # unless overriden by the command line option --without-release-url. The
+    # variant --without-release-url can override the released check.
     #
     url_bases = opts.urls()
+    if url_bases is None:
+        url_bases = []
     try:
         rtems_release_url_value = config.macros.expand('%{release_path}')
     except:
         rtems_release_url_value = None
     rtems_release_url = None
+    rtems_release_urls = []
     if version.released() and rtems_release_url_value:
         rtems_release_url = rtems_release_url_value
     with_rel_url = opts.with_arg('release-url')
@@ -618,18 +640,17 @@ def get_file(url, local, opts, config):
     elif with_rel_url[0] == 'without_release-url' and with_rel_url[1] == 'yes':
         rtems_release_url = None
     if rtems_release_url is not None:
-        log.trace('release url: %s' % (rtems_release_url))
-        #
-        # If the URL being fetched is under the release path do not add the
-        # sources release path because it is already there.
-        #
-        if not url.startswith(rtems_release_url):
-            if url_bases is None:
-                url_bases = [rtems_release_url]
-            else:
-                url_bases.append(rtems_release_url)
+        rtems_release_urls = rtems_release_url.split(',')
+        for release_url in rtems_release_urls:
+            log.trace('release url: %s' % (release_url))
+            #
+            # If the URL being fetched is under the release path do not add
+            # the sources release path because it is already there.
+            #
+            if not url.startswith(release_url):
+                url_bases = [release_url] + url_bases
     urls = []
-    if url_bases is not None:
+    if len(url_bases) > 0:
         #
         # Split up the URL we are being asked to download.
         #
@@ -645,7 +666,7 @@ def get_file(url, local, opts, config):
             # Hack to fix #3064 where --rsb-file is being used. This code is a
             # mess and should be refactored.
             #
-            if version.released() and base == rtems_release_url:
+            if version.released() and base in rtems_release_urls:
                 url_file = path.basename(local)
             if base[-1:] != '/':
                 base += '/'

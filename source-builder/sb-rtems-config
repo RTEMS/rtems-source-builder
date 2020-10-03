@@ -20,12 +20,11 @@
 
 from __future__ import print_function
 
-import sys, os
-base = os.path.dirname(sys.argv[0])
-sys.path.insert(0, base + '/sb')
+import sys
+
 try:
-    import rtemsconfig
-    rtemsconfig.run(sys.argv)
+    import sb.rtemsconfig
+    sb.rtemsconfig.run(sys.argv)
 except ImportError:
     print("Incorrect Source Builder installation", file = sys.stderr)
     sys.exit(1)

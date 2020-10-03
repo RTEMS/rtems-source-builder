@@ -30,27 +30,22 @@ import datetime
 import os
 import sys
 
-import pprint
-pp = pprint.PrettyPrinter(indent = 2)
-
 try:
-    import build
-    import check
-    import config
-    import error
-    import git
-    import log
-    import options
-    import path
-    import setbuilder
-    import sources
-    import version
+    from . import build
+    from . import check
+    from . import config
+    from . import error
+    from . import git
+    from . import log
+    from . import options
+    from . import path
+    from . import sources
+    from . import version
 except KeyboardInterrupt:
     print('user terminated', file = sys.stderr)
     sys.exit(1)
 except:
-    print('error: unknown application load error', file = sys.stderr)
-    sys.exit(1)
+    raise
 
 _line_len = 78
 
@@ -241,13 +236,16 @@ class markdown_formatter(formatter):
             self.line(self._strong('Remotes:'))
             self.line('')
             rc = 1
-            for r in remotes:
-                if 'url' in remotes[r]:
-                    text = remotes[r]['url']
-                else:
-                    text = 'no URL found'
-                self.line('%d. %s: %s' % (rc, r, text))
-                rc += 1
+            if not remotes:
+                self.line('[ remotes removed, contact sender for details ]')
+            else:
+                for r in remotes:
+                    if 'url' in remotes[r]:
+                        text = remotes[r]['url']
+                    else:
+                        text = 'no URL found'
+                    self.line('%d. %s: %s' % (rc, r, text))
+                    rc += 1
             self.line('')
             self.line(self._strong('Status:'))
             self.line('')
@@ -427,14 +425,17 @@ class text_formatter(formatter):
         if valid:
             self.line('%s Remotes:' % (self.cini))
             rc = 0
-            for r in remotes:
-                rc += 1
-                if 'url' in remotes[r]:
-                    text = remotes[r]['url']
-                else:
-                    text = 'no URL found'
-                text = '%s: %s' % (r, text)
-                self.line('%s  %2d: %s' % (self.cini, rc, text))
+            if not remotes:
+                self.line('[ remotes removed, contact sender for details ]')
+            else:
+                for r in remotes:
+                    rc += 1
+                    if 'url' in remotes[r]:
+                        text = remotes[r]['url']
+                    else:
+                        text = 'no URL found'
+                    text = '%s: %s' % (r, text)
+                    self.line('%s  %2d: %s' % (self.cini, rc, text))
             self.line('%s Status:' % (self.cini))
             if dirty:
                 self.line('%s  Repository is dirty' % (self.cini))
@@ -603,7 +604,7 @@ def _merge(_dict, new):
 class report:
     """Report the build details about a package given a config file."""
 
-    def __init__(self, formatter, _configs, opts, macros = None):
+    def __init__(self, formatter, sanitize, _configs, opts, macros = None):
         if type(formatter) == str:
             if formatter == 'text':
                 self.formatter = text_formatter()
@@ -621,6 +622,7 @@ class report:
             self.formatter = formatter
         self.configs = _configs
         self.opts = opts
+        self.sanitize = sanitize
         if macros is None:
             self.macros = opts.defaults
         else:
@@ -645,11 +647,14 @@ class report:
         pass
 
     def release_status(self):
-        self.formatter.release_status(version.str())
+        self.formatter.release_status(version.string())
 
     def git_status(self):
         r = git.repo('.', self.opts, self.macros)
-        self.formatter.git_status(r.valid(), r.dirty(), r.head(), r.remotes())
+        if self.sanitize:
+            self.formatter.git_status(r.valid(), r.dirty(), r.head(), None)
+        else:
+            self.formatter.git_status(r.valid(), r.dirty(), r.head(), r.remotes())
 
     def introduction(self, name, intro_text = None):
         now = datetime.datetime.now().ctime()
@@ -855,6 +860,7 @@ class report:
                 raise error.general('writing output file: %s: %s' % (name, err))
 
     def generate(self, name, tree = None, opts = None, macros = None):
+        from . import setbuilder
         self.buildset_start(name)
         if tree is None:
             tree = self.tree
@@ -889,14 +895,16 @@ class report:
 
 def run(args):
     try:
+        from . import setbuilder
         optargs = { '--list-bsets':   'List available build sets',
                     '--list-configs': 'List available configurations',
                     '--format':       'Output format (text, html, markdown, ini, xml)',
-                    '--output':       'File name to output the report' }
+                    '--output':       'File name to output the report',
+                    '--sanitize':     'Remove Remotes information from report'}
         opts = options.load(args, optargs, logfile = False)
         if opts.get_arg('--output') and len(opts.params()) > 1:
             raise error.general('--output can only be used with a single config')
-        print('RTEMS Source Builder, Reporter, %s' % (version.str()))
+        print('RTEMS Source Builder, Reporter, %s' % (version.string()))
         opts.log_info()
         if not check.host_setup(opts):
             log.warning('forcing build with known host setup problems')
@@ -922,7 +930,10 @@ def run(args):
                     formatter = xml_formatter()
                 else:
                     raise error.general('invalid format: %s' % (format_opt[1]))
-            r = report(formatter, configs, opts)
+            sanitize = False
+            if opts.get_arg('--sanitize'):
+                sanitize = True
+            r = report(formatter, sanitize, configs, opts)
             for _config in opts.params():
                 if output is None:
                     outname = path.splitext(_config)[0] + formatter.ext()
@@ -934,8 +945,6 @@ def run(args):
                     raise error.general('config file not found: %s' % (_config))
                 r.create(config, outname)
             del r
-        else:
-            raise error.general('invalid config type: %s' % (config))
     except error.general as gerr:
         print(gerr)
         sys.exit(1)

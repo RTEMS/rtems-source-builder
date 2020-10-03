@@ -1,6 +1,6 @@
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2010-2013 Chris Johns (chrisj@rtems.org)
+# Copyright 2010-2018 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -21,12 +21,12 @@
 # Windows specific support and overrides.
 #
 
-import error
-import pprint
 import os
 import sys
 
-import execute
+from . import error
+from . import execute
+from . import path
 
 def load():
     # Default to the native Windows Python.
@@ -78,6 +78,7 @@ def load():
     defines = {
         '_ncpus':            ('none',    'none',     ncpus),
         '_os':               ('none',    'none',     'win32'),
+        '_windows_os':       ('none',    'none',     uname),
         '_build':            ('triplet', 'required', build_triple),
         '_build_vendor':     ('none',    'none',     'microsoft'),
         '_build_os':         ('none',    'none',     'win32'),
@@ -101,6 +102,7 @@ def load():
         '__chgrp':           ('exe',     'required', 'chgrp'),
         '__chmod':           ('exe',     'required', 'chmod'),
         '__chown':           ('exe',     'required', 'chown'),
+        '__cmake':           ('exe',     'optional', 'cmake'),
         '__cp':              ('exe',     'required', 'cp'),
         '__cvs':             ('exe',     'optional', 'cvs'),
         '__cxx':             ('exe',     'required', cxx),
@@ -125,7 +127,7 @@ def load():
         '__rm':              ('exe',     'required', 'rm'),
         '__sed':             ('exe',     'required', 'sed'),
         '__sh':              ('exe',     'required', 'sh'),
-        '__tar':             ('exe',     'required', 'bsdtar'),
+        '__tar':             ('exe',     'required', 'tar'),
         '__touch':           ('exe',     'required', 'touch'),
         '__unzip':           ('exe',     'required', 'unzip'),
         '__xz':              ('exe',     'required', 'xz'),
@@ -146,9 +148,15 @@ def load():
     #  6. W64/Python2 - Ok if machsize is 32
     #  7. W64/Python3 - gdb-7.9 needs python2.
     #
-    if sys.platform == 'win32' and 'MSC' in sys.version:
-        raise error.general('python.org Pythons are built with MSC and cannot be linked with GDB')
-
+    # Find a suitable python2 and python3.
+    #
+    for p in os.environ['PATH'].split(os.pathsep):
+        sh = os.path.join(p, 'sh.exe')
+        if os.path.exists(sh) and os.path.isfile(sh):
+            break
+        sh = None
+    if sh is None:
+        raise error.general('cannot find a shell (sh.exe) in the PATH')
     #
     # Search the MSYS2 install tree for a suitable python.
     #
@@ -166,23 +174,19 @@ def load():
             raise error.general('cannot locate MSYS root mount point')
         if install_point[1] != ':':
             raise error.general('invalid MSYS root mount point: %s' % install_point)
-        install_point = '/%s%s' % (install_point[0], install_point[2:])
-        bin = '/mingw%s/bin' % (machsize)
-        bin_list = os.listdir(bin)
-        exe = None
-        for python in ['python2.exe']:
-            for f in bin_list:
-                if f == python:
-                    exe = install_point + os.path.join(bin, f)
-                    break;
-            if exe is not None:
-                break
-        if exe is None:
-            raise error.general('no valid python found; you need a mingw%s python2 installed' % (machsize))
-        defines['with_python_path'] = exe
-
+        install_point = path.shell(install_point)
+        mingw = path.join(install_point, 'mingw%s' % (machsize))
+        if not path.exists(mingw) or not path.isdir(mingw):
+            raise error.general('cannot find MinGW install: %s' % (path.host(mingw)))
+        for version in ['2', '3']:
+            python = 'python%s' % (version)
+            exe = path.join(mingw, 'bin', '%s.exe' % (python))
+            if not path.exists(exe) or not path.isdir(exe):
+                defines['gdb_python%s' % (version)] = exe
+                header = path.join(mingw, python)
 
     return defines
 
 if __name__ == '__main__':
+    import pprint
     pprint.pprint(load())

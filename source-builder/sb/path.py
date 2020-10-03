@@ -1,6 +1,6 @@
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2010-2016 Chris Johns (chrisj@rtems.org)
+# Copyright 2010-2018 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -25,15 +25,18 @@
 
 from __future__ import print_function
 
-import log
 import os
 import shutil
 import stat
 import string
+import sys
 
-import error
+from . import error
+from . import log
 
+windows_posix = sys.platform == 'msys'
 windows = os.name == 'nt'
+
 win_maxpath = 254
 
 def host(path):
@@ -53,19 +56,16 @@ def host(path):
                 path = u'\\'.join([u'\\\\?', path])
     return path
 
-def is_abspath(path):
-    if path is not None:
-        return '/' == path[0]
-    return False
-
 def shell(path):
+    if isinstance(path, bytes):
+        path = path.decode('ascii')
     if path is not None:
-        if windows:
-            path = path.encode('ascii', 'ignore')
+        if windows or windows_posix:
+            path = path.encode('ascii', 'ignore').decode('ascii')
             if path.startswith('\\\\?\\'):
                 path = path[4:]
             if len(path) > 1 and path[1] == ':':
-                path = '/%s%s' % (path[0], path[2:])
+                path = '/%s%s' % (path[0].lower(), path[2:])
             path = path.replace('\\', '/')
         while '//' in path:
             path = path.replace('//', '/')
@@ -78,6 +78,11 @@ def basename(path):
 def dirname(path):
     path = shell(path)
     return shell(os.path.dirname(path))
+
+def is_abspath(path):
+    if path is not None and len(path) > 0:
+        return '/' == path[0]
+    return False
 
 def join(path, *args):
     path = shell(path)
@@ -218,7 +223,6 @@ def removeall(path):
         _remove_node(path)
 
 def expand(name, paths):
-    path = shell(path)
     l = []
     for p in paths:
         l += [join(shell(p), name)]
@@ -305,6 +309,58 @@ def copy_tree(src, dst):
         else:
             raise error.general('copying tree (4): %s -> %s: %s' % (hsrc, hdst, str(why)))
 
+def get_size(path, depth = -1):
+    #
+    # Get the size the directory tree manually to the required depth.
+    # This makes sure on Windows the files are correctly encoded to avoid
+    # the file name size limit. On Windows the os.walk fails once we
+    # get to the max path length on Windows.
+    #
+    def _isdir(path):
+        hpath = host(path)
+        return os.path.isdir(hpath) and not os.path.islink(hpath)
+
+    def _node_size(path):
+        hpath = host(path)
+        size = 0
+        if not os.path.islink(hpath):
+            size = os.path.getsize(hpath)
+        return size
+
+    def _get_size(path, depth, level = 0):
+        level += 1
+        dirs = []
+        size = 0
+        for name in listdir(path):
+            path_ = join(path, shell(name))
+            hname = host(path_)
+            if _isdir(path_):
+                dirs += [shell(name)]
+            else:
+                size += _node_size(path_)
+        if depth < 0 or level < depth:
+            for name in dirs:
+                dir = join(path, name)
+                size += _get_size(dir, depth, level)
+        return size
+
+    path = shell(path)
+    hpath = host(path)
+    size = 0
+
+    if os.path.exists(hpath):
+        size = _get_size(path, depth)
+
+    return size
+
+def get_humanize_size(path, depth = -1):
+    size = get_size(path, depth)
+    for unit in ['','K','M','G','T','P','E','Z']:
+        if abs(size) < 1024.0:
+            return "%5.3f%sB" % (size, unit)
+        size /= 1024.0
+    return "%.3f%sB" % (size, 'Y')
+
 if __name__ == '__main__':
     print(host('/a/b/c/d-e-f'))
     print(host('//a/b//c/d-e-f'))
@@ -312,6 +368,10 @@ if __name__ == '__main__':
     print(basename('/as/sd/df/fg/me.txt'))
     print(dirname('/as/sd/df/fg/me.txt'))
     print(join('/d', 'g', '/tyty/fgfg'))
+    print('size of . depth all: ', get_size('.'))
+    print('size of . depth   1: ', get_size('.', 1))
+    print('size of . depth   2: ', get_size('.', 2))
+    print('size of . as human : ', get_humanize_size('.'))
     windows = True
     print(host('/a/b/c/d-e-f'))
     print(host('//a/b//c/d-e-f'))

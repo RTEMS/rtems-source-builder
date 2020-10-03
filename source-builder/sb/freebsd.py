@@ -27,9 +27,9 @@
 import pprint
 import os
 
-import check
-import error
-import execute
+from . import check
+from . import error
+from . import execute
 
 def load():
     uname = os.uname()
@@ -57,16 +57,20 @@ def load():
         '_host_cpu':        ('none',    'none',     cpu),
         '_host_alias':      ('none',    'none',     '%{nil}'),
         '_host_arch':       ('none',    'none',     cpu),
+        'host_includes':    ('none',    'convert',  '-I%{_usr}/include'),
+        'host_ldflags':     ('none',    'convert',  '-L%{_usr}/lib'),
         '_usr':             ('dir',     'required', '/usr/local'),
         '_var':             ('dir',     'optional', '/usr/local/var'),
         '__bash':           ('exe',     'optional', '/usr/local/bin/bash'),
         '__bison':          ('exe',     'required', '/usr/local/bin/bison'),
+        '__cmake':          ('exe',     'optional', '/usr/local/bin/cmake'),
         '__git':            ('exe',     'required', '/usr/local/bin/git'),
-        '__svn':            ('exe',     'required', '/usr/local/bin/svn'),
+        '__svn':            ('exe',     'optional', '/usr/local/bin/svn'),
+        '__unzip':          ('exe',     'optional', '/usr/local/bin/unzip'),
         '__xz':             ('exe',     'optional', '/usr/bin/xz'),
         '__make':           ('exe',     'required', 'gmake'),
         '__patch_opts':     ('none',     'none',    '-E')
-        }
+    }
 
     defines['_build']        = defines['_host']
     defines['_build_vendor'] = defines['_host_vendor']
@@ -107,9 +111,11 @@ def load():
         if check.check_exe(cvs, cvs):
             defines['__cvs'] = cvs
         #
-        # Fix the mess iconv is on FreeBSD 10.0.
+        # Fix the mess iconv is on FreeBSD 10.0 and higher.
         #
-        defines['iconv_includes'] = ('none', 'none', '-I/usr/local/include -L/usr/local/lib')
+        defines['iconv_includes'] = ('none', 'none', '%{host_includes} %{host_ldflags}')
+        if fb_version >= 12:
+            defines['iconv_prefix'] = ('none', 'none', '%{_usr}')
 
         #
         # On 11.0+ makeinfo and install-info have moved to /usr/local/...
@@ -117,6 +123,11 @@ def load():
         if fb_version >= 11:
             defines['__install_info'] = ('exe', 'optional', '/usr/local/bin/install-info')
             defines['__makeinfo']     = ('exe', 'required', '/usr/local/bin/makeinfo')
+        #
+        # On 12.0+ unzip is in /usr/bin
+        #
+        if fb_version >= 12:
+            defines['__unzip'] = ('exe', 'optional', '/usr/bin/unzip')
     else:
         for gv in ['49', '48', '47']:
             gcc = '%s-portbld-freebsd%s-gcc%s' % (cpu, version, gv)

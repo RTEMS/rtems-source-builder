@@ -28,11 +28,11 @@ import sys
 import threading
 import time
 
-import error
-import log
-import options
-import path
-import version
+from . import error
+from . import log
+from . import options
+from . import path
+from . import version
 
 def _collect(path_, file):
     confs = []
@@ -193,7 +193,7 @@ def run(args):
         bsp = bsp_config(opts, prefix, opts.get_arg('--rtems-bsp')[1])
 
         if opts.get_arg('--list'):
-            log.notice('RTEMS Source Builder - RTEMS Configuration, %s' % (version.str()))
+            log.notice('RTEMS Source Builder - RTEMS Configuration, %s' % (version.string()))
             opts.log_info()
             configs = list(bsp.keys())
             for c in sorted(configs.keys()):

@@ -23,16 +23,16 @@
 
 from __future__ import print_function
 
-import os
-
-import error
-import execute
 import fnmatch
-import log
-import options
-import path
+import os
 import re
-import version
+
+from . import error
+from . import execute
+from . import log
+from . import options
+from . import path
+from . import version
 
 def _check_none(_opts, macro, value, constraint):
     return True
@@ -104,20 +104,24 @@ def path_check(opts, silent = False):
     if 'PATH' in os.environ:
         paths = os.environ['PATH'].split(os.pathsep)
         for p in paths:
-            if len(p.strip()) == 0:
+            try:
+                if len(p.strip()) == 0:
+                    if not silent:
+                        log.notice('error: environment PATH contains an empty path')
+                    return False
+                elif not options.host_windows and (p.strip() == '.' or p.strip() == '..'):
+                    if not silent:
+                        log.notice('error: environment PATH invalid path: %s' % (p))
+                    return False
+                elif not path.exists(p):
+                    if not silent and opts.warn_all():
+                        log.notice('warning: environment PATH not found: %s' % (p))
+                elif not path.isdir(p):
+                    if not silent and opts.warn_all():
+                        log.notice('warning: environment PATH not a directory: %s' % (p))
+            except Exception as e:
                 if not silent:
-                    log.notice('error: environment PATH contains an empty path')
-                return False
-            elif not options.host_windows and (p.strip() == '.' or p.strip() == '..'):
-                if not silent:
-                    log.notice('error: environment PATH invalid path: %s' % (p))
-                return False
-            elif not path.exists(p):
-                if not silent and opts.warn_all():
-                    log.notice('warning: environment PATH not found: %s' % (p))
-            elif not path.isdir(p):
-                if not silent and opts.warn_all():
-                    log.notice('warning: environment PATH not a directory: %s' % (p))
+                    log.notice('warning: environment PATH suspicious path: %s' % (e))
     return True
 
 
@@ -264,7 +268,7 @@ def run():
     import sys
     try:
         _opts = options.load(args = sys.argv, logfile = False)
-        log.notice('RTEMS Source Builder - Check, %s' % (version.str()))
+        log.notice('RTEMS Source Builder - Check, %s' % (version.string()))
 
         orphans = _opts.parse_args('--check-orphans', error = False, extra = False)
         if orphans:

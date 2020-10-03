@@ -25,9 +25,9 @@
 import pprint
 import os
 
-import check
-import error
-import execute
+from . import check
+from . import error
+from . import execute
 
 def load():
     uname = os.uname()

@@ -1,7 +1,6 @@
-#! /usr/bin/env python
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2010-2013 Chris Johns (chrisj@rtems.org)
+# Copyright 2020 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -19,12 +18,3 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from __future__ import print_function
-
-import sys
-
-try:
-    import sb.reports
-    sb.reports.run(sys.argv)
-except ImportError:
-    print("Incorrect Source Builder installation", file = sys.stderr)
-    sys.exit(1)

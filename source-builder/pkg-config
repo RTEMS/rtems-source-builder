@@ -35,7 +35,6 @@ import os
 import sys
 
 base = os.path.dirname(sys.argv[0])
-sys.path.insert(0, base + '/sb')
 
 try:
     import argparse
@@ -47,16 +46,12 @@ except:
         print("Incorrect Source Builder installation", file = sys.stderr)
         sys.exit(1)
 
-try:
-    import pkgconfig
-except ImportError:
-    print("Incorrect Source Builder installation", file = sys.stderr)
-    sys.exit(1)
+import sb.pkgconfig
 
 #
 # Make trace true to get a file of what happens and what is being asked.
 #
-trace = True
+trace = False
 trace_stdout = False
 logfile = 'pkg-config.log'
 out = None
@@ -65,7 +60,7 @@ srcfd = None
 #
 # Write all the package source parsed to a single file.
 #
-trace_src = True
+trace_src = False
 if trace_src:
     srcfd = open('pkg-src.txt', 'w')
 
@@ -164,7 +159,7 @@ def run(argv):
                       default = False,
                       help = 'Ignored')
     opts.add_argument('--prefix-variable', dest = 'prefix', action = 'store',
-                      nargs = 1, default = pkgconfig.default_prefix(),
+                      nargs = 1, default = sb.pkgconfig.default_prefix(),
                       help = 'Define the prefix.')
     opts.add_argument('--static', dest = 'static', action = 'store_true',
                       default = False,
@@ -173,7 +168,7 @@ def run(argv):
                       default = False,
                       help = 'Dump the package if one is found.')
 
-    args = opts.parse_args(argv[1:])
+    args = opts.parse_args(argv)
 
     if (args.exists and (args.exact_version or args.max_version)) or \
             (args.exact_version and (args.exists or args.max_version)) or \
@@ -181,7 +176,7 @@ def run(argv):
         raise error('only one of --exists, --exact-version, or --max-version')
 
     if args.dont_define_prefix:
-        args.prefix = pkgconfig.default_prefix(False)
+        args.prefix = sb.pkgconfig.default_prefix(False)
 
     exists = False
 
@@ -190,7 +185,7 @@ def run(argv):
     if args.atleast_pkgconfig_version:
         ec = 0
     else:
-        ec, pkg, flags = pkgconfig.check_package(args.libraries, args, log, src)
+        ec, pkg, flags = sb.pkgconfig.check_package(args.libraries, args, log, src)
         if ec == 0:
             if args.cflags:
                 if len(flags['cflags']):
@@ -212,15 +207,15 @@ def run(argv):
 try:
     log('-' * 40)
     log('pkg-config', lf = False)
-    for a in sys.argv[1:]:
+    for a in sys.argv[2:]:
         log(' "%s"' % (a), lf = False)
     log('')
-    ec = run(sys.argv)
+    ec = run(sys.argv[1:])
     log('ec = %d' % (ec))
 except ImportError:
     print("incorrect package config installation", file = sys.stderr)
     sys.exit(1)
-except pkgconfig.error as e:
+except sb.pkgconfig.error as e:
     print('error: %s' % (e), file = sys.stderr)
     sys.exit(1)
 sys.exit(ec)

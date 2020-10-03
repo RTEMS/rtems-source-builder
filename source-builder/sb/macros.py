@@ -27,8 +27,8 @@ import re
 import os
 import string
 
-import error
-import path
+from . import error
+from . import path
 
 #
 # Macro tables
@@ -53,7 +53,8 @@ class macros:
         def iterkeys(self):
             return self.keys
 
-    def _unicode_to_str(self, us):
+    @staticmethod
+    def _unicode_to_str(us):
         try:
             if type(us) == unicode:
                 return us.encode('ascii', 'replace')
@@ -122,6 +123,7 @@ class macros:
                 lc = 0
                 for l in ds:
                     lc += 1
+                    l = self._unicode_to_str(l)
                     while len(l):
                         if indent:
                             text += ' %21s %10s %12s' % (' ', ' ', ' ')
@@ -174,14 +176,14 @@ class macros:
                             'override', 'undefine', 'convert']:
             raise TypeError('bad value tuple (attrib field): %s' % (value[1]))
         if value[1] == 'convert':
-            value = self.expand(value)
+            value = (value[0], value[1], self.expand(value[2]))
         self.macros[self.write_map][self.key_filter(key)] = value
 
     def __delitem__(self, key):
         self.undefine(key)
 
     def __contains__(self, key):
-        return self.has_key(key)
+        return self.has_key(self._unicode_to_str(key))
 
     def __len__(self):
         return len(list(self.keys()))
@@ -201,6 +203,7 @@ class macros:
         return sorted(set(keys))
 
     def has_key(self, key):
+        key = self._unicode_to_str(key)
         if type(key) is not str:
             raise TypeError('bad key type (want str): %s' % (type(key)))
         if self.key_filter(key) not in list(self.keys()):
@@ -230,7 +233,7 @@ class macros:
         return [rm[5:] for rm in self.read_maps]
 
     def key_filter(self, key):
-        if key.startswith('%{') and key[-1] is '}':
+        if key.startswith('%{') and key[-1] == '}':
             key = key[2:-1]
         return key.lower()
 
@@ -266,28 +269,28 @@ class macros:
                     print(']]]]]]]] c:%s(%d) s:%s t:"%s" m:%r M:%s' % \
                         (c, ord(c), state, token, macro, map))
                 l_remaining = l_remaining[1:]
-                if c is '#' and not state.startswith('value'):
+                if c == '#' and not state.startswith('value'):
                     break
                 if c == '\n' or c == '\r':
-                    if not (state is 'key' and len(token) == 0) and \
+                    if not (state == 'key' and len(token) == 0) and \
                             not state.startswith('value-multiline'):
                         raise error.general('malformed macro line:%d: %s' % (lc, l))
-                if state is 'key':
+                if state == 'key':
                     if c not in string.whitespace:
-                        if c is '[':
+                        if c == '[':
                             state = 'map'
-                        elif c is '%':
+                        elif c == '%':
                             state = 'directive'
-                        elif c is ':':
+                        elif c == ':':
                             macro += [token]
                             token = ''
                             state = 'attribs'
-                        elif c is '#':
+                        elif c == '#':
                             break
                         else:
                             token += c
-                elif state is 'map':
-                    if c is ']':
+                elif state == 'map':
+                    if c == ']':
                         if token not in macros:
                             macros[token] = {}
                         map = token
@@ -297,7 +300,7 @@ class macros:
                         token += c
                     else:
                         raise error.general('invalid macro map:%d: %s' % (lc, l))
-                elif state is 'directive':
+                elif state == 'directive':
                     if c in string.whitespace:
                         if token == 'include':
                             self.load(_clean(l_remaining))
@@ -308,7 +311,7 @@ class macros:
                         token += c
                     else:
                         raise error.general('invalid macro directive:%d: %s' % (lc, l))
-                elif state is 'include':
+                elif state == 'include':
                     if c is string.whitespace:
                         if token == 'include':
                             state = 'include'
@@ -316,49 +319,49 @@ class macros:
                         token += c
                     else:
                         raise error.general('invalid macro directive:%d: %s' % (lc, l))
-                elif state is 'attribs':
+                elif state == 'attribs':
                     if c not in string.whitespace:
-                        if c is ',':
+                        if c == ',':
                             macro += [token]
                             token = ''
                             if len(macro) == 3:
                                 state = 'value-start'
                         else:
                             token += c
-                elif state is 'value-start':
-                    if c is "'":
+                elif state == 'value-start':
+                    if c == "'":
                         state = 'value-line-start'
-                elif state is 'value-line-start':
-                    if c is "'":
+                elif state == 'value-line-start':
+                    if c == "'":
                         state = 'value-multiline-start'
                     else:
                         state = 'value-line'
                         token += c
-                elif state is 'value-multiline-start':
-                    if c is "'":
+                elif state == 'value-multiline-start':
+                    if c == "'":
                         state = 'value-multiline'
                     else:
                         macro += [token]
                         state = 'macro'
-                elif state is 'value-line':
-                    if c is "'":
+                elif state == 'value-line':
+                    if c == "'":
                         macro += [token]
                         state = 'macro'
                     else:
                         token += c
-                elif state is 'value-multiline':
-                    if c is "'":
+                elif state == 'value-multiline':
+                    if c == "'":
                         state = 'value-multiline-end'
                     else:
                         token += c
-                elif state is 'value-multiline-end':
-                    if c is "'":
+                elif state == 'value-multiline-end':
+                    if c == "'":
                         state = 'value-multiline-end-end'
                     else:
                         state = 'value-multiline'
                         token += "'" + c
-                elif state is 'value-multiline-end-end':
-                    if c is "'":
+                elif state == 'value-multiline-end-end':
+                    if c == "'":
                         macro += [token]
                         state = 'macro'
                     else:
@@ -366,7 +369,7 @@ class macros:
                         token += "''" + c
                 else:
                     raise error.internal('bad state: %s' % (state))
-                if state is 'macro':
+                if state == 'macro':
                     macros[map][self._unicode_to_str(macro[0].lower())] = \
                                 (self._unicode_to_str(macro[1]),
                                  self._unicode_to_str(macro[2]),
@@ -452,6 +455,7 @@ class macros:
 
     def expand(self, _str):
         """Simple basic expander of config file macros."""
+        _str = self._unicode_to_str(_str)
         expanded = True
         while expanded:
             expanded = False

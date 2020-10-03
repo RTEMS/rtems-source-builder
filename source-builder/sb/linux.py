@@ -22,29 +22,15 @@
 # RTEMS project's spec files.
 #
 
+import multiprocessing
+import platform
 import pprint
 import os
 
-import platform
-import execute
-import path
+from . import path
 
 def load():
     uname = os.uname()
-    smp_mflags = ''
-    processors = '/bin/grep processor /proc/cpuinfo'
-    e = execute.capture_execution()
-    exit_code, proc, output = e.shell(processors)
-    ncpus = 0
-    if exit_code == 0:
-        try:
-            for l in output.split('\n'):
-                count = l.split(':')[1].strip()
-                if int(count) > ncpus:
-                    ncpus = int(count)
-        except:
-            pass
-    ncpus = str(ncpus + 1)
     if uname[4].startswith('arm'):
         cpu = 'arm'
     else:
@@ -52,7 +38,7 @@ def load():
 
     version = uname[2]
     defines = {
-        '_ncpus':           ('none',    'none',     ncpus),
+        '_ncpus':           ('none',    'none',     str(multiprocessing.cpu_count())),
         '_os':              ('none',    'none',     'linux'),
         '_host':            ('triplet', 'required', cpu + '-linux-gnu'),
         '_host_vendor':     ('none',    'none',     'gnu'),
@@ -69,13 +55,17 @@ def load():
         '__tar':            ('exe',     'required', '/bin/tar')
         }
 
-    # Works for LSB distros
-    try:
-        distro = platform.dist()[0]
-        distro_ver = float(platform.dist()[1])
-    except ValueError:
-        # Non LSB distro found, use failover"
-        pass
+    # platform.dist() was removed in Python 3.8
+    if hasattr(platform, 'dist'):
+        # Works for LSB distros
+        try:
+            distro = platform.dist()[0]
+            distro_ver = float(platform.dist()[1])
+        except ValueError:
+         # Non LSB distro found, use failover"
+         pass
+    else:
+         distro = ''
 
     # Non LSB - fail over to issue
     if distro == '':
@@ -94,7 +84,7 @@ def load():
             distro = 'redhat'
     elif distro in ['centos', 'fedora']:
         distro = 'redhat'
-    elif distro in ['Ubuntu', 'ubuntu', 'LinuxMint', 'linuxmint']:
+    elif distro in ['Ubuntu', 'ubuntu', 'MX', 'LinuxMint', 'linuxmint']:
         distro = 'debian'
     elif distro in ['Arch']:
         distro = 'arch'
@@ -120,6 +110,12 @@ def load():
                      '__chown':        ('exe',     'required', '/usr/bin/chown') },
         'suse'   : { '__chgrp':        ('exe',     'required', '/usr/bin/chgrp'),
                      '__chown':        ('exe',     'required', '/usr/sbin/chown') },
+        'gentoo' : { '__bzip2':        ('exe',     'required', '/bin/bzip2'),
+                     '__chgrp':        ('exe',     'required', '/bin/chgrp'),
+                     '__chown':        ('exe',     'required', '/bin/chown'),
+                     '__gzip':         ('exe',     'required', '/bin/gzip'),
+                     '__grep':         ('exe',     'required', '/bin/grep'),
+                     '__sed':          ('exe',     'required', '/bin/sed') },
         }
 
     if distro in variations:

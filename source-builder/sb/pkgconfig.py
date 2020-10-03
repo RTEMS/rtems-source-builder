@@ -43,7 +43,7 @@ import re
 import shlex
 import sys
 
-import path
+from . import path
 
 def default_prefix(common = True):
     paths = []
@@ -91,6 +91,7 @@ class package(object):
     no_dup_flags = ['-I', '-l', '-L']
     dual_opts = ['-D', '-U', '-I', '-l', '-L']
     lib_list_splitter = re.compile('[\s,]+')
+    loaded_prefixes = None
     loaded = {}
 
     @staticmethod
@@ -100,6 +101,22 @@ class package(object):
         dst.defines = copy.copy(src.defines)
         dst.fields = copy.copy(src.fields)
         dst.nodes = copy.copy(src.nodes)
+
+    @staticmethod
+    def _is_string(us):
+        if type(us) == str:
+            return True
+        try:
+            if type(us) == unicode:
+                return True
+        except:
+            pass
+        try:
+            if type(us) == bytes:
+                return True
+        except:
+            pass
+        return False
 
     @staticmethod
     def is_version(v):
@@ -213,7 +230,8 @@ class package(object):
             prefix = default_prefix()
         if prefix:
             self._log('prefix: %s' % (prefix))
-            if type(prefix) is str:
+            if self._is_string(prefix):
+                prefix = str(prefix)
                 self.prefix = []
                 for p in prefix.split(os.pathsep):
                     self.prefix += [path.shell(p)]
@@ -416,15 +434,15 @@ class package(object):
         return ok
 
     def load(self, name):
-        if name in package.loaded:
-            package._copy(package.loaded[name], self)
-            return
         self._log('loading: %s' % (name))
         if self.name_:
             self._clean()
         self.name_ = name
         file = self._find_package(name)
         if file:
+            if file in package.loaded:
+                package._copy(package.loaded[file], self)
+                return
             self._log('load: %s (%s)' % (name, file))
             if self.src:
                 self.src('==%s%s' % ('=' * 80, os.linesep))
@@ -474,8 +492,9 @@ class package(object):
             if requires:
                 for r in package.splitter(requires):
                     if r[0] not in self.nodes[nt]:
-                        if r[0] in package.loaded:
-                            pkg = package.loaded[r[0]]
+                        file = self._find_package(r[0])
+                        if file in package.loaded:
+                            pkg = package.loaded[file]
                         else:
                             pkg = package(r[0], self.prefix, self.output)
                         ver = pkg.get('version')
@@ -486,8 +505,8 @@ class package(object):
                             self._log('failed: %s (%s %s %s)' % (r[0], ver, r[1], r[2]))
                             self.nodes['failed'][r[0]] = pkg
         if self.exists():
-            self._log('load: exists')
-            package.loaded[name] = self
+            self._log('load: exists and loaded; cache as loaded')
+            package.loaded[self.file_] = self
 
     def get(self, label, private = True):
         self._log('get: %s (%s)' % (label, ','.join(self.fields)))
