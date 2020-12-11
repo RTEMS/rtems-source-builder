@@ -11,6 +11,7 @@
 #
 
 devel/expat-2.1.0-1
+devel/gmp-6.1.0
 tools/rtems-gdb-head
 
 tools/rtems-binutils-head
