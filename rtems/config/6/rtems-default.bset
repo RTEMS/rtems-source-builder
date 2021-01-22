@@ -12,8 +12,8 @@
 
 devel/expat-2.1.0-1
 devel/gmp-6.1.0
-tools/rtems-gdb-head
+tools/rtems-gdb-10
 
-tools/rtems-binutils-head
+tools/rtems-binutils-2.36
 tools/rtems-gcc-10-newlib-head
 tools/rtems-tools-6
