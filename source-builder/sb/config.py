@@ -978,7 +978,7 @@ class file:
                     else:
                         self._error('invalid if bool operator: ' + reduce(add, ls, ''))
             else:
-                if len(ifls) > 3:
+                if len(ifls) >= 3:
                     for op in ['==', '!=', '>=', '=>', '=<', '<=', '>', '<']:
                         ops = s.split(op)
                         if len(ops) == 2:
