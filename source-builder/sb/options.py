@@ -517,6 +517,15 @@ class command_line:
             return None
         return self.parse_args(arg)
 
+    def find_arg(self, arg):
+        if self.optargs is None or arg not in self.optargs:
+            raise error.internal('bad arg: %s' % (arg))
+        for a in self.args:
+            sa = a.split('=')
+            if sa[0].startswith(arg):
+                return sa
+        return None
+
     def with_arg(self, label, default = 'not-found'):
         # the default if there is no option for without.
         result = default
@@ -582,7 +591,22 @@ class command_line:
         self.opts['no-install'] = '1'
 
     def info(self):
-        s = ' Command Line: %s%s' % (' '.join(self.argv), os.linesep)
+        # Filter potentially sensitive mail options out.
+        filtered_args = [
+            arg for arg in self.argv
+            if all(
+                smtp_opt not in arg
+                for smtp_opt in [
+                    '--smtp-host',
+                    '--mail-to',
+                    '--mail-from',
+                    '--smtp-user',
+                    '--smtp-password',
+                    '--smtp-port'
+                ]
+            )
+        ]
+        s = ' Command Line: %s%s' % (' '.join(filtered_args), os.linesep)
         s += ' Python: %s' % (sys.version.replace('\n', ''))
         return s
 

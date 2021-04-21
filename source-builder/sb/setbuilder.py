@@ -695,6 +695,8 @@ def run():
                      'log'    : '',
                      'reports': [],
                      'failure': None }
+            # Request this now to generate any errors.
+            smtp_host = mail['mail'].smtp_host()
             to_addr = opts.get_arg('--mail-to')
             if to_addr is not None:
                 mail['to'] = to_addr[1]
