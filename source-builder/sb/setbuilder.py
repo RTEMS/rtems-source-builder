@@ -673,6 +673,16 @@ def list_bset_cfg_files(opts, configs):
         return True
     return False
 
+def list_host(opts):
+    if opts.get_arg('--list-host'):
+        print('Host operating system information:')
+        print('Operating system: %s' % macro_expand(opts.defaults, '%{_os}'))
+        print('Number of processors: %s' % macro_expand(opts.defaults, '%{_ncpus}'))
+        print('Build architecture: %s' % macro_expand(opts.defaults, '%{_host_arch}'))
+        print('Host triplet: %s' % macro_expand(opts.defaults, '%{_host}'))
+        return True
+    return False
+
 def run():
     import sys
     ec = 0
@@ -683,6 +693,7 @@ def run():
                     '--list-bsets':    'List available build sets',
                     '--list-configs':  'List available configuration files.',
                     '--list-deps':     'List the dependent files.',
+                    '--list-host':     'List host information and the host triplet.',
                     '--bset-tar-file': 'Create a build set tar file',
                     '--pkg-tar-files': 'Create package tar files',
                     '--no-report':     'Do not create a package report.',
@@ -720,7 +731,8 @@ def run():
             deps = []
         else:
             deps = None
-        if not list_bset_cfg_files(opts, configs):
+
+        if not list_bset_cfg_files(opts, configs) and not list_host(opts):
             prefix = macro_expand(opts.defaults, '%{_prefix}')
             if opts.canadian_cross():
                 opts.disable_install()
