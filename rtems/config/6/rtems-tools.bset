@@ -14,4 +14,4 @@
 #
 %include rtems-base.bset
 
-tools/rtems-tools-6-1
+tools/rtems-tools-6
