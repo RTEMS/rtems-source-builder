@@ -6,8 +6,6 @@
 #
 %include 6/rtems-base.bset
 
-6/rtems-autotools
-
 devel/dtc-1.6.0-1
 
 #
