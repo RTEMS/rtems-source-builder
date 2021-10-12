@@ -1,0 +1,147 @@
+#! /usr/bin/env python
+
+"""
+SPDX-License-Identifier: BSD-2-Clause
+
+COPYRIGHT (C) 2021 On-Line Applications Research Corporation (OAR).
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+"""
+
+from __future__ import print_function
+
+import sys
+import argparse
+
+from os.path import exists
+
+try:
+    import ConfigParser
+    configparser = ConfigParser # used for python2
+except ImportError:
+    try:
+        import configparser # used for python3
+    except ImportError:
+        print("Could not import configparser. Exiting...", file = sys.stderr)
+        sys.exit(1)
+
+def run():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("config", help="path to config file")
+    parser.add_argument(
+        "-a",
+        "--arch",
+        help="return target architecture specified in the config",
+        action="store_true"
+    )
+    parser.add_argument(
+        "-b",
+        "--bsp",
+        help="return BSP specified in the config",
+        action="store_true"
+    )
+    parser.add_argument(
+        "-c",
+        "--arch-bsp",
+        help="return target architecture and BSP specified in the config",
+        action="store_true"
+    )
+    parser.add_argument(
+        "-v",
+        "--rtems-version",
+        help="version of RTEMS",
+        type=int,
+        default=6
+    )
+    parser.add_argument(
+        "-t",
+        "--target",
+        help="return target (<arch-rtems<rtems-version>)",
+        action="store_true"
+    )
+    args = parser.parse_args()
+    config = configparser.ConfigParser()
+
+    if args.config[-4:] != ".ini":
+        print(
+            "The config file is missing an *.ini extension.",
+            file = sys.stderr
+        )
+        sys.exit(1)
+
+    try:
+        config.read(args.config)
+    except configparser.MissingSectionHeaderError:
+        print(
+            "There is no section header in the config file",
+            file = sys.stderr
+        )
+        sys.exit(1)
+    except configparser.ParsingError:
+        print(
+            "An exception occured when parsing the config file",
+            file = sys.stderr
+        )
+        sys.exit(1)
+    except:
+        print(
+            "An unknown exception occured",
+            file = sys.stderr
+        )
+
+    if len(config.sections()) != 1:
+        print(
+            "You can only have one arch/bsp section in your config.",
+            file = sys.stderr
+        )
+        sys.exit(1)
+
+    arch_bsp_str = config.sections()[0]
+    if arch_bsp_str.find("/") == -1:
+        print(
+            "arch/bsp section in config is missing '/'",
+            file = sys.stderr
+        )
+        sys.exit(1)
+
+    if ( args.arch or args.bsp) and args.arch_bsp:
+        args.arch = False
+
+    if args.arch:
+        print(arch_bsp_str.split("/")[0])
+        return
+
+    if args.bsp:
+        print(arch_bsp_str.split("/")[1])
+        return
+
+    if args.arch_bsp:
+        print(arch_bsp_str.replace("/", " "))
+        return
+
+    if args.target:
+        arch = arch_bsp_str.split("/")[0]
+        print(arch + "-rtems" + str(args.rtems_version))
+        return
+
+if __name__ == "__main__":
+    run()
