@@ -6,8 +6,6 @@
 #
 %include 6/rtems-base.bset
 
-devel/dtc-1.6.0-1
-
 #
 # Build gdb first to raise the Python install error as early as possible.
 # GDB needs expat so it needs to be built before.

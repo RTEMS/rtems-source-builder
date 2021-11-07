@@ -5,6 +5,8 @@
 # GDB needs expat so it needs to be built before.
 #
 
+devel/dtc-1.6.0-1
+
 devel/expat-2.1.0-1
 devel/gmp-6.1.0
 tools/rtems-gdb-head
