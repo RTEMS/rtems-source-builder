@@ -76,20 +76,16 @@ def load():
         except:
             pass
 
+    distro = distro.lower()
+
     # Manage distro aliases
     if distro in ['centos']:
         distro = 'redhat'
     elif distro in ['fedora']:
         if distro_ver < 17:
             distro = 'redhat'
-    elif distro in ['centos', 'fedora']:
-        distro = 'redhat'
-    elif distro in ['Ubuntu', 'ubuntu', 'MX', 'LinuxMint', 'linuxmint']:
+    elif distro in ['ubuntu', 'mx', 'linuxmint']:
         distro = 'debian'
-    elif distro in ['Arch']:
-        distro = 'arch'
-    elif distro in ['SuSE']:
-        distro = 'suse'
 
     variations = {
         'debian' : { '__bzip2':        ('exe',     'required', '/bin/bzip2'),
