@@ -12,7 +12,7 @@
 #
 
 devel/expat-2.4.8-1
-devel/gmp-6.1.0
+devel/gmp-6.2.1
 tools/rtems-gdb-11.2
 
 tools/rtems-xilinx-binutils-2.36
