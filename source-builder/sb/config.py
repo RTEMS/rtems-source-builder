@@ -68,6 +68,13 @@ def _check_nil(value):
         istrue = False
     return istrue
 
+def _check_number(value):
+    try:
+        float(value)
+        return True
+    except ValueError:
+        return False
+
 class package:
 
     def __init__(self, name, arch, config):
@@ -915,6 +922,12 @@ class file:
                           (self.name, self.lc,
                            self.if_depth,
                            join_op))
+                # If OR and the previous check was true short circuit the evaluation
+                if join_op == 'or' and cistrue:
+                    log.trace('config: %s: %3d:  _if[%i]: OR true, short circuit eval' % \
+                              (self.name, self.lc,
+                               self.if_depth))
+                    break
             ori = 0
             andi = 0
             i = len(cls)
@@ -935,10 +948,8 @@ class file:
                     i = andi
                 elif andi == 0:
                     i = ori
-                elif ori < andi:
-                    i = andi
                 else:
-                    i = andi
+                    i = min(ori, andi)
                 log.trace('config: %s: %3d:  _if[%i]: next OP found at %i' % \
                           (self.name, self.lc,
                            self.if_depth,
@@ -996,37 +1007,27 @@ class file:
                             ifls = (' '.join(ifls[:op_pos]), op, ' '.join(ifls[op_pos + 1:]))
                             break
                 if len(ifls) != 3:
-                     self._error('malformed if: ' + reduce(add, ls, ''))
-                if ifls[1] == '==':
-                    if ifls[0] == ifls[2]:
-                        istrue = True
-                    else:
-                        istrue = False
-                elif ifls[1] == '!=' or ifls[1] == '=!':
-                    if ifls[0] != ifls[2]:
-                        istrue = True
-                    else:
-                        istrue = False
-                elif ifls[1] == '>':
-                    if ifls[0] > ifls[2]:
-                        istrue = True
-                    else:
-                        istrue = False
-                elif ifls[1] == '>=' or ifls[1] == '=>':
-                    if ifls[0] >= ifls[2]:
-                        istrue = True
-                    else:
-                        istrue = False
-                elif ifls[1] == '<=' or ifls[1] == '=<':
-                    if ifls[0] <= ifls[2]:
-                        istrue = True
-                    else:
-                        istrue = False
-                elif ifls[1] == '<':
-                    if ifls[0] < ifls[2]:
-                        istrue = True
-                    else:
-                        istrue = False
+                    self._error('malformed if: ' + reduce(add, ls, ''))
+                lhs = ifls[0]
+                operator = ifls[1]
+                rhs = ifls[2]
+                if _check_number(lhs) and _check_number(rhs):
+                    log.trace('config: %s: %3d:  _if: numeric value check' % \
+                              (self.name, self.lc))
+                    lhs = float(lhs)
+                    rhs = float(rhs)
+                if operator == '==':
+                    istrue = lhs == rhs
+                elif operator == '!=' or operator == '=!':
+                    istrue = lhs != rhs
+                elif operator == '>':
+                    istrue = lhs > rhs
+                elif operator == '>=' or operator == '=>':
+                    istrue = lhs >= rhs
+                elif operator == '<=' or operator == '=<':
+                    istrue = lhs <= rhs
+                elif operator == '<':
+                    istrue = lhs < rhs
                 else:
                     self._error('invalid %if operator: ' + reduce(add, ls, ''))
 
