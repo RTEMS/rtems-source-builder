@@ -1,16 +1,20 @@
+#
+# Default tools configuration.
+#
 %include 7/rtems-base.bset
 
 #
-# Build gdb first to raise the Python install error as early as possible.
-# GDB needs expat so it needs to be built before.
+# Default RTEMS build. Override on the command line to the
+# the RSB. For example to test the latest version of gcc use:
 #
+#  --with-rtems-gcc=tools/rtems-gcc-head-newlib-head
+#
+%defineifnot with_rtems_dtc      devel/dtc-1.6.1-1
+%defineifnot with_rtems_expat    devel/expat-2.4.8-1
+%defineifnot with_rtems_gmp      devel/gmp-6.2.1
+%defineifnot with_rtems_gdb      tools/rtems-gdb-head
+%defineifnot with_rtems_binutils tools/rtems-binutils-head
+%defineifnot with_rtems_gcc      tools/rtems-gcc-head-newlib-head
+%defineifnot with_rtems_tools    tools/rtems-tools-6
 
-devel/dtc-1.6.1-1
-
-devel/expat-2.4.8-1
-devel/gmp-6.2.1
-tools/rtems-gdb-head
-
-tools/rtems-binutils-head
-tools/rtems-gcc-head-newlib-head
-tools/rtems-tools-6
+tools/rtems-default-tools.bset

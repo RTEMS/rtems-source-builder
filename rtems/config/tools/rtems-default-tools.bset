@@ -1,0 +1,15 @@
+#
+# Default tools build
+#
+
+#
+# Build gdb first to raise the Python install error as early as
+# possible. GDB needs expat so it needs to be built before gdb.
+#
+%{with_rtems_dtc}
+%{with_rtems_expat}
+%{with_rtems_gmp}
+%{with_rtems_gdb}
+%{with_rtems_binutils}
+%{with_rtems_gcc}
+%{with_rtems_tools}
