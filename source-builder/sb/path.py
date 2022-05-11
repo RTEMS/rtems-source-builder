@@ -58,7 +58,7 @@ def host(path):
 
 def shell(path):
     if isinstance(path, bytes):
-        path = path.decode('ascii')
+        path = path.decode('utf8')
     if path is not None:
         if windows or windows_posix:
             path = path.encode('ascii', 'ignore').decode('ascii')
@@ -189,11 +189,11 @@ def removeall(path):
     # get to the max path length on Windows.
     #
     def _isdir(path):
-        hpath = host(path)
+        hpath = host(path).encode('utf8')
         return os.path.isdir(hpath) and not os.path.islink(hpath)
 
     def _remove_node(path):
-        hpath = host(path)
+        hpath = host(path).encode('utf8')
         if not os.path.islink(hpath) and not os.access(hpath, os.W_OK):
             os.chmod(hpath, stat.S_IWUSR)
         if _isdir(path):
@@ -216,7 +216,7 @@ def removeall(path):
             _remove_node(dir)
 
     path = shell(path)
-    hpath = host(path)
+    hpath = host(path).encode('utf8')
 
     if os.path.exists(hpath):
         _remove(path)
@@ -317,11 +317,11 @@ def get_size(path, depth = -1):
     # get to the max path length on Windows.
     #
     def _isdir(path):
-        hpath = host(path)
+        hpath = host(path).encode('utf8')
         return os.path.isdir(hpath) and not os.path.islink(hpath)
 
     def _node_size(path):
-        hpath = host(path)
+        hpath = host(path).encode('utf8')
         size = 0
         if not os.path.islink(hpath):
             size = os.path.getsize(hpath)
@@ -345,7 +345,7 @@ def get_size(path, depth = -1):
         return size
 
     path = shell(path)
-    hpath = host(path)
+    hpath = host(path).encode('utf8')
     size = 0
 
     if os.path.exists(hpath):
