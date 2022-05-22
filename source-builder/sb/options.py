@@ -235,7 +235,7 @@ class command_line:
         print('--with-<label>         : Add the --with-<label> to the build')
         print('--without-<label>      : Add the --without-<label> to the build')
         print('--rtems-tools path     : Path to an install RTEMS tool set')
-        print('--rtems-bsp arc/bsp    : Standard RTEMS architecure and BSP specifier')
+        print('--rtems-bsp arch/bsp   : Standard RTEMS architecure and BSP specifier')
         print('--rtems-version ver    : The RTEMS major/minor version string')
         if self.optargs:
             for a in self.optargs:
