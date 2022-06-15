@@ -1,0 +1,17 @@
+#
+# Default tools build
+#
+
+%define release 1
+
+%define gcc_version_message RTEMS bare %{rtems_version}, RSB %{_sbgit_id}, Newlib %{newlib_version}
+
+#
+# Build gdb first to raise the Python install error as early as
+# possible. GDB needs expat so it needs to be built before gdb.
+#
+%{with_bare_expat}
+%{with_bare_gmp}
+%{with_bare_gdb}
+%{with_bare_binutils}
+%{with_bare_gcc}

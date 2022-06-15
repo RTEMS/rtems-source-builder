@@ -1,0 +1,17 @@
+#
+# Default tools configuration.
+#
+
+#
+# Default bare build. Override on the command line to the
+# the RSB. For example to test the latest version of gcc use:
+#
+#  --with-bare-gcc=tools/gnu-gcc-head-newlib-head
+#
+%defineifnot with_bare_expat    devel/expat-2.4.8-1
+%defineifnot with_bare_gmp      devel/gmp-6.2.1
+%defineifnot with_bare_gdb      devel/gdb-11.2
+%defineifnot with_bare_binutils devel/binutils-2.38
+%defineifnot with_bare_gcc      devel/gcc-12-newlib-head
+
+devel/gnu-default-tools.bset
