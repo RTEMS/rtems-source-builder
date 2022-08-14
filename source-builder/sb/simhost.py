@@ -36,6 +36,7 @@ try:
     from . import log
     from . import macros
     from . import path
+    from . import shell
     from . import sources
     from . import version
 except KeyboardInterrupt:
@@ -122,7 +123,6 @@ profiles = {
                  '_var':             ('dir',     'optional', '/usr/local/var') },
 }
 
-
 class log_capture(object):
     def __init__(self):
         self.log = []
@@ -153,6 +153,18 @@ def find_bset_config(bset_config, macros):
         if name is None:
             raise error.general('no build set file found: %s' % (bset_config))
     return name
+
+def macro_expand(macros, _str):
+    cstr = None
+    while cstr != _str:
+        cstr = _str
+        _str = macros.expand(_str)
+        _str = shell.expand(macros, _str)
+    return _str
+
+def strip_common_prefix(files):
+    commonprefix = os.path.commonprefix(files)
+    return sorted(list(set([f[len(commonprefix):] for f in files])))
 
 #
 # A skinny options command line class to get the configs to load.
@@ -252,10 +264,10 @@ class options(object):
             a += 1
         return None
 
-    def rtems_bsp(self):
+    def rtems_bsp(self, arch='arch'):
         self.defaults['rtems_version'] = str(version.version())
-        self.defaults['_target'] = 'arch-rtems'
-        self.defaults['rtems_host'] = 'rtems-arch'
+        self.defaults['_target'] = arch + '-rtems'
+        self.defaults['rtems_host'] = 'rtems-' + arch
         self.defaults['with_rtems_bsp'] = 'rtems-bsp'
 
     def sb_git(self):
@@ -383,8 +395,19 @@ class buildset:
                 rebased += [i]
         return rebased
 
+    def root(self):
+        for i in self._includes:
+            si = i.split(':')
+            if len(si) == 2:
+                if si[1] == 'root':
+                    return si[0]
+        return None
+
     def includes(self):
-        return sorted(list(set(self._includes)))
+        return [i for i in self._includes if not i.endswith(':root')]
+
+    def deps(self):
+        return strip_common_prefix([i.split(':')[0] for i in self.includes()])
 
     def errors(self):
         return sorted(list(set(self._errors)))
@@ -393,7 +416,7 @@ class buildset:
         if not _build.disabled():
             _build.make()
 
-    def parse(self, bset):
+    def parse(self, bset, expand=True):
 
         #
         # Ouch, this is a copy of the setbuilder.py code.
@@ -409,7 +432,7 @@ class buildset:
         bsetname = find_bset_config(bset, self.macros)
 
         try:
-            log.trace('_bset: %s: open: %s' % (self.bset, bsetname))
+            log.trace('_bset: %s: open: %s %s' % (self.bset, bsetname, expand))
             bsetf = open(path.host(bsetname), 'r')
         except IOError as err:
             raise error.general('error opening bset file: %s' % (bsetname))
@@ -432,19 +455,26 @@ class buildset:
                 if ls[0][-1] == ':' and ls[0][:-1] == 'package':
                     self.bset_pkg = ls[1].strip()
                     self.macros['package'] = self.bset_pkg
-                elif ls[0][0] == '%':
+                elif ls[0][0] == '%' and (len(ls[0]) > 1 and ls[0][1] != '{'):
                     def err(msg):
                         raise error.general('%s:%d: %s' % (self.bset, lc, msg))
-                    if ls[0] == '%define':
+                    if ls[0] == '%define' or ls[0] == '%defineifnot' :
+                        name = ls[1].strip()
+                        value = None
                         if len(ls) > 2:
-                            self.macros.define(ls[1].strip(),
-                                               ' '.join([f.strip() for f in ls[2:]]))
-                        else:
-                            self.macros.define(ls[1].strip())
+                            value = ' '.join([f.strip() for f in ls[2:]])
+                        if ls[0] == '%defineifnot':
+                            if self.macros.defined(name):
+                                name = None
+                        if name is not None:
+                            if value is not None:
+                                self.macros.define(name, value)
+                            else:
+                                self.macros.define(name)
                     elif ls[0] == '%undefine':
                         if len(ls) > 2:
-                            raise error.general('%s:%d: %undefine requires just the name' \
-                                                % (self.bset, lc))
+                            raise error.general('%s:%d: %undefine requires ' \
+                                                'just the name' % (self.bset, lc))
                         self.macros.undefine(ls[1].strip())
                     elif ls[0] == '%include':
                         configs += self.parse(ls[1].strip())
@@ -453,12 +483,18 @@ class buildset:
                     elif ls[0] == '%hash':
                         sources.hash(ls[1:], self.macros, err)
                 else:
-                    l = l.strip()
-                    c = build.find_config(l, self.configs)
-                    if c is None:
-                        raise error.general('%s:%d: cannot find file: %s'
-                                            % (self.bset, lc, l))
-                    configs += [c + ':' + self.parent]
+                    try:
+                        l = macro_expand(self.macros, l.strip())
+                    except:
+                        if expand:
+                            raise
+                        l = None
+                    if l is not None:
+                        c = build.find_config(l, self.configs)
+                        if c is None:
+                            raise error.general('%s:%d: cannot find file: %s'
+                                                % (self.bset, lc, l))
+                        configs += [c + ':' + self.parent]
         finally:
             bsetf.close()
             self.parent = parent
@@ -523,7 +559,7 @@ class buildset:
 
         nesting_count += 1
 
-        log.trace('_bset: %s for %s: make' % (self.bset, host))
+        log.trace('_bset: %2d: %s for %s: make' % (nesting_count, self.bset, host))
         log.notice('Build Set: %s for %s' % (self.bset, host))
 
         mail_subject = '%s on %s' % (self.bset,
@@ -538,7 +574,7 @@ class buildset:
         try:
             configs = self.load()
 
-            log.trace('_bset: %s: configs: %s'  % (self.bset, ','.join(configs)))
+            log.trace('_bset: %2d: %s: configs: %s'  % (nesting_count, self.bset, ','.join(configs)))
 
             sizes_valid = False
             builds = []
@@ -556,14 +592,14 @@ class buildset:
                     self.set_host_details(host, opts, macros)
                     config, parent = configs[s].split(':', 2)
                     if config.endswith('.bset'):
-                        log.trace('_bset: == %2d %s' % (nesting_count + 1, '=' * 75))
+                        log.trace('_bset: %2d: %s' % (nesting_count + 1, '=' * 75))
                         bs = buildset(config, self.configs, opts, macros)
                         bs.build(host, nesting_count)
                         self._includes += \
                             self._rebase_includes(bs.includes(), parent)
                         del bs
                     elif config.endswith('.cfg'):
-                        log.trace('_bset: -- %2d %s' % (nesting_count + 1, '-' * 75))
+                        log.trace('_bset: %2d: %s' % (nesting_count + 1, '-' * 75))
                         try:
                             b = build.build(config,
                                             False,
@@ -579,7 +615,7 @@ class buildset:
                         #
                         # Dump post build macros.
                         #
-                        log.trace('_bset: macros post-build')
+                        log.trace('_bset: %2d: macros post-build' % (nesting_count))
                         log.trace(str(macros))
                     else:
                         raise error.general('invalid config type: %s' % (config))
@@ -589,13 +625,16 @@ class buildset:
                         if self.build_failure is None:
                             self.build_failure = b.name()
                         self._includes += b.includes()
-                    self._errors += [find_bset_config(config, opts.defaults) + ':' + parent] + self._includes
+                    self._errors += \
+                        [find_bset_config(config, opts.defaults) + ':' + parent] + self._includes
                     raise
             #
             # Clear out the builds ...
             #
             for b in builds:
                 del b
+            self._includes += \
+                [find_bset_config(c.split(':')[0], self.macros) + ':' + self.bset for c in configs]
         except error.general as gerr:
             if not build_error:
                 log.stderr(str(gerr))
@@ -616,9 +655,9 @@ def list_hosts():
     max_os_len = max(len(h) for h in hosts)
     max_host_len = max(len(profiles[h]['_host'][2]) for h in hosts)
     for h in hosts:
-        print('%*s: %-*s %s' % (max_os_len, h, max_host_len,
-                                profiles[h]['_host'][2],
-                                profiles[h]['_host'][2]))
+        log.notice('%*s: %-*s %s' % (max_os_len, h, max_host_len,
+                                     profiles[h]['_host'][2],
+                                     profiles[h]['_host'][2]))
 
 def get_files(configs, ext, localpath):
     files = []
@@ -635,14 +674,39 @@ def get_config_files(configs, localpath = False):
 def get_bset_files(configs, localpath = False):
     return get_files(configs, '.bset', localpath)
 
+def get_config_bset_files(opts, configs):
+    cbs = get_config_files(configs) + get_bset_files(configs)
+    return strip_common_prefix([find_bset_config(cb, opts.defaults) for cb in cbs])
+
+def get_root_bset_files(opts, configs, localpath = False):
+    bsets = get_bset_files(configs, localpath)
+    incs = {}
+    for bs in bsets:
+        bset = buildset(bs, configs, opts)
+        cfgs = [find_bset_config(c.split(':')[0], bset.macros) for c in bset.parse(bs, False)]
+        incs[bset.root()] = bset.includes() + cfgs
+    roots = sorted(incs.keys())
+    for inc in incs:
+        for i in incs[inc]:
+            si = i.split(':')
+            if len(si) > 0 and si[0] in roots:
+                roots.remove(si[0])
+    return roots
+
 def get_root(configs):
     return configs['root']
 
+def list_root_bset_files(opts, configs):
+    for p in configs['paths']:
+        log.notice('Examining: %s' % (os.path.relpath(p)))
+    for r in strip_common_prefix(get_root_bset_files(opts, configs)):
+        log.notice(' %s' % (r))
+
 def list_bset_files(opts, configs):
     for p in configs['paths']:
-        print('Examining: %s' % (os.path.relpath(p)))
+        log.notice('Examining: %s' % (os.path.relpath(p)))
     for b in get_bset_files(configs):
-        print(' %s' % (b[:b.rfind('.')]))
+        log.notice(' %s' % (b[:b.rfind('.')]))
 
 def load_log(logfile):
     log.default = log.log(streams = [logfile])

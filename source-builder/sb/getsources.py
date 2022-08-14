@@ -60,7 +60,9 @@ def run(args = sys.argv):
                            default = version.version())
         argsp.add_argument('--list-hosts', help = 'List the hosts.',
                            action = 'store_true')
-        argsp.add_argument('--list-bsets', help = 'List the hosts.',
+        argsp.add_argument('--list-bsets', help = 'List the buildsets.',
+                           action = 'store_true')
+        argsp.add_argument('--list-root-bsets', help = 'List the toplevel or root buildsets.',
                            action = 'store_true')
         argsp.add_argument('--download-dir', help = 'Download directory.',
                            type = str)
@@ -71,8 +73,14 @@ def run(args = sys.argv):
         argsp.add_argument('--log', help = 'Log file.',
                            type = str,
                            default = simhost.log_default('getsource'))
+        argsp.add_argument('--stop-on-error', help = 'Stop on error.',
+                           action = 'store_true')
         argsp.add_argument('--trace', help = 'Enable trace logging for debugging.',
                            action = 'store_true')
+        argsp.add_argument('--used', help = 'Save the used buildset and config files.',
+                           type = str, default = None)
+        argsp.add_argument('--unused', help = 'Save the unused buildset and config files.',
+                           type = str, default = None)
         argsp.add_argument('bsets', nargs='*', help = 'Build sets.')
 
         argopts = argsp.parse_args(args[1:])
@@ -84,10 +92,14 @@ def run(args = sys.argv):
         opts = simhost.load_options(args, argopts, extras = ['--with-download'])
         configs = build.get_configs(opts)
 
+        stop_on_error = argopts.stop_on_error
+
         if argopts.list_hosts:
             simhost.list_hosts()
         elif argopts.list_bsets:
             simhost.list_bset_files(opts, configs)
+        elif argopts.list_root_bsets:
+            simhost.list_root_bset_files(opts, configs)
         else:
             if argopts.clean:
                 if argopts.download_dir is None:
@@ -95,11 +107,11 @@ def run(args = sys.argv):
                 if path.exists(argopts.download_dir):
                     log.notice('Cleaning source directory: %s' % (argopts.download_dir))
                     path.removeall(argopts.download_dir)
-            all_bsets = simhost.get_bset_files(configs)
             if len(argopts.bsets) == 0:
-                bsets = all_bsets
+                bsets = simhost.get_root_bset_files(opts, configs)
             else:
                 bsets = argopts.bsets
+            deps = copy.copy(simhost.strip_common_prefix(bsets))
             for bset in bsets:
                 b = None
                 try:
@@ -108,11 +120,23 @@ def run(args = sys.argv):
                         b = simhost.buildset(bset, configs, opts)
                         get_sources_error = False
                         b.build(host)
+                        deps += b.deps()
                         del b
                 except error.general as gerr:
+                    if stop_on_error:
+                        raise
                     log.stderr(str(gerr))
                     log.stderr('Build FAILED')
                 b = None
+            deps = sorted(list(set(deps)))
+            if argopts.used:
+                with open(argopts.used, 'w') as o:
+                    o.write(os.linesep.join(deps))
+            if argopts.unused:
+                cfgs_bsets = \
+                    [cb for cb in simhost.get_config_bset_files(opts, configs) if not cb in deps]
+                with open(argopts.unused, 'w') as o:
+                    o.write(os.linesep.join(cfgs_bsets))
     except error.general as gerr:
         if get_sources_error:
             log.stderr(str(gerr))
