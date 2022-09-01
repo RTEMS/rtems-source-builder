@@ -785,7 +785,16 @@ class file:
                                 mn = '%{nil}'
                 if mn:
                     if mn.lower() in self.macros:
-                        s = s.replace(m, self.macros[mn.lower()])
+                        em = self.macros[mn.lower()]
+                        if self.macros.get_type(mn) == 'dir' and ':' in em:
+                            ss = []
+                            for sp in s.split():
+                                if m in sp:
+                                    sp = ':'.join([sp.replace(mn, ps) for ps in em.split(':')])
+                                ss += [sp]
+                                s = ' '.join(ss)
+                        else:
+                            s = s.replace(m, self.macros[mn.lower()])
                         expanded = True
                     elif show_warning:
                         self._error("macro '%s' not found" % (mn))
@@ -1345,6 +1354,14 @@ class file:
                 right = right[:-1]
             return end
 
+        def search_path(confignames):
+            for configname in confignames.split(':'):
+                if not configname.endswith('.cfg'):
+                    configname = '%s.cfg' % (configname)
+                if path.exists(configname):
+                    return configname
+            return None
+
         if self.load_depth == 0:
             self._packages[self.package] = package(self.package,
                                                    self.define('%{_arch}'),
@@ -1358,7 +1375,7 @@ class file:
 
         #
         # Locate the config file. Expand any macros then add the
-        # extension. Check if the file exists, therefore directly
+        # extension. Check if the file exists then it is directly
         # referenced. If not see if the file contains ':' or the path
         # separator. If it does split the path else use the standard config dir
         # path in the defaults.
@@ -1366,32 +1383,13 @@ class file:
 
         exname = self.expand(name)
 
-        #
-        # Macro could add an extension.
-        #
-        if exname.endswith('.cfg'):
-            configname = exname
-        else:
-            configname = '%s.cfg' % (exname)
-            name = '%s.cfg' % (name)
+        configname = search_path(exname)
+        if configname is None:
+            configname = search_path(self.expand(path.join('%{_configdir}', exname)))
+        if configname is None:
+            raise error.general('no config file found: %s' % (','.join(exname.split(':'))))
 
-        if ':' in configname:
-            cfgname = path.basename(configname)
-        else:
-            cfgname = common_end(configname, name)
-
-        if not path.exists(configname):
-            if ':' in configname:
-                configdirs = path.dirname(configname).split(':')
-            else:
-                configdirs = self.define('_configdir').split(':')
-            for cp in configdirs:
-                configname = path.join(path.abspath(cp), cfgname)
-                if path.exists(configname):
-                    break
-                configname = None
-            if configname is None:
-                raise error.general('no config file found: %s' % (cfgname))
+        name = path.basename(configname)
 
         try:
             log.trace('config: %s:  _open: %s' % (self.name, path.host(configname)))
