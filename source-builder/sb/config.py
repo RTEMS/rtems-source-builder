@@ -258,7 +258,7 @@ class file:
                 re.compile('%select'),
                 re.compile('%disable') ]
 
-    def __init__(self, name, opts, macros = None):
+    def __init__(self, name, opts, macros = None, load = True):
         log.trace('config: %s: initialising' % (name))
         self.opts = opts
         self.init_name = name
@@ -267,7 +267,8 @@ class file:
         self.sf = re.compile(r'%\([^\)]+\)')
         self.set_macros(macros)
         self._reset(name)
-        self.load(name)
+        if load:
+            self.load(name)
 
     def __str__(self):
 
