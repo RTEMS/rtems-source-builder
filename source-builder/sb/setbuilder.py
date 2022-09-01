@@ -30,11 +30,14 @@ import glob
 import operator
 import os
 import sys
+import tarfile
+
 import textwrap
 
 try:
     import build
     import check
+    import config
     import error
     import log
     import mailer
@@ -259,21 +262,31 @@ class buildset:
                 self.root_copy(_build.config.expand('%{buildroot}'),
                                _build.config.expand('%{_tmproot}'))
 
-    def bset_tar(self, _build):
-        tardir = _build.config.expand('%{_tardir}')
-        if (self.opts.get_arg('--bset-tar-file') or self.opts.canadian_cross()) \
-           and not _build.macros.get('%{_disable_packaging}'):
+    def bset_tar(self, stagingroot):
+        if self.opts.get_arg('--bset-tar-file') or self.opts.canadian_cross():
+            # Use a config to expand the macros because it supports all
+            # expansions, ie %{_cwd}
+            cfg = config.file(self.bset, self.opts, self.macros, load=False)
+            prefix = cfg.expand('%{_prefix}')
+            tardir = cfg.expand('%{_tardir}')
             path.mkdir(tardir)
-            tar = path.join(tardir,
-                            _build.config.expand('%s.tar.bz2' % \
-                                                 (_build.main_package().name())))
-            log.notice('tarball: %s' % (os.path.relpath(path.host(tar))))
+            tarname = path.join(tardir,
+                                path.basename('%s.tar.bz2' % (self.bset)))
+            log.notice('tarfile: %s' % (os.path.relpath(path.host(tarname))))
             if not self.opts.dry_run():
-                tmproot = _build.config.expand('%{_tmproot}')
-                cmd = _build.config.expand('"cd ' + tmproot + \
-                                           ' && %{__tar} -cf - . | %{__bzip2} > ' + \
-                                           tar + '"')
-                _build.run(cmd, shell_opts = '-c', cwd = tmproot)
+                tar = None
+                try:
+                    tar = tarfile.open(tarname, 'w:bz2')
+                    for filedir in sorted(path.listdir(stagingroot)):
+                        src = path.join(stagingroot, filedir)
+                        dst = path.join(prefix, filedir)
+                        log.trace('tar: %s -> %s' % (src, dst))
+                        tar.add(src, dst)
+                except OSError as oe:
+                    raise error.general('tarfile: %s: %s' % (self.bset, oe))
+                finally:
+                    if tar is not None:
+                        tar.close()
 
     def parse(self, bset):
 
@@ -500,8 +513,6 @@ class buildset:
                                         copy.copy(self.macros),
                                         format = 'xml',
                                         mail = mail)
-                            if s == len(configs) - 1 and not have_errors:
-                                self.bset_tar(b)
                         else:
                             deps += b.config.includes()
                         builds += [b]
@@ -540,7 +551,7 @@ class buildset:
             log.trace('_bset: %2d: %s: builds: %s' % \
                       (nesting_count, self.install_mode(),
                        ', '.join([b.name() for b in builds])))
-            if deps is None and not self.opts.no_install() and not have_errors:
+            if deps is None and not have_errors:
                 for b in builds:
                     log.trace('_bset:   : %s: %r' % (self.install_mode(),
                                                      b.installable()))
@@ -550,7 +561,6 @@ class buildset:
                         if self.staging():
                             prefix = b.config.expand('%{stagingroot}')
                         self.install(self.install_mode(), b.name(), buildroot, prefix)
-
             #
             # Sizes ...
             #
@@ -604,16 +614,20 @@ class buildset:
                 del b
 
             #
-            # If builds have been staged install into the finaly prefix.
+            # If builds have been staged install into the final prefix.
             #
-            if have_staging and not self.opts.no_install() and not have_errors:
+            if have_staging and not have_errors:
                 stagingroot = macro_expand(self.macros, '%{stagingroot}')
                 have_stagingroot = path.exists(stagingroot)
-                log.trace('_bset: %2d: install staging, present: %s' % \
-                          (nesting_count, have_stagingroot))
+                do_install = not self.opts.no_install()
+                if do_install:
+                    log.trace('_bset: %2d: install staging, present: %s' % \
+                              (nesting_count, have_stagingroot))
                 if have_stagingroot:
                     prefix = macro_expand(self.macros, '%{_prefix}')
-                    self.install(self.install_mode(), self.bset, stagingroot, prefix)
+                    if do_install:
+                        self.install(self.install_mode(), self.bset, stagingroot, prefix)
+                    self.bset_tar(stagingroot)
                     staging_size = path.get_size(stagingroot)
                     if not self.opts.no_clean() or self.opts.always_clean():
                         log.notice('clean staging: %s' % (self.bset))
