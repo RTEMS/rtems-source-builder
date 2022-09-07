@@ -28,10 +28,9 @@ POSSIBILITY OF SUCH DAMAGE.
 
 from __future__ import print_function
 
-import sys
 import argparse
-
-from os.path import exists
+import os.path
+import sys
 
 try:
     import ConfigParser
@@ -67,8 +66,8 @@ def run():
                         type=int,
                         default=6)
     parser.add_argument("-t",
-                        "--target",
-                        help="return target (<arch-rtems<rtems-version>)",
+                        "--tests",
+                        help="Build tests is true",
                         action="store_true")
     args = parser.parse_args()
     config = configparser.ConfigParser()
@@ -76,6 +75,10 @@ def run():
     if args.config[-4:] != ".ini":
         print("The config file is missing an *.ini extension.",
               file=sys.stderr)
+        sys.exit(1)
+
+    if not os.path.exists(args.config):
+        print("Config file not found: " + args.config, file=sys.stderr)
         sys.exit(1)
 
     try:
@@ -90,34 +93,33 @@ def run():
     except:
         print("An unknown exception occured", file=sys.stderr)
 
-    if len(config.sections()) != 1:
-        print("You can only have one arch/bsp section in your config.",
-              file=sys.stderr)
-        sys.exit(1)
-
-    arch_bsp_str = config.sections()[0]
-    if arch_bsp_str.find("/") == -1:
-        print("arch/bsp section in config is missing '/'", file=sys.stderr)
-        sys.exit(1)
+    for arch_bsp in config.sections():
+        if len(arch_bsp.split("/")) != 2:
+            print("arch/bsp section in config is missing '/'", file=sys.stderr)
+            sys.exit(1)
 
     if (args.arch or args.bsp) and args.arch_bsp:
         args.arch = False
 
     if args.arch:
-        print(arch_bsp_str.split("/")[0])
+        print(' '.join([ab.split('/')[0] for ab in config.sections()]))
         return
 
     if args.bsp:
-        print(arch_bsp_str.split("/")[1])
+        print(' '.join([ab.split('/')[1] for ab in config.sections()]))
         return
 
     if args.arch_bsp:
-        print(arch_bsp_str.replace("/", " "))
+        print(' '.join([arch_bsp for arch_bsp in config.sections()]))
         return
 
-    if args.target:
-        arch = arch_bsp_str.split("/")[0]
-        print(arch + "-rtems" + str(args.rtems_version))
+    if args.tests:
+        for sec in ["DEFAULT"] + config.sections():
+            for item in config[sec].items():
+                if item[0] == 'buld_tests' or item[0] == 'build_samples':
+                    print("True")
+                    return
+        print("False")
         return
 
 
