@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-
 """
 SPDX-License-Identifier: BSD-2-Clause
 
@@ -36,13 +35,14 @@ from os.path import exists
 
 try:
     import ConfigParser
-    configparser = ConfigParser # used for python2
+    configparser = ConfigParser  # used for python2
 except ImportError:
     try:
-        import configparser # used for python3
+        import configparser  # used for python3
     except ImportError:
-        print("Could not import configparser. Exiting...", file = sys.stderr)
+        print("Could not import configparser. Exiting...", file=sys.stderr)
         sys.exit(1)
+
 
 def run():
     parser = argparse.ArgumentParser()
@@ -51,79 +51,56 @@ def run():
         "-a",
         "--arch",
         help="return target architecture specified in the config",
-        action="store_true"
-    )
-    parser.add_argument(
-        "-b",
-        "--bsp",
-        help="return BSP specified in the config",
-        action="store_true"
-    )
+        action="store_true")
+    parser.add_argument("-b",
+                        "--bsp",
+                        help="return BSP specified in the config",
+                        action="store_true")
     parser.add_argument(
         "-c",
         "--arch-bsp",
         help="return target architecture and BSP specified in the config",
-        action="store_true"
-    )
-    parser.add_argument(
-        "-v",
-        "--rtems-version",
-        help="version of RTEMS",
-        type=int,
-        default=6
-    )
-    parser.add_argument(
-        "-t",
-        "--target",
-        help="return target (<arch-rtems<rtems-version>)",
-        action="store_true"
-    )
+        action="store_true")
+    parser.add_argument("-v",
+                        "--rtems-version",
+                        help="version of RTEMS",
+                        type=int,
+                        default=6)
+    parser.add_argument("-t",
+                        "--target",
+                        help="return target (<arch-rtems<rtems-version>)",
+                        action="store_true")
     args = parser.parse_args()
     config = configparser.ConfigParser()
 
     if args.config[-4:] != ".ini":
-        print(
-            "The config file is missing an *.ini extension.",
-            file = sys.stderr
-        )
+        print("The config file is missing an *.ini extension.",
+              file=sys.stderr)
         sys.exit(1)
 
     try:
         config.read(args.config)
     except configparser.MissingSectionHeaderError:
-        print(
-            "There is no section header in the config file",
-            file = sys.stderr
-        )
+        print("There is no section header in the config file", file=sys.stderr)
         sys.exit(1)
     except configparser.ParsingError:
-        print(
-            "An exception occured when parsing the config file",
-            file = sys.stderr
-        )
+        print("An exception occured when parsing the config file",
+              file=sys.stderr)
         sys.exit(1)
     except:
-        print(
-            "An unknown exception occured",
-            file = sys.stderr
-        )
+        print("An unknown exception occured", file=sys.stderr)
 
     if len(config.sections()) != 1:
-        print(
-            "You can only have one arch/bsp section in your config.",
-            file = sys.stderr
-        )
+        print("You can only have one arch/bsp section in your config.",
+              file=sys.stderr)
         sys.exit(1)
 
     arch_bsp_str = config.sections()[0]
     if arch_bsp_str.find("/") == -1:
-        print(
-            "arch/bsp section in config is missing '/'",
-            file = sys.stderr
-        )
+        print("arch/bsp section in config is missing '/'", file=sys.stderr)
         sys.exit(1)
 
-    if ( args.arch or args.bsp) and args.arch_bsp:
+    if (args.arch or args.bsp) and args.arch_bsp:
         args.arch = False
 
     if args.arch:
@@ -142,6 +119,7 @@ def run():
         arch = arch_bsp_str.split("/")[0]
         print(arch + "-rtems" + str(args.rtems_version))
         return
+
 
 if __name__ == "__main__":
     run()
