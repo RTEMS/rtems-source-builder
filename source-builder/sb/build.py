@@ -76,6 +76,14 @@ class script:
     def __init__(self):
         self.reset()
 
+    def __str__(self):
+        i = 0
+        text = []
+        for l in self.body:
+            i += 1
+            text += ['script:%3d: %s' % (self.lc + i, l)]
+        return os.linesep.join(text)
+
     def reset(self):
         self.body = []
         self.lc = 0
@@ -103,7 +111,7 @@ class script:
         s = None
         try:
             s = open(path.host(name), 'w')
-            s.write('\n'.join(self.body))
+            s.write(os.linesep.join(self.body))
             s.close()
             os.chmod(path.host(name), stat.S_IRWXU | \
                          stat.S_IRGRP | stat.S_IXGRP | \
@@ -434,8 +442,8 @@ class build:
 
     def builddir(self):
         builddir = self.config.abspath('_builddir')
-        self.rmdir(builddir)
         if not self.opts.dry_run():
+            self.rmdir(builddir)
             self.mkdir(builddir)
 
     def prep(self, package):
@@ -583,12 +591,16 @@ class build:
                 self.script_build.append('echo "=> ' + name + ': BUILD"')
                 self.prep(package)
                 self.build_package(package)
+                self.builddir()
+                build_sn = path.join(self.config.expand('%{_builddir}'), 'do-build')
+                clean_sn = path.join(self.config.expand('%{_builddir}'), 'do-clean')
+                log.trace('script: ' + build_sn)
+                log.trace(str(self.script_build))
+                log.trace('script: ' + clean_sn)
+                log.trace(str(self.script_clean))
                 if not self.opts.dry_run():
-                    self.builddir()
-                    build_sn = path.join(self.config.expand('%{_builddir}'), 'do-build')
                     log.output('write script: ' + build_sn)
                     self.script_build.write(build_sn)
-                    clean_sn = path.join(self.config.expand('%{_builddir}'), 'do-clean')
                     log.output('write script: ' + clean_sn)
                     self.script_clean.write(clean_sn)
                     log.notice('building: %s%s' % (cxc_label, name))
