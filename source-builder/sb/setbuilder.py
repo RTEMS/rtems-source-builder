@@ -284,6 +284,13 @@ class buildset:
                 line = line[1:b]
             return line.strip()
 
+        def _clean_and_pack(line, last_line):
+            leading_ws = ' ' if len(line) > 0 and line[0].isspace() else ''
+            line = _clean(line)
+            if len(last_line) > 0:
+                line = last_line + leading_ws + line
+            return line
+
         bset = macro_expand(self.macros, bset)
         bsetname = bset
 
@@ -306,11 +313,16 @@ class buildset:
 
         try:
             lc = 0
+            ll = ''
             for l in bset:
                 lc += 1
-                l = _clean(l)
+                l = _clean_and_pack(l, ll)
                 if len(l) == 0:
                     continue
+                if l[-1] == '\\':
+                    ll = l[0:-1]
+                    continue
+                ll = ''
                 log.trace('_bset:   : %s: %03d: %s' % (self.bset, lc, l))
                 ls = l.split()
                 if ls[0][-1] == ':' and ls[0][:-1] == 'package':
