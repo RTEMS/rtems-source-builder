@@ -45,8 +45,7 @@ except KeyboardInterrupt:
     print('user terminated', file = sys.stderr)
     sys.exit(1)
 except:
-    print('error: unknown application load error', file = sys.stderr)
-    sys.exit(1)
+    raise
 
 def _check_bool(value):
     istrue = None
@@ -68,6 +67,13 @@ def _check_nil(value):
     else:
         istrue = False
     return istrue
+
+def _check_number(value):
+    try:
+        float(value)
+        return True
+    except ValueError:
+        return False
 
 class package:
 
@@ -283,6 +289,7 @@ class file:
         return s
 
     def _reset(self, name):
+        self.parent = 'root'
         self.name = name
         self.load_depth = 0
         self.configpath = []
@@ -430,7 +437,8 @@ class file:
             if len(shell_macro) > 3:
                 e = execute.capture_execution()
                 if options.host_windows:
-                    shell_cmd = ''.join([c if c != '"' else '\\' + c for c in shell_macro[2:-1]])
+                    shell_cmd = \
+                        ''.join([c if c != '"' else '\\' + c for c in shell_macro[2:-1]])
                     cmd = '%s -c "%s"' % (self.macros.expand('%{__sh}'), shell_cmd)
                 else:
                     cmd = shell_macro[2:-1]
@@ -458,7 +466,8 @@ class file:
                         if braces > 0:
                             braces -= 1
                         else:
-                            shell_cmd = '%(' + self._shell(line[pos + 2:p], nesting + 1) + ')'
+                            shell_cmd = '%(' + \
+                                self._shell(line[pos + 2:p], nesting + 1) + ')'
                             line = line[:pos] + _exec(shell_cmd) + line[p + 1:]
                             updating = True
                             break
@@ -472,9 +481,10 @@ class file:
            ('with_download' in self.macros and self.macros['with_download'] == '1'):
             return '0'
         ok = False
-        log.trace('pkgconfig: check: crossc=%d pkg_crossc=%d prefix=%s' % ( self._cross_compile(),
-                                                                            self.pkgconfig_crosscompile,
-                                                                            self.pkgconfig_prefix))
+        log.trace('pkgconfig: check: crossc=%d pkg_crossc=%d prefix=%s'
+                  % ( self._cross_compile(),
+                      self.pkgconfig_crosscompile,
+                      self.pkgconfig_prefix))
         log.trace('pkgconfig: check: test=%s' % (test))
         if type(test) == str:
             test = test.split()
@@ -496,6 +506,7 @@ class file:
             except pkgconfig.error as pe:
                 self._error('pkgconfig: check: %s' % (pe))
             except:
+                raise
                 raise error.internal('pkgconfig failure')
         if ok:
             return '1'
@@ -520,6 +531,7 @@ class file:
             except pkgconfig.error as pe:
                 self._error('pkgconfig: %s:  %s' % (flags, pe))
             except:
+                raise
                 raise error.internal('pkgconfig failure')
         if pkg_flags is None:
             pkg_flags = ''
@@ -594,7 +606,8 @@ class file:
                 elif m.startswith('%{expand'):
                     colon = m.find(':')
                     if colon < 8:
-                        log.warning(self._name_line_msg('malformed expand macro, no colon found'))
+                        log.warning(self._name_line_msg('malformed expand macro, ' \
+                                                        'no colon found'))
                     else:
                         e = self._expand(m[colon + 1:-1].strip())
                         s = s.replace(m, self._label(e))
@@ -861,7 +874,8 @@ class file:
                             dir, info, data = self._process_directive(r, dir, info, data)
                     else:
                         if in_dir != dir:
-                            self._error('directives cannot change scope across if statements')
+                            self._error('directives cannot change' \
+                                        ' scope across if statements')
 
                     return data
                 if r[1] == '%else':
@@ -904,34 +918,42 @@ class file:
                 elif cls[0] == '&&':
                     join_op = 'and'
                 cls = cls[1:]
-                log.trace('config: %s: %3d:  _if[%i]: joining: %s' % (self.name, self.lc,
-                                                                      self.if_depth,
-                                                                      join_op))
+                log.trace('config: %s: %3d:  _if[%i]: joining: %s' % \
+                          (self.name, self.lc,
+                           self.if_depth,
+                           join_op))
+                # If OR and the previous check was true short circuit the evaluation
+                if join_op == 'or' and cistrue:
+                    log.trace('config: %s: %3d:  _if[%i]: OR true, short circuit eval' % \
+                              (self.name, self.lc,
+                               self.if_depth))
+                    break
             ori = 0
             andi = 0
             i = len(cls)
             if '||' in cls:
                 ori = cls.index('||')
-                log.trace('config: %s: %3d:  _if[%i}: OR found at %i' % (self.name, self.lc,
-                                                                         self.if_depth,
-                                                                         ori))
+                log.trace('config: %s: %3d:  _if[%i}: OR found at %i' % \
+                          (self.name, self.lc,
+                           self.if_depth,
+                           ori))
             if '&&' in cls:
                 andi = cls.index('&&')
-                log.trace('config: %s: %3d:  _if[%i]: AND found at %i' % (self.name, self.lc,
-                                                                          self.if_depth,
-                                                                          andi))
+                log.trace('config: %s: %3d:  _if[%i]: AND found at %i' % \
+                          (self.name, self.lc,
+                           self.if_depth,
+                           andi))
             if ori > 0 or andi > 0:
                 if ori == 0:
                     i = andi
                 elif andi == 0:
                     i = ori
-                elif ori < andi:
-                    i = andi
                 else:
-                    i = andi
-                log.trace('config: %s: %3d:  _if[%i]: next OP found at %i' % (self.name, self.lc,
-                                                                              self.if_depth,
-                                                                              i))
+                    i = min(ori, andi)
+                log.trace('config: %s: %3d:  _if[%i]: next OP found at %i' % \
+                          (self.name, self.lc,
+                           self.if_depth,
+                           i))
             ls = cls[:i]
             if len(ls) == 0:
                 self._error('invalid if expression: ' + reduce(add, sls, ''))
@@ -985,37 +1007,27 @@ class file:
                             ifls = (' '.join(ifls[:op_pos]), op, ' '.join(ifls[op_pos + 1:]))
                             break
                 if len(ifls) != 3:
-                     self._error('malformed if: ' + reduce(add, ls, ''))
-                if ifls[1] == '==':
-                    if ifls[0] == ifls[2]:
-                        istrue = True
-                    else:
-                        istrue = False
-                elif ifls[1] == '!=' or ifls[1] == '=!':
-                    if ifls[0] != ifls[2]:
-                        istrue = True
-                    else:
-                        istrue = False
-                elif ifls[1] == '>':
-                    if ifls[0] > ifls[2]:
-                        istrue = True
-                    else:
-                        istrue = False
-                elif ifls[1] == '>=' or ifls[1] == '=>':
-                    if ifls[0] >= ifls[2]:
-                        istrue = True
-                    else:
-                        istrue = False
-                elif ifls[1] == '<=' or ifls[1] == '=<':
-                    if ifls[0] <= ifls[2]:
-                        istrue = True
-                    else:
-                        istrue = False
-                elif ifls[1] == '<':
-                    if ifls[0] < ifls[2]:
-                        istrue = True
-                    else:
-                        istrue = False
+                    self._error('malformed if: ' + reduce(add, ls, ''))
+                lhs = ifls[0]
+                operator = ifls[1]
+                rhs = ifls[2]
+                if _check_number(lhs) and _check_number(rhs):
+                    log.trace('config: %s: %3d:  _if: numeric value check' % \
+                              (self.name, self.lc))
+                    lhs = float(lhs)
+                    rhs = float(rhs)
+                if operator == '==':
+                    istrue = lhs == rhs
+                elif operator == '!=' or operator == '=!':
+                    istrue = lhs != rhs
+                elif operator == '>':
+                    istrue = lhs > rhs
+                elif operator == '>=' or operator == '=>':
+                    istrue = lhs >= rhs
+                elif operator == '<=' or operator == '=<':
+                    istrue = lhs <= rhs
+                elif operator == '<':
+                    istrue = lhs < rhs
                 else:
                     self._error('invalid %if operator: ' + reduce(add, ls, ''))
 
@@ -1226,7 +1238,8 @@ class file:
                                 log.trace('config: %s: %3d:  _parse: directive: %s' % \
                                           (self.name, self.lc, ls[0].strip()))
                                 return ('directive', ls[0].strip(), ls[1:])
-                        log.warning(self._name_line_msg("unknown directive: '" + ls[0] + "'"))
+                        log.warning(self._name_line_msg("unknown directive: '" + \
+                                                        ls[0] + "'"))
                         return ('data', [lo])
             else:
                 return ('data', [lo])
@@ -1247,7 +1260,8 @@ class file:
                 _package = results[2][0]
             else:
                 if results[2][0].strip() != '-n':
-                    log.warning(self._name_line_msg("unknown directive option: '%s'" % (' '.join(results[2]))))
+                    log.warning(self._name_line_msg("unknown directive option: '%s'" % \
+                                                    (' '.join(results[2]))))
                 _package = results[2][1].strip()
             self._set_package(_package)
         if directive and directive != results[1]:
@@ -1257,7 +1271,8 @@ class file:
         return (directive, info, data)
 
     def _process_data(self, results, directive, info, data):
-        log.trace('config: %s: %3d:  _process_data: result=#%r# directive=#%s# info=#%r# data=#%r#' % \
+        log.trace('config: %s: %3d:  _process_data: result=#%r# ' \
+                  'directive=#%s# info=#%r# data=#%r#' % \
                   (self.name, self.lc, results, directive, info, data))
         new_data = []
         for l in results[1]:
@@ -1284,10 +1299,12 @@ class file:
                 if info is not None:
                     self._info_append(info, info_data)
                 else:
-                    log.warning(self._name_line_msg("invalid format: '%s'" % (info_data[:-1])))
+                    log.warning(self._name_line_msg("invalid format: '%s'" % \
+                                                    (info_data[:-1])))
             else:
                 l = self._expand(l)
-                log.trace('config: %s: %3d:  _data: %s %s' % (self.name, self.lc, l, new_data))
+                log.trace('config: %s: %3d:  _data: %s %s' % \
+                          (self.name, self.lc, l, new_data))
                 new_data.append(l)
         return (directive, info, data + new_data)
 
@@ -1303,7 +1320,8 @@ class file:
         self.package = _package
 
     def _directive_extend(self, dir, data):
-        log.trace('config: %s: %3d:  _directive_extend: %s: %r' % (self.name, self.lc, dir, data))
+        log.trace('config: %s: %3d:  _directive_extend: %s: %r' % \
+                  (self.name, self.lc, dir, data))
         self._packages[self.package].directive_extend(dir, data)
 
     def _info_append(self, info, data):
@@ -1328,7 +1346,6 @@ class file:
             return end
 
         if self.load_depth == 0:
-            self._reset(name)
             self._packages[self.package] = package(self.package,
                                                    self.define('%{_arch}'),
                                                    self)
@@ -1336,6 +1353,7 @@ class file:
         self.load_depth += 1
 
         save_name = self.name
+        save_parent = self.parent
         save_lc = self.lc
 
         #
@@ -1382,7 +1400,9 @@ class file:
             raise error.general('error opening config file: %s' % (path.host(configname)))
 
         self.configpath += [configname]
-        self._includes += [configname]
+
+        self._includes += [configname + ':' + self.parent]
+        self.parent = configname
 
         self.name = self._relative_path(configname)
         self.lc = 0
@@ -1413,13 +1433,12 @@ class file:
         except:
             config.close()
             raise
-
-        config.close()
-
-        self.name = save_name
-        self.lc = save_lc
-
-        self.load_depth -= 1
+        finally:
+            config.close()
+            self.name = save_name
+            self.parent = save_parent
+            self.lc = save_lc
+            self.load_depth -= 1
 
     def defined(self, name):
         return name in self.macros
@@ -1456,7 +1475,7 @@ class file:
             raise error.general('package "' + _package + '" not found')
         if name not in self._packages[_package].directives:
             raise error.general('directive "' + name + \
-                                    '" not found in package "' + _package + '"')
+                                '" not found in package "' + _package + '"')
         return self._packages[_package].directives[name]
 
     def abspath(self, rpath):

@@ -48,8 +48,7 @@ except KeyboardInterrupt:
     print('abort: user terminated', file = sys.stderr)
     sys.exit(1)
 except:
-    print('error: unknown application load error', file = sys.stderr)
-    sys.exit(1)
+    raise
 
 def macro_expand(macros, _str):
     cstr = None
@@ -285,6 +284,7 @@ class buildset:
                 line = line[1:b]
             return line.strip()
 
+        bset = macro_expand(self.macros, bset)
         bsetname = bset
 
         if not path.exists(bsetname):
@@ -316,15 +316,22 @@ class buildset:
                 if ls[0][-1] == ':' and ls[0][:-1] == 'package':
                     self.bset_pkg = ls[1].strip()
                     self.macros['package'] = self.bset_pkg
-                elif ls[0][0] == '%':
+                elif ls[0][0] == '%' and (len(ls[0]) > 1 and ls[0][1] != '{'):
                     def err(msg):
                         raise error.general('%s:%d: %s' % (self.bset, lc, msg))
-                    if ls[0] == '%define':
+                    if ls[0] == '%define' or ls[0] == '%defineifnot' :
+                        name = ls[1].strip()
+                        value = None
                         if len(ls) > 2:
-                            self.macros.define(ls[1].strip(),
-                                               ' '.join([f.strip() for f in ls[2:]]))
-                        else:
-                            self.macros.define(ls[1].strip())
+                            value = ' '.join([f.strip() for f in ls[2:]])
+                        if ls[0] == '%defineifnot':
+                            if self.macros.defined(name):
+                                name = None
+                        if name is not None:
+                            if value is not None:
+                                self.macros.define(name, value)
+                            else:
+                                self.macros.define(name)
                     elif ls[0] == '%undefine':
                         if len(ls) > 2:
                             raise error.general('%s:%d: %undefine requires ' \
@@ -337,7 +344,7 @@ class buildset:
                     elif ls[0] == '%hash':
                         sources.hash(ls[1:], self.macros, err)
                 else:
-                    l = l.strip()
+                    l = macro_expand(self.macros, l.strip())
                     c = build.find_config(l, self.configs)
                     if c is None:
                         raise error.general('%s:%d: cannot find file: %s' % (self.bset,
@@ -674,6 +681,16 @@ def list_bset_cfg_files(opts, configs):
         return True
     return False
 
+def list_host(opts):
+    if opts.get_arg('--list-host'):
+        print('Host operating system information:')
+        print('Operating system: %s' % macro_expand(opts.defaults, '%{_os}'))
+        print('Number of processors: %s' % macro_expand(opts.defaults, '%{_ncpus}'))
+        print('Build architecture: %s' % macro_expand(opts.defaults, '%{_host_arch}'))
+        print('Host triplet: %s' % macro_expand(opts.defaults, '%{_host}'))
+        return True
+    return False
+
 def run():
     import sys
     ec = 0
@@ -684,6 +701,7 @@ def run():
                     '--list-bsets':    'List available build sets',
                     '--list-configs':  'List available configuration files.',
                     '--list-deps':     'List the dependent files.',
+                    '--list-host':     'List host information and the host triplet.',
                     '--bset-tar-file': 'Create a build set tar file',
                     '--pkg-tar-files': 'Create package tar files',
                     '--no-report':     'Do not create a package report.',
@@ -721,7 +739,8 @@ def run():
             deps = []
         else:
             deps = None
-        if not list_bset_cfg_files(opts, configs):
+
+        if not list_bset_cfg_files(opts, configs) and not list_host(opts):
             prefix = macro_expand(opts.defaults, '%{_prefix}')
             if opts.canadian_cross():
                 opts.disable_install()

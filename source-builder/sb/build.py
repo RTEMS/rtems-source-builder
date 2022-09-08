@@ -48,8 +48,7 @@ except KeyboardInterrupt:
     print('abort: user terminated')
     sys.exit(1)
 except:
-    print('error: unknown application load error')
-    sys.exit(1)
+    raise
 
 def humanize_number(num, suffix):
     for unit in ['','K','M','G','T','P','E','Z']:
@@ -635,6 +634,10 @@ class build:
             return 0
         return package.get_size('installed')
 
+    def includes(self):
+        if self.config:
+            return self.config.includes()
+
 def get_configs(opts):
 
     def _scan(_path, ext):
@@ -648,10 +651,17 @@ def get_configs(opts):
         return configs
 
     configs = { 'paths': [], 'files': [] }
-    for cp in opts.defaults.expand('%{_configdir}').split(':'):
+    paths = opts.defaults.expand('%{_configdir}').split(':')
+    root = path.host(os.path.commonprefix(paths))
+    configs['root'] = root
+    configs['localpaths'] = [lp[len(root):] for lp in paths]
+    for cp in paths:
         hcp = path.host(path.abspath(cp))
         configs['paths'] += [hcp]
-        configs['files'] += _scan(hcp, ['.cfg', '.bset'])
+        hpconfigs = sorted(set(_scan(hcp, ['.cfg', '.bset'])))
+        hcplocal = hcp[len(root):]
+        configs[hcplocal] = [path.join(hcplocal, c) for c in hpconfigs]
+        configs['files'] += hpconfigs
     configs['files'] = sorted(set(configs['files']))
     return configs
 
