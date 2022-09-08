@@ -6,5 +6,5 @@
 #
 5/rtems-epiphany
 5/rtems-microblaze
-5/rtems-riscv32
+5/rtems-riscv
 5/rtems-x86_64
