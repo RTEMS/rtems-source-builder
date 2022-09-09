@@ -20,5 +20,4 @@ graphics/t1lib
 # Networking
 #
 ftp/curl
-net/lwip
 net/protobuf
