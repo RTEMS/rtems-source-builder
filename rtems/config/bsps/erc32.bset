@@ -11,9 +11,7 @@
 
 %define mail_single_report 1
 
-%define with_rtems_bsp erc32
-%define rtems_target   sparc-rtems%{rtems_version}
-%define rtems_host     %{rtems_target}
+%define with_rtems_bsp sparc/erc32
 
 6/rtems-sparc
 6/rtems-kernel

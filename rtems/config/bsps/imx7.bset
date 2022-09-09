@@ -1,8 +1,6 @@
 %define mail_single_report 1
 
-%define with_rtems_bsp imx7
-%define rtems_target   arm-rtems%{rtems_version}
-%define rtems_host     %{rtems_target}
+%define with_rtems_bsp arm/imx7
 
 6/rtems-arm
 6/rtems-kernel

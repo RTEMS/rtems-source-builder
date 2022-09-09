@@ -11,9 +11,7 @@
 
 %define mail_single_report 1
 
-%define with_rtems_bsp pc686
-%define rtems_target   i386-rtems%{rtems_version}
-%define rtems_host     %{rtems_target}
+%define with_rtems_bsp i386/pc686
 
 6/rtems-i386
 6/rtems-kernel
