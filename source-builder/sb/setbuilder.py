@@ -560,7 +560,8 @@ class buildset:
                         buildroot = path.join(b.config.expand('%{buildroot}'), prefix)
                         if self.staging():
                             prefix = b.config.expand('%{stagingroot}')
-                        self.install(self.install_mode(), b.name(), buildroot, prefix)
+                        if not self.opts.no_install():
+                            self.install(self.install_mode(), b.name(), buildroot, prefix)
             #
             # Sizes ...
             #
