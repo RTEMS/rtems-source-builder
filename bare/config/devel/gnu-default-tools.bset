@@ -7,6 +7,12 @@
 %define gcc_version_message RTEMS bare %{rtems_version}, RSB %{_sbgit_id}, Newlib %{newlib_version}
 
 #
+# GCC requires a GNU sed so build an internal version if one is not
+# available
+#
+%include textproc/gsed-internal
+
+#
 # Build gdb first to raise the Python install error as early as
 # possible. GDB needs expat so it needs to be built before gdb.
 #

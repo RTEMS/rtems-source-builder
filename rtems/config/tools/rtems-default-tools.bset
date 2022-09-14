@@ -2,6 +2,11 @@
 # Default tools build
 #
 
+# GCC requires a GNU sed so build an internal version if one is not
+# available
+#
+%include textproc/gsed-internal.bset
+
 #
 # Build gdb first to raise the Python install error as early as
 # possible. GDB needs expat so it needs to be built before gdb.
