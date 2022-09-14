@@ -1,0 +1,12 @@
+#
+# Internal GNU sed
+#
+
+%define _internal_gsed      yes
+%define _internal_gsed_path %{_tmppath}/sb-%{_uid}/${SB_PREFIX_CLEAN}
+%define _disable_collecting yes
+%define _disable_packaging  yes
+%define _disable_reporting  yes
+%define _disable_installing yes
+
+%include textproc/gsed.bset
