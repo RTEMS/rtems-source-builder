@@ -226,6 +226,9 @@ class buildset:
     def installing(self):
         return self.install_mode() == 'installing'
 
+    def installable(self):
+        return not self.opts.no_install() or self.staging()
+
     def staging(self):
         return not self.installing()
 
@@ -553,14 +556,14 @@ class buildset:
                        ', '.join([b.name() for b in builds])))
             if deps is None and not have_errors:
                 for b in builds:
-                    log.trace('_bset:   : %s: %r' % (self.install_mode(),
-                                                     b.installable()))
+                    log.trace('_bset:   : %s: installable=%r build-installable=%r' % \
+                              (self.install_mode(), self.installable(), b.installable()))
                     if b.installable():
                         prefix = b.config.expand('%{_prefix}')
                         buildroot = path.join(b.config.expand('%{buildroot}'), prefix)
                         if self.staging():
                             prefix = b.config.expand('%{stagingroot}')
-                        if not self.opts.no_install():
+                        if self.installable():
                             self.install(self.install_mode(), b.name(), buildroot, prefix)
             #
             # Sizes ...
