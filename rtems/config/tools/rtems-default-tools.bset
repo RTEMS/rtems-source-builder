@@ -5,7 +5,8 @@
 # GCC requires a GNU sed so build an internal version if one is not
 # available
 #
-%include textproc/gsed-internal.bset
+%define _internal_gsed_path %{_tmppath}/sb-%{_uid}/${SB_PREFIX_CLEAN}
+textproc/gsed-internal
 
 #
 # Build gdb first to raise the Python install error as early as

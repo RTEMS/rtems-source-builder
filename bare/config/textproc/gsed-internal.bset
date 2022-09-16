@@ -2,8 +2,11 @@
 # Internal GNU sed
 #
 
+%if !{defined _internal_gsed_path}
+ %error no gsed internal install path defined
+%endif
+
 %define _internal_gsed      yes
-%define _internal_gsed_path %{_tmppath}/sb-%{_uid}/${SB_PREFIX_CLEAN}
 %define _disable_collecting yes
 %define _disable_packaging  yes
 %define _disable_reporting  yes

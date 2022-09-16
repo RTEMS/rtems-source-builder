@@ -10,6 +10,7 @@
 # GCC requires a GNU sed so build an internal version if one is not
 # available
 #
+%define _internal_gsed_path %{_tmppath}/sb-%{_uid}/${SB_PREFIX_CLEAN}
 %include textproc/gsed-internal
 
 #
