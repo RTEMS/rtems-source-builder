@@ -433,19 +433,11 @@ class buildset:
         interrupted = False
 
         #
-        # If this is the outter most buildset it's files are installed. Nested
-        # build sets staged their installed file. The staged files are install
-        # when the outtter most build finishes.
+        # If installing switch to staging. Not sure if this is still
+        # needed.
         #
-        if nesting_count != 1:
-            if self.installing():
-                self.macros['install_mode'] = 'staging'
-
-        #
-        # Only the outter build set can have staging to install. Get the staging
-        # root via the config because it could require a valid config.
-        #
-        have_staging = False
+        if self.installing():
+            self.macros['install_mode'] = 'staging'
 
         try:
             configs = self.load()
@@ -453,7 +445,7 @@ class buildset:
             log.trace('_bset: %2d: %s: configs: %s'  % (nesting_count,
                                                         self.bset, ', '.join(configs)))
 
-            if nesting_count == 1 and len(configs) > 1:
+            if nesting_count == 1:
                 #
                 # Prepend staging areas, bin directory to the
                 # path. Lets the later package depend on the earlier
@@ -485,8 +477,6 @@ class buildset:
                                                          '=' * (74 - len(configs[s]))))
                         bs = buildset(configs[s], self.configs, opts, macros)
                         bs.build(deps, nesting_count, mail)
-                        if self.installing():
-                            have_staging = True
                         del bs
                     elif configs[s].endswith('.cfg'):
                         if mail:
@@ -620,7 +610,7 @@ class buildset:
             #
             # If builds have been staged install into the final prefix.
             #
-            if have_staging and not have_errors:
+            if not have_errors:
                 stagingroot = macro_expand(self.macros, '%{stagingroot}')
                 have_stagingroot = path.exists(stagingroot)
                 do_install = not self.opts.no_install()
