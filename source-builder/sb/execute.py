@@ -27,6 +27,7 @@
 from __future__ import print_function
 
 import functools
+import codecs
 import io
 import os
 import re
@@ -181,6 +182,7 @@ class execute(object):
 
             if trace_threads:
                 print('execute:_readthread: start')
+            decoder = codecs.getincrementaldecoder(sys.stdout.encoding)()
             count = 0
             line = ''
             try:
@@ -201,7 +203,7 @@ class execute(object):
                         break
                     # str and bytes are the same type in Python2
                     if type(data) is not str and type(data) is bytes:
-                        data = data.decode(sys.stdout.encoding)
+                        data = decoder.decode(data)
                     last_ch = data[-1]
                     sd = (line + data).split('\n')
                     if last_ch != '\n':
