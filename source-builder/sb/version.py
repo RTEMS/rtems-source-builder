@@ -89,9 +89,13 @@ _version_str = '%s.%s' % (_version, _revision)
 _released = False
 _git = False
 _is_loaded = False
+_top_dir = None
 
 def _top():
-    top = path.dirname(sys.argv[0])
+    if _top_dir is None:
+        top = path.dirname(sys.argv[0])
+    else:
+        top = _top_dir
     if len(top) == 0:
         top = '.'
     return top
@@ -182,6 +186,10 @@ def _load_git_version():
             _git = True
             _is_loaded = True
     return _git
+
+def set_top(top):
+    global _top_dir
+    _top_dir = top
 
 def load_release_settings(section, error = False):
     vc, v = _load_released_version_config()
