@@ -227,7 +227,7 @@ class buildset:
         return self.install_mode() == 'installing'
 
     def installable(self):
-        return not self.opts.no_install() or self.staging()
+        return not self.opts.no_install() and self.installing()
 
     def staging(self):
         return not self.installing()
@@ -436,7 +436,7 @@ class buildset:
         # If installing switch to staging. Not sure if this is still
         # needed.
         #
-        if self.installing():
+        if nesting_count > 1 and self.installing():
             self.macros['install_mode'] = 'staging'
 
         try:
@@ -538,10 +538,10 @@ class buildset:
             #
             # Installing or staging ...
             #
-            log.trace('_bset: %2d: %s: deps:%r no-install:%r' % \
+            log.trace('_bset: %2d: mode: %s: deps:%r no-install:%r' % \
                       (nesting_count, self.install_mode(),
                        deps is None, self.opts.no_install()))
-            log.trace('_bset: %2d: %s: builds: %s' % \
+            log.trace('_bset: %2d: mode: %s: builds: %s' % \
                       (nesting_count, self.install_mode(),
                        ', '.join([b.name() for b in builds])))
             if deps is None and not have_errors:
@@ -551,10 +551,9 @@ class buildset:
                     if b.installable():
                         prefix = b.config.expand('%{_prefix}')
                         buildroot = path.join(b.config.expand('%{buildroot}'), prefix)
-                        if self.staging():
-                            prefix = b.config.expand('%{stagingroot}')
+                        self.install('staging', b.name(), buildroot, b.config.expand('%{stagingroot}'))
                         if self.installable():
-                            self.install(self.install_mode(), b.name(), buildroot, prefix)
+                            self.install('installing', b.name(), buildroot, prefix)
             #
             # Sizes ...
             #
@@ -610,7 +609,7 @@ class buildset:
             #
             # If builds have been staged install into the final prefix.
             #
-            if not have_errors:
+            if self.installing() and not have_errors:
                 stagingroot = macro_expand(self.macros, '%{stagingroot}')
                 have_stagingroot = path.exists(stagingroot)
                 do_install = not self.opts.no_install()
