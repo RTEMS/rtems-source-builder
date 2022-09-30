@@ -182,7 +182,10 @@ class execute(object):
 
             if trace_threads:
                 print('execute:_readthread: start')
-            decoder = codecs.getincrementaldecoder(sys.stdout.encoding)()
+            if sys.stdout.encoding is not None:
+                decoder = codecs.getincrementaldecoder(sys.stdout.encoding)()
+            else:
+                decoder = None
             count = 0
             line = ''
             try:
@@ -202,7 +205,7 @@ class execute(object):
                             _output_line(line + '\n', exe, prefix, out, count)
                         break
                     # str and bytes are the same type in Python2
-                    if type(data) is not str and type(data) is bytes:
+                    if decoder is not None and type(data) is not str and type(data) is bytes:
                         data = decoder.decode(data)
                     last_ch = data[-1]
                     sd = (line + data).split('\n')
