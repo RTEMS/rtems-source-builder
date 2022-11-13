@@ -7,7 +7,7 @@
 #
 # RTEMS Version
 #
-%define rtems_version 4.11
+%define rtems_version 5
 
 #
 # The RTEMS URL paths.
@@ -17,4 +17,4 @@
 #
 # Build NetSNMP.
 #
-net-mgmt/net-snmp-5.7.2.1-1
+net-mgmt/net-snmp-5.9.3
