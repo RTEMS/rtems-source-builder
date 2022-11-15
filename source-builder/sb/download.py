@@ -132,9 +132,7 @@ def _hash_check(file_, absfile, macros, remove = True):
         if hasher is not None:
             del hasher
     else:
-        if version.released():
-            raise error.general('%s: no hash found in released RSB' % (file_))
-        log.warning('%s: no hash found' % (file_))
+        raise error.general('%s: no hash found in released RSB' % (file_))
     return not failed
 
 def _local_path(source, pathkey, config):
