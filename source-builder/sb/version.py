@@ -94,6 +94,8 @@ _top_dir = None
 def _top():
     if _top_dir is None:
         top = path.dirname(sys.argv[0])
+        if top.endswith('source-builder/sb'):
+            top = path.dirname(path.dirname(top))
     else:
         top = _top_dir
     if len(top) == 0:
