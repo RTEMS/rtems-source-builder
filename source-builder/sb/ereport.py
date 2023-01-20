@@ -54,7 +54,9 @@ def generate(name, opts, header = None, footer = None):
             name = name.replace('/', '-')
             with open(name, 'w') as l:
                 l.write(os.linesep.join(r))
-            log.notice('  See error report: %s' % (name))
+            log.notice(os.linesep.join(['  See error report: %s' % (name),
+                '  Note: In some cases the error appears only in',
+                '  the complete build log (see --log option)']))
         except:
             log.stderr('error: failure to create error report')
             raise
