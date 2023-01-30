@@ -11,7 +11,7 @@
 # available
 #
 %define _internal_gsed_path %{_tmppath}/sb-%{_uid}/${SB_PREFIX_CLEAN}
-%include textproc/gsed-internal
+%include textproc/gsed-internal.bset
 
 #
 # Build gdb first to raise the Python install error as early as
