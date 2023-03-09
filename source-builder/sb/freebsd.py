@@ -101,22 +101,24 @@ def load():
             cxx = '/usr/bin/clang++'
             if check.check_exe(cxx, cxx):
                 raise error.general('no valid c++ found')
-        #
-        # Assume the compiler is clang and so we need to increase
-        # bracket depth build build the gcc ARM compiler.
-        #
-        defines['build_cflags'] = '-O2 -pipe -fbracket-depth=1024'
-        defines['build_cxxflags'] = '-O2 -pipe -fbracket-depth=1024'
         cvs = 'cvs'
         if check.check_exe(cvs, cvs):
             defines['__cvs'] = cvs
+        defines['build_cflags'] = '-O2 -pipe'
+        defines['build_cxxflags'] = '-O2 -pipe'
+        if fb_version <= 12:
+            #
+            # Assume the compiler is clang and so we need to increase
+            # bracket depth build build the gcc ARM compiler.
+            #
+            defines['build_cflags'] += ' -fbracket-depth=1024'
+            defines['build_cxxflags'] += ' -fbracket-depth=1024'
         #
         # Fix the mess iconv is on FreeBSD 10.0 and higher.
         #
         defines['iconv_includes'] = ('none', 'none', '%{host_includes} %{host_ldflags}')
         if fb_version >= 12:
             defines['iconv_prefix'] = ('none', 'none', '%{_usr}')
-
         #
         # On 11.0+ makeinfo and install-info have moved to /usr/local/...
         #
