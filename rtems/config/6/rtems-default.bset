@@ -13,7 +13,7 @@
 %defineifnot with_rtems_expat    devel/expat-2.4.8-1
 %defineifnot with_rtems_gmp      devel/gmp-6.2.1
 %defineifnot with_rtems_gdb      tools/rtems-gdb-13.1
-%defineifnot with_rtems_binutils tools/rtems-binutils-2.40
+%defineifnot with_rtems_binutils tools/rtems-binutils-2.39
 %defineifnot with_rtems_gcc      tools/rtems-gcc-12-newlib-head
 %defineifnot with_rtems_tools    tools/rtems-tools-6
 
