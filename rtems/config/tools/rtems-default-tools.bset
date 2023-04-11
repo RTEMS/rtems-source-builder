@@ -5,16 +5,23 @@
 # GCC requires a GNU sed so build an internal version if one is not
 # available
 #
-%define _internal_gsed_path %{_tmppath}/sb-%{_uid}/${SB_PREFIX_CLEAN}
-textproc/gsed-internal
+%define _internal_gsed_path %{_tmpinternal}
+%defineifnot with_rtems_gmp textproc/gsed-internal
+
+# GNU tools need texinfo for makeinfo to build documentation
+%define _internal_texinfo_path %{_tmpinternal}
+%defineifnot with_rtems_texinfo print/texinfo-internal
 
 #
 # Build gdb first to raise the Python install error as early as
-# possible. GDB needs expat so it needs to be built before gdb.
+# possible.
+#
+# GCC and GDB need GMP.
 #
 %{with_rtems_dtc}
 %{with_rtems_expat}
 %{with_rtems_gmp}
+%{with_rtems_texinfo}
 %{with_rtems_gdb}
 %{with_rtems_binutils}
 %{with_rtems_gcc}

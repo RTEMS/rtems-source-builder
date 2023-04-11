@@ -1,11 +1,11 @@
 #
-# Internal GNU sed
+# Internal GNU texinfo
 #
 
-%define _internal_gsed      yes
+%define _internal_texinfo   yes
 %define _disable_collecting yes
 %define _disable_packaging  yes
 %define _disable_reporting  yes
 %define _disable_installing yes
 
-%include textproc/gsed.bset
+%include print/texinfo.bset
