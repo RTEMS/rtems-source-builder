@@ -6,7 +6,7 @@
 # available
 #
 %define _internal_gsed_path %{_tmpinternal}
-%defineifnot with_rtems_gmp textproc/gsed-internal
+%defineifnot with_rtems_gsed textproc/gsed-internal
 
 # GNU tools need texinfo for makeinfo to build documentation
 %define _internal_texinfo_path %{_tmpinternal}
@@ -21,6 +21,7 @@
 %{with_rtems_dtc}
 %{with_rtems_expat}
 %{with_rtems_gmp}
+%{with_rtems_gsed}
 %{with_rtems_texinfo}
 %{with_rtems_gdb}
 %{with_rtems_binutils}
