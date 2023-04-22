@@ -71,6 +71,20 @@ def shell(path):
             path = path.replace('//', '/')
     return path
 
+def host_encode(dpath):
+    '''Encoding the path was present in the RSB however on a ZFS pool I am
+       seeing a failure with a go test in gcc:
+          gcc/testsuite/go.test/test/fixedbugs/issue27836.dir
+       Not encoding works however I am not sure why the encoding was added
+       so the following keeps the encoding and falls back to not encoded
+       if there is an error.0
+    '''
+    try:
+        return host(dpath).encode('utf8')
+    except:
+        pass
+    return dpath
+
 def basename(path):
     path = shell(path)
     return shell(os.path.basename(host(path)))
@@ -189,11 +203,11 @@ def removeall(path):
     # get to the max path length on Windows.
     #
     def _isdir(path):
-        hpath = host(path).encode('utf8')
+        hpath = host_encode(path)
         return os.path.isdir(hpath) and not os.path.islink(hpath)
 
     def _remove_node(path):
-        hpath = host(path).encode('utf8')
+        hpath = host_encode(path)
         if not os.path.islink(hpath) and not os.access(hpath, os.W_OK):
             os.chmod(hpath, stat.S_IWUSR)
         if _isdir(path):
@@ -216,7 +230,7 @@ def removeall(path):
             _remove_node(dir)
 
     path = shell(path)
-    hpath = host(path).encode('utf8')
+    hpath = host_encode(path)
 
     if os.path.exists(hpath):
         _remove(path)
@@ -317,11 +331,11 @@ def get_size(path, depth = -1):
     # get to the max path length on Windows.
     #
     def _isdir(path):
-        hpath = host(path).encode('utf8')
+        hpath = host_encode(path)
         return os.path.isdir(hpath) and not os.path.islink(hpath)
 
     def _node_size(path):
-        hpath = host(path).encode('utf8')
+        hpath = host_encode(path)
         size = 0
         if not os.path.islink(hpath):
             size = os.path.getsize(hpath)
@@ -345,7 +359,7 @@ def get_size(path, depth = -1):
         return size
 
     path = shell(path)
-    hpath = host(path).encode('utf8')
+    hpath = host_encode(path)
     size = 0
 
     if os.path.exists(hpath):
