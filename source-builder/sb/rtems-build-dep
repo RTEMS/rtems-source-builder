@@ -154,13 +154,16 @@ if [ ${op} = "library" ]; then
 		      awk 'BEGIN {FS="-L"} {for (i=0;++i<=NF;) if (length($i) > 0) print $i;}')
     for p in ${lib_paths_1} ${lib_paths_2}
     do
-	if [ ${verbose} = yes ]; then
-	    echo "Library: ${p}/${name}"
-	fi
-	if ls ${p}/${name} 1> /dev/null 2>&1; then
-	    echo "found"
-	    exit 0
-	fi
+	for lname in ${name} lib${name}.a
+	do
+	    if [ ${verbose} = yes ]; then
+		echo "Library: ${p}/${lname}"
+	    fi
+	    if ls ${p}/${lname} 1> /dev/null 2>&1; then
+		echo "found"
+		exit 0
+	    fi
+	done
     done
     echo "not-found"
     exit 0
