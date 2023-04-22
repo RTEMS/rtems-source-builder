@@ -86,6 +86,19 @@ def log(s, lf = True):
                 sys.stdout.flush()
             print(s, end = '', file = out)
 
+def cflags_filter(cflags, prefixes, include=True):
+    cflags = cflags.split(' ')
+    f_cflags = []
+    for f in cflags:
+        for p in prefixes:
+            if f.startswith(p):
+                f_cflags += [f]
+    if not include:
+        not_f_cflags = [f for f in cflags if f not in f_cflags]
+        f_cflags = not_f_cflags
+    return ' '.join(f_cflags)
+
+
 def run(argv):
 
     class version_action(argparse.Action):
@@ -110,6 +123,7 @@ def run(argv):
                       help = 'Make error messages short.')
     opts.add_argument('--silence-errors', dest = 'silence_errors', action = 'store_true',
                       default = False,
+
                       help = 'Do not print any errors.')
     opts.add_argument('--errors-to-stdout', dest = 'errors_to_stdout', action = 'store_true',
                       default = False,
@@ -118,6 +132,14 @@ def run(argv):
                       default = False,
                       help = 'This prints pre-processor and compile flags required to' \
                              ' compile the package(s)')
+    opts.add_argument('--cflags-only-I', dest = 'cflags_only_i', action = 'store_true',
+                      default = False,
+                      help = 'This prints the -I part of "--cflags". That is, it defines the header' \
+                             'search path but doesn\'t specify anything else.')
+    opts.add_argument('--cflags-only-other', dest = 'cflags_only_other', action = 'store_true',
+                      default = False,
+                      help = 'Return all compiler flags, other than the include path flags, ' \
+                             'required to compile against the package.')
     opts.add_argument('--libs', dest = 'libs', action = 'store_true',
                       default = False,
                       help = 'This option is identical to "--cflags", only it prints the' \
@@ -190,6 +212,20 @@ def run(argv):
             if args.cflags:
                 if len(flags['cflags']):
                     print(flags['cflags'])
+                    log('cflags: %s' % (flags['cflags']))
+                else:
+                    log('cflags: empty')
+            if args.cflags_only_i:
+                cflags = cflags_filter(flags['cflags'], ['-I', '-system'], True)
+                if len(cflags):
+                    print(cflags)
+                    log('cflags: %s' % (flags['cflags']))
+                else:
+                    log('cflags: empty')
+            if args.cflags_only_other:
+                cflags = cflags_filter(flags['cflags'], ['-I', '-system'], False)
+                if len(cflags):
+                    print(cflags)
                     log('cflags: %s' % (flags['cflags']))
                 else:
                     log('cflags: empty')
