@@ -634,6 +634,7 @@ class command_line:
             if len(ab) != 2:
                 raise error.general('invalid --rtems-bsp option')
             self.args.append('--target=%s-rtems%s' % (ab[0], rtems_version))
+            self.args.append('--with-rtems-arch=%s' % (ab[0]))
             self.args.append('--with-rtems-bsp=%s' % (ab[1]))
 
 def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc', logfile = True):
