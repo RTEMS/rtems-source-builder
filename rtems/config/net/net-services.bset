@@ -1,0 +1,15 @@
+#
+# Build set for RTEMS Net Services
+#
+
+%define release 1
+
+#
+# The RTEMS Package defines
+#
+%include rtems-package.bset
+
+#
+# Build Net Services
+#
+net/net-services-1
