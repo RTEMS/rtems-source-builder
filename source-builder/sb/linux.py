@@ -28,6 +28,7 @@ import pprint
 import os
 
 from . import path
+from . import log
 
 def load():
     uname = os.uname()
@@ -56,36 +57,11 @@ def load():
         }
 
     # platform.dist() was removed in Python 3.8
-    if hasattr(platform, 'dist'):
-        # Works for LSB distros
-        try:
-            distro = platform.dist()[0]
-            distro_ver = float(platform.dist()[1])
-        except ValueError:
-         # Non LSB distro found, use failover"
-         pass
-    else:
-         distro = ''
-
-    # Non LSB - fail over to issue
-    if distro == '':
-        try:
-            issue = open('/etc/issue').read()
-            distro = issue.split(' ')[0]
-            distro_ver = float(issue.split(' ')[2])
-        except:
-            pass
-
-    distro = distro.lower()
-
-    # Manage distro aliases
-    if distro in ['centos']:
-        distro = 'redhat'
-    elif distro in ['fedora']:
-        if distro_ver < 17:
-            distro = 'redhat'
-    elif distro in ['ubuntu', 'mx', 'linuxmint']:
-        distro = 'debian'
+    # The distro module (introduced in Python 3.6, back-ported to 2.6)
+    # is preferred.
+    distro = ''
+    distro_like = ''
+    distro_ver = 0
 
     variations = {
         'debian' : { '__bzip2':        ('exe',     'required', '/bin/bzip2'),
@@ -114,10 +90,63 @@ def load():
                      '__sed':          ('exe',     'required', '/bin/sed') },
         }
 
+    try:
+        import distro as distro_mod
+        distro = distro_mod.id()
+        distro_like = distro_mod.like()
+        try:
+            distro_ver = float(distro_mod.version())
+        except ValueError:
+            pass
+    except:
+        pass
+
+    if distro == '' and hasattr(platform, 'dist'):
+        distro = platform.dist()[0]
+        try:
+            distro_ver = float(platform.dist()[1])
+        except ValueError:
+            pass
+
+    # Non LSB - last resort, try issue
+    if distro == '':
+        try:
+            with open('/etc/issue') as f:
+                issue = f.read().split(' ')
+                distro = issue[0]
+                distro_ver = float(issue[2])
+        except:
+            pass
+
+    if distro:
+        distro = distro.lower()
+    if distro_like:
+        distro_like = distro_like.lower().split(' ')[0]
+
+    # Some additional distro aliases
+    if distro in ['centos']:
+        distro_like = 'redhat'
+    elif distro in ['fedora']:
+        if distro_ver < 17:
+            distro_like = 'redhat'
+    elif distro in ['ubuntu', 'mx', 'linuxmint']:
+        distro_like = 'debian'
+
+    if not (distro in variations) and (distro_like in variations):
+        distro = distro_like
+        # Versions don't carry over to likes; e.g. linuxmint 21.6 != debian 21.6.
+        distro_ver = 0
+
     if distro in variations:
         for v in variations[distro]:
             if path.exists(variations[distro][v][2]):
                 defines[v] = variations[distro][v]
+    else:
+        log.warning('Unrecognized OS distro; assuming defaults for grep, sed, etc.')
+        try:
+            distro_mod
+        except:
+            log.warning("The 'distro' package may fix this problem; try 'pip install distro'.")
 
     defines['_build']        = defines['_host']
     defines['_build_vendor'] = defines['_host_vendor']
