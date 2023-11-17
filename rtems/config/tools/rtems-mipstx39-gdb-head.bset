@@ -1,0 +1,7 @@
+%define release 1
+%define rtems_arch mips
+%define gdb-sim-options --enable-sim-hardware
+%define win32-gdb-disable-sim
+%define _target mipstx39-rtems%{rtems_version}
+devel/gmp-6.2.1
+tools//rtems-gdb-head
