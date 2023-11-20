@@ -110,7 +110,7 @@ def _load_released_version_config():
                 import configparser
             except ImportError:
                 import ConfigParser as configparser
-            v = configparser.SafeConfigParser()
+            v = configparser.ConfigParser()
             try:
                 v.read(path.host(ver))
             except Exception as e:
