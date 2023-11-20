@@ -90,7 +90,7 @@ class package(object):
     get_recursion = ['cflags', 'libs']
     no_dup_flags = ['-I', '-l', '-L']
     dual_opts = ['-D', '-U', '-I', '-l', '-L']
-    lib_list_splitter = re.compile('[\s,]+')
+    lib_list_splitter = re.compile(r'[\s,]+')
     loaded_prefixes = None
     loaded = {}
 
@@ -514,7 +514,7 @@ class package(object):
             return None
         s = ''
         if self.file_:
-            mre = re.compile('\$\{[^\}]+\}')
+            mre = re.compile(r'\$\{[^\}]+\}')
             s = self.fields[label.lower()]
             expanded = True
             tm = False
