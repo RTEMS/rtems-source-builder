@@ -132,7 +132,7 @@ def _hash_check(file_, absfile, macros, remove = True):
         if hasher is not None:
             del hasher
     else:
-        raise error.general('%s: no hash found in released RSB' % (file_))
+        raise error.general('%s: no hash found' % (file_))
     return not failed
 
 def _local_path(source, pathkey, config):
@@ -189,7 +189,7 @@ def _http_parser(source, pathkey, config, opts):
         #
         # Wipe out everything special in the file name.
         #
-        source['file'] = re.sub(r'[^a-zA-Z0-9.\-]+', '-', source['file'])
+        source['file'] = re.sub(r'[^a-zA-Z0-9.\-_]+', '-', source['file'])
         max_file_len = 127
         if len(source['file']) > max_file_len:
             raise error.general('file name length is greater than %i (maybe use --rsb-file=FILE option): %s' % \
