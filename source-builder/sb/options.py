@@ -46,7 +46,7 @@ basepath = 'sb'
 #
 # Save the host and POSIX state.
 #
-host_windows = False
+host_windows = os.name == 'nt'
 host_posix = True
 
 class command_line:
@@ -103,6 +103,10 @@ class command_line:
                 self.defaults[self._long_opts[lo][0]] = ('none',
                                                          'none',
                                                          self._long_opts[lo][3])
+        # Set the _uid field, performance improvement on Unix
+        if not host_windows:
+            self.defaults['_uid'] = str(os.getuid())
+            self.defaults['_gid'] = str(os.getgid())
 
     def __str__(self):
         def _dict(dd):
