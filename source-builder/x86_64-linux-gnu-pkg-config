@@ -1,0 +1,3 @@
+#! /bin/sh
+base=$(dirname $0)
+exec ${base}/pkg-config $*
