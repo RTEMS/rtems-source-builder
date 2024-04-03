@@ -85,6 +85,8 @@ def _hash_check(file_, absfile, macros, remove = True):
         hash = hash.split()
         if len(hash) != 2:
             raise error.internal('invalid hash format: %s' % (file_))
+        if hash[0] == 'NO-HASH':
+            return not failed
         try:
             hashlib_algorithms = hashlib.algorithms
         except:
@@ -479,7 +481,8 @@ def _git_downloader(url, local, config, opts):
     else:
         repo.clean(['-f', '-d'])
         repo.reset('--hard')
-        repo.checkout('master')
+        default_branch = repo.default_branch()
+        repo.checkout(default_branch)
     for a in us[1:]:
         _as = a.split('=')
         if _as[0] == 'branch' or _as[0] == 'checkout':

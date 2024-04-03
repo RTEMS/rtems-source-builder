@@ -226,6 +226,18 @@ class repo:
                 hash = l1[len('commit '):]
         return hash
 
+    def default_branch(self):
+        ec, output = self._run(['remote', 'show'])
+        if ec == 0:
+            origin = output.split('\n')[0]
+            ec, output = self._run(['remote', 'show', origin])
+            if ec == 0:
+                for l in output.split('\n'):
+                    l = l.strip()
+                    if l.startswith('HEAD branch: '):
+                        return l[len('HEAD branch: '):]
+        return None
+
 if __name__ == '__main__':
     import os.path
     import sys
