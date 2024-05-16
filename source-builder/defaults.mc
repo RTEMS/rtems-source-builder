@@ -91,6 +91,7 @@ install_mode:        none,    none,     'installing'
 # Extra path a platform can override.
 _extra_path:         none,    none,     '%{_sbdir}'
 _ld_library_path:    none,    none,     'LD_LIBRARY_PATH'
+_library_path:       none,    none,     'LIBRARY_PATH'
 
 # Paths
 _host_platform:      none,    none,     '%{_host_cpu}-%{_host_vendor}-%{_host_os}%{?_gnu}'

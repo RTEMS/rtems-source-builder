@@ -19,6 +19,6 @@ devel/autotools-internal
 devel/libiconv-1.14-1
 devel/gettext-0.18.3.1-1
 devel/libffi-3.0.13-1
-devel/pixman-0.40.0-1
-devel/glib-2.56.4-1
+devel/pixman-0.42.2
+devel/glib-2.80.2
 devel/qemu-5.2.0-1
