@@ -113,8 +113,8 @@ def run(argv):
 
     opts = argparse.ArgumentParser(prog = 'pkg-config', description = 'Package Configuration.')
     opts.add_argument('libraries', metavar='lib', type = str,  help = 'a library', nargs = '*')
-    opts.add_argument('--modversion', dest = 'modversion', action = 'store', default = None,
-                      help = 'Requests that the version information of the libraries.')
+    opts.add_argument('--modversion', dest = 'modversion', action = 'store_true', default = False,
+                      help = 'Requests the version information of the libraries.')
     opts.add_argument('--print-errors', dest = 'print_errors', action = 'store_true',
                       default = False,
                       help = 'Print any errors.')
@@ -189,6 +189,9 @@ def run(argv):
     opts.add_argument('--dump', dest = 'dump', action = 'store_true',
                       default = False,
                       help = 'Dump the package if one is found.')
+    opts.add_argument('--version', dest = 'version', action = 'store_true',
+                      default = False,
+                      help = 'Print the version.')
 
     args = opts.parse_args(argv)
 
@@ -204,7 +207,9 @@ def run(argv):
 
     ec = 1
 
-    if args.atleast_pkgconfig_version:
+    if args.atleast_pkgconfig_version or args.version:
+        if args.version:
+            print('version: 1.2.3')
         ec = 0
     else:
         ec, pkg, flags = sb.pkgconfig.check_package(args.libraries, args, log, src)
@@ -235,6 +240,10 @@ def run(argv):
                     log('libs: %s' % (flags['libs']))
                 else:
                     log('libs: empty')
+            if args.modversion:
+                version = pkg.get('Version')
+                print(version)
+                log('Version: %s' % (version))
 
     #pkgconfig.package.dump_loaded()
 
