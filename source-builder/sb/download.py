@@ -616,6 +616,9 @@ def get_file(url, local, opts, config):
     url_bases = opts.urls()
     if url_bases is None:
         url_bases = []
+    #
+    # See if a release path has been specified and this is a release?
+    #
     try:
         rtems_release_url_value = config.macros.expand('%{release_path}')
     except:
@@ -624,6 +627,9 @@ def get_file(url, local, opts, config):
     rtems_release_urls = []
     if version.released() and rtems_release_url_value:
         rtems_release_url = rtems_release_url_value
+    #
+    # A with/without release URL is a testing option
+    #
     with_rel_url = opts.with_arg('release-url')
     if with_rel_url[1] == 'not-found':
         if config.defined('without_release_url'):
@@ -656,25 +662,17 @@ def get_file(url, local, opts, config):
         #
         url_path = urllib_parse.urlsplit(url)[2]
         slash = url_path.rfind('/')
-        if slash < 0:
-            url_file = url_path
-        else:
-            url_file = url_path[slash + 1:]
+        url_file = path.basename(local)
         log.trace('url_file: %s' %(url_file))
         for base in url_bases:
-            #
-            # Hack to fix #3064 where --rsb-file is being used. This code is a
-            # mess and should be refactored.
-            #
-            if version.released() and base in rtems_release_urls:
-                url_file = path.basename(local)
             if base[-1:] != '/':
                 base += '/'
             next_url = urllib_parse.urljoin(base, url_file)
             log.trace('url: %s' %(next_url))
             urls.append(next_url)
     urls += url.split()
-    log.trace('_url: %s -> %s' % (','.join(urls), local))
+    for url in urls:
+        log.trace('url: get: %s -> %s' % (url, local))
     for url in urls:
         for dl in downloaders:
             if url.startswith(dl):
