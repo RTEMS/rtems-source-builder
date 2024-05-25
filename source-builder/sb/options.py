@@ -49,46 +49,55 @@ basepath = 'sb'
 host_windows = os.name == 'nt'
 host_posix = True
 
+
 class command_line:
     """Process the command line in a common way for all Tool Builder commands."""
 
     def __init__(self, argv, optargs, _defaults, command_path):
         self._long_opts = {
             # key                       macro                handler            param  defs   init
-            '--prefix'               : ('_prefix',           self._lo_path,     True,  None,  False),
-            '--topdir'               : ('_topdir',           self._lo_path,     True,  None,  False),
-            '--configdir'            : ('_configdir',        self._lo_path,     True,  None,  False),
-            '--builddir'             : ('_builddir',         self._lo_path,     True,  None,  False),
-            '--sourcedir'            : ('_sourcedir',        self._lo_path,     True,  None,  False),
-            '--patchdir'             : ('_patchdir',         self._lo_path,     True,  None,  False),
-            '--tmppath'              : ('_tmppath',          self._lo_path,     True,  None,  False),
-            '--jobs'                 : ('_jobs',             self._lo_jobs,     True,  'max', True),
-            '--log'                  : ('_logfile',          self._lo_string,   True,  None,  False),
-            '--url'                  : ('_url_base',         self._lo_string,   True,  None,  False),
-            '--no-download'          : ('_disable_download', self._lo_bool,     False, '0',   True),
-            '--macros'               : ('_macros',           self._lo_string,   True,  None,  False),
-            '--source-only-download' : ('_source_download',  self._lo_bool,     False, '0',   True),
-            '--targetcflags'         : ('_targetcflags',     self._lo_string,   True,  None,  False),
-            '--targetcxxflags'       : ('_targetcxxflags',   self._lo_string,   True,  None,  False),
-            '--libstdcxxflags'       : ('_libstdcxxflags',   self._lo_string,   True,  None,  False),
-            '--force'                : ('_force',            self._lo_bool,     False, '0',   True),
-            '--quiet'                : ('_quiet',            self._lo_bool,     False, '0',   True),
-            '--trace'                : ('_trace',            self._lo_bool,     False, '0',   True),
-            '--dry-run'              : ('_dry_run',          self._lo_bool,     False, '0',   True),
-            '--warn-all'             : ('_warn_all',         self._lo_bool,     False, '0',   True),
-            '--no-clean'             : ('_no_clean',         self._lo_bool,     False, '0',   True),
-            '--keep-going'           : ('_keep_going',       self._lo_bool,     False, '0',   True),
-            '--always-clean'         : ('_always_clean',     self._lo_bool,     False, '0',   True),
-            '--no-install'           : ('_no_install',       self._lo_bool,     False, '0',   True),
-            '--regression'           : ('_regression',       self._lo_bool,     False, '0',   True),
-            '--host'                 : ('_host',             self._lo_triplets, True,  None,  False),
-            '--build'                : ('_build',            self._lo_triplets, True,  None,  False),
-            '--target'               : ('_target',           self._lo_triplets, True,  None,  False),
-            '--rtems-tools'          : ('_rtems_tools',      self._lo_string,   True,  None,  False),
-            '--rtems-bsp'            : ('_rtems_bsp',        self._lo_string,   True,  None,  False),
-            '--rtems-version'        : ('_rtems_version',    self._lo_string,   True,  None,  False),
-            '--help'                 : (None,                self._lo_help,     False, None,  False)
-            }
+            '--prefix': ('_prefix', self._lo_path, True, None, False),
+            '--topdir': ('_topdir', self._lo_path, True, None, False),
+            '--configdir': ('_configdir', self._lo_path, True, None, False),
+            '--builddir': ('_builddir', self._lo_path, True, None, False),
+            '--sourcedir': ('_sourcedir', self._lo_path, True, None, False),
+            '--patchdir': ('_patchdir', self._lo_path, True, None, False),
+            '--tmppath': ('_tmppath', self._lo_path, True, None, False),
+            '--jobs': ('_jobs', self._lo_jobs, True, 'max', True),
+            '--log': ('_logfile', self._lo_string, True, None, False),
+            '--url': ('_url_base', self._lo_string, True, None, False),
+            '--no-download':
+            ('_disable_download', self._lo_bool, False, '0', True),
+            '--macros': ('_macros', self._lo_string, True, None, False),
+            '--source-only-download':
+            ('_source_download', self._lo_bool, False, '0', True),
+            '--targetcflags':
+            ('_targetcflags', self._lo_string, True, None, False),
+            '--targetcxxflags':
+            ('_targetcxxflags', self._lo_string, True, None, False),
+            '--libstdcxxflags': ('_libstdcxxflags', self._lo_string, True,
+                                 None, False),
+            '--force': ('_force', self._lo_bool, False, '0', True),
+            '--quiet': ('_quiet', self._lo_bool, False, '0', True),
+            '--trace': ('_trace', self._lo_bool, False, '0', True),
+            '--dry-run': ('_dry_run', self._lo_bool, False, '0', True),
+            '--warn-all': ('_warn_all', self._lo_bool, False, '0', True),
+            '--no-clean': ('_no_clean', self._lo_bool, False, '0', True),
+            '--keep-going': ('_keep_going', self._lo_bool, False, '0', True),
+            '--always-clean': ('_always_clean', self._lo_bool, False, '0',
+                               True),
+            '--no-install': ('_no_install', self._lo_bool, False, '0', True),
+            '--regression': ('_regression', self._lo_bool, False, '0', True),
+            '--host': ('_host', self._lo_triplets, True, None, False),
+            '--build': ('_build', self._lo_triplets, True, None, False),
+            '--target': ('_target', self._lo_triplets, True, None, False),
+            '--rtems-tools': ('_rtems_tools', self._lo_string, True, None,
+                              False),
+            '--rtems-bsp': ('_rtems_bsp', self._lo_string, True, None, False),
+            '--rtems-version': ('_rtems_version', self._lo_string, True, None,
+                                False),
+            '--help': (None, self._lo_help, False, None, False)
+        }
 
         self.command_path = command_path
         self.command_name = path.basename(argv[0])
@@ -96,19 +105,19 @@ class command_line:
         self.args = argv[1:]
         self.optargs = optargs
         self.defaults = _defaults
-        self.opts = { 'params' : [] }
+        self.opts = {'params': []}
         for lo in self._long_opts:
             self.opts[lo[2:]] = self._long_opts[lo][3]
             if self._long_opts[lo][4]:
-                self.defaults[self._long_opts[lo][0]] = ('none',
-                                                         'none',
-                                                         self._long_opts[lo][3])
+                self.defaults[self._long_opts[lo][0]] = (
+                    'none', 'none', self._long_opts[lo][3])
         # Set the _uid field, performance improvement on Unix
         if not host_windows:
             self.defaults['_uid'] = str(os.getuid())
             self.defaults['_gid'] = str(os.getgid())
 
     def __str__(self):
+
         def _dict(dd):
             s = ''
             ddl = list(dd.keys())
@@ -171,8 +180,7 @@ class command_line:
         # is ok.  The target triplet is 'cpu-vendor-os'.
         #
         e = execute.capture_execution()
-        config_sub = path.join(self.command_path,
-                               basepath, 'config.sub')
+        config_sub = path.join(self.command_path, basepath, 'config.sub')
         exit_code, proc, output = e.shell(config_sub + ' ' + value)
         if exit_code == 0:
             value = output
@@ -195,51 +203,85 @@ class command_line:
             value = value[dash + 1:]
         if len(value):
             _os_value = value
-        self.defaults[_cpu]    = _arch_value
-        self.defaults[_arch]   = _arch_value
+        self.defaults[_cpu] = _arch_value
+        self.defaults[_arch] = _arch_value
         self.defaults[_vendor] = _vendor_value
-        self.defaults[_os]     = _os_value
+        self.defaults[_os] = _os_value
 
     def _lo_help(self, opt, macro, value):
         self.help()
 
     def help(self):
         print('%s: [options] [args]' % (self.command_name))
-        print('RTEMS Source Builder, an RTEMS Tools Project (c) 2012-2019 Chris Johns')
+        print(
+            'RTEMS Source Builder, an RTEMS Tools Project (c) 2012-2019 Chris Johns'
+        )
         print('Options and arguments:')
         print('--force                : Force the build to proceed')
         print('--quiet                : Quiet output (not used)')
         print('--trace                : Trace the execution')
-        print('--dry-run              : Do everything but actually run the build')
+        print(
+            '--dry-run              : Do everything but actually run the build'
+        )
         print('--warn-all             : Generate warnings')
         print('--no-clean             : Do not clean up the build tree')
-        print('--always-clean         : Always clean the build tree, even with an error')
+        print(
+            '--always-clean         : Always clean the build tree, even with an error'
+        )
         print('--keep-going           : Do not stop on an error.')
-        print('--regression           : Set --no-install, --keep-going and --always-clean')
-        print('--jobs                 : Run with specified number of jobs, default: num CPUs.')
+        print(
+            '--regression           : Set --no-install, --keep-going and --always-clean'
+        )
+        print(
+            '--jobs                 : Run with specified number of jobs, default: num CPUs.'
+        )
         print('--host                 : Set the host triplet')
         print('--build                : Set the build triplet')
         print('--target               : Set the target triplet')
-        print('--prefix path          : Tools build prefix, ie where they are installed')
-        print('--topdir path          : Top of the build tree, default is $PWD')
-        print('--configdir path       : Path to the configuration directory, default: ./config')
-        print('--builddir path        : Path to the build directory, default: ./build')
-        print('--sourcedir path       : Path to the source directory, default: ./source')
-        print('--patchdir path        : Path to the patches directory, default: ./patches')
-        print('--tmppath path         : Path to the temp directory, default: ./tmp')
-        print('--macros file[,[file]  : Macro format files to load after the defaults')
-        print('--log file             : Log file where all build out is written too')
+        print(
+            '--prefix path          : Tools build prefix, ie where they are installed'
+        )
+        print(
+            '--topdir path          : Top of the build tree, default is $PWD')
+        print(
+            '--configdir path       : Path to the configuration directory, default: ./config'
+        )
+        print(
+            '--builddir path        : Path to the build directory, default: ./build'
+        )
+        print(
+            '--sourcedir path       : Path to the source directory, default: ./source'
+        )
+        print(
+            '--patchdir path        : Path to the patches directory, default: ./patches'
+        )
+        print(
+            '--tmppath path         : Path to the temp directory, default: ./tmp'
+        )
+        print(
+            '--macros file[,[file]  : Macro format files to load after the defaults'
+        )
+        print(
+            '--log file             : Log file where all build out is written too'
+        )
         print('--url url[,url]        : URL to look for source')
         print('--no-download          : Disable the source downloader')
-        print('--no-install           : Do not install the packages to the prefix')
+        print(
+            '--no-install           : Do not install the packages to the prefix'
+        )
         print('--targetcflags flags   : List of C flags for the target code')
         print('--targetcxxflags flags : List of C++ flags for the target code')
-        print('--libstdcxxflags flags : List of C++ flags to build the target libstdc++ code')
+        print(
+            '--libstdcxxflags flags : List of C++ flags to build the target libstdc++ code'
+        )
         print('--source-only-download : Only download the source')
         print('--with-<label>         : Add the --with-<label> to the build')
-        print('--without-<label>      : Add the --without-<label> to the build')
+        print(
+            '--without-<label>      : Add the --without-<label> to the build')
         print('--rtems-tools path     : Path to an install RTEMS tool set')
-        print('--rtems-bsp arch/bsp   : Standard RTEMS architecure and BSP specifier')
+        print(
+            '--rtems-bsp arch/bsp   : Standard RTEMS architecure and BSP specifier'
+        )
         print('--rtems-version ver    : The RTEMS major/minor version string')
         if self.optargs:
             for a in self.optargs:
@@ -283,7 +325,8 @@ class command_line:
                             raise error.general('unknown option: %s' % (lo))
             else:
                 if a.startswith('-'):
-                    raise error.general('short options not supported; only "-?"')
+                    raise error.general(
+                        'short options not supported; only "-?"')
                 self.opts['params'].append(a)
             arg += 1
 
@@ -292,16 +335,15 @@ class command_line:
         while arg < len(self.args):
             a = self.args[arg]
             if a == '--source-only-download':
-                self.args += ['--dry-run',
-                              '--with-download',
-                              '--quiet',
-                              '--without-log',
-                              '--without-error-report']
+                self.args += [
+                    '--dry-run', '--with-download', '--quiet', '--without-log',
+                    '--without-error-report'
+                ]
             if a == '--dry-run':
                 self.args += ['--without-error-report']
             arg += 1
 
-    def post_process(self, logfile = True):
+    def post_process(self, logfile=True):
         # Handle the log first.
         logctrl = self.parse_args('--without-log')
         if logctrl is None:
@@ -309,7 +351,7 @@ class command_line:
                 logfiles = self.logfiles()
             else:
                 logfiles = None
-            log.default = log.log(streams = logfiles)
+            log.default = log.log(streams=logfiles)
         if self.trace():
             log.tracing = True
         if self.quiet():
@@ -323,8 +365,7 @@ class command_line:
         # Default prefix
         prefix = self.parse_args('--prefix')
         if prefix is None:
-            value = path.join(self.defaults['_prefix'],
-                              'rtems',
+            value = path.join(self.defaults['_prefix'], 'rtems',
                               str(self.defaults['rtems_version']))
             self.opts['prefix'] = value
             self.defaults['_prefix'] = value
@@ -389,10 +430,10 @@ class command_line:
             repo_id = 'no-repo'
             repo_mail = None
         self.defaults['_sbgit_valid'] = repo_valid
-        self.defaults['_sbgit_head']  = repo_head
+        self.defaults['_sbgit_head'] = repo_head
         self.defaults['_sbgit_clean'] = str(repo_clean)
         self.defaults['_sbgit_remotes'] = str(repo_remotes)
-        self.defaults['_sbgit_id']    = repo_id
+        self.defaults['_sbgit_id'] = repo_id
         if repo_mail is not None:
             self.defaults['_sbgit_mail'] = repo_mail
 
@@ -487,7 +528,8 @@ class command_line:
                 except:
                     pass
                 if not ok:
-                    raise error.internal('bad jobs option: %s' % (self.opts['jobs']))
+                    raise error.internal('bad jobs option: %s' %
+                                         (self.opts['jobs']))
         if cpus <= 0:
             cpu = 1
         return cpus
@@ -495,7 +537,7 @@ class command_line:
     def params(self):
         return self.opts['params']
 
-    def parse_args(self, arg, error = True, extra = True):
+    def parse_args(self, arg, error=True, extra=True):
         for a in range(0, len(self.args)):
             if self.args[a].startswith(arg):
                 lhs = None
@@ -530,15 +572,15 @@ class command_line:
                 return sa
         return None
 
-    def with_arg(self, label, default = 'not-found'):
+    def with_arg(self, label, default='not-found'):
         # the default if there is no option for without.
         result = default
         for pre in ['with', 'without']:
             arg_str = '--%s-%s' % (pre, label)
             arg_label = '%s_%s' % (pre, label)
-            arg = self.parse_args(arg_str, error = False, extra = False)
+            arg = self.parse_args(arg_str, error=False, extra=False)
             if arg is not None:
-                if arg[1] is  None:
+                if arg[1] is None:
                     result = 'yes'
                 else:
                     result = arg[1]
@@ -581,7 +623,10 @@ class command_line:
     def logfiles(self):
         if 'log' in self.opts and self.opts['log'] is not None:
             return self.opts['log'].split(',')
-        return ['rsb-log-%s.txt' % (datetime.datetime.now().strftime('%Y%m%d-%H%M%S'))]
+        return [
+            'rsb-log-%s.txt' %
+            (datetime.datetime.now().strftime('%Y%m%d-%H%M%S'))
+        ]
 
     def urls(self):
         if self.opts['url'] is not None:
@@ -598,17 +643,10 @@ class command_line:
         # Filter potentially sensitive mail options out.
         filtered_args = [
             arg for arg in self.argv
-            if all(
-                smtp_opt not in arg
-                for smtp_opt in [
-                    '--smtp-host',
-                    '--mail-to',
-                    '--mail-from',
-                    '--smtp-user',
-                    '--smtp-password',
-                    '--smtp-port'
-                ]
-            )
+            if all(smtp_opt not in arg for smtp_opt in [
+                '--smtp-host', '--mail-to', '--mail-from', '--smtp-user',
+                '--smtp-password', '--smtp-port'
+            ])
         ]
         s = ' Command Line: %s%s' % (' '.join(filtered_args), os.linesep)
         s += ' Python: %s' % (sys.version.replace('\n', ''))
@@ -622,7 +660,8 @@ class command_line:
         rtems_tools = self.parse_args('--rtems-tools')
         if rtems_tools is not None:
             if self.get_arg('--with-tools') is not None:
-                raise error.general('--rtems-tools and --with-tools cannot be used together')
+                raise error.general(
+                    '--rtems-tools and --with-tools cannot be used together')
             self.args.append('--with-tools=%s' % (rtems_tools[1]))
         rtems_version = self.parse_args('--rtems-version')
         if rtems_version is None:
@@ -633,7 +672,8 @@ class command_line:
         rtems_arch_bsp = self.parse_args('--rtems-bsp')
         if rtems_arch_bsp is not None:
             if self.get_arg('--target') is not None:
-                raise error.general('--rtems-bsp and --target cannot be used together')
+                raise error.general(
+                    '--rtems-bsp and --target cannot be used together')
             ab = rtems_arch_bsp[1].split('/')
             if len(ab) != 2:
                 raise error.general('invalid --rtems-bsp option')
@@ -641,7 +681,8 @@ class command_line:
             self.args.append('--with-rtems-arch=%s' % (ab[0]))
             self.args.append('--with-rtems-bsp=%s' % (ab[1]))
 
-def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc', logfile = True):
+
+def load(args, optargs=None, defaults='%{_sbdir}/defaults.mc', logfile=True):
     """
     Copy the defaults, get the host specific values and merge them overriding
     any matching defaults, then create an options object to handle the command
@@ -663,10 +704,8 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc', logfile = Tru
     # The command line contains the base defaults object all build objects copy
     # and modify by loading a configuration.
     #
-    o = command_line(args,
-                     optargs,
-                     macros.macros(name = defaults,
-                                   sbdir = command_path),
+    o = command_line(args, optargs,
+                     macros.macros(name=defaults, sbdir=command_path),
                      command_path)
 
     overrides = None
@@ -704,7 +743,8 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc', logfile = Tru
                 from . import solaris
                 overrides = solaris.load()
         except error.general as ge:
-            raise error.general('failed to load %s host support: %s' % (uname[0], ge))
+            raise error.general('failed to load %s host support: %s' %
+                                (uname[0], ge))
         except:
             raise error.general('failed to load %s host support' % (uname[0]))
     else:
@@ -726,27 +766,30 @@ def load(args, optargs = None, defaults = '%{_sbdir}/defaults.mc', logfile = Tru
     #
     def setting_error(msg):
         raise error.general(msg)
+
     hashes = version.load_release_settings('hashes')
     for hash in hashes:
         hs = hash[1].split()
         if len(hs) != 2:
             raise error.general('invalid release hash in VERSION')
         sources.hash((hs[0], hash[0], hs[1]), o.defaults, setting_error)
-    release_path = version.load_release_setting('version', 'release_path',
-                                                raw = True)
+    release_path = version.load_release_setting('version',
+                                                'release_path',
+                                                raw=True)
     if release_path is not None:
         try:
-            release_path = ','.join([rp.strip() for rp in release_path.split(',')])
+            release_path = ','.join(
+                [rp.strip() for rp in release_path.split(',')])
         except:
             raise error.general('invalid release path in VERSION')
         download.set_release_path(release_path, o.defaults)
     return o
 
+
 def run(args):
     try:
         dpath = path.dirname(args[0])
-        _opts = load(args = args,
-                     defaults = path.join(dpath, 'defaults.mc'))
+        _opts = load(args=args, defaults=path.join(dpath, 'defaults.mc'))
         log.notice('RTEMS Source Builder - Defaults, %s' % (version.string()))
         _opts.log_info()
         log.notice('Options:')
@@ -767,6 +810,7 @@ def run(args):
         _notice(opts, 'abort: user terminated')
         sys.exit(1)
     sys.exit(0)
+
 
 if __name__ == '__main__':
     run(sys.argv)

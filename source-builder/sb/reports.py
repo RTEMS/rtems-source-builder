@@ -42,7 +42,7 @@ try:
     from . import sources
     from . import version
 except KeyboardInterrupt:
-    print('user terminated', file = sys.stderr)
+    print('user terminated', file=sys.stderr)
     sys.exit(1)
 except:
     raise
@@ -54,16 +54,18 @@ _title = 'RTEMS Tools Project <users@rtems.org>'
 _release_status_text = 'RTEMS Source Builder Release'
 _git_status_text = 'RTEMS Source Builder Repository Status'
 
+
 def _make_path(p, *args):
     for arg in args:
         p = path.join(p, arg)
     return os.path.abspath(path.host(p))
 
-def platform(mode = 'all'):
+
+def platform(mode='all'):
     import platform
     if mode == 'system':
         return platform.system()
-    compact = platform.platform(aliased = True)
+    compact = platform.platform(aliased=True)
     if mode == 'compact':
         return compact
     extended = ' '.join(platform.uname())
@@ -71,7 +73,9 @@ def platform(mode = 'all'):
         return extended
     return '%s (%s)' % (short, extended)
 
+
 class formatter(object):
+
     def __init__(self):
         self.content = ''
 
@@ -85,7 +89,8 @@ class formatter(object):
         self.sbpath = sbpath
 
     def format(self):
-        raise error.general('internal error: formatter.format() not implemented')
+        raise error.general(
+            'internal error: formatter.format() not implemented')
 
     def ext(self):
         raise error.general('internal error: formatter.ext() not implemented')
@@ -147,12 +152,14 @@ class formatter(object):
     def post_process(self):
         return self.content
 
+
 class markdown_formatter(formatter):
+
     def __init__(self):
         super(markdown_formatter, self).__init__()
         self.level_current = 1
         self.level_path = '0.'
-        self.levels = { '0.': 0 }
+        self.levels = {'0.': 0}
         self.cols = [20, 55]
 
     def _heading(self, heading, level):
@@ -262,12 +269,14 @@ class markdown_formatter(formatter):
     def config(self, nest_level, name, _config):
         self._bline(nest_level, self._bold('Package:'))
         self._bline(nest_level, '')
-        self._bline(nest_level + 1, self._table_row([self._bold('Item'),
-                                                     self._bold('Description')]))
+        self._bline(
+            nest_level + 1,
+            self._table_row([self._bold('Item'),
+                             self._bold('Description')]))
         self._bline(nest_level + 1, self._table_line())
         self._bline(nest_level + 1, self._table_row(['Package', name]))
-        self._bline(nest_level + 1, self._table_row(['Config',
-                                                     _config.file_name()]))
+        self._bline(nest_level + 1,
+                    self._table_row(['Config', _config.file_name()]))
 
     def config_end(self, nest_level, name):
         self._bline(nest_level + 1, '')
@@ -277,12 +286,12 @@ class markdown_formatter(formatter):
             self.line('- - -')
             self._bline(nest_level,
                         self._heading('RTEMS Source Builder Packages', 2))
-        self._bline(nest_level,
-                    self._heading('%s Build %s' % (self._level(nest_level), name), 3))
+        self._bline(
+            nest_level,
+            self._heading('%s Build %s' % (self._level(nest_level), name), 3))
 
     def info(self, nest_level, name, info, separated):
-        self._bline(nest_level + 1,
-                    self._table_row([name, ' '.join(info)]))
+        self._bline(nest_level + 1, self._table_row([name, ' '.join(info)]))
 
     def directive(self, nest_level, name, data):
         self._bline(nest_level, '')
@@ -305,13 +314,15 @@ class markdown_formatter(formatter):
                 else:
                     hash = s[1].split()
                     h = '%s: %s' % (hash[0], hash[1])
-                self._bline(nest_level,
-                            '%d. [%s](%s "%s %s")<br/>' % (fc, s[0], s[0],
-                                                           name, singular.lower()))
+                self._bline(
+                    nest_level, '%d. [%s](%s "%s %s")<br/>' %
+                    (fc, s[0], s[0], name, singular.lower()))
                 self._bline(nest_level,
                             '    <span class=checksum>%s</span>' % (h))
 
+
 class html_formatter(markdown_formatter):
+
     def __init__(self):
         super(html_formatter, self).__init__()
         self.html_header = '<!DOCTYPE html>' + os.linesep + \
@@ -348,7 +359,8 @@ class html_formatter(markdown_formatter):
                            '</html>' + os.linesep
 
     def _logo(self):
-        logo = _make_path(self.sbpath, options.basepath, 'images', 'rtemswhitebg.jpg')
+        logo = _make_path(self.sbpath, options.basepath, 'images',
+                          'rtemswhitebg.jpg')
         try:
             with open(logo, "rb") as image:
                 b64 = base64.b64encode(image.read())
@@ -375,20 +387,25 @@ class html_formatter(markdown_formatter):
             raise error.general('installation error: no markdown found')
         try:
             out = markdown.markdown(self.content,
-                                    output_format = 'html5',
-                                    extensions = ['markdown.extensions.toc',
-                                                  'markdown.extensions.tables',
-                                                  'markdown.extensions.sane_lists',
-                                                  'markdown.extensions.smarty'])
+                                    output_format='html5',
+                                    extensions=[
+                                        'markdown.extensions.toc',
+                                        'markdown.extensions.tables',
+                                        'markdown.extensions.sane_lists',
+                                        'markdown.extensions.smarty'
+                                    ])
         except:
             raise
             raise error.general('application error: markdown failed')
-        header = self.html_header.replace('@BUILD@', self.name).replace('@NOW@', self.now)
+        header = self.html_header.replace('@BUILD@', self.name).replace(
+            '@NOW@', self.now)
         footer = self.html_footer
         logo = self._logo()
         return header + logo + out + footer
 
+
 class text_formatter(formatter):
+
     def __init__(self):
         super(text_formatter, self).__init__()
         self.cini = ''
@@ -446,7 +463,9 @@ class text_formatter(formatter):
         else:
             self.line('%s Not a valid GIT repository' % (self.cini))
 
+
 class ini_formatter(text_formatter):
+
     def __init__(self):
         super(ini_formatter, self).__init__()
         self.cini = ';'
@@ -519,7 +538,9 @@ class ini_formatter(text_formatter):
     def files(self, nest_level, singular, plural, _files):
         pass
 
+
 class xml_formatter(formatter):
+
     def __init__(self):
         super(xml_formatter, self).__init__()
 
@@ -558,7 +579,8 @@ class xml_formatter(formatter):
         self.line('\t' * nest_level + '<Package name="' + name + '">')
 
     def config(self, nest_level, name, _config):
-        self.line('\t' * nest_level + '<Config>' + _config.file_name() + '</Config>')
+        self.line('\t' * nest_level + '<Config>' + _config.file_name() +
+                  '</Config>')
 
     def config_end(self, nest_level, name):
         self.line('\t' * nest_level + '</Package>')
@@ -590,8 +612,10 @@ class xml_formatter(formatter):
                     self.add(' ' + hash[0] + '="' + hash[1] + '"')
                 self.line('>' + s[0] + '</' + sigular + '>')
 
+
 def _tree_name(path_):
     return path.splitext(path.basename(path_))[0]
+
 
 def _merge(_dict, new):
     new = copy.deepcopy(new)
@@ -601,10 +625,11 @@ def _merge(_dict, new):
         else:
             _dict[i] += new[i]
 
+
 class report:
     """Report the build details about a package given a config file."""
 
-    def __init__(self, formatter, sanitize, _configs, opts, macros = None):
+    def __init__(self, formatter, sanitize, _configs, opts, macros=None):
         if type(formatter) == str:
             if formatter == 'text':
                 self.formatter = text_formatter()
@@ -632,7 +657,7 @@ class report:
         self.bset_nesting = 0
         self.out = ''
         self.tree = {}
-        self.files = { 'buildsets':[], 'configs':[] }
+        self.files = {'buildsets': [], 'configs': []}
 
     def output(self, text):
         self.formatter.line(text)
@@ -654,9 +679,10 @@ class report:
         if self.sanitize:
             self.formatter.git_status(r.valid(), r.dirty(), r.head(), None)
         else:
-            self.formatter.git_status(r.valid(), r.dirty(), r.head(), r.remotes())
+            self.formatter.git_status(r.valid(), r.dirty(), r.head(),
+                                      r.remotes())
 
-    def introduction(self, name, intro_text = None):
+    def introduction(self, name, intro_text=None):
         now = datetime.datetime.now().ctime()
         self.formatter.introduction(name, now, intro_text)
         if version.released():
@@ -688,8 +714,10 @@ class report:
         self.bset_nesting -= 1
 
     def source(self, macros):
+
         def err(msg):
             raise error.general('%s' % (msg))
+
         _srcs = {}
         for p in sources.get_source_names(macros, err):
             if 'setup' in sources.get_source_keys(p, macros, err):
@@ -698,24 +726,31 @@ class report:
                 _srcs[p] = [macros.expand(s) for s in _srcs[p]]
         srcs = {}
         for p in _srcs:
-            srcs[p] = [(s, sources.get_hash(path.basename(s).lower(), macros)) for s in _srcs[p]]
+            srcs[p] = [(s, sources.get_hash(path.basename(s).lower(), macros))
+                       for s in _srcs[p]]
         return srcs
 
     def patch(self, macros):
+
         def err(msg):
             raise error.general('%s' % (msg))
+
         _patches = {}
         for n in sources.get_patch_names(macros, err):
             if 'setup' in sources.get_patch_keys(n, macros, err):
                 _patches[n] = \
                     [p for p in sources.get_patches(n, macros, err) if not p.startswith('%setup')]
-                _patches[n] = [macros.expand(p.split()[-1]) for p in _patches[n]]
+                _patches[n] = [
+                    macros.expand(p.split()[-1]) for p in _patches[n]
+                ]
         patches = {}
         for n in _patches:
-            patches[n] = [(p, sources.get_hash(path.basename(p).lower(), macros)) for p in _patches[n]]
+            patches[n] = [(p,
+                           sources.get_hash(path.basename(p).lower(), macros))
+                          for p in _patches[n]]
         return patches
 
-    def output_info(self, name, info, separated = False):
+    def output_info(self, name, info, separated=False):
         if info is not None:
             self.formatter.info(self.bset_nesting + 2, name, info, separated)
 
@@ -723,14 +758,14 @@ class report:
         if directive is not None:
             self.formatter.directive(self.bset_nesting + 2, name, directive)
 
-    def tree_packages(self, tree, packages = []):
+    def tree_packages(self, tree, packages=[]):
         if 'bset' in tree:
             for node in sorted(tree['bset'].keys()):
                 packages += [_tree_name(node)]
                 packages += self.tree_packages(tree['bset'][node], packages)
         return set(packages)
 
-    def tree_sources(self, name, tree, sources = []):
+    def tree_sources(self, name, tree, sources=[]):
         if 'cfg' in tree:
             packages = {}
             if 'sources' in tree['cfg']:
@@ -739,11 +774,14 @@ class report:
                 _merge(packages, tree['cfg']['patches'])
             for package in packages:
                 for source in packages[package]:
-                    if not source[0].startswith('git') and not source[0].startswith('cvs'):
-                        sources += [(path.basename(source[0]), source[0], source[1])]
+                    if not source[0].startswith(
+                            'git') and not source[0].startswith('cvs'):
+                        sources += [(path.basename(source[0]), source[0],
+                                     source[1])]
         if 'bset' in tree:
             for node in sorted(tree['bset'].keys()):
-                self.tree_sources(_tree_name(node), tree['bset'][node], sources)
+                self.tree_sources(_tree_name(node), tree['bset'][node],
+                                  sources)
         return sources
 
     def config(self, _config, tree, opts, macros):
@@ -758,12 +796,14 @@ class report:
             tree['file'] += [_config.file_name()]
             if len(sources):
                 if 'sources' in tree:
-                    tree['sources'] = dict(list(tree['sources'].items()) + list(sources.items()))
+                    tree['sources'] = dict(
+                        list(tree['sources'].items()) + list(sources.items()))
                 else:
                     tree['sources'] = sources
             if len(patches):
                 if 'patches' in tree:
-                    tree['patches'] = dict(list(tree['patches'].items()) + list(patches.items()))
+                    tree['patches'] = dict(
+                        list(tree['patches'].items()) + list(patches.items()))
                 else:
                     tree['patches'] = patches
         self.config_start(name, _config)
@@ -773,15 +813,17 @@ class report:
         self.output_info('Version', package.get_info('version'))
         self.output_info('Release', package.get_info('release'))
         self.output_info('Build Arch', package.get_info('buildarch'))
-        self.formatter.files(self.bset_nesting + 2, "Source", "Sources", sources)
-        self.formatter.files(self.bset_nesting + 2, "Patch", "Patches", patches)
+        self.formatter.files(self.bset_nesting + 2, "Source", "Sources",
+                             sources)
+        self.formatter.files(self.bset_nesting + 2, "Patch", "Patches",
+                             patches)
         self.output_directive('Preparation', package.prep())
         self.output_directive('Build', package.build())
         self.output_directive('Install', package.install())
         self.output_directive('Clean', package.clean())
         self.config_end(name, _config)
 
-    def generate_ini_tree(self, name, tree, prefix_char, prefix = ''):
+    def generate_ini_tree(self, name, tree, prefix_char, prefix=''):
         if prefix_char == '|':
             c = '|'
         else:
@@ -805,10 +847,8 @@ class report:
                     prefix_char = ' '
                 else:
                     prefix_char = '|'
-                self.generate_ini_tree(nodes[node],
-                                       tree['bset'][nodes[node]],
-                                       prefix_char,
-                                       prefix)
+                self.generate_ini_tree(nodes[node], tree['bset'][nodes[node]],
+                                       prefix_char, prefix)
 
     def generate_ini_source(self, sources):
         self.output('')
@@ -828,7 +868,8 @@ class report:
             self.output(' %s = %s' % (source[0], hash))
 
     def generate_ini(self):
-        nodes = sorted([node for node in list(self.tree.keys()) if node != 'bset'])
+        nodes = sorted(
+            [node for node in list(self.tree.keys()) if node != 'bset'])
         self.output(';')
         self.output('; Configuration Tree:')
         for node in range(0, len(nodes)):
@@ -836,7 +877,8 @@ class report:
                 prefix_char = ' '
             else:
                 prefix_char = '|'
-            self.generate_ini_tree(nodes[node], self.tree[nodes[node]], prefix_char)
+            self.generate_ini_tree(nodes[node], self.tree[nodes[node]],
+                                   prefix_char)
         self.output(';')
         sources = []
         for node in nodes:
@@ -857,9 +899,10 @@ class report:
                 o.close()
                 del o
             except IOError as err:
-                raise error.general('writing output file: %s: %s' % (name, err))
+                raise error.general('writing output file: %s: %s' %
+                                    (name, err))
 
-    def generate(self, name, tree = None, opts = None, macros = None):
+    def generate(self, name, tree=None, opts=None, macros=None):
         from . import setbuilder
         self.buildset_start(name)
         if tree is None:
@@ -871,7 +914,7 @@ class report:
         bset = setbuilder.buildset(name, self.configs, opts, macros)
         if name in tree:
             raise error.general('duplicate build set in tree: %s' % (name))
-        tree[name] = { 'bset': { }, 'cfg': { 'file': []  } }
+        tree[name] = {'bset': {}, 'cfg': {'file': []}}
         for c in bset.load():
             macros = copy.copy(bset.macros)
             if c.endswith('.bset'):
@@ -885,7 +928,7 @@ class report:
                 raise error.general('invalid config type: %s' % (c))
         self.buildset_end(name)
 
-    def create(self, inname, outname = None, intro_text = None):
+    def create(self, inname, outname=None, intro_text=None):
         self.introduction(inname, intro_text)
         self.generate(inname)
         if self.is_ini():
@@ -893,17 +936,21 @@ class report:
         self.epilogue(inname)
         self.write(outname)
 
+
 def run(args):
     try:
         from . import setbuilder
-        optargs = { '--list-bsets':   'List available build sets',
-                    '--list-configs': 'List available configurations',
-                    '--format':       'Output format (text, html, markdown, ini, xml)',
-                    '--output':       'File name to output the report',
-                    '--sanitize':     'Remove Remotes information from report'}
-        opts = options.load(args, optargs, logfile = False)
+        optargs = {
+            '--list-bsets': 'List available build sets',
+            '--list-configs': 'List available configurations',
+            '--format': 'Output format (text, html, markdown, ini, xml)',
+            '--output': 'File name to output the report',
+            '--sanitize': 'Remove Remotes information from report'
+        }
+        opts = options.load(args, optargs, logfile=False)
         if opts.get_arg('--output') and len(opts.params()) > 1:
-            raise error.general('--output can only be used with a single config')
+            raise error.general(
+                '--output can only be used with a single config')
         print('RTEMS Source Builder, Reporter, %s' % (version.string()))
         opts.log_info()
         if not check.host_setup(opts):
@@ -917,7 +964,8 @@ def run(args):
             format_opt = opts.get_arg('--format')
             if format_opt:
                 if len(format_opt) != 2:
-                    raise error.general('invalid format option: %s' % ('='.join(format_opt)))
+                    raise error.general('invalid format option: %s' %
+                                        ('='.join(format_opt)))
                 if format_opt[1] == 'text':
                     pass
                 elif format_opt[1] == 'markdown':
@@ -942,7 +990,8 @@ def run(args):
                     outname = output
                 config = build.find_config(_config, configs)
                 if config is None:
-                    raise error.general('config file not found: %s' % (_config))
+                    raise error.general('config file not found: %s' %
+                                        (_config))
                 r.create(config, outname)
             del r
     except error.general as gerr:
@@ -957,6 +1006,7 @@ def run(args):
         log.notice('abort: user terminated')
         sys.exit(1)
     sys.exit(0)
+
 
 if __name__ == "__main__":
     run(sys.argv)

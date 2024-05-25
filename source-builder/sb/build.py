@@ -50,12 +50,14 @@ except KeyboardInterrupt:
 except:
     raise
 
+
 def humanize_number(num, suffix):
-    for unit in ['','K','M','G','T','P','E','Z']:
+    for unit in ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z']:
         if abs(num) < 1024.0:
             return "%5.3f%s%s" % (num, unit, suffix)
         num /= 1024.0
     return "%.3f%s%s" % (size, 'Y', suffix)
+
 
 def short_name(name):
     #
@@ -69,6 +71,7 @@ def short_name(name):
         return buildname
     else:
         return name
+
 
 class script:
     """Create and manage a shell script."""
@@ -107,7 +110,7 @@ class script:
         self.lc += len(text)
         self.body.extend(text)
 
-    def write(self, name, check_for_errors = False):
+    def write(self, name, check_for_errors=False):
         s = None
         try:
             s = open(path.host(name), 'w')
@@ -125,14 +128,15 @@ class script:
         if s is not None:
             s.close()
 
+
 class build:
     """Build a package given a config file."""
 
-    def _generate_report_(self, header, footer = None):
-        ereport.generate('rsb-report-%s.txt' % self.macros['name'],
-                         self.opts, header, footer)
+    def _generate_report_(self, header, footer=None):
+        ereport.generate('rsb-report-%s.txt' % self.macros['name'], self.opts,
+                         header, footer)
 
-    def __init__(self, name, create_tar_files, opts, macros = None):
+    def __init__(self, name, create_tar_files, opts, macros=None):
         try:
             self.opts = opts
             self.init_name = name
@@ -221,7 +225,7 @@ class build:
             raise error.general('no source set: %s (%s)' % (name, _map))
         srcs = []
         for s in src_keys:
-            sm = self.macros.get(s, globals = False, maps = _map)
+            sm = self.macros.get(s, globals=False, maps=_map)
             if sm is None:
                 raise error.internal('source macro not found: %s in %s (%s)' % \
                                          (s, name, _map))
@@ -233,7 +237,8 @@ class build:
                 else:
                     url += [sp]
             if len(url) == 0:
-                raise error.general('source URL not found: %s' % (' '.join(args)))
+                raise error.general('source URL not found: %s' %
+                                    (' '.join(args)))
             #
             # Look for --rsb-file as an option we use as a local file name.
             # This can be used if a URL has no reasonable file name the
@@ -243,18 +248,18 @@ class build:
             if len(opts) > 0:
                 for o in opts:
                     if o.startswith('--rsb-file'):
-                       os_ = o.split('=')
-                       if len(os_) != 2:
-                           raise error.general('invalid --rsb-file option: %s' % \
-                                               (' '.join(args)))
-                       if os_[0] != '--rsb-file':
-                           raise error.general('invalid --rsb-file option: %s' % \
-                                               (' '.join(args)))
-                       file_override = os_[1]
+                        os_ = o.split('=')
+                        if len(os_) != 2:
+                            raise error.general('invalid --rsb-file option: %s' % \
+                                                (' '.join(args)))
+                        if os_[0] != '--rsb-file':
+                            raise error.general('invalid --rsb-file option: %s' % \
+                                                (' '.join(args)))
+                        file_override = os_[1]
                 opts = [o for o in opts if not o.startswith('--rsb-')]
             url = self.config.expand(' '.join(url))
-            src = download.parse_url(url, '_sourcedir',
-                                     self.config, self.opts, file_override)
+            src = download.parse_url(url, '_sourcedir', self.config, self.opts,
+                                     file_override)
             download.get_file(src['url'], src['local'], self.opts, self.config)
             if not download_only:
                 if strip_components > 0:
@@ -333,10 +338,12 @@ class build:
             if not download_only:
                 self.script_build.append(self.config.expand('cd %{_builddir}'))
                 if not deleted_dir and delete_before_unpack and name is not None:
-                    self.script_build.append(self.config.expand('%{__rm} -rf ' + name))
+                    self.script_build.append(
+                        self.config.expand('%{__rm} -rf ' + name))
                     deleted_dir = True
                 if not created_dir and create_dir and name is not None:
-                    self.script_build.append(self.config.expand('%{__mkdir_p} ' + name))
+                    self.script_build.append(
+                        self.config.expand('%{__mkdir_p} ' + name))
                     created_dir = True
                 if not changed_dir and (not unpack_before_chdir or create_dir) and \
                    name is not None:
@@ -358,11 +365,14 @@ class build:
                 if options.host_windows:
                     if no_errors:
                         self.script_build.append(' set +e')
-                        self.script_build.append(' ' + self.config.expand(source['script']))
+                        self.script_build.append(
+                            ' ' + self.config.expand(source['script']))
                         self.script_build.append(' set -e')
                     else:
-                        self.script_build.append('if test $tar_exit != 0; then')
-                        self.script_build.append(' ' + self.config.expand(source['script']))
+                        self.script_build.append(
+                            'if test $tar_exit != 0; then')
+                        self.script_build.append(
+                            ' ' + self.config.expand(source['script']))
                         self.script_build.append('fi')
         if not changed_dir and (unpack_before_chdir and not create_dir) and \
            name is not None and not download_only:
@@ -378,7 +388,7 @@ class build:
         patch_keys = [p for p in self.macros.map_keys(_map) if p != 'setup']
         patches = []
         for p in patch_keys:
-            pm = self.macros.get(p, globals = False, maps = _map)
+            pm = self.macros.get(p, globals=False, maps=_map)
             if pm is None:
                 raise error.internal('patch macro not found: %s in %s (%s)' % \
                                          (p, name, _map))
@@ -390,7 +400,8 @@ class build:
                 else:
                     url += [pp]
             if len(url) == 0:
-                raise error.general('patch URL not found: %s' % (' '.join(opts)))
+                raise error.general('patch URL not found: %s' %
+                                    (' '.join(opts)))
             #
             # Look for --rsb-file as an option we use as a local file name.
             # This can be used if a URL has no reasonable file name the
@@ -400,14 +411,14 @@ class build:
             if len(opts) > 0:
                 for o in opts:
                     if o.startswith('--rsb-file'):
-                       os_ = o.split('=')
-                       if len(os_) != 2:
-                           raise error.general('invalid --rsb-file option: %s' % \
-                                               (' '.join(opts)))
-                       if os_[0] != '--rsb-file':
-                           raise error.general('invalid --rsb-file option: %s' % \
-                                               (' '.join(opts)))
-                       file_override = os_[1]
+                        os_ = o.split('=')
+                        if len(os_) != 2:
+                            raise error.general('invalid --rsb-file option: %s' % \
+                                                (' '.join(opts)))
+                        if os_[0] != '--rsb-file':
+                            raise error.general('invalid --rsb-file option: %s' % \
+                                                (' '.join(opts)))
+                        file_override = os_[1]
                 opts = [o for o in opts if not o.startswith('--rsb-')]
             if len(opts) == 0:
                 opts = default_opts
@@ -423,19 +434,21 @@ class build:
             #
             # Download the patch
             #
-            download.get_file(patch['url'], patch['local'], self.opts, self.config)
+            download.get_file(patch['url'], patch['local'], self.opts,
+                              self.config)
             if 'compressed' in patch:
-                patch['script'] = patch['compressed'] + ' ' +  patch['local']
+                patch['script'] = patch['compressed'] + ' ' + patch['local']
             else:
                 patch['script'] = '%{__cat} ' + patch['local']
             patch['script'] += ' | %%{__patch} %s' % (opts)
             self.script_build.append(self.config.expand(patch['script']))
 
-    def run(self, command, shell_opts = '', cwd = None):
-        e = execute.capture_execution(log = log.default, dump = self.opts.quiet())
-        cmd = self.config.expand('%{___build_shell} -ex ' + shell_opts + ' ' + command)
+    def run(self, command, shell_opts='', cwd=None):
+        e = execute.capture_execution(log=log.default, dump=self.opts.quiet())
+        cmd = self.config.expand('%{___build_shell} -ex ' + shell_opts + ' ' +
+                                 command)
         log.output('run: ' + cmd)
-        exit_code, proc, output = e.shell(cmd, cwd = path.host(cwd))
+        exit_code, proc, output = e.shell(cmd, cwd=path.host(cwd))
         if exit_code != 0:
             log.output('shell cmd failed: %s' % (cmd))
             raise error.general('building %s' % (self.macros['buildname']))
@@ -453,8 +466,10 @@ class build:
             for l in _prep:
                 args = l.split()
                 if len(args):
+
                     def err(msg):
                         raise error.general('%s: %s' % (package, msg))
+
                     if args[0] == '%setup':
                         if len(args) == 1:
                             raise error.general('invalid %%setup directive: %s' % \
@@ -464,7 +479,8 @@ class build:
                         elif args[1] == 'patch':
                             self.patch_setup(package, args[1:])
                     elif args[0] in ['%patch', '%source']:
-                        sources.process(args[0][1:], args[1:], self.macros, err)
+                        sources.process(args[0][1:], args[1:], self.macros,
+                                        err)
                     elif args[0] == '%hash':
                         sources.hash(args[1:], self.macros, err)
                         self.hash(package, args)
@@ -472,7 +488,8 @@ class build:
                         self.script_build.append(' '.join(args))
 
     def build(self, package):
-        self.script_build.append('echo "==> clean %{buildroot}: ${SB_BUILD_ROOT}"')
+        self.script_build.append(
+            'echo "==> clean %{buildroot}: ${SB_BUILD_ROOT}"')
         self.script_build.append('%s ${SB_BUILD_ROOT}' %
                                  (self.config.expand('%{__rmdir}')))
         self.script_build.append('%s ${SB_BUILD_ROOT}' %
@@ -497,11 +514,14 @@ class build:
             self.script_build.append('echo "==> %files:"')
             inpath = path.abspath(self.config.expand('%{buildroot}'))
             tardir = path.abspath(self.config.expand('%{_tardir}'))
-            self.script_build.append(self.config.expand('if test -d %s; then' % (inpath)))
-            self.script_build.append(self.config.expand('  %%{__mkdir_p} %s' % tardir))
+            self.script_build.append(
+                self.config.expand('if test -d %s; then' % (inpath)))
+            self.script_build.append(
+                self.config.expand('  %%{__mkdir_p} %s' % tardir))
             self.script_build.append(self.config.expand('  cd ' + inpath))
             tar = path.join(tardir, package.long_name() + '.tar.bz2')
-            cmd = self.config.expand('  %{__tar} -cf - . ' + '| %{__bzip2} > ' + tar)
+            cmd = self.config.expand('  %{__tar} -cf - . ' +
+                                     '| %{__bzip2} > ' + tar)
             self.script_build.append(cmd)
             self.script_build.append(self.config.expand('  cd %{_builddir}'))
             self.script_build.append('fi')
@@ -518,20 +538,21 @@ class build:
                 self.script_clean.append(' '.join(args))
 
     def sizes(self, package):
+
         def _sizes(package, what, path):
             package.set_size(what, path)
             s = humanize_number(package.get_size(what), 'B')
-            log.trace('size: %s (%s): %s (%d)' % (what, path, s, package.get_size(what)))
+            log.trace('size: %s (%s): %s (%d)' %
+                      (what, path, s, package.get_size(what)))
             return s
+
         s = {}
-        for p in [('build', '%{_builddir}'),
-                  ('build', '%{buildroot}'),
+        for p in [('build', '%{_builddir}'), ('build', '%{buildroot}'),
                   ('installed', '%{buildroot}')]:
             hs = _sizes(package, p[0], self.config.expand(p[1]))
             s[p[0]] = hs
-        log.notice('sizes: %s: %s (installed: %s)' % (package.name(),
-                                                      s['build'],
-                                                      s['installed']))
+        log.notice('sizes: %s: %s (installed: %s)' %
+                   (package.name(), s['build'], s['installed']))
 
     def build_package(self, package):
         if self.canadian_cross():
@@ -587,13 +608,16 @@ class build:
                 log.trace('%s' % (str(self.config.macros)))
                 log.trace('-' * 70)
                 self.script_build.reset()
-                self.script_build.append(self.config.expand('%{___build_template}'))
+                self.script_build.append(
+                    self.config.expand('%{___build_template}'))
                 self.script_build.append('echo "=> ' + name + ': BUILD"')
                 self.prep(package)
                 self.build_package(package)
                 self.builddir()
-                build_sn = path.join(self.config.expand('%{_builddir}'), 'do-build')
-                clean_sn = path.join(self.config.expand('%{_builddir}'), 'do-clean')
+                build_sn = path.join(self.config.expand('%{_builddir}'),
+                                     'do-build')
+                clean_sn = path.join(self.config.expand('%{_builddir}'),
+                                     'do-clean')
                 log.trace('script: ' + build_sn)
                 log.trace(str(self.script_build))
                 log.trace('script: ' + clean_sn)
@@ -650,6 +674,7 @@ class build:
         if self.config:
             return self.config.includes()
 
+
 def get_configs(opts):
 
     def _scan(_path, ext):
@@ -662,7 +687,7 @@ def get_configs(opts):
                         configs += [path.join(prefix, file)]
         return configs
 
-    configs = { 'paths': [], 'files': [] }
+    configs = {'paths': [], 'files': []}
     paths = opts.defaults.expand('%{_configdir}').split(':')
     root = path.host(os.path.commonprefix(paths))
     configs['root'] = root
@@ -677,6 +702,7 @@ def get_configs(opts):
     configs['files'] = sorted(set(configs['files']))
     return configs
 
+
 def find_config(config, configs):
     config_root, config_ext = path.splitext(config)
     if config_ext not in ['', '.bset', '.cfg']:
@@ -689,12 +715,14 @@ def find_config(config, configs):
                 return c
     return None
 
+
 def run(args):
     ec = 0
     try:
-        optargs = { '--list-configs': 'List available configurations' }
+        optargs = {'--list-configs': 'List available configurations'}
         opts = options.load(args, optargs)
-        log.notice('RTEMS Source Builder, Package Builder, %s' % (version.string()))
+        log.notice('RTEMS Source Builder, Package Builder, %s' %
+                   (version.string()))
         opts.log_info()
         if not check.host_setup(opts):
             if not opts.force():
@@ -725,6 +753,7 @@ def run(args):
         log.notice('abort: user terminated')
         ec = 1
     sys.exit(ec)
+
 
 if __name__ == "__main__":
     run(sys.argv)

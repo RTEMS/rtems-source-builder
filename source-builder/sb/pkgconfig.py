@@ -45,7 +45,8 @@ import sys
 
 from . import path
 
-def default_prefix(common = True):
+
+def default_prefix(common=True):
     paths = []
     #
     # We have two paths to work around an issue in MSYS2 and the
@@ -58,13 +59,10 @@ def default_prefix(common = True):
         for p in os.environ['PKG_CONFIG_PATH'].split(os.pathsep):
             paths += [path.shell(p)]
     if common:
-        defaults = ['/usr',
-                    '/usr/share',
-                    '/lib',
-                    '/lib64',
-                    '/usr/lib',
-                    '/usr/lib64',
-                    '/usr/local']
+        defaults = [
+            '/usr', '/usr/share', '/lib', '/lib64', '/usr/lib', '/usr/lib64',
+            '/usr/local'
+        ]
         for d in defaults:
             for cp in package.config_prefixes:
                 prefix = path.join(d, cp, 'pkgconfig')
@@ -72,19 +70,24 @@ def default_prefix(common = True):
                     paths += [prefix]
     return paths
 
+
 class error(Exception):
+
     def __init__(self, msg):
         self.msg = msg
 
     def __str__(self):
         return self.msg
 
+
 class package(object):
 
     node_types = ['requires', 'requires.private']
-    node_type_labels = { 'requires': 'r',
-                         'requires.private': 'rp',
-                         'failed': 'F' }
+    node_type_labels = {
+        'requires': 'r',
+        'requires.private': 'rp',
+        'failed': 'F'
+    }
     version_ops = ['=', '<', '>', '<=', '>=', '!=']
     config_prefixes = ['lib', 'libdata']
     get_recursion = ['cflags', 'libs']
@@ -217,8 +220,12 @@ class package(object):
         for n in sorted(package.loaded):
             print(package.loaded[n]._str())
 
-    def __init__(self, name = None, prefix = None,
-                 libs_scan = False, output = None, src = None):
+    def __init__(self,
+                 name=None,
+                 prefix=None,
+                 libs_scan=False,
+                 output=None,
+                 src=None):
         self._clean()
         self.name_ = name
         self.libs_scan = libs_scan
@@ -284,21 +291,22 @@ class package(object):
                 s += '%s%s' % (', '.join(txt), os.linesep)
             else:
                 s += 'none' + os.linesep
-        return s #[:-1]
+        return s  #[:-1]
 
     def _clean(self):
         self.name_ = None
         self.file_ = None
         self.defines = {}
         self.fields = {}
-        self.nodes = { 'failed': {} }
+        self.nodes = {'failed': {}}
         for nt in package.node_types:
             self.nodes[nt] = {}
         self.libraries = []
         if 'PKG_CONFIG_SYSROOT_DIR' in os.environ:
             self.defines['sysroot'] = os.environ['PKG_CONFIG_SYSROOT_DIR']
         if 'PKG_CONFIG_BUILD_TOP_DIR' in os.environ:
-            self.defines['top_builddir'] = os.environ['PKG_CONFIG_BUILD_TOP_DIR']
+            self.defines['top_builddir'] = os.environ[
+                'PKG_CONFIG_BUILD_TOP_DIR']
 
     def _log(self, s):
         if self.output:
@@ -309,7 +317,7 @@ class package(object):
             for p in self.paths:
                 pc = path.join(p, '%s.pc' % (name))
                 if path.isfile(pc):
-                    return pc;
+                    return pc
         return None
 
     def _find_libraries(self, name):
@@ -346,7 +354,8 @@ class package(object):
                     dash = s[offset:].find('-')
                     if dash < 0:
                         break
-                    if offset + dash + 2 < len(s) and s[offset + dash + 1] in 'LI':
+                    if offset + dash + 2 < len(s) and s[offset + dash +
+                                                        1] in 'LI':
                         p = s[offset + dash + 2:]
                         if not p.startswith(top_builddir):
                             s = s[:offset + dash + 2] + top_builddir + p
@@ -409,7 +418,7 @@ class package(object):
             pkgs += [pkg]
         return pkgs
 
-    def name_from_file(self, file = None):
+    def name_from_file(self, file=None):
         if file is None:
             file = self.file_
         if file is None:
@@ -446,7 +455,8 @@ class package(object):
             self._log('load: %s (%s)' % (name, file))
             if self.src:
                 self.src('==%s%s' % ('=' * 80, os.linesep))
-                self.src(' %s %s%s' % (file, '=' * (80 - len(file)), os.linesep))
+                self.src(' %s %s%s' % (file, '=' *
+                                       (80 - len(file)), os.linesep))
                 self.src('==%s%s' % ('=' * 80, os.linesep))
             f = open(path.host(file))
             tm = False
@@ -479,7 +489,8 @@ class package(object):
                         lhs = l[:d].lower()
                         rhs = l[d + 1:]
                         if tm:
-                            print(('define: ' + str(define) + ', lhs: ' + lhs + ', ' + rhs))
+                            print(('define: ' + str(define) + ', lhs: ' + lhs +
+                                   ', ' + rhs))
                         if define:
                             self.defines[lhs] = rhs
                         else:
@@ -488,7 +499,7 @@ class package(object):
         else:
             self.libraries = self._find_libraries(name)
         for nt in package.node_types:
-            requires = self.get(nt, private = False)
+            requires = self.get(nt, private=False)
             if requires:
                 for r in package.splitter(requires):
                     if r[0] not in self.nodes[nt]:
@@ -498,17 +509,19 @@ class package(object):
                         else:
                             pkg = package(r[0], self.prefix, self.output)
                         ver = pkg.get('version')
-                        self._log(' checking: %s (%s) %s %s' % (r[0], ver, r[1], r[2]))
+                        self._log(' checking: %s (%s) %s %s' %
+                                  (r[0], ver, r[1], r[2]))
                         if ver and package.check_versions(ver, r[1], r[2]):
                             self.nodes[nt][r[0]] = pkg
                         else:
-                            self._log('failed: %s (%s %s %s)' % (r[0], ver, r[1], r[2]))
+                            self._log('failed: %s (%s %s %s)' %
+                                      (r[0], ver, r[1], r[2]))
                             self.nodes['failed'][r[0]] = pkg
         if self.exists():
             self._log('load: exists and loaded; cache as loaded')
             package.loaded[self.file_] = self
 
-    def get(self, label, private = True):
+    def get(self, label, private=True):
         self._log('get: %s (%s)' % (label, ','.join(self.fields)))
         if label.lower() not in self.fields:
             return None
@@ -532,8 +545,9 @@ class package(object):
                 for nt in package.node_types:
                     if 'private' not in nt or ('private' in nt and private):
                         for n in self.nodes[nt]:
-                            r = self.nodes[nt][n].get(label, private = private)
-                            self._log('node: %s: %s' % (self.nodes[nt][n].name(), r))
+                            r = self.nodes[nt][n].get(label, private=private)
+                            self._log('node: %s: %s' %
+                                      (self.nodes[nt][n].name(), r))
                             if r:
                                 s += ' ' + r
         elif label == 'libs' and len(self.libraries):
@@ -560,16 +574,16 @@ class package(object):
                 self._log('check: %s not found' % (self.name_))
         return ok
 
+
 def check_package(libraries, args, output, src):
     ec = 1
     pkg = None
-    flags = { 'cflags': '',
-              'libs': '' }
+    flags = {'cflags': '', 'libs': ''}
     output('libraries: %s' % (libraries))
     libs = package.splitter(libraries)
     for lib in libs:
         output('pkg: %s' % (lib))
-        pkg = package(lib[0], prefix = args.prefix, output = output, src = src)
+        pkg = package(lib[0], prefix=args.prefix, output=output, src=src)
         if args.dump:
             output(pkg)
         if pkg.exists():
@@ -594,7 +608,7 @@ def check_package(libraries, args, output, src):
                 cflags = pkg.get('cflags')
                 if cflags:
                     flags['cflags'] += cflags
-                libs = pkg.get('libs', private = False)
+                libs = pkg.get('libs', private=False)
                 if libs:
                     flags['libs'] += libs
                 break

@@ -29,6 +29,7 @@ from . import check
 from . import error
 from . import execute
 
+
 def load():
     uname = os.uname()
     psrinfo = '/sbin/psrinfo|wc -l'
@@ -46,40 +47,41 @@ def load():
     if version.find('-') > 0:
         version = version.split('-')[0]
     defines = {
-        '_ncpus':           ('none',    'none',     ncpus),
-        '_os':              ('none',    'none',     'solaris'),
-        '_host':            ('triplet', 'required', cpu + '-pc-solaris2'),
-        '_host_vendor':     ('none',    'none',     'pc'),
-        '_host_os':         ('none',    'none',     'solaris'),
-        '_host_os_version': ('none',    'none',     version),
-        '_host_cpu':        ('none',    'none',     cpu),
-        '_host_alias':      ('none',    'none',     '%{nil}'),
-        '_host_arch':       ('none',    'none',     cpu),
-        '_usr':             ('dir',     'required', '/usr'),
-        '_var':             ('dir',     'optional', '/var'),
-        '__bash':           ('exe',     'optional', '/usr/bin/bash'),
-        '__bison':          ('exe',     'required', '/usr/bin/bison'),
-        '__git':            ('exe',     'required', '/usr/bin/git'),
-        '__svn':            ('exe',     'required', '/usr/bin/svn'),
-        '__cvs':            ('exe',     'optional', '/usr/bin/cvs'),
-        '__xz':             ('exe',     'optional', '/usr/bin/xz'),
-        '__make':           ('exe',     'required', 'gmake'),
-        '__patch_opts':     ('none',     'none',    '-E'),
-        '__chown':          ('exe',     'required', '/usr/bin/chown'),
-        '__install':        ('exe',     'required', '/usr/bin/ginstall'),
-        '__cc':             ('exe',     'required', '/usr/bin/gcc'),
-        '__cxx':            ('exe',     'required', '/usr/bin/g++'),
-        'with_iconv':       ('none',    'none',     '0')
-        }
+        '_ncpus': ('none', 'none', ncpus),
+        '_os': ('none', 'none', 'solaris'),
+        '_host': ('triplet', 'required', cpu + '-pc-solaris2'),
+        '_host_vendor': ('none', 'none', 'pc'),
+        '_host_os': ('none', 'none', 'solaris'),
+        '_host_os_version': ('none', 'none', version),
+        '_host_cpu': ('none', 'none', cpu),
+        '_host_alias': ('none', 'none', '%{nil}'),
+        '_host_arch': ('none', 'none', cpu),
+        '_usr': ('dir', 'required', '/usr'),
+        '_var': ('dir', 'optional', '/var'),
+        '__bash': ('exe', 'optional', '/usr/bin/bash'),
+        '__bison': ('exe', 'required', '/usr/bin/bison'),
+        '__git': ('exe', 'required', '/usr/bin/git'),
+        '__svn': ('exe', 'required', '/usr/bin/svn'),
+        '__cvs': ('exe', 'optional', '/usr/bin/cvs'),
+        '__xz': ('exe', 'optional', '/usr/bin/xz'),
+        '__make': ('exe', 'required', 'gmake'),
+        '__patch_opts': ('none', 'none', '-E'),
+        '__chown': ('exe', 'required', '/usr/bin/chown'),
+        '__install': ('exe', 'required', '/usr/bin/ginstall'),
+        '__cc': ('exe', 'required', '/usr/bin/gcc'),
+        '__cxx': ('exe', 'required', '/usr/bin/g++'),
+        'with_iconv': ('none', 'none', '0')
+    }
 
-    defines['_build']        = defines['_host']
+    defines['_build'] = defines['_host']
     defines['_build_vendor'] = defines['_host_vendor']
-    defines['_build_os']     = defines['_host_os']
-    defines['_build_cpu']    = defines['_host_cpu']
-    defines['_build_alias']  = defines['_host_alias']
-    defines['_build_arch']   = defines['_host_arch']
+    defines['_build_os'] = defines['_host_os']
+    defines['_build_cpu'] = defines['_host_cpu']
+    defines['_build_alias'] = defines['_host_alias']
+    defines['_build_arch'] = defines['_host_arch']
 
     return defines
+
 
 if __name__ == '__main__':
     pprint.pprint(load())

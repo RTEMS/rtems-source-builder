@@ -26,5 +26,5 @@ try:
     import sb.reports
     sb.reports.run(sys.argv)
 except ImportError:
-    print("Incorrect Source Builder installation", file = sys.stderr)
+    print("Incorrect Source Builder installation", file=sys.stderr)
     sys.exit(1)

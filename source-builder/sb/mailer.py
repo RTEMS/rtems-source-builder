@@ -45,28 +45,34 @@ from . import options
 from . import path
 
 _options = {
-    '--mail'         : 'Send email report or results.',
+    '--mail': 'Send email report or results.',
     '--use-gitconfig': 'Use mail configuration from git config.',
-    '--mail-to'      : 'Email address to send the email to.',
-    '--mail-from'    : 'Email address the report is from.',
-    '--smtp-host'    : 'SMTP host to send via.',
-    '--smtp-port'    : 'SMTP port to send via.',
-    '--smtp-user'    : 'User for SMTP authentication.',
+    '--mail-to': 'Email address to send the email to.',
+    '--mail-from': 'Email address the report is from.',
+    '--smtp-host': 'SMTP host to send via.',
+    '--smtp-port': 'SMTP port to send via.',
+    '--smtp-user': 'User for SMTP authentication.',
     '--smtp-password': 'Password for SMTP authentication.'
 }
+
 
 def append_options(opts):
     for o in _options:
         opts[o] = _options[o]
 
+
 def add_arguments(argsp):
-    argsp.add_argument('--mail', help = _options['--mail'], action = 'store_true')
-    argsp.add_argument('--use-gitconfig', help = _options['--use-gitconfig'], action = 'store_true')
+    argsp.add_argument('--mail', help=_options['--mail'], action='store_true')
+    argsp.add_argument('--use-gitconfig',
+                       help=_options['--use-gitconfig'],
+                       action='store_true')
     no_add = ['--mail', '--use-gitconfig']
     for o in [opt for opt in list(_options) if opt not in no_add]:
-        argsp.add_argument(o, help = _options[o], type = str)
+        argsp.add_argument(o, help=_options[o], type=str)
+
 
 class mail:
+
     def __init__(self, opts):
         self.opts = opts
         self.gitconfig_lines = None
@@ -215,7 +221,7 @@ class mail:
         except socket.error as se:
             raise error.general('sending mail: %s' % (str(se)))
 
-    def send_file_as_body(self, to_addr, subject, name, intro = None):
+    def send_file_as_body(self, to_addr, subject, name, intro=None):
         try:
             with open(name, 'r') as f:
                 body = f.readlines()
@@ -225,6 +231,7 @@ class mail:
             body = intro + body
         self.send(to_addr, from_addr, body)
 
+
 if __name__ == '__main__':
     import sys
     from . import macros
@@ -232,11 +239,12 @@ if __name__ == '__main__':
     rtdir = 'source-builder'
     defaults = '%s/defaults.mc' % (rtdir)
     append_options(optargs)
-    opts = options.command_line(base_path = '.',
-                                argv = sys.argv,
-                                optargs = optargs,
-                                defaults = macros.macros(name = defaults, rtdir = rtdir),
-                                command_path = '.')
+    opts = options.command_line(base_path='.',
+                                argv=sys.argv,
+                                optargs=optargs,
+                                defaults=macros.macros(name=defaults,
+                                                       rtdir=rtdir),
+                                command_path='.')
     options.load(opts)
     m = mail(opts)
     print('From: %s' % (m.from_address()))

@@ -28,7 +28,8 @@ import os
 from . import error
 from . import log
 
-def generate(name, opts, header = None, footer = None):
+
+def generate(name, opts, header=None, footer=None):
     label, result = opts.with_arg('error-report')
     if (label.startswith('without_') and result != 'yes') or \
        (label.startswith('with_') and result != 'no'):
@@ -37,8 +38,10 @@ def generate(name, opts, header = None, footer = None):
             r += [' %s' % (header)]
         r += [opts.info()]
         if opts.defaults.get_value('%{_sbgit_valid}') == '1':
-            r += [' %s/%s' % (opts.defaults.get_value('%{_sbgit_remotes}'),
-                              opts.defaults.get_value('%{_sbgit_id}'))]
+            r += [
+                ' %s/%s' % (opts.defaults.get_value('%{_sbgit_remotes}'),
+                            opts.defaults.get_value('%{_sbgit_id}'))
+            ]
         else:
             r += [' RSB: not a valid repo']
         if os.name == 'nt':
@@ -54,9 +57,12 @@ def generate(name, opts, header = None, footer = None):
             name = name.replace('/', '-')
             with open(name, 'w') as l:
                 l.write(os.linesep.join(r))
-            log.notice(os.linesep.join(['  See error report: %s' % (name),
-                '  Note: In some cases the error appears only in',
-                '  the complete build log (see --log option)']))
+            log.notice(
+                os.linesep.join([
+                    '  See error report: %s' % (name),
+                    '  Note: In some cases the error appears only in',
+                    '  the complete build log (see --log option)'
+                ]))
         except:
             log.stderr('error: failure to create error report')
             raise

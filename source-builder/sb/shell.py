@@ -30,10 +30,11 @@ try:
     from . import log
     from . import options
 except KeyboardInterrupt:
-    print('abort: user terminated', file = sys.stderr)
+    print('abort: user terminated', file=sys.stderr)
     sys.exit(1)
 except:
     raise
+
 
 def expand(macros, line):
     #
@@ -44,15 +45,15 @@ def expand(macros, line):
         if len(shell_macro) > 3:
             e = execute.capture_execution()
             if options.host_windows:
-                cmd = '%s -c "%s"' % (macros.expand('%{__sh}'), shell_macro[2:-1])
+                cmd = '%s -c "%s"' % (macros.expand('%{__sh}'),
+                                      shell_macro[2:-1])
             else:
                 cmd = shell_macro[2:-1]
             exit_code, proc, output = e.shell(cmd)
             log.trace('shell-output: %d %s' % (exit_code, output))
             if exit_code != 0:
-                raise error.general('shell macro failed: %s: %d: %s' % (cmd,
-                                                                        exit_code,
-                                                                        output))
+                raise error.general('shell macro failed: %s: %d: %s' %
+                                    (cmd, exit_code, output))
         return output
 
     updating = True
@@ -68,7 +69,8 @@ def expand(macros, line):
                     if braces > 0:
                         braces -= 1
                     else:
-                        line = line[:pos] + _exec(line[pos:p + 1]) + line[p + 1:]
+                        line = line[:pos] + _exec(
+                            line[pos:p + 1]) + line[p + 1:]
                         updating = True
                         break
     return line

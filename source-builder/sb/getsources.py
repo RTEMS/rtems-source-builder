@@ -37,12 +37,13 @@ try:
     from . import simhost
     from . import version
 except KeyboardInterrupt:
-    print('abort: user terminated', file = sys.stderr)
+    print('abort: user terminated', file=sys.stderr)
     sys.exit(1)
 except:
     raise
 
-def run(args = sys.argv):
+
+def run(args=sys.argv):
     ec = 0
     get_sources_error = True
     try:
@@ -50,46 +51,61 @@ def run(args = sys.argv):
         # The RSB options support cannot be used because it loads the defaults
         # for the host which we cannot do here.
         #
-        description  = 'RTEMS Get Sources downloads all the source a build set '
+        description = 'RTEMS Get Sources downloads all the source a build set '
         description += 'references for all hosts.'
 
-        argsp = argparse.ArgumentParser(prog = 'rtems-get-sources',
-                                        description = description)
-        argsp.add_argument('--rtems-version', help = 'Set the RTEMS version.',
-                           type = str,
-                           default = version.version())
-        argsp.add_argument('--list-hosts', help = 'List the hosts.',
-                           action = 'store_true')
-        argsp.add_argument('--list-bsets', help = 'List the buildsets.',
-                           action = 'store_true')
-        argsp.add_argument('--list-root-bsets', help = 'List the toplevel or root buildsets.',
-                           action = 'store_true')
-        argsp.add_argument('--download-dir', help = 'Download directory.',
-                           type = str)
-        argsp.add_argument('--clean', help = 'Clean the download directory.',
-                           action = 'store_true')
-        argsp.add_argument('--tar', help = 'Create a tarball of all the source.',
-                           action = 'store_true')
-        argsp.add_argument('--log', help = 'Log file.',
-                           type = str,
-                           default = simhost.log_default('getsource'))
-        argsp.add_argument('--stop-on-error', help = 'Stop on error.',
-                           action = 'store_true')
-        argsp.add_argument('--trace', help = 'Enable trace logging for debugging.',
-                           action = 'store_true')
-        argsp.add_argument('--used', help = 'Save the used buildset and config files.',
-                           type = str, default = None)
-        argsp.add_argument('--unused', help = 'Save the unused buildset and config files.',
-                           type = str, default = None)
-        argsp.add_argument('bsets', nargs='*', help = 'Build sets.')
+        argsp = argparse.ArgumentParser(prog='rtems-get-sources',
+                                        description=description)
+        argsp.add_argument('--rtems-version',
+                           help='Set the RTEMS version.',
+                           type=str,
+                           default=version.version())
+        argsp.add_argument('--list-hosts',
+                           help='List the hosts.',
+                           action='store_true')
+        argsp.add_argument('--list-bsets',
+                           help='List the buildsets.',
+                           action='store_true')
+        argsp.add_argument('--list-root-bsets',
+                           help='List the toplevel or root buildsets.',
+                           action='store_true')
+        argsp.add_argument('--download-dir',
+                           help='Download directory.',
+                           type=str)
+        argsp.add_argument('--clean',
+                           help='Clean the download directory.',
+                           action='store_true')
+        argsp.add_argument('--tar',
+                           help='Create a tarball of all the source.',
+                           action='store_true')
+        argsp.add_argument('--log',
+                           help='Log file.',
+                           type=str,
+                           default=simhost.log_default('getsource'))
+        argsp.add_argument('--stop-on-error',
+                           help='Stop on error.',
+                           action='store_true')
+        argsp.add_argument('--trace',
+                           help='Enable trace logging for debugging.',
+                           action='store_true')
+        argsp.add_argument('--used',
+                           help='Save the used buildset and config files.',
+                           type=str,
+                           default=None)
+        argsp.add_argument('--unused',
+                           help='Save the unused buildset and config files.',
+                           type=str,
+                           default=None)
+        argsp.add_argument('bsets', nargs='*', help='Build sets.')
 
         argopts = argsp.parse_args(args[1:])
 
         simhost.load_log(argopts.log)
-        log.notice('RTEMS Source Builder - Get Sources, %s' % (version.string()))
+        log.notice('RTEMS Source Builder - Get Sources, %s' %
+                   (version.string()))
         log.tracing = argopts.trace
 
-        opts = simhost.load_options(args, argopts, extras = ['--with-download'])
+        opts = simhost.load_options(args, argopts, extras=['--with-download'])
         configs = build.get_configs(opts)
 
         stop_on_error = argopts.stop_on_error
@@ -103,9 +119,12 @@ def run(args = sys.argv):
         else:
             if argopts.clean:
                 if argopts.download_dir is None:
-                    raise error.general('cleaning of the default download directories is not supported')
+                    raise error.general(
+                        'cleaning of the default download directories is not supported'
+                    )
                 if path.exists(argopts.download_dir):
-                    log.notice('Cleaning source directory: %s' % (argopts.download_dir))
+                    log.notice('Cleaning source directory: %s' %
+                               (argopts.download_dir))
                     path.removeall(argopts.download_dir)
             if len(argopts.bsets) == 0:
                 bsets = simhost.get_root_bset_files(opts, configs)
@@ -157,6 +176,7 @@ def run(args = sys.argv):
         log.notice('abort: unknown error')
         ec = 1
     sys.exit(ec)
+
 
 if __name__ == "__main__":
     run()

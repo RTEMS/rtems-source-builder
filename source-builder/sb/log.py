@@ -44,12 +44,14 @@ capture = None
 tracing = False
 quiet = False
 
+
 def set_default_once(log):
     global default
     if default is None:
         default = log
 
-def _output(text = os.linesep, log = None):
+
+def _output(text=os.linesep, log=None):
     """Output the text to a log if provided else send it to stdout."""
     if text is None:
         text = os.linesep
@@ -67,22 +69,26 @@ def _output(text = os.linesep, log = None):
             print(l)
         sys.stdout.flush()
 
-def stdout_raw(text = os.linesep):
-    print(text, end = '')
+
+def stdout_raw(text=os.linesep):
+    print(text, end='')
     sys.stdout.flush()
 
-def stderr(text = os.linesep, log = None):
+
+def stderr(text=os.linesep, log=None):
     for l in text.replace(chr(13), '').splitlines():
-        print(l, file = sys.stderr)
+        print(l, file=sys.stderr)
         sys.stderr.flush()
     if capture is not None:
         capture(text)
 
-def output(text = os.linesep, log = None):
+
+def output(text=os.linesep, log=None):
     if not quiet:
         _output(text, log)
 
-def notice(text = os.linesep, log = None):
+
+def notice(text=os.linesep, log=None):
     if not quiet and default is not None and not default.has_stdout():
         for l in text.replace(chr(13), '').splitlines():
             print(l)
@@ -91,30 +97,36 @@ def notice(text = os.linesep, log = None):
             capture(text)
     _output(text, log)
 
-def trace(text = os.linesep, log = None):
+
+def trace(text=os.linesep, log=None):
     if not quiet and tracing:
         _output(text, log)
 
-def warning(text = os.linesep, log = None):
+
+def warning(text=os.linesep, log=None):
     for l in text.replace(chr(13), '').splitlines():
         notice('warning: %s' % (l), log)
 
-def flush(log = None):
+
+def flush(log=None):
     if log:
         log.flush()
     elif default is not None:
         default.flush()
 
-def tail(log = None):
+
+def tail(log=None):
     if log is not None:
         return log.tail
     if default is not None:
         return default.tail
     return 'No log output'
 
+
 class log:
     """Log output to stdout or a file."""
-    def __init__(self, streams = None, tail_size = 400):
+
+    def __init__(self, streams=None, tail_size=400):
         self.tail = []
         self.tail_size = tail_size
         self.fhs = [None, None]
@@ -128,8 +140,8 @@ class log:
                     try:
                         self.fhs.append(open(s, 'w'))
                     except IOError as ioe:
-                         raise error.general("creating log file '" + s + \
-                                             "': " + str(ioe))
+                        raise error.general("creating log file '" + s + \
+                                            "': " + str(ioe))
 
     def __del__(self):
         for f in range(2, len(self.fhs)):
@@ -173,8 +185,9 @@ class log:
             if self.fhs[f] is not None:
                 self.fhs[f].flush()
 
+
 if __name__ == "__main__":
-    l = log(['stdout', 'log.txt'], tail_size = 20)
+    l = log(['stdout', 'log.txt'], tail_size=20)
     for i in range(0, 10):
         l.output('log: hello world: %d\n' % (i))
     l.output('log: hello world CRLF\r\n')
@@ -194,22 +207,26 @@ if __name__ == "__main__":
     for i in [0, 1]:
         quiet = False
         tracing = False
-        print('- quiet:%s - trace:%s %s' % (str(quiet), str(tracing), '-' * 30))
+        print('- quiet:%s - trace:%s %s' %
+              (str(quiet), str(tracing), '-' * 30))
         trace('trace with quiet and trace off')
         notice('notice with quiet and trace off')
         quiet = True
         tracing = False
-        print('- quiet:%s - trace:%s %s' % (str(quiet), str(tracing), '-' * 30))
+        print('- quiet:%s - trace:%s %s' %
+              (str(quiet), str(tracing), '-' * 30))
         trace('trace with quiet on and trace off')
         notice('notice with quiet on and trace off')
         quiet = False
         tracing = True
-        print('- quiet:%s - trace:%s %s' % (str(quiet), str(tracing), '-' * 30))
+        print('- quiet:%s - trace:%s %s' %
+              (str(quiet), str(tracing), '-' * 30))
         trace('trace with quiet off and trace on')
         notice('notice with quiet off and trace on')
         quiet = True
         tracing = True
-        print('- quiet:%s - trace:%s %s' % (str(quiet), str(tracing), '-' * 30))
+        print('- quiet:%s - trace:%s %s' %
+              (str(quiet), str(tracing), '-' * 30))
         trace('trace with quiet on and trace on')
         notice('notice with quiet on and trace on')
         default = l

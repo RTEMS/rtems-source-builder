@@ -34,13 +34,15 @@ from . import options
 from . import path
 from . import version
 
+
 def _collect(path_, file):
     confs = []
-    for root, dirs, files in os.walk(path.host(path_), topdown = True):
+    for root, dirs, files in os.walk(path.host(path_), topdown=True):
         for f in files:
             if f == file:
                 confs += [path.shell(path.join(root, f))]
     return confs
+
 
 def _grep(file, pattern):
     rege = re.compile(pattern)
@@ -52,9 +54,10 @@ def _grep(file, pattern):
         raise error.general('error reading: %s' % (file))
     return True in matches
 
+
 class command:
 
-    def __init__(self, opts, cmd, cwd = None):
+    def __init__(self, opts, cmd, cwd=None):
         self.exit_code = 0
         self.output = None
         self.opts = opts
@@ -69,10 +72,14 @@ class command:
         # Support Python 2.6
         #
         if "check_output" not in dir(subprocess):
+
             def f(*popenargs, **kwargs):
                 if 'stdout' in kwargs:
-                    raise ValueError('stdout argument not allowed, it will be overridden.')
-                process = subprocess.Popen(stdout=subprocess.PIPE, *popenargs, **kwargs)
+                    raise ValueError(
+                        'stdout argument not allowed, it will be overridden.')
+                process = subprocess.Popen(stdout=subprocess.PIPE,
+                                           *popenargs,
+                                           **kwargs)
                 output, unused_err = process.communicate()
                 retcode = process.poll()
                 if retcode:
@@ -81,21 +88,23 @@ class command:
                         cmd = popenargs[0]
                     raise subprocess.CalledProcessError(retcode, cmd)
                 return output
+
             subprocess.check_output = f
 
         self.start_time = datetime.datetime.now()
         self.exit_code = 0
         try:
             cmd = [self.opts.defaults.expand(c) for c in self.cmd]
-            self.output = subprocess.check_output(cmd, cwd = self.cwd)
+            self.output = subprocess.check_output(cmd, cwd=self.cwd)
         except subprocess.CalledProcessError as cpe:
             self.exit_code = cpe.returncode
             self.output = cpe.output
         self.end_time = datetime.datetime.now()
 
+
 class bsp_config:
 
-    filter_out = ['as', 'cc', 'ld', 'objcopy', 'size' ]
+    filter_out = ['as', 'cc', 'ld', 'objcopy', 'size']
 
     def __init__(self, opts, prefix, arch_bsp):
         self.opts = opts
@@ -123,9 +132,11 @@ class bsp_config:
         if not path.exists(self.makefile_inc):
             raise error.general('RTEMS BSP configuration not found: %s: %s' % \
                                     (arch_bsp, self.makefile_inc))
-        self.command = command(opts, ['%{__make}',
-                                      '-f' '%{_sbdir}/sb/rtemsconfig.mk',
-                                      'makefile_inc=%s' % (self.makefile_inc)])
+        self.command = command(opts, [
+            '%{__make}', '-f'
+            '%{_sbdir}/sb/rtemsconfig.mk',
+            'makefile_inc=%s' % (self.makefile_inc)
+        ])
         self.command.run()
         self.parse(self.command.output)
 
@@ -176,11 +187,14 @@ class bsp_config:
             return self.configs[_keys[nl]]
         raise error.general('invalid configuration: %s' % (name))
 
+
 def run(args):
     try:
-        optargs = { '--rtems':      'The RTEMS source directory',
-                    '--rtems-bsp':  'The RTEMS BSP (arch/bsp)',
-                    '--list':       'List the configurations' }
+        optargs = {
+            '--rtems': 'The RTEMS source directory',
+            '--rtems-bsp': 'The RTEMS BSP (arch/bsp)',
+            '--list': 'List the configurations'
+        }
         opts = options.load(sys.argv, optargs)
 
         if opts.get_arg('--rtems'):
@@ -193,7 +207,8 @@ def run(args):
         bsp = bsp_config(opts, prefix, opts.get_arg('--rtems-bsp')[1])
 
         if opts.get_arg('--list'):
-            log.notice('RTEMS Source Builder - RTEMS Configuration, %s' % (version.string()))
+            log.notice('RTEMS Source Builder - RTEMS Configuration, %s' %
+                       (version.string()))
             opts.log_info()
             configs = list(bsp.keys())
             for c in sorted(configs.keys()):
@@ -214,6 +229,7 @@ def run(args):
         log.notice('abort: user terminated')
         sys.exit(1)
     sys.exit(0)
+
 
 if __name__ == "__main__":
     run(sys.argv)

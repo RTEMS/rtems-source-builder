@@ -25,5 +25,5 @@ try:
     sb.setbuilder.run()
 except ImportError:
     import sys
-    print("Incorrect Source Builder installation", file = sys.stderr)
+    print("Incorrect Source Builder installation", file=sys.stderr)
     sys.exit(1)

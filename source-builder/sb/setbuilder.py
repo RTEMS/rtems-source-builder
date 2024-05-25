@@ -48,10 +48,11 @@ try:
     from . import sources
     from . import version
 except KeyboardInterrupt:
-    print('abort: user terminated', file = sys.stderr)
+    print('abort: user terminated', file=sys.stderr)
     sys.exit(1)
 except:
     raise
+
 
 def macro_expand(macros, _str):
     cstr = None
@@ -61,7 +62,9 @@ def macro_expand(macros, _str):
         _str = shell.expand(macros, _str)
     return _str
 
+
 class log_capture(object):
+
     def __init__(self):
         self.log = []
         log.capture = self.capture
@@ -78,10 +81,11 @@ class log_capture(object):
     def clear(self):
         self.log = []
 
+
 class buildset:
     """Build a set builds a set of packages."""
 
-    def __init__(self, bset, _configs, opts, macros = None):
+    def __init__(self, bset, _configs, opts, macros=None):
         log.trace('_bset:   : %s: init' % (bset))
         self.configs = _configs
         self.opts = opts
@@ -103,7 +107,7 @@ class buildset:
         self.mail_report_0subject = ''
         self.build_failure = None
 
-    def write_mail_header(self, text = '', prepend = False):
+    def write_mail_header(self, text='', prepend=False):
         if type(text) is list:
             text = os.linesep.join(text)
         text = text.replace('\r', '').replace('\n', os.linesep)
@@ -117,7 +121,7 @@ class buildset:
     def get_mail_header(self):
         return self.mail_header
 
-    def write_mail_report(self, text, prepend = False):
+    def write_mail_report(self, text, prepend=False):
         if type(text) is list:
             text = os.linesep.join(text)
         text = text.replace('\r', '').replace('\n', os.linesep)
@@ -134,17 +138,20 @@ class buildset:
     def mail_single_report(self):
         return self.macros.get('%{mail_single_report}') != 0
 
-    def mail_active(self, mail, nesting_count = 1):
-        return mail is not None and not (self.mail_single_report() and nesting_count > 1)
+    def mail_active(self, mail, nesting_count=1):
+        return mail is not None and not (self.mail_single_report()
+                                         and nesting_count > 1)
 
     def mail_send(self, mail):
-        if True: #not self.opts.dry_run():
-            mail_subject = '%s on %s' % (self.bset, self.macros.expand('%{_host}'))
+        if True:  #not self.opts.dry_run():
+            mail_subject = '%s on %s' % (self.bset,
+                                         self.macros.expand('%{_host}'))
             if mail['failure'] is not None:
-                mail_subject = 'FAILED %s (%s)' % (mail_subject, mail['failure'])
+                mail_subject = 'FAILED %s (%s)' % (mail_subject,
+                                                   mail['failure'])
             else:
                 mail_subject = 'PASSED %s' % (mail_subject)
-            mail_subject = 'Build %s: %s' % (reports.platform(mode = 'system'),
+            mail_subject = 'Build %s: %s' % (reports.platform(mode='system'),
                                              mail_subject)
             body = mail['log']
             body += (os.linesep * 2).join(mail['reports'])
@@ -155,7 +162,7 @@ class buildset:
         if not self.opts.dry_run():
             path.copy_tree(src, dst)
 
-    def report(self, _config, _build, opts, macros, format = None, mail = None):
+    def report(self, _config, _build, opts, macros, format=None, mail=None):
         if len(_build.main_package().name()) > 0 \
            and not _build.macros.get('%{_disable_reporting}') \
            and (not _build.opts.get_arg('--no-report') \
@@ -186,7 +193,8 @@ class buildset:
             name = _build.main_package().name() + ext
             log.notice('reporting: %s -> %s' % (_config, name))
             if not _build.opts.get_arg('--no-report'):
-                outpath = path.host(path.join(buildroot, prefix, 'share', 'rtems', 'rsb'))
+                outpath = path.host(
+                    path.join(buildroot, prefix, 'share', 'rtems', 'rsb'))
                 if not _build.opts.dry_run():
                     outname = path.host(path.join(outpath, name))
                 else:
@@ -201,8 +209,8 @@ class buildset:
                     r.write(outname)
                 del r
             if mail:
-                r = reports.report('text', True, self.configs,
-                                   copy.copy(opts), copy.copy(macros))
+                r = reports.report('text', True, self.configs, copy.copy(opts),
+                                   copy.copy(macros))
                 r.introduction(_build.config.file_name())
                 r.generate(_build.config.file_name())
                 r.epilogue(_build.config.file_name())
@@ -234,15 +242,15 @@ class buildset:
 
     def canadian_cross(self, _build):
         log.trace('_bset:   : Cxc for build machine: _build => _host')
-        macros_to_copy = [('%{_host}',        '%{_build}'),
-                          ('%{_host_alias}',  '%{_build_alias}'),
-                          ('%{_host_arch}',   '%{_build_arch}'),
-                          ('%{_host_cpu}',    '%{_build_cpu}'),
-                          ('%{_host_os}',     '%{_build_os}'),
+        macros_to_copy = [('%{_host}', '%{_build}'),
+                          ('%{_host_alias}', '%{_build_alias}'),
+                          ('%{_host_arch}', '%{_build_arch}'),
+                          ('%{_host_cpu}', '%{_build_cpu}'),
+                          ('%{_host_os}', '%{_build_os}'),
                           ('%{_host_vendor}', '%{_build_vendor}'),
-                          ('%{_tmproot}',     '%{_tmpcxcroot}'),
-                          ('%{buildroot}',    '%{buildcxcroot}'),
-                          ('%{_builddir}',    '%{_buildcxcdir}')]
+                          ('%{_tmproot}', '%{_tmpcxcroot}'),
+                          ('%{buildroot}', '%{buildcxcroot}'),
+                          ('%{_builddir}', '%{_buildcxcdir}')]
         cxc_macros = _build.copy_init_macros()
         for m in macros_to_copy:
             log.trace('_bset:   : Cxc: %s <= %s' % (m[0], cxc_macros[m[1]]))
@@ -345,9 +353,11 @@ class buildset:
                     self.bset_pkg = ls[1].strip()
                     self.macros['package'] = self.bset_pkg
                 elif ls[0][0] == '%' and (len(ls[0]) > 1 and ls[0][1] != '{'):
+
                     def err(msg):
                         raise error.general('%s:%d: %s' % (self.bset, lc, msg))
-                    if ls[0] == '%define' or ls[0] == '%defineifnot' :
+
+                    if ls[0] == '%define' or ls[0] == '%defineifnot':
                         name = ls[1].strip()
                         value = None
                         if len(ls) > 2:
@@ -375,8 +385,8 @@ class buildset:
                     l = macro_expand(self.macros, l.strip())
                     c = build.find_config(l, self.configs)
                     if c is None:
-                        raise error.general('%s:%d: cannot find file: %s' % (self.bset,
-                                                                             lc, l))
+                        raise error.general('%s:%d: cannot find file: %s' %
+                                            (self.bset, lc, l))
                     configs += [c]
         except:
             bset.close()
@@ -409,7 +419,7 @@ class buildset:
             configs = self.parse(bset)
         return configs
 
-    def build(self, deps = None, nesting_count = 0, mail = None):
+    def build(self, deps=None, nesting_count=0, mail=None):
 
         build_error = False
 
@@ -442,8 +452,8 @@ class buildset:
         try:
             configs = self.load()
 
-            log.trace('_bset: %2d: %s: configs: %s'  % (nesting_count,
-                                                        self.bset, ', '.join(configs)))
+            log.trace('_bset: %2d: %s: configs: %s' %
+                      (nesting_count, self.bset, ', '.join(configs)))
 
             if nesting_count == 1:
                 #
@@ -472,23 +482,23 @@ class buildset:
                     opts = copy.copy(self.opts)
                     macros = copy.copy(self.macros)
                     if configs[s].endswith('.bset'):
-                        log.trace('_bset: %2d: %s %s' % (nesting_count,
-                                                         configs[s],
-                                                         '=' * (74 - len(configs[s]))))
+                        log.trace('_bset: %2d: %s %s' %
+                                  (nesting_count, configs[s], '=' *
+                                   (74 - len(configs[s]))))
                         bs = buildset(configs[s], self.configs, opts, macros)
                         bs.build(deps, nesting_count, mail)
                         del bs
                     elif configs[s].endswith('.cfg'):
                         if mail:
                             mail_report = True
-                        log.trace('_bset: %2d: %s %s' % (nesting_count,
-                                                         configs[s],
-                                                         '=' * (74 - len(configs[s]))))
+                        log.trace('_bset: %2d: %s %s' %
+                                  (nesting_count, configs[s], '=' *
+                                   (74 - len(configs[s]))))
                         try:
-                            b = build.build(configs[s],
-                                            self.opts.get_arg('--pkg-tar-files'),
-                                            opts,
-                                            macros)
+                            b = build.build(
+                                configs[s],
+                                self.opts.get_arg('--pkg-tar-files'), opts,
+                                macros)
                         except:
                             build_error = True
                             raise
@@ -496,16 +506,18 @@ class buildset:
                             mail_report = False
                         if deps is None:
                             self.build_package(configs[s], b)
-                            self.report(configs[s], b,
+                            self.report(configs[s],
+                                        b,
                                         copy.copy(self.opts),
                                         copy.copy(self.macros),
-                                        mail = mail)
+                                        mail=mail)
                             # Always produce an XML report.
-                            self.report(configs[s], b,
+                            self.report(configs[s],
+                                        b,
                                         copy.copy(self.opts),
                                         copy.copy(self.macros),
-                                        format = 'xml',
-                                        mail = mail)
+                                        format='xml',
+                                        mail=mail)
                         else:
                             deps += b.config.includes()
                         builds += [b]
@@ -515,7 +527,8 @@ class buildset:
                         log.trace('_bset:   : macros post-build')
                         log.trace(str(b.macros))
                     else:
-                        raise error.general('invalid config type: %s' % (configs[s]))
+                        raise error.general('invalid config type: %s' %
+                                            (configs[s]))
                 except error.general as gerr:
                     have_errors = True
                     if b is not None:
@@ -550,10 +563,13 @@ class buildset:
                               (self.install_mode(), self.installable(), b.installable()))
                     if b.installable():
                         prefix = b.config.expand('%{_prefix}')
-                        buildroot = path.join(b.config.expand('%{buildroot}'), prefix)
-                        self.install('staging', b.name(), buildroot, b.config.expand('%{stagingroot}'))
+                        buildroot = path.join(b.config.expand('%{buildroot}'),
+                                              prefix)
+                        self.install('staging', b.name(), buildroot,
+                                     b.config.expand('%{stagingroot}'))
                         if self.installable():
-                            self.install('installing', b.name(), buildroot, prefix)
+                            self.install('installing', b.name(), buildroot,
+                                         prefix)
             #
             # Sizes ...
             #
@@ -574,12 +590,15 @@ class buildset:
                 for p in builds[0].config.expand('%{_patchdir}').split(':'):
                     size_patches += path.get_size(p)
                 size_total = size_sources + size_patches + size_installed
-                build_max_size_human = build.humanize_number(size_build_max +
-                                                             size_installed, 'B')
+                build_max_size_human = build.humanize_number(
+                    size_build_max + size_installed, 'B')
                 build_total_size_human = build.humanize_number(size_total, 'B')
-                build_sources_size_human = build.humanize_number(size_sources, 'B')
-                build_patches_size_human = build.humanize_number(size_patches, 'B')
-                build_installed_size_human = build.humanize_number(size_installed, 'B')
+                build_sources_size_human = build.humanize_number(
+                    size_sources, 'B')
+                build_patches_size_human = build.humanize_number(
+                    size_patches, 'B')
+                build_installed_size_human = build.humanize_number(
+                    size_installed, 'B')
                 build_size = 'usage: %s' % (build_max_size_human)
                 build_size += ' total: %s' % (build_total_size_human)
                 build_size += ' (sources: %s' % (build_sources_size_human)
@@ -619,7 +638,8 @@ class buildset:
                 if have_stagingroot:
                     prefix = macro_expand(self.macros, '%{_prefix}')
                     if do_install:
-                        self.install(self.install_mode(), self.bset, stagingroot, prefix)
+                        self.install(self.install_mode(), self.bset,
+                                     stagingroot, prefix)
                     self.bset_tar(stagingroot)
                     staging_size = path.get_size(stagingroot)
                     if not self.opts.no_clean() or self.opts.always_clean():
@@ -651,7 +671,8 @@ class buildset:
                 mail_report = False
             if mail_report and mail is not None:
                 if self.installing():
-                    self.write_mail_header('Build Time: %s' % (build_time), True)
+                    self.write_mail_header('Build Time: %s' % (build_time),
+                                           True)
                     self.write_mail_header('', True)
                     self.write_mail_header(mail['header'], True)
                     self.write_mail_header('')
@@ -666,8 +687,10 @@ class buildset:
                             'Total size: ' + build_total_size_human + os.linesep
                         mail['log'] += \
                             'Installed : ' + build_installed_size_human + os.linesep
-                        mail['log'] += 'Sources: ' + build_sources_size_human + os.linesep
-                        mail['log'] += 'Patches: ' + build_patches_size_human + os.linesep
+                        mail[
+                            'log'] += 'Sources: ' + build_sources_size_human + os.linesep
+                        mail[
+                            'log'] += 'Patches: ' + build_patches_size_human + os.linesep
                     mail['log'] += os.linesep
                     mail['log'] += 'Output' + os.linesep
                     mail['log'] += '======' + os.linesep + os.linesep
@@ -686,6 +709,7 @@ class buildset:
 
             log.notice('Build Set: Time %s' % (build_time))
 
+
 def list_bset_cfg_files(opts, configs):
     if opts.get_arg('--list-configs') or opts.get_arg('--list-bsets'):
         if opts.get_arg('--list-configs'):
@@ -700,15 +724,19 @@ def list_bset_cfg_files(opts, configs):
         return True
     return False
 
+
 def list_host(opts):
     if opts.get_arg('--list-host'):
         print('Host operating system information:')
         print('Operating system: %s' % macro_expand(opts.defaults, '%{_os}'))
-        print('Number of processors: %s' % macro_expand(opts.defaults, '%{_ncpus}'))
-        print('Build architecture: %s' % macro_expand(opts.defaults, '%{_host_arch}'))
+        print('Number of processors: %s' %
+              macro_expand(opts.defaults, '%{_ncpus}'))
+        print('Build architecture: %s' %
+              macro_expand(opts.defaults, '%{_host_arch}'))
         print('Host triplet: %s' % macro_expand(opts.defaults, '%{_host}'))
         return True
     return False
+
 
 def run():
     import sys
@@ -716,23 +744,27 @@ def run():
     setbuilder_error = False
     mail = None
     try:
-        optargs = { '--list-configs':  'List available configurations',
-                    '--list-bsets':    'List available build sets',
-                    '--list-configs':  'List available configuration files.',
-                    '--list-deps':     'List the dependent files.',
-                    '--list-host':     'List host information and the host triplet.',
-                    '--bset-tar-file': 'Create a build set tar file',
-                    '--pkg-tar-files': 'Create package tar files',
-                    '--no-report':     'Do not create a package report.',
-                    '--report-format': 'The report format (text, html, asciidoc).' }
+        optargs = {
+            '--list-configs': 'List available configurations',
+            '--list-bsets': 'List available build sets',
+            '--list-configs': 'List available configuration files.',
+            '--list-deps': 'List the dependent files.',
+            '--list-host': 'List host information and the host triplet.',
+            '--bset-tar-file': 'Create a build set tar file',
+            '--pkg-tar-files': 'Create package tar files',
+            '--no-report': 'Do not create a package report.',
+            '--report-format': 'The report format (text, html, asciidoc).'
+        }
         mailer.append_options(optargs)
         opts = options.load(sys.argv, optargs)
         if opts.get_arg('--mail'):
-            mail = { 'mail'   : mailer.mail(opts),
-                     'output' : log_capture(),
-                     'log'    : '',
-                     'reports': [],
-                     'failure': None }
+            mail = {
+                'mail': mailer.mail(opts),
+                'output': log_capture(),
+                'log': '',
+                'reports': [],
+                'failure': None
+            }
             # Request this now to generate any errors.
             smtp_host = mail['mail'].smtp_host()
             to_addr = opts.get_arg('--mail-to')
@@ -741,17 +773,20 @@ def run():
             else:
                 mail['to'] = macro_expand(opts.defaults, '%{_mail_tools_to}')
             mail['from'] = mail['mail'].from_address()
-        log.notice('RTEMS Source Builder - Set Builder, %s' % (version.string()))
+        log.notice('RTEMS Source Builder - Set Builder, %s' %
+                   (version.string()))
         opts.log_info()
         if not check.host_setup(opts):
-            raise error.general('host build environment is not set up correctly')
+            raise error.general(
+                'host build environment is not set up correctly')
         if mail:
             mail['header'] = os.linesep.join(mail['output'].get()) + os.linesep
             mail['header'] += os.linesep
-            mail['header'] += 'Host: '  + reports.platform('compact') + os.linesep
+            mail['header'] += 'Host: ' + reports.platform(
+                'compact') + os.linesep
             indent = '       '
             for l in textwrap.wrap(reports.platform('extended'),
-                                   width = 80 - len(indent)):
+                                   width=80 - len(indent)):
                 mail['header'] += indent + l + os.linesep
         configs = build.get_configs(opts)
         if opts.get_arg('--list-deps'):
@@ -768,12 +803,13 @@ def run():
                not opts.canadian_cross() and \
                not opts.no_install() and \
                not path.ispathwritable(prefix):
-                raise error.general('prefix is not writable: %s' % (path.host(prefix)))
+                raise error.general('prefix is not writable: %s' %
+                                    (path.host(prefix)))
 
             for bset in opts.params():
                 setbuilder_error = True
                 b = buildset(bset, configs, opts)
-                b.build(deps, mail = mail)
+                b.build(deps, mail=mail)
                 b = None
                 setbuilder_error = False
 
@@ -802,6 +838,7 @@ def run():
         log.notice('abort: unknown error')
         ec = 1
     sys.exit(ec)
+
 
 if __name__ == "__main__":
     run()

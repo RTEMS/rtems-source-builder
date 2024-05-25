@@ -30,10 +30,11 @@ from . import execute
 from . import log
 from . import path
 
+
 class repo:
     """An object to manage a cvs repo."""
 
-    def __init__(self, _path, opts, macros = None, prefix = None):
+    def __init__(self, _path, opts, macros=None, prefix=None):
         self.path = _path
         self.opts = opts
         self.prefix = prefix
@@ -51,8 +52,7 @@ class repo:
     def _parse_args(self, url):
         if not url.startswith('cvs://'):
             raise error.general('invalid cvs url: %s' % (url))
-        opts = { 'cvsroot': ':%s' % (us[0][6:]),
-                 'module':  '' }
+        opts = {'cvsroot': ':%s' % (us[0][6:]), 'module': ''}
         for o in us:
             os = o.split('=')
             if len(os) == 1:
@@ -61,7 +61,7 @@ class repo:
                 opts[os[0]] = os[1:]
         return opts
 
-    def _run(self, args, check = False, cwd = None):
+    def _run(self, args, check=False, cwd=None):
         e = execute.capture_execution()
         if cwd is None:
             cwd = path.join(self.path, self.prefix)
@@ -69,7 +69,7 @@ class repo:
             raise error.general('cvs path needs to exist: %s' % (cwd))
         cmd = [self.cvs, '-z', '9', '-q'] + args
         log.output('cmd: (%s) %s' % (str(cwd), ' '.join(cmd)))
-        exit_code, proc, output = e.spawn(cmd, cwd = path.host(cwd))
+        exit_code, proc, output = e.spawn(cmd, cwd=path.host(cwd))
         log.trace(output)
         if check:
             self._cvs_exit_code(cmd, exit_code, output)
@@ -79,30 +79,33 @@ class repo:
         ec, output = self._run(['--version'], True)
         lines = output.split('\n')
         if len(lines) < 12:
-            raise error.general('invalid version string from cvs: %s' % (output))
+            raise error.general('invalid version string from cvs: %s' %
+                                (output))
         cvs = lines[0].split(' ')
         if len(cvs) != 6:
-            raise error.general('invalid version number from cvs: %s' % (lines[0]))
+            raise error.general('invalid version number from cvs: %s' %
+                                (lines[0]))
         vs = cvs[4].split('.')
         if len(vs) < 3:
-            raise error.general('invalid version number from cvs: %s' % (cvs[4]))
+            raise error.general('invalid version number from cvs: %s' %
+                                (cvs[4]))
         return (int(vs[0]), int(vs[1]), int(vs[2]))
 
-    def checkout(self, root, module = None, tag = None, date = None):
+    def checkout(self, root, module=None, tag=None, date=None):
         cmd = ['-d', root, 'co', '-N']
         if tag:
-           cmd += ['-r', tag]
+            cmd += ['-r', tag]
         if date:
             cmd += ['-D', date]
         if module:
             cmd += [module]
-        ec, output = self._run(cmd, check = True, cwd = self.path)
+        ec, output = self._run(cmd, check=True, cwd=self.path)
 
     def update(self):
-        ec, output = self._run(['up'], check = True)
+        ec, output = self._run(['up'], check=True)
 
     def reset(self):
-        ec, output = self._run(['up', '-C'], check = True)
+        ec, output = self._run(['up', '-C'], check=True)
 
     def branch(self):
         ec, output = self._run(['branch'])
@@ -113,13 +116,15 @@ class repo:
         return None
 
     def status(self):
-        keys = { 'U': 'modified',
-                 'P': 'modified',
-                 'M': 'modified',
-                 'R': 'removed',
-                 'C': 'conflict',
-                 'A': 'added',
-                 '?': 'untracked' }
+        keys = {
+            'U': 'modified',
+            'P': 'modified',
+            'M': 'modified',
+            'R': 'removed',
+            'C': 'conflict',
+            'A': 'added',
+            '?': 'untracked'
+        }
         _status = {}
         if path.exists(self.path):
             ec, output = self._run(['-n', 'up'])
@@ -144,15 +149,16 @@ class repo:
                     return True
         return False
 
+
 if __name__ == '__main__':
     import sys
     from . import options
-    opts = options.load(sys.argv, defaults = 'defaults.mc')
+    opts = options.load(sys.argv, defaults='defaults.mc')
     ldir = 'cvs-test-rm-me'
     c = repo(ldir, opts)
     if not path.exists(ldir):
         path.mkdir(ldir)
-        c.checkout(':pserver:anoncvs@sourceware.org:/cvs/src', module = 'newlib')
+        c.checkout(':pserver:anoncvs@sourceware.org:/cvs/src', module='newlib')
     print(c.cvs_version())
     print(c.valid())
     print(c.status())

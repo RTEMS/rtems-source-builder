@@ -8,7 +8,7 @@
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
- #
+#
 # THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
 # WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
 # MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
@@ -49,12 +49,14 @@ PIPE = subprocess.PIPE
 # Regular expression to find quotes.
 qstr = re.compile('[rR]?\'([^\\n\'\\\\]|\\\\.)*\'|[rR]?"([^\\n"\\\\]|\\\\.)*"')
 
+
 def check_type(command):
     """Checks the type of command we have. The types are spawn and
     shell."""
     if command in ['spawn', 'shell']:
         return True
     return False
+
 
 def arg_list(args):
     """Turn a string of arguments into a list suitable for
@@ -68,7 +70,7 @@ def arg_list(args):
         qs = qstr.search(argstr)
         if not qs:
             args.extend(argstr.split())
-            argstr= ''
+            argstr = ''
         else:
             # We have a quoted string. Get the string before
             # the quoted string and splt on white space then
@@ -80,6 +82,7 @@ def arg_list(args):
             argstr = argstr[qs.end():]
     return args
 
+
 def arg_subst(command, substs):
     """Substitute the %[0-9] in the command with the subst values."""
     args = arg_list(command)
@@ -89,17 +92,27 @@ def arg_subst(command, substs):
                 args[a] = re.compile(('%%%d' % (r))).sub(substs[r], args[a])
     return args
 
+
 def arg_subst_str(command, subst):
     cmd = arg_subst(command, subst)
-    def add(x, y): return x + ' ' + str(y)
+
+    def add(x, y):
+        return x + ' ' + str(y)
+
     return functools.reduce(add, cmd, '')
+
 
 class execute(object):
     """Execute commands or scripts. The 'output' is a funtion that handles the
     output from the process. The 'input' is a function that blocks and returns
     data to be written to stdin"""
-    def __init__(self, output = None, input = None, cleanup = None,
-                 error_prefix = '', verbose = False):
+
+    def __init__(self,
+                 output=None,
+                 input=None,
+                 cleanup=None,
+                 error_prefix='',
+                 verbose=False):
         self.lock = threading.Lock()
         self.output = output
         self.input = input
@@ -114,10 +127,11 @@ class execute(object):
         self.timing_out = False
         self.proc = None
 
-    def capture(self, proc, command = 'pipe', timeout = None):
+    def capture(self, proc, command='pipe', timeout=None):
         """Create 3 threads to read stdout and stderr and send to the output handler
         and call an input handler is provided. Based on the 'communicate' code
         in the subprocess module."""
+
         def _writethread(exe, fh, input):
             """Call the input handler and write it to the stdin. The input handler should
             block and return None or False if this thread is to exit and True if this
@@ -141,7 +155,8 @@ class execute(object):
                         print('execute:_writethread: call input', input)
                     lines = input()
                     if trace_threads:
-                        print('execute:_writethread: input returned:', type(lines))
+                        print('execute:_writethread: input returned:',
+                              type(lines))
                     if type(lines) in input_types:
                         try:
                             if encoding:
@@ -166,9 +181,10 @@ class execute(object):
             if trace_threads:
                 print('execute:_writethread: finished')
 
-        def _readthread(exe, fh, out, prefix = ''):
+        def _readthread(exe, fh, out, prefix=''):
             """Read from a file handle and write to the output handler
             until the file closes."""
+
             def _output_line(line, exe, prefix, out, count):
                 #exe.lock.acquire()
                 #exe.outputting = True
@@ -205,7 +221,8 @@ class execute(object):
                             _output_line(line + '\n', exe, prefix, out, count)
                         break
                     # str and bytes are the same type in Python2
-                    if decoder is not None and type(data) is not str and type(data) is bytes:
+                    if decoder is not None and type(data) is not str and type(
+                            data) is bytes:
                         data = decoder.decode(data)
                     last_ch = data[-1]
                     sd = (line + data).split('\n')
@@ -268,42 +285,36 @@ class execute(object):
         timeout_thread = None
 
         if proc.stdout:
-            stdout_thread = threading.Thread(target = _readthread,
-                                             name = '_stdout[%s]' % (name),
-                                             args = (self,
-                                                     io.open(proc.stdout.fileno(),
-                                                             mode = 'rb',
-                                                             closefd = False),
-                                                     self.output,
-                                                     ''))
+            stdout_thread = threading.Thread(
+                target=_readthread,
+                name='_stdout[%s]' % (name),
+                args=(self,
+                      io.open(proc.stdout.fileno(), mode='rb',
+                              closefd=False), self.output, ''))
             stdout_thread.daemon = True
             stdout_thread.start()
         if proc.stderr:
-            stderr_thread = threading.Thread(target = _readthread,
-                                             name = '_stderr[%s]' % (name),
-                                             args = (self,
-                                                     io.open(proc.stderr.fileno(),
-                                                             mode = 'rb',
-                                                             closefd = False),
-                                                     self.output,
-                                                     self.error_prefix))
+            stderr_thread = threading.Thread(
+                target=_readthread,
+                name='_stderr[%s]' % (name),
+                args=(self,
+                      io.open(proc.stderr.fileno(), mode='rb',
+                              closefd=False), self.output, self.error_prefix))
             stderr_thread.daemon = True
             stderr_thread.start()
         if self.input and proc.stdin:
-            stdin_thread = threading.Thread(target = _writethread,
-                                            name = '_stdin[%s]' % (name),
-                                            args = (self,
-                                                    proc.stdin,
-                                                    self.input))
+            stdin_thread = threading.Thread(target=_writethread,
+                                            name='_stdin[%s]' % (name),
+                                            args=(self, proc.stdin,
+                                                  self.input))
             stdin_thread.daemon = True
             stdin_thread.start()
         if timeout:
             self.timing_out = True
-            timeout_thread = threading.Thread(target = _timerthread,
-                                              name = '_timeout[%s]' % (name),
-                                              args = (self,
-                                                      timeout[0],
-                                                      timeout[1]))
+            timeout_thread = threading.Thread(target=_timerthread,
+                                              name='_timeout[%s]' % (name),
+                                              args=(self, timeout[0],
+                                                    timeout[1]))
             timeout_thread.daemon = True
             timeout_thread.start()
         try:
@@ -339,17 +350,26 @@ class execute(object):
                 stderr_thread.join(2)
         return exitcode
 
-    def open(self, command, capture = True, shell = False,
-             cwd = None, env = None,
-             stdin = None, stdout = None, stderr = None,
-             timeout = None):
+    def open(self,
+             command,
+             capture=True,
+             shell=False,
+             cwd=None,
+             env=None,
+             stdin=None,
+             stdout=None,
+             stderr=None,
+             timeout=None):
         """Open a command with arguments. Provide the arguments as a list or
         a string."""
         if self.output is None:
             raise error.general('capture needs an output handler')
         cs = command
         if type(command) is list:
-            def add(x, y): return x + ' ' + str(y)
+
+            def add(x, y):
+                return x + ' ' + str(y)
+
             cs = functools.reduce(add, command, '')[1:]
         what = 'spawn'
         if shell:
@@ -382,11 +402,14 @@ class execute(object):
                     if e not in ['.exe', '.com', '.bat']:
                         command[0] = command[0] + '.exe'
             log.trace('exe: %s' % (command))
-            proc = subprocess.Popen(command, shell = shell,
-                                    cwd = cwd, env = env,
-                                    stdin = stdin, stdout = stdout,
-                                    stderr = stderr,
-                                    close_fds = False)
+            proc = subprocess.Popen(command,
+                                    shell=shell,
+                                    cwd=cwd,
+                                    env=env,
+                                    stdin=stdin,
+                                    stdout=stdout,
+                                    stderr=stderr,
+                                    close_fds=False)
             if not capture:
                 return (0, proc)
             if self.output is None:
@@ -400,27 +423,46 @@ class execute(object):
                 log.output('exit: ' + str(ose))
         return (exit_code, proc)
 
-    def spawn(self, command, capture = True, cwd = None, env = None,
-              stdin = None, stdout = None, stderr = None,
-              timeout = None):
+    def spawn(self,
+              command,
+              capture=True,
+              cwd=None,
+              env=None,
+              stdin=None,
+              stdout=None,
+              stderr=None,
+              timeout=None):
         """Spawn a command with arguments. Provide the arguments as a list or
         a string."""
-        return self.open(command, capture, False, cwd, env,
-                         stdin, stdout, stderr, timeout)
+        return self.open(command, capture, False, cwd, env, stdin, stdout,
+                         stderr, timeout)
 
-    def shell(self, command, capture = True, cwd = None, env = None,
-              stdin = None, stdout = None, stderr = None,
-              timeout = None):
+    def shell(self,
+              command,
+              capture=True,
+              cwd=None,
+              env=None,
+              stdin=None,
+              stdout=None,
+              stderr=None,
+              timeout=None):
         """Execute a command within a shell context. The command can contain
         argumments. The shell is specific to the operating system. For example
         it is cmd.exe on Windows XP."""
-        return self.open(command, capture, True, cwd, env,
-                         stdin, stdout, stderr, timeout)
+        return self.open(command, capture, True, cwd, env, stdin, stdout,
+                         stderr, timeout)
 
-    def command(self, command, args = None, capture = True, shell = False,
-                cwd = None, env = None,
-                stdin = None, stdout = None, stderr = None,
-                timeout = None):
+    def command(self,
+                command,
+                args=None,
+                capture=True,
+                shell=False,
+                cwd=None,
+                env=None,
+                stdin=None,
+                stdout=None,
+                stderr=None,
+                timeout=None):
         """Run the command with the args. The args can be a list
         or a string."""
         if args and not type(args) is list:
@@ -428,23 +470,40 @@ class execute(object):
         cmd = [command]
         if args:
             cmd.extend(args)
-        return self.open(cmd, capture = capture, shell = shell,
-                         cwd = cwd, env = env,
-                         stdin = stdin, stdout = stdout, stderr = stderr,
-                         timeout = timeout)
+        return self.open(cmd,
+                         capture=capture,
+                         shell=shell,
+                         cwd=cwd,
+                         env=env,
+                         stdin=stdin,
+                         stdout=stdout,
+                         stderr=stderr,
+                         timeout=timeout)
 
-    def command_subst(self, command, substs, capture = True, shell = False,
-                      cwd = None, env = None,
-                      stdin = None, stdout = None, stderr = None,
-                      timeout = None):
+    def command_subst(self,
+                      command,
+                      substs,
+                      capture=True,
+                      shell=False,
+                      cwd=None,
+                      env=None,
+                      stdin=None,
+                      stdout=None,
+                      stderr=None,
+                      timeout=None):
         """Run the command from the config data with the
         option format string subsituted with the subst variables."""
         args = arg_subst(command, substs)
-        return self.command(args[0], args[1:], capture = capture,
-                            shell = shell or self.shell_commands,
-                            cwd = cwd, env = env,
-                            stdin = stdin, stdout = stdout, stderr = stderr,
-                            timeout = timeout)
+        return self.command(args[0],
+                            args[1:],
+                            capture=capture,
+                            shell=shell or self.shell_commands,
+                            cwd=cwd,
+                            env=env,
+                            stdin=stdin,
+                            stdout=stdout,
+                            stderr=stderr,
+                            timeout=timeout)
 
     def set_shell(self, execute):
         """Set the shell to execute when issuing a shell command."""
@@ -509,11 +568,13 @@ class execute(object):
         finally:
             self.lock.release()
 
+
 class capture_execution(execute):
     """Capture all output as a string and return it."""
 
     class _output_snapper:
-        def __init__(self, log = None, dump = False):
+
+        def __init__(self, log=None, dump=False):
             self.output = ''
             self.log = log
             self.dump = dump
@@ -530,27 +591,45 @@ class capture_execution(execute):
             self.output = ''
             return text.strip()
 
-    def __init__(self, log = None, dump = False, error_prefix = '', verbose = False):
-        self.snapper = capture_execution._output_snapper(log = log, dump = dump)
-        execute.__init__(self, output = self.snapper.handler,
-                         error_prefix = error_prefix,
-                         verbose = verbose)
+    def __init__(self, log=None, dump=False, error_prefix='', verbose=False):
+        self.snapper = capture_execution._output_snapper(log=log, dump=dump)
+        execute.__init__(self,
+                         output=self.snapper.handler,
+                         error_prefix=error_prefix,
+                         verbose=verbose)
 
-    def open(self, command, capture = True, shell = False, cwd = None, env = None,
-             stdin = None, stdout = None, stderr = None, timeout = None):
+    def open(self,
+             command,
+             capture=True,
+             shell=False,
+             cwd=None,
+             env=None,
+             stdin=None,
+             stdout=None,
+             stderr=None,
+             timeout=None):
         if not capture:
-            raise error.general('output capture must be true; leave as default')
+            raise error.general(
+                'output capture must be true; leave as default')
         #self.snapper.get_and_clear()
-        exit_code, proc = execute.open(self, command, capture = True, shell = shell,
-                                       cwd = cwd, env = env,
-                                       stdin = stdin, stdout = stdout, stderr = stderr,
-                                       timeout = timeout)
+        exit_code, proc = execute.open(self,
+                                       command,
+                                       capture=True,
+                                       shell=shell,
+                                       cwd=cwd,
+                                       env=env,
+                                       stdin=stdin,
+                                       stdout=stdout,
+                                       stderr=stderr,
+                                       timeout=timeout)
         return (exit_code, proc, self.snapper.get_and_clear())
 
     def set_output(self, output):
         raise error.general('output capture cannot be overrided')
 
+
 if __name__ == "__main__":
+
     def run_tests(e, commands, use_shell):
         for c in commands['shell']:
             e.shell(c)
@@ -558,13 +637,15 @@ if __name__ == "__main__":
             e.spawn(c)
         for c in commands['cmd']:
             if type(c) is str:
-                e.command(c, shell = use_shell)
+                e.command(c, shell=use_shell)
             else:
-                e.command(c[0], c[1], shell = use_shell)
+                e.command(c[0], c[1], shell=use_shell)
         for c in commands['csubsts']:
-            e.command_subst(c[0], c[1], shell = use_shell)
-        ec, proc = e.command(commands['pipe'][0], commands['pipe'][1],
-                             capture = False, stdin = subprocess.PIPE)
+            e.command_subst(c[0], c[1], shell=use_shell)
+        ec, proc = e.command(commands['pipe'][0],
+                             commands['pipe'][1],
+                             capture=False,
+                             stdin=subprocess.PIPE)
         if ec == 0:
             print('piping input into ' + commands['pipe'][0] + ': ' + \
                   commands['pipe'][2])
@@ -578,7 +659,7 @@ if __name__ == "__main__":
             del proc
 
     def capture_output(text):
-        print(text, end = '')
+        print(text, end='')
 
     cmd_shell_test = 'if "%OS%" == "Windows_NT" (echo It is WinNT) else echo Is is not WinNT'
     sh_shell_test = 'x="me"; if [ $x = "me" ]; then echo "It was me"; else "It was him"; fi'
@@ -587,14 +668,17 @@ if __name__ == "__main__":
     commands['windows'] = {}
     commands['unix'] = {}
     commands['windows']['shell'] = ['cd', 'dir /w', '.\\xyz', cmd_shell_test]
-    commands['windows']['spawn'] = ['hostname', 'hostnameZZ', ['netstat', '/e']]
+    commands['windows']['spawn'] = [
+        'hostname', 'hostnameZZ', ['netstat', '/e']
+    ]
     commands['windows']['cmd'] = [('ipconfig'), ('nslookup', 'www.python.org')]
     commands['windows']['csubsts'] = [('netstat %0', ['-a']),
                                       ('netstat %0 %1', ['-a', '-n'])]
     commands['windows']['pipe'] = ('ftp', None, 'help\nquit')
     commands['unix']['shell'] = ['pwd', 'ls -las', './xyz', sh_shell_test]
     commands['unix']['spawn'] = ['ls', 'execute.pyc', ['ls', '-i']]
-    commands['unix']['cmd'] = [('date'), ('date', '-R'), ('date', ['-u', '+%d %D']),
+    commands['unix']['cmd'] = [('date'), ('date', '-R'),
+                               ('date', ['-u', '+%d %D']),
                                ('date', '-u "+%d %D %S"')]
     commands['unix']['csubsts'] = [('date %0 "+%d %D %S"', ['-u']),
                                    ('date %0 %1', ['-u', '+%d %D %S'])]
@@ -602,16 +686,17 @@ if __name__ == "__main__":
 
     print(arg_list('cmd a1 a2 "a3 is a string" a4'))
     print(arg_list('cmd b1 b2 "b3 is a string a4'))
-    print(arg_subst(['nothing', 'xx-%0-yyy', '%1', '%2-something'],
-                    ['subst0', 'subst1', 'subst2']))
+    print(
+        arg_subst(['nothing', 'xx-%0-yyy', '%1', '%2-something'],
+                  ['subst0', 'subst1', 'subst2']))
 
-    e = execute(error_prefix = 'ERR: ', output = capture_output, verbose = True)
+    e = execute(error_prefix='ERR: ', output=capture_output, verbose=True)
     if sys.platform == "win32":
         run_tests(e, commands['windows'], False)
         if os.path.exists('c:\\msys\\1.0\\bin\\sh.exe'):
             e.set_shell('c:\\msys\\1.0\\bin\\sh.exe --login -c')
-            commands['unix']['pipe'] = ('c:\\msys\\1.0\\bin\\grep',
-                                        'hello', 'hello world')
+            commands['unix']['pipe'] = ('c:\\msys\\1.0\\bin\\grep', 'hello',
+                                        'hello world')
             run_tests(e, commands['unix'], True)
     else:
         run_tests(e, commands['unix'], False)

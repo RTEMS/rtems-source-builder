@@ -30,6 +30,7 @@ import os
 from . import path
 from . import log
 
+
 def load():
     uname = os.uname()
     if uname[4].startswith('arm'):
@@ -39,22 +40,22 @@ def load():
 
     version = uname[2]
     defines = {
-        '_ncpus':           ('none',    'none',     str(multiprocessing.cpu_count())),
-        '_os':              ('none',    'none',     'linux'),
-        '_host':            ('triplet', 'required', cpu + '-linux-gnu'),
-        '_host_vendor':     ('none',    'none',     'gnu'),
-        '_host_os':         ('none',    'none',     'linux'),
-        '_host_os_version': ('none',    'none',     version),
-        '_host_cpu':        ('none',    'none',     cpu),
-        '_host_alias':      ('none',    'none',     '%{nil}'),
-        '_host_arch':       ('none',    'none',     cpu),
-        '_usr':             ('dir',     'required', '/usr'),
-        '_var':             ('dir',     'required', '/var'),
-        '_prefix':          ('dir',     'optional', '/opt'),
-        '__bzip2':          ('exe',     'required', '/usr/bin/bzip2'),
-        '__gzip':           ('exe',     'required', '/bin/gzip'),
-        '__tar':            ('exe',     'required', '/bin/tar')
-        }
+        '_ncpus': ('none', 'none', str(multiprocessing.cpu_count())),
+        '_os': ('none', 'none', 'linux'),
+        '_host': ('triplet', 'required', cpu + '-linux-gnu'),
+        '_host_vendor': ('none', 'none', 'gnu'),
+        '_host_os': ('none', 'none', 'linux'),
+        '_host_os_version': ('none', 'none', version),
+        '_host_cpu': ('none', 'none', cpu),
+        '_host_alias': ('none', 'none', '%{nil}'),
+        '_host_arch': ('none', 'none', cpu),
+        '_usr': ('dir', 'required', '/usr'),
+        '_var': ('dir', 'required', '/var'),
+        '_prefix': ('dir', 'optional', '/opt'),
+        '__bzip2': ('exe', 'required', '/usr/bin/bzip2'),
+        '__gzip': ('exe', 'required', '/bin/gzip'),
+        '__tar': ('exe', 'required', '/bin/tar')
+    }
 
     # platform.dist() was removed in Python 3.8
     # The distro module (introduced in Python 3.6, back-ported to 2.6)
@@ -64,31 +65,43 @@ def load():
     distro_ver = 0
 
     variations = {
-        'debian' : { '__bzip2':        ('exe',     'required', '/bin/bzip2'),
-                     '__chgrp':        ('exe',     'required', '/bin/chgrp'),
-                     '__chown':        ('exe',     'required', '/bin/chown'),
-                     '__grep':         ('exe',     'required', '/bin/grep'),
-                     '__sed':          ('exe',     'required', '/bin/sed') },
-        'redhat' : { '__bzip2':        ('exe',     'required', '/bin/bzip2'),
-                     '__chgrp':        ('exe',     'required', '/bin/chgrp'),
-                     '__chown':        ('exe',     'required', '/bin/chown'),
-                     '__install_info': ('exe',     'required', '/sbin/install-info'),
-                     '__grep':         ('exe',     'required', '/bin/grep'),
-                     '__sed':          ('exe',     'required', '/bin/sed'),
-                     '__touch':        ('exe',     'required', '/bin/touch') },
-        'fedora' : { '__chown':        ('exe',     'required', '/usr/bin/chown'),
-                     '__install_info': ('exe',     'required', '/usr/sbin/install-info') },
-        'arch'   : { '__gzip':         ('exe',     'required', '/usr/bin/gzip'),
-                     '__chown':        ('exe',     'required', '/usr/bin/chown') },
-        'suse'   : { '__chgrp':        ('exe',     'required', '/usr/bin/chgrp'),
-                     '__chown':        ('exe',     'required', '/usr/sbin/chown') },
-        'gentoo' : { '__bzip2':        ('exe',     'required', '/bin/bzip2'),
-                     '__chgrp':        ('exe',     'required', '/bin/chgrp'),
-                     '__chown':        ('exe',     'required', '/bin/chown'),
-                     '__gzip':         ('exe',     'required', '/bin/gzip'),
-                     '__grep':         ('exe',     'required', '/bin/grep'),
-                     '__sed':          ('exe',     'required', '/bin/sed') },
-        }
+        'debian': {
+            '__bzip2': ('exe', 'required', '/bin/bzip2'),
+            '__chgrp': ('exe', 'required', '/bin/chgrp'),
+            '__chown': ('exe', 'required', '/bin/chown'),
+            '__grep': ('exe', 'required', '/bin/grep'),
+            '__sed': ('exe', 'required', '/bin/sed')
+        },
+        'redhat': {
+            '__bzip2': ('exe', 'required', '/bin/bzip2'),
+            '__chgrp': ('exe', 'required', '/bin/chgrp'),
+            '__chown': ('exe', 'required', '/bin/chown'),
+            '__install_info': ('exe', 'required', '/sbin/install-info'),
+            '__grep': ('exe', 'required', '/bin/grep'),
+            '__sed': ('exe', 'required', '/bin/sed'),
+            '__touch': ('exe', 'required', '/bin/touch')
+        },
+        'fedora': {
+            '__chown': ('exe', 'required', '/usr/bin/chown'),
+            '__install_info': ('exe', 'required', '/usr/sbin/install-info')
+        },
+        'arch': {
+            '__gzip': ('exe', 'required', '/usr/bin/gzip'),
+            '__chown': ('exe', 'required', '/usr/bin/chown')
+        },
+        'suse': {
+            '__chgrp': ('exe', 'required', '/usr/bin/chgrp'),
+            '__chown': ('exe', 'required', '/usr/sbin/chown')
+        },
+        'gentoo': {
+            '__bzip2': ('exe', 'required', '/bin/bzip2'),
+            '__chgrp': ('exe', 'required', '/bin/chgrp'),
+            '__chown': ('exe', 'required', '/bin/chown'),
+            '__gzip': ('exe', 'required', '/bin/gzip'),
+            '__grep': ('exe', 'required', '/bin/grep'),
+            '__sed': ('exe', 'required', '/bin/sed')
+        },
+    }
 
     try:
         import distro as distro_mod
@@ -142,20 +155,24 @@ def load():
             if path.exists(variations[distro][v][2]):
                 defines[v] = variations[distro][v]
     else:
-        log.warning('Unrecognized OS distro; assuming defaults for grep, sed, etc.')
+        log.warning(
+            'Unrecognized OS distro; assuming defaults for grep, sed, etc.')
         try:
             distro_mod
         except:
-            log.warning("The 'distro' package may fix this problem; try 'pip install distro'.")
+            log.warning(
+                "The 'distro' package may fix this problem; try 'pip install distro'."
+            )
 
-    defines['_build']        = defines['_host']
+    defines['_build'] = defines['_host']
     defines['_build_vendor'] = defines['_host_vendor']
-    defines['_build_os']     = defines['_host_os']
-    defines['_build_cpu']    = defines['_host_cpu']
-    defines['_build_alias']  = defines['_host_alias']
-    defines['_build_arch']   = defines['_host_arch']
+    defines['_build_os'] = defines['_host_os']
+    defines['_build_cpu'] = defines['_host_cpu']
+    defines['_build_alias'] = defines['_host_alias']
+    defines['_build_arch'] = defines['_host_arch']
 
     return defines
+
 
 if __name__ == '__main__':
     pprint.pprint(load())

@@ -30,6 +30,7 @@ from . import execute
 from . import log
 from . import path
 
+
 class repo:
     """An object to manage a git repo."""
 
@@ -37,7 +38,7 @@ class repo:
         if ec:
             raise error.general('git command failed (%s): %d' % (self.git, ec))
 
-    def _run(self, args, check = False):
+    def _run(self, args, check=False):
         e = execute.capture_execution()
         if path.exists(self.path):
             cwd = self.path
@@ -45,13 +46,13 @@ class repo:
             cwd = None
         cmd = [self.git] + args
         log.trace('cmd: (%s) %s' % (str(cwd), ' '.join(cmd)))
-        exit_code, proc, output = e.spawn(cmd, cwd = path.host(cwd))
+        exit_code, proc, output = e.spawn(cmd, cwd=path.host(cwd))
         log.trace(output)
         if check:
             self._git_exit_code(exit_code)
         return exit_code, output
 
-    def __init__(self, _path, opts = None, macros = None):
+    def __init__(self, _path, opts=None, macros=None):
         self.path = _path
         self.opts = opts
         if macros is None and opts is not None:
@@ -67,28 +68,30 @@ class repo:
         ec, output = self._run(['--version'], True)
         gvs = output.split()
         if len(gvs) < 3:
-            raise error.general('invalid version string from git: %s' % (output))
+            raise error.general('invalid version string from git: %s' %
+                                (output))
         vs = gvs[2].split('.')
         if len(vs) not in [3, 4]:
-            raise error.general('invalid version number from git: %s' % (gvs[2]))
+            raise error.general('invalid version number from git: %s' %
+                                (gvs[2]))
         return tuple(map(int, vs))
 
     def clone(self, url, _path):
-        ec, output = self._run(['clone', url, path.host(_path)], check = True)
+        ec, output = self._run(['clone', url, path.host(_path)], check=True)
 
     def fetch(self):
-        ec, output = self._run(['fetch'], check = True)
+        ec, output = self._run(['fetch'], check=True)
 
     def merge(self):
-        ec, output = self._run(['merge'], check = True)
+        ec, output = self._run(['merge'], check=True)
 
     def pull(self):
-        ec, output = self._run(['pull'], check = True)
+        ec, output = self._run(['pull'], check=True)
 
     def reset(self, args):
         if type(args) == str:
             args = [args]
-        ec, output = self._run(['reset'] + args, check = True)
+        ec, output = self._run(['reset'] + args, check=True)
 
     def branch(self):
         ec, output = self._run(['branch'])
@@ -98,23 +101,23 @@ class repo:
                     return b[2:]
         return None
 
-    def checkout(self, branch = 'master'):
-        ec, output = self._run(['checkout', branch], check = True)
+    def checkout(self, branch='master'):
+        ec, output = self._run(['checkout', branch], check=True)
 
     def submodule(self, module):
-        ec, output = self._run(['submodule', 'update', '--init', module], check = True)
+        ec, output = self._run(['submodule', 'update', '--init', module],
+                               check=True)
 
-    def submodule_foreach(self, args = []):
+    def submodule_foreach(self, args=[]):
         if type(args) == str:
             args = [args.split(args)]
-        ec, output = self._run(['submodule',
-                                'foreach',
-                                '--recursive',
-                                self.git] + args, check = True)
+        ec, output = self._run(
+            ['submodule', 'foreach', '--recursive', self.git] + args,
+            check=True)
 
     def submodules(self):
         smodules = {}
-        ec, output = self._run(['submodule'], check = True)
+        ec, output = self._run(['submodule'], check=True)
         if ec == 0:
             for l in output.split('\n'):
                 ms = l.split()
@@ -122,12 +125,12 @@ class repo:
                     smodules[ms[1]] = (ms[0], ms[2][1:-1])
         return smodules
 
-    def clean(self, args = []):
+    def clean(self, args=[]):
         if type(args) == str:
             args = [args]
-        ec, output = self._run(['clean'] + args, check = True)
+        ec, output = self._run(['clean'] + args, check=True)
 
-    def status(self, submodules_always_clean = False):
+    def status(self, submodules_always_clean=False):
         _status = {}
         if path.exists(self.path):
             if submodules_always_clean:
@@ -159,7 +162,8 @@ class repo:
                                 if len(l.strip()) > 0:
                                     l = l.strip()
                                     ls = l.split()
-                                    if state != 'unstaged' or ls[0] not in submodules:
+                                    if state != 'unstaged' or ls[
+                                            0] not in submodules:
                                         if state not in _status:
                                             _status[state] = [l]
                                         else:
@@ -238,13 +242,14 @@ class repo:
                         return l[len('HEAD branch: '):]
         return None
 
+
 if __name__ == '__main__':
     import os.path
     import sys
     from . import options
     defaults = path.join(path.dirname(path.dirname(path.shell(sys.argv[0]))),
                          'defaults.mc')
-    opts = options.load(sys.argv, defaults = defaults)
+    opts = options.load(sys.argv, defaults=defaults)
     g = repo('.', opts)
     print('g.git_version():', g.git_version())
     print('g.valid():', g.valid())

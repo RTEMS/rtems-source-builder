@@ -34,6 +34,7 @@ from . import options
 from . import path
 from . import version
 
+
 def _check_none(_opts, macro, value, constraint):
     return True
 
@@ -42,7 +43,7 @@ def _check_triplet(_opts, macro, value, constraint):
     return True
 
 
-def _check_dir(_opts, macro, value, constraint, silent = False):
+def _check_dir(_opts, macro, value, constraint, silent=False):
     if constraint != 'none' and not path.isdir(value):
         if constraint == 'required':
             if not silent:
@@ -53,7 +54,7 @@ def _check_dir(_opts, macro, value, constraint, silent = False):
     return True
 
 
-def _check_exe(_opts, macro, value, constraint, silent = False):
+def _check_exe(_opts, macro, value, constraint, silent=False):
 
     if len(value) == 0 or constraint == 'none':
         return True
@@ -76,12 +77,15 @@ def _check_exe(_opts, macro, value, constraint, silent = False):
     if _check_paths(value, paths):
         if absexe:
             if not silent:
-                log.notice('warning: exe: absolute exe found in path: (%s) %s' % (macro, orig_value))
+                log.notice(
+                    'warning: exe: absolute exe found in path: (%s) %s' %
+                    (macro, orig_value))
         return True
 
     if constraint == 'optional':
         if not silent:
-            log.trace('warning: exe: optional exe not found: (%s) %s' % (macro, orig_value))
+            log.trace('warning: exe: optional exe not found: (%s) %s' %
+                      (macro, orig_value))
         return True
 
     if not silent:
@@ -100,28 +104,35 @@ def _check_paths(name, paths):
     return False
 
 
-def path_check(opts, silent = False):
+def path_check(opts, silent=False):
     if 'PATH' in os.environ:
         paths = os.environ['PATH'].split(os.pathsep)
         for p in paths:
             try:
                 if len(p.strip()) == 0:
                     if not silent:
-                        log.notice('error: environment PATH contains an empty path')
+                        log.notice(
+                            'error: environment PATH contains an empty path')
                     return False
-                elif not options.host_windows and (p.strip() == '.' or p.strip() == '..'):
+                elif not options.host_windows and (p.strip() == '.'
+                                                   or p.strip() == '..'):
                     if not silent:
-                        log.notice('error: environment PATH invalid path: %s' % (p))
+                        log.notice('error: environment PATH invalid path: %s' %
+                                   (p))
                     return False
                 elif not path.exists(p):
                     if not silent and opts.warn_all():
-                        log.notice('warning: environment PATH not found: %s' % (p))
+                        log.notice('warning: environment PATH not found: %s' %
+                                   (p))
                 elif not path.isdir(p):
                     if not silent and opts.warn_all():
-                        log.notice('warning: environment PATH not a directory: %s' % (p))
+                        log.notice(
+                            'warning: environment PATH not a directory: %s' %
+                            (p))
             except Exception as e:
                 if not silent:
-                    log.notice('warning: environment PATH suspicious path: %s' % (e))
+                    log.notice(
+                        'warning: environment PATH suspicious path: %s' % (e))
     return True
 
 
@@ -131,10 +142,12 @@ def host_setup(opts):
     if not path_check(opts):
         return False
 
-    checks = { 'none':    _check_none,
-               'triplet': _check_triplet,
-               'dir':     _check_dir,
-               'exe':     _check_exe }
+    checks = {
+        'none': _check_none,
+        'triplet': _check_triplet,
+        'dir': _check_dir,
+        'exe': _check_exe
+    }
 
     sane = True
 
@@ -146,17 +159,20 @@ def host_setup(opts):
             if opts.defaults.get(d) is None:
                 raise error.general('invalid default: %s: not found' % (d))
             else:
-                raise error.general('invalid default: %s [%r]' % (d, opts.defaults.get(d)))
+                raise error.general('invalid default: %s [%r]' %
+                                    (d, opts.defaults.get(d)))
         if test != 'none':
             value = opts.defaults.expand(value)
             if test not in checks:
-                raise error.general('invalid check test: %s [%r]' % (test, opts.defaults.get(d)))
+                raise error.general('invalid check test: %s [%r]' %
+                                    (test, opts.defaults.get(d)))
             ok = checks[test](opts, d, value, constraint)
             if ok:
                 tag = ' '
             else:
                 tag = '*'
-            log.trace('%c %15s: %r -> "%s"' % (tag, d, opts.defaults.get(d), value))
+            log.trace('%c %15s: %r -> "%s"' %
+                      (tag, d, opts.defaults.get(d), value))
             if sane and not ok:
                 sane = False
     log.trace('--- check host set up : end"')
@@ -170,9 +186,9 @@ def check_exe(label, exe):
 
 def check_orphans(opts):
 
-    def _find_files(path, globs, excludes = []):
+    def _find_files(path, globs, excludes=[]):
         ff = []
-        for root, dirs, files in os.walk(path, followlinks = True):
+        for root, dirs, files in os.walk(path, followlinks=True):
             for f in files:
                 for g in globs:
                     if fnmatch.fnmatch(f, g) and f not in excludes:
@@ -207,7 +223,7 @@ def check_orphans(opts):
         print('Scanning: %s (%s)' % (p, ep))
         for f in _find_files(ep, ['*.cfg', '*.bset']):
             root, ext = path.splitext(f)
-            cfgs[f] = { 'src': None, 'ext': ext, 'refs': 0, 'errors':[] }
+            cfgs[f] = {'src': None, 'ext': ext, 'refs': 0, 'errors': []}
 
     wss = re.compile(r'\s+')
 
@@ -227,7 +243,8 @@ def check_orphans(opts):
                     if name is None:
                         cfgs[c]['errors'] += [lc]
                     elif name not in cfgs:
-                        raise error.general('include: %s: not present' % (ls[1]))
+                        raise error.general('include: %s: not present' %
+                                            (ls[1]))
                     else:
                         cfgs[name]['refs'] += 1
             elif cfgs[c]['ext'] == '.bset' and ':' not in l:
@@ -235,7 +252,8 @@ def check_orphans(opts):
                     name = _find(l + ext, opts)
                     if name is not None:
                         if name not in cfgs:
-                            raise error.general('include: %s: not present' % (ls[1]))
+                            raise error.general('include: %s: not present' %
+                                                (ls[1]))
                         else:
                             cfgs[name]['refs'] += 1
                         break
@@ -264,13 +282,14 @@ def check_orphans(opts):
             show = False
         print(' %s' % (path.relpath(o)))
 
+
 def run():
     import sys
     try:
-        _opts = options.load(args = sys.argv, logfile = False)
+        _opts = options.load(args=sys.argv, logfile=False)
         log.notice('RTEMS Source Builder - Check, %s' % (version.string()))
 
-        orphans = _opts.parse_args('--check-orphans', error = False, extra = False)
+        orphans = _opts.parse_args('--check-orphans', error=False, extra=False)
         if orphans:
             print('Checking for orphans...')
             check_orphans(_opts)

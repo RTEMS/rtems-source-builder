@@ -45,6 +45,7 @@ from . import path
 from . import sources
 from . import version
 
+
 def _do_download(opts):
     download = True
     if opts.dry_run():
@@ -55,15 +56,10 @@ def _do_download(opts):
                 download = True
     return download
 
-def _humanize_bytes(bytes, precision = 1):
-    abbrevs = (
-        (1 << 50, 'PB'),
-        (1 << 40, 'TB'),
-        (1 << 30, 'GB'),
-        (1 << 20, 'MB'),
-        (1 << 10, 'kB'),
-        (1, ' bytes')
-    )
+
+def _humanize_bytes(bytes, precision=1):
+    abbrevs = ((1 << 50, 'PB'), (1 << 40, 'TB'), (1 << 30, 'GB'),
+               (1 << 20, 'MB'), (1 << 10, 'kB'), (1, ' bytes'))
     if bytes == 1:
         return '1 byte'
     for factor, suffix in abbrevs:
@@ -71,14 +67,16 @@ def _humanize_bytes(bytes, precision = 1):
             break
     return '%.*f%s' % (precision, float(bytes) / factor, suffix)
 
-def _sensible_url(url, used = 0):
+
+def _sensible_url(url, used=0):
     space = 100
     if len(url) > space:
         size = int(space - 14)
         url = url[:size] + '...<see log>'
     return url
 
-def _hash_check(file_, absfile, macros, remove = True):
+
+def _hash_check(file_, absfile, macros, remove=True):
     failed = False
     hash = sources.get_hash(file_.lower(), macros)
     if hash is not None:
@@ -90,9 +88,12 @@ def _hash_check(file_, absfile, macros, remove = True):
         try:
             hashlib_algorithms = hashlib.algorithms
         except:
-            hashlib_algorithms = ['md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512']
+            hashlib_algorithms = [
+                'md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512'
+            ]
         if hash[0] not in hashlib_algorithms:
-            raise error.general('invalid hash algorithm for %s: %s' % (file_, hash[0]))
+            raise error.general('invalid hash algorithm for %s: %s' %
+                                (file_, hash[0]))
         if hash[0] in ['md5', 'sha1']:
             raise error.general('hash: %s: insecure: %s' % (file_, hash[0]))
         hasher = None
@@ -115,10 +116,8 @@ def _hash_check(file_, absfile, macros, remove = True):
             _in.close()
         hash_hex = hasher.hexdigest()
         hash_base64 = base64.b64encode(hasher.digest()).decode('utf-8')
-        log.output('checksums: %s: (hex: %s) (b64: %s) => %s' % (file_,
-                                                                 hash_hex,
-                                                                 hash_base64,
-                                                                 hash[1]))
+        log.output('checksums: %s: (hex: %s) (b64: %s) => %s' %
+                   (file_, hash_hex, hash_base64, hash[1]))
         if hash_hex != hash[1] and hash_base64 != hash[1]:
             log.warning('checksum error: %s' % (file_))
             failed = True
@@ -128,7 +127,8 @@ def _hash_check(file_, absfile, macros, remove = True):
                 try:
                     os.remove(path.host(absfile))
                 except IOError as err:
-                    raise error.general('hash: %s: remove: %s' % (absfile, str(err)))
+                    raise error.general('hash: %s: remove: %s' %
+                                        (absfile, str(err)))
                 except:
                     raise error.general('hash: %s: remove error' % (file_))
         if hasher is not None:
@@ -136,6 +136,7 @@ def _hash_check(file_, absfile, macros, remove = True):
     else:
         raise error.general('%s: no hash found' % (file_))
     return not failed
+
 
 def _local_path(source, pathkey, config):
     for p in config.define(pathkey).split(':'):
@@ -149,6 +150,7 @@ def _local_path(source, pathkey, config):
             source['local'] = local
             _hash_check(source['file'], local, config.macros)
             break
+
 
 def _http_parser(source, pathkey, config, opts):
     #
@@ -186,7 +188,8 @@ def _http_parser(source, pathkey, config, opts):
                 elif rs[0] == 'h':
                     h = rs[1]
             if p is None or h is None:
-                raise error.general('gitweb.cgi path missing p or h: %s' % (url))
+                raise error.general('gitweb.cgi path missing p or h: %s' %
+                                    (url))
             source['file'] = '%s-%s.patch' % (p, h)
         #
         # Wipe out everything special in the file name.
@@ -217,12 +220,14 @@ def _http_parser(source, pathkey, config, opts):
         source['compressed-type'] = 'xz'
         source['compressed'] = '%{__xz} -dc'
 
+
 def _patchworks_parser(source, pathkey, config, opts):
     #
     # Check local path
     #
     _local_path(source, pathkey, config)
     source['url'] = 'http%s' % (source['path'][2:])
+
 
 def _git_parser(source, pathkey, config, opts):
     #
@@ -241,6 +246,7 @@ def _git_parser(source, pathkey, config, opts):
     source['local'] = \
         path.join(source['local_prefix'], 'git', source['file'])
     source['symlink'] = source['local']
+
 
 def _cvs_parser(source, pathkey, config, opts):
     #
@@ -278,7 +284,8 @@ def _cvs_parser(source, pathkey, config, opts):
                 raise error.general('invalid cvs date: %s' % (a))
             source['date'] = _as[1]
     if 'date' in source and 'tag' in source:
-        raise error.general('cvs URL cannot have a date and tag: %s' % (source['url']))
+        raise error.general('cvs URL cannot have a date and tag: %s' %
+                            (source['url']))
     # Do here to ensure an ordered path, the URL can include options in any order
     if 'module' in source:
         source['file'] += '_%s' % (source['module'])
@@ -294,6 +301,7 @@ def _cvs_parser(source, pathkey, config, opts):
     else:
         source['symlink'] = source['local']
 
+
 def _file_parser(source, pathkey, config, opts):
     #
     # Check local path
@@ -304,19 +312,24 @@ def _file_parser(source, pathkey, config, opts):
     #
     source['file'] = source['url'][6:]
 
-parsers = { 'http': _http_parser,
-            'ftp':  _http_parser,
-            'pw':   _patchworks_parser,
-            'git':  _git_parser,
-            'cvs':  _cvs_parser,
-            'file': _file_parser }
+
+parsers = {
+    'http': _http_parser,
+    'ftp': _http_parser,
+    'pw': _patchworks_parser,
+    'git': _git_parser,
+    'cvs': _cvs_parser,
+    'file': _file_parser
+}
+
 
 def set_release_path(release_path, macros):
     if release_path is None:
         release_path = '%{rtems_release_url}/%{rsb_version}/sources'
     macros.define('release_path', release_path)
 
-def parse_url(url, pathkey, config, opts, file_override = None):
+
+def parse_url(url, pathkey, config, opts, file_override=None):
     #
     # Split the source up into the parts we need.
     #
@@ -332,7 +345,8 @@ def parse_url(url, pathkey, config, opts, file_override = None):
     else:
         bad_chars = [c for c in ['/', '\\', '?', '*'] if c in file_override]
         if len(bad_chars) > 0:
-            raise error.general('bad characters in file name: %s' % (file_override))
+            raise error.general('bad characters in file name: %s' %
+                                (file_override))
         log.output('download: file-override: %s' % (file_override))
         source['file'] = file_override
         source['options'] += ['file-override']
@@ -351,6 +365,7 @@ def parse_url(url, pathkey, config, opts, file_override = None):
                 break
     source['script'] = ''
     return source
+
 
 def _http_downloader(url, local, config, opts):
     if path.exists(local):
@@ -385,7 +400,7 @@ def _http_downloader(url, local, config, opts):
                 try:
                     import ssl
                     _ssl_context = ssl._create_unverified_context()
-                    _in = urllib_request.urlopen(_req, context = _ssl_context)
+                    _in = urllib_request.urlopen(_req, context=_ssl_context)
                 except:
                     log.output('download: no ssl context')
                     _ssl_context = None
@@ -401,14 +416,17 @@ def _http_downloader(url, local, config, opts):
                 except:
                     pass
                 while True:
-                    _msg = '\rdownloading: %s - %s ' % (dst, _humanize_bytes(_have))
+                    _msg = '\rdownloading: %s - %s ' % (dst,
+                                                        _humanize_bytes(_have))
                     if _length:
                         _percent = round((float(_have) / _length) * 100, 2)
                         if _percent != _last_percent:
-                            _msg += 'of %s (%0.0f%%) ' % (_humanize_bytes(_length), _percent)
+                            _msg += 'of %s (%0.0f%%) ' % (
+                                _humanize_bytes(_length), _percent)
                     if _msg != _last_msg:
                         extras = (len(_last_msg) - len(_msg))
-                        log.stdout_raw('%s%s' % (_msg, ' ' * extras + '\b' * extras))
+                        log.stdout_raw('%s%s' %
+                                       (_msg, ' ' * extras + '\b' * extras))
                         _last_msg = _msg
                         _have_status_output = True
                     _chunk = _in.read(_chunk_size)
@@ -422,12 +440,14 @@ def _http_downloader(url, local, config, opts):
                     log.stdout_raw('\n\r')
                 raise
         except IOError as err:
-            log.notice('download: %s: error: %s' % (_sensible_url(_url), str(err)))
+            log.notice('download: %s: error: %s' %
+                       (_sensible_url(_url), str(err)))
             if path.exists(local):
                 os.remove(path.host(local))
             failed = True
         except ValueError as err:
-            log.notice('download: %s: error: %s' % (_sensible_url(_url), str(err)))
+            log.notice('download: %s: error: %s' %
+                       (_sensible_url(_url), str(err)))
             if path.exists(local):
                 os.remove(path.host(local))
             failed = True
@@ -447,10 +467,13 @@ def _http_downloader(url, local, config, opts):
             del _in
         if not failed:
             if not path.isfile(local):
-                raise error.general('source is not a file: %s' % (path.host(local)))
-            if not _hash_check(path.basename(local), local, config.macros, False):
+                raise error.general('source is not a file: %s' %
+                                    (path.host(local)))
+            if not _hash_check(path.basename(local), local, config.macros,
+                               False):
                 raise error.general('checksum failure file: %s' % (dst))
     return not failed
+
 
 def _git_downloader(url, local, config, opts):
     repo = git.repo(local, opts, config.macros)
@@ -471,7 +494,9 @@ def _git_downloader(url, local, config, opts):
                 # remove the rest of the protocol header leaving nothing.
                 us[0] = url_base[len('://'):]
             else:
-                if _as[1] not in ['ssh', 'git', 'http', 'https', 'ftp', 'ftps', 'rsync']:
+                if _as[1] not in [
+                        'ssh', 'git', 'http', 'https', 'ftp', 'ftps', 'rsync'
+                ]:
                     raise error.general('unknown git protocol: %s' % (_as[1]))
                 us[0] = _as[1] + url_base
     if not repo.valid():
@@ -531,6 +556,7 @@ def _git_downloader(url, local, config, opts):
             raise error.general('invalid git option: %s' % (_as))
     return True
 
+
 def _cvs_downloader(url, local, config, opts):
     rlp = os.path.relpath(path.host(local))
     us = url.split('?')
@@ -578,6 +604,7 @@ def _cvs_downloader(url, local, config, opts):
                 repo.reset()
     return True
 
+
 def _file_downloader(url, local, config, opts):
     if not path.exists(local):
         try:
@@ -589,12 +616,16 @@ def _file_downloader(url, local, config, opts):
             return False
     return True
 
-downloaders = { 'http': _http_downloader,
-                'ftp':  _http_downloader,
-                'pw':   _http_downloader,
-                'git':  _git_downloader,
-                'cvs':  _cvs_downloader,
-                'file': _file_downloader }
+
+downloaders = {
+    'http': _http_downloader,
+    'ftp': _http_downloader,
+    'pw': _http_downloader,
+    'git': _git_downloader,
+    'cvs': _cvs_downloader,
+    'file': _file_downloader
+}
+
 
 def get_file(url, local, opts, config):
     if local is None:
@@ -663,12 +694,12 @@ def get_file(url, local, opts, config):
         url_path = urllib_parse.urlsplit(url)[2]
         slash = url_path.rfind('/')
         url_file = path.basename(local)
-        log.trace('url_file: %s' %(url_file))
+        log.trace('url_file: %s' % (url_file))
         for base in url_bases:
             if base[-1:] != '/':
                 base += '/'
             next_url = urllib_parse.urljoin(base, url_file)
-            log.trace('url: %s' %(next_url))
+            log.trace('url: %s' % (next_url))
             urls.append(next_url)
     urls += url.split()
     for url in urls:
@@ -679,4 +710,5 @@ def get_file(url, local, opts, config):
                 if downloaders[dl](url, local, config, opts):
                     return
     if _do_download(opts):
-        raise error.general('downloading %s: all paths have failed, giving up' % (url))
+        raise error.general(
+            'downloading %s: all paths have failed, giving up' % (url))

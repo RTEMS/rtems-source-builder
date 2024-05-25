@@ -28,6 +28,7 @@ from . import error
 from . import execute
 from . import path
 
+
 def load():
     # Default to the native Windows Python.
     uname = 'win32'
@@ -76,64 +77,64 @@ def load():
 
     version = uname[2]
     defines = {
-        '_ncpus':            ('none',    'none',     ncpus),
-        '_os':               ('none',    'none',     'win32'),
-        '_windows_os':       ('none',    'none',     uname),
-        '_build':            ('triplet', 'required', build_triple),
-        '_build_vendor':     ('none',    'none',     'microsoft'),
-        '_build_os':         ('none',    'none',     'win32'),
-        '_build_os_version': ('none',    'none',     version),
-        '_build_cpu':        ('none',    'none',     hosttype),
-        '_build_alias':      ('none',    'none',     '%{nil}'),
-        '_build_arch':       ('none',    'none',     hosttype),
-        '_host':             ('triplet', 'required', host_triple),
-        '_host_vendor':      ('none',    'none',     'microsoft'),
-        '_host_os':          ('none',    'none',     'win32'),
-        '_host_cpu':         ('none',    'none',     hosttype),
-        '_host_alias':       ('none',    'none',     '%{nil}'),
-        '_host_arch':        ('none',    'none',     hosttype),
-        '_usr':              ('dir',     'optional', '/opt/local'),
-        '_var':              ('dir',     'optional', '/opt/local/var'),
-        '__bash':            ('exe',     'required', 'bash'),
-        '__bzip2':           ('exe',     'required', 'bzip2'),
-        '__bison':           ('exe',     'required', 'bison'),
-        '__cat':             ('exe',     'required', 'cat'),
-        '__cc':              ('exe',     'required', cc),
-        '__chgrp':           ('exe',     'required', 'chgrp'),
-        '__chmod':           ('exe',     'required', 'chmod'),
-        '__chown':           ('exe',     'required', 'chown'),
-        '__cmake':           ('exe',     'optional', 'cmake'),
-        '__cp':              ('exe',     'required', 'cp'),
-        '__cvs':             ('exe',     'optional', 'cvs'),
-        '__cxx':             ('exe',     'required', cxx),
-        '__flex':            ('exe',     'required', 'flex'),
-        '__git':             ('exe',     'required', 'git'),
-        '__grep':            ('exe',     'required', 'grep'),
-        '__gzip':            ('exe',     'required', 'gzip'),
-        '__id':              ('exe',     'required', 'id'),
-        '__install':         ('exe',     'required', 'install'),
-        '__install_info':    ('exe',     'required', 'install-info'),
-        '__ld':              ('exe',     'required', 'ld'),
-        '__ldconfig':        ('exe',     'none',     ''),
-        '__makeinfo':        ('exe',     'required', 'makeinfo'),
-        '__mkdir':           ('exe',     'required', 'mkdir'),
-        '__mv':              ('exe',     'required', 'mv'),
-        '__nm':              ('exe',     'required', 'nm'),
-        '__nm':              ('exe',     'required', 'nm'),
-        '__objcopy':         ('exe',     'required', 'objcopy'),
-        '__objdump':         ('exe',     'required', 'objdump'),
-        '__patch':           ('exe',     'required', 'patch'),
-        '__patch_bin':       ('exe',     'required', 'patch'),
-        '__rm':              ('exe',     'required', 'rm'),
-        '__sed':             ('exe',     'required', 'sed'),
-        '__sh':              ('exe',     'required', 'sh'),
-        '__tar':             ('exe',     'required', 'tar'),
-        '__touch':           ('exe',     'required', 'touch'),
-        '__unzip':           ('exe',     'required', 'unzip'),
-        '__xz':              ('exe',     'required', 'xz'),
-        '_buildshell':       ('exe',     'required', '%{__sh}'),
-        '___setup_shell':    ('exe',     'required', '%{__sh}')
-        }
+        '_ncpus': ('none', 'none', ncpus),
+        '_os': ('none', 'none', 'win32'),
+        '_windows_os': ('none', 'none', uname),
+        '_build': ('triplet', 'required', build_triple),
+        '_build_vendor': ('none', 'none', 'microsoft'),
+        '_build_os': ('none', 'none', 'win32'),
+        '_build_os_version': ('none', 'none', version),
+        '_build_cpu': ('none', 'none', hosttype),
+        '_build_alias': ('none', 'none', '%{nil}'),
+        '_build_arch': ('none', 'none', hosttype),
+        '_host': ('triplet', 'required', host_triple),
+        '_host_vendor': ('none', 'none', 'microsoft'),
+        '_host_os': ('none', 'none', 'win32'),
+        '_host_cpu': ('none', 'none', hosttype),
+        '_host_alias': ('none', 'none', '%{nil}'),
+        '_host_arch': ('none', 'none', hosttype),
+        '_usr': ('dir', 'optional', '/opt/local'),
+        '_var': ('dir', 'optional', '/opt/local/var'),
+        '__bash': ('exe', 'required', 'bash'),
+        '__bzip2': ('exe', 'required', 'bzip2'),
+        '__bison': ('exe', 'required', 'bison'),
+        '__cat': ('exe', 'required', 'cat'),
+        '__cc': ('exe', 'required', cc),
+        '__chgrp': ('exe', 'required', 'chgrp'),
+        '__chmod': ('exe', 'required', 'chmod'),
+        '__chown': ('exe', 'required', 'chown'),
+        '__cmake': ('exe', 'optional', 'cmake'),
+        '__cp': ('exe', 'required', 'cp'),
+        '__cvs': ('exe', 'optional', 'cvs'),
+        '__cxx': ('exe', 'required', cxx),
+        '__flex': ('exe', 'required', 'flex'),
+        '__git': ('exe', 'required', 'git'),
+        '__grep': ('exe', 'required', 'grep'),
+        '__gzip': ('exe', 'required', 'gzip'),
+        '__id': ('exe', 'required', 'id'),
+        '__install': ('exe', 'required', 'install'),
+        '__install_info': ('exe', 'required', 'install-info'),
+        '__ld': ('exe', 'required', 'ld'),
+        '__ldconfig': ('exe', 'none', ''),
+        '__makeinfo': ('exe', 'required', 'makeinfo'),
+        '__mkdir': ('exe', 'required', 'mkdir'),
+        '__mv': ('exe', 'required', 'mv'),
+        '__nm': ('exe', 'required', 'nm'),
+        '__nm': ('exe', 'required', 'nm'),
+        '__objcopy': ('exe', 'required', 'objcopy'),
+        '__objdump': ('exe', 'required', 'objdump'),
+        '__patch': ('exe', 'required', 'patch'),
+        '__patch_bin': ('exe', 'required', 'patch'),
+        '__rm': ('exe', 'required', 'rm'),
+        '__sed': ('exe', 'required', 'sed'),
+        '__sh': ('exe', 'required', 'sh'),
+        '__tar': ('exe', 'required', 'tar'),
+        '__touch': ('exe', 'required', 'touch'),
+        '__unzip': ('exe', 'required', 'unzip'),
+        '__xz': ('exe', 'required', 'xz'),
+        '_buildshell': ('exe', 'required', '%{__sh}'),
+        '___setup_shell': ('exe', 'required', '%{__sh}')
+    }
 
     #
     # Locate a suitable python to use with GDB. Python Windows is more
@@ -173,11 +174,13 @@ def load():
         if install_point is None:
             raise error.general('cannot locate MSYS root mount point')
         if install_point[1] != ':':
-            raise error.general('invalid MSYS root mount point: %s' % install_point)
+            raise error.general('invalid MSYS root mount point: %s' %
+                                install_point)
         install_point = path.shell(install_point)
         mingw = path.join(install_point, 'mingw%s' % (machsize))
         if not path.exists(mingw) or not path.isdir(mingw):
-            raise error.general('cannot find MinGW install: %s' % (path.host(mingw)))
+            raise error.general('cannot find MinGW install: %s' %
+                                (path.host(mingw)))
         for version in ['2', '3']:
             python = 'python%s' % (version)
             exe = path.join(mingw, 'bin', '%s.exe' % (python))
@@ -186,6 +189,7 @@ def load():
                 header = path.join(mingw, python)
 
     return defines
+
 
 if __name__ == '__main__':
     import pprint

@@ -20,11 +20,10 @@
 
 from __future__ import print_function
 
-
 try:
     import sb.getsources
     sb.getsources.run()
 except ImportError:
     import sys
-    print("Incorrect Source Builder installation", file = sys.stderr)
+    print("Incorrect Source Builder installation", file=sys.stderr)
     sys.exit(1)

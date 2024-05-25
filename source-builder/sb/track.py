@@ -38,13 +38,15 @@ try:
     from . import simhost
     from . import version
 except KeyboardInterrupt:
-    print('abort: user terminated', file = sys.stderr)
+    print('abort: user terminated', file=sys.stderr)
     sys.exit(1)
 except:
     raise
 
+
 def unique(l):
     return sorted(list(set(l)))
+
 
 def filter_deps(deps, ext):
     rdeps = []
@@ -53,6 +55,7 @@ def filter_deps(deps, ext):
         if ds[0].endswith(ext):
             rdeps += [ds[0] + ':' + ds[1]]
     return sorted(rdeps)
+
 
 def normalise_paths(includes, root):
     normalised = []
@@ -64,6 +67,7 @@ def normalise_paths(includes, root):
             parent = parent[len(root):]
         normalised += [config + ':' + parent]
     return normalised
+
 
 def process_dependencies(includes):
     deps = {}
@@ -78,6 +82,7 @@ def process_dependencies(includes):
         deps[d] = unique(deps[d])
     return deps
 
+
 def includes_str(includes):
     o = []
     deps = [i.split(':', 2) for i in includes]
@@ -86,26 +91,30 @@ def includes_str(includes):
         o += ['%*s %s' % (ll, d[1], d[0])]
     return o
 
+
 def deps_str(deps):
-    def print_node(deps, node, level = 0, prefix = '', indent = ''):
+
+    def print_node(deps, node, level=0, prefix='', indent=''):
         o = []
         if node != 'root':
             level += 1
             if level == 1:
                 o += ['']
-            o += [prefix + '+-- ' +  node]
+            o += [prefix + '+-- ' + node]
         if node in deps:
             prefix += indent
-            for c, child in enumerate(deps[node], start = 1):
+            for c, child in enumerate(deps[node], start=1):
                 if c < len(deps[node]) and level > 1:
                     indent = '|    '
                 else:
                     indent = '     '
                 o += print_node(deps, child, level, prefix, indent)
         return o
+
     return print_node(deps, 'root')
 
-def run(args = sys.argv):
+
+def run(args=sys.argv):
     ec = 0
     output = []
     try:
@@ -113,37 +122,45 @@ def run(args = sys.argv):
         # The RSB options support cannot be used because it loads the defaults
         # for the host which we cannot do here.
         #
-        description  = 'RTEMS Track Dependencies a build set has for all hosts.'
+        description = 'RTEMS Track Dependencies a build set has for all hosts.'
 
-        argsp = argparse.ArgumentParser(prog = 'sb-dep-check',
-                                        description = description)
-        argsp.add_argument('--rtems-version', help = 'Set the RTEMS version.',
-                           type = str,
-                           default = version.version())
-        argsp.add_argument('--list-hosts', help = 'List the hosts.',
-                           action = 'store_true')
-        argsp.add_argument('--list-bsets', help = 'List the hosts.',
-                           action = 'store_true')
-        argsp.add_argument('--output', help = 'Output file.',
-                           type = str,
-                           default = None)
-        argsp.add_argument('--log', help = 'Log file.',
-                           type = str,
-                           default = simhost.log_default('trackdeps'))
-        argsp.add_argument('--trace', help = 'Enable trace logging for debugging.',
-                           action = 'store_true')
-        argsp.add_argument('--not-referenced',
-                           help = 'Write out the list of config files not referenced.',
-                           action = 'store_true')
-        argsp.add_argument('bsets', nargs='*', help = 'Build sets.')
+        argsp = argparse.ArgumentParser(prog='sb-dep-check',
+                                        description=description)
+        argsp.add_argument('--rtems-version',
+                           help='Set the RTEMS version.',
+                           type=str,
+                           default=version.version())
+        argsp.add_argument('--list-hosts',
+                           help='List the hosts.',
+                           action='store_true')
+        argsp.add_argument('--list-bsets',
+                           help='List the hosts.',
+                           action='store_true')
+        argsp.add_argument('--output',
+                           help='Output file.',
+                           type=str,
+                           default=None)
+        argsp.add_argument('--log',
+                           help='Log file.',
+                           type=str,
+                           default=simhost.log_default('trackdeps'))
+        argsp.add_argument('--trace',
+                           help='Enable trace logging for debugging.',
+                           action='store_true')
+        argsp.add_argument(
+            '--not-referenced',
+            help='Write out the list of config files not referenced.',
+            action='store_true')
+        argsp.add_argument('bsets', nargs='*', help='Build sets.')
 
         argopts = argsp.parse_args(args[1:])
 
         simhost.load_log(argopts.log)
-        log.notice('RTEMS Source Builder - Track Dependencies, %s' % (version.string()))
+        log.notice('RTEMS Source Builder - Track Dependencies, %s' %
+                   (version.string()))
         log.tracing = argopts.trace
 
-        opts = simhost.load_options(args, argopts, extras = ['---keep-going'])
+        opts = simhost.load_options(args, argopts, extras=['---keep-going'])
         configs = build.get_configs(opts)
 
         if argopts.list_hosts:
@@ -184,17 +201,19 @@ def run(args = sys.argv):
             configs = unique([i.split(':', 2)[0] for i in configs])
             not_used_configs = [c for c in all_configs if c not in configs]
             if len(errors) > 0:
-                errors = [e.split(':', 2)[0] for e in normalise_paths(errors, root)]
+                errors = [
+                    e.split(':', 2)[0] for e in normalise_paths(errors, root)
+                ]
                 errs = []
                 for e in errors:
                     if e not in bsets + configs:
                         errs += [e]
                 errors = errs
-            output = ['RSB Dependency Tracker',
-                      '',
-                      'Total buildsets: %d' % (len(all_bsets)),
-                      'Total configs: %d' % (len(all_configs)),
-                      '']
+            output = [
+                'RSB Dependency Tracker', '',
+                'Total buildsets: %d' % (len(all_bsets)),
+                'Total configs: %d' % (len(all_configs)), ''
+            ]
             if len(errors) > 0:
                 output += ['Errored File Set (%d):' % (len(errors)),
                            ''] + \
@@ -245,6 +264,7 @@ def run(args = sys.argv):
         log.notice('abort: unknown error')
         ec = 1
     sys.exit(ec)
+
 
 if __name__ == "__main__":
     run()

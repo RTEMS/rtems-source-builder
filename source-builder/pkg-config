@@ -43,7 +43,7 @@ except:
     try:
         import argparse
     except:
-        print("Incorrect Source Builder installation", file = sys.stderr)
+        print("Incorrect Source Builder installation", file=sys.stderr)
         sys.exit(1)
 
 import sb.pkgconfig
@@ -64,11 +64,13 @@ trace_src = False
 if trace_src:
     srcfd = open('pkg-src.txt', 'w')
 
+
 def src(text):
     if srcfd:
         srcfd.writelines(text)
 
-def log(s, lf = True):
+
+def log(s, lf=True):
     global trace, logfile, out
     if trace:
         if out is None:
@@ -79,12 +81,13 @@ def log(s, lf = True):
         if lf:
             if out != sys.stdout and trace_stdout:
                 print(s)
-            print(s, file = out)
+            print(s, file=out)
         else:
             if out != sys.stdout and trace_stdout:
-                print(s, end = '')
+                print(s, end='')
                 sys.stdout.flush()
-            print(s, end = '', file = out)
+            print(s, end='', file=out)
+
 
 def cflags_filter(cflags, prefixes, include=True):
     cflags = cflags.split(' ')
@@ -102,7 +105,8 @@ def cflags_filter(cflags, prefixes, include=True):
 def run(argv):
 
     class version_action(argparse.Action):
-        def __call__(self, parser, namespace, values, option_string = None):
+
+        def __call__(self, parser, namespace, values, option_string=None):
             parts = values[0].strip().split('.')
             for p in parts:
                 if not p.isdigit():
@@ -111,23 +115,39 @@ def run(argv):
 
     ec = 0
 
-    opts = argparse.ArgumentParser(prog = 'pkg-config', description = 'Package Configuration.')
-    opts.add_argument('libraries', metavar='lib', type = str,  help = 'a library', nargs = '*')
-    opts.add_argument('--modversion', dest = 'modversion', action = 'store_true', default = False,
-                      help = 'Requests the version information of the libraries.')
-    opts.add_argument('--print-errors', dest = 'print_errors', action = 'store_true',
-                      default = False,
-                      help = 'Print any errors.')
-    opts.add_argument('--short-errors', dest = 'short_errors', action = 'store_true',
-                      default = False,
-                      help = 'Make error messages short.')
-    opts.add_argument('--silence-errors', dest = 'silence_errors', action = 'store_true',
-                      default = False,
-
-                      help = 'Do not print any errors.')
-    opts.add_argument('--errors-to-stdout', dest = 'errors_to_stdout', action = 'store_true',
-                      default = False,
-                      help = 'Print errors to stdout rather than stderr.')
+    opts = argparse.ArgumentParser(prog='pkg-config',
+                                   description='Package Configuration.')
+    opts.add_argument('libraries',
+                      metavar='lib',
+                      type=str,
+                      help='a library',
+                      nargs='*')
+    opts.add_argument(
+        '--modversion',
+        dest='modversion',
+        action='store_true',
+        default=False,
+        help='Requests the version information of the libraries.')
+    opts.add_argument('--print-errors',
+                      dest='print_errors',
+                      action='store_true',
+                      default=False,
+                      help='Print any errors.')
+    opts.add_argument('--short-errors',
+                      dest='short_errors',
+                      action='store_true',
+                      default=False,
+                      help='Make error messages short.')
+    opts.add_argument('--silence-errors',
+                      dest='silence_errors',
+                      action='store_true',
+                      default=False,
+                      help='Do not print any errors.')
+    opts.add_argument('--errors-to-stdout',
+                      dest='errors_to_stdout',
+                      action='store_true',
+                      default=False,
+                      help='Print errors to stdout rather than stderr.')
     opts.add_argument('--cflags', dest = 'cflags', action = 'store_true',
                       default = False,
                       help = 'This prints pre-processor and compile flags required to' \
@@ -144,54 +164,93 @@ def run(argv):
                       default = False,
                       help = 'This option is identical to "--cflags", only it prints the' \
                              ' link flags.')
-    opts.add_argument('--libs-only-L', dest = 'libs_only_L', action = 'store_true',
-                      default = False,
-                      help = 'This prints the -L/-R part of "--libs".')
-    opts.add_argument('--libs-only-l', dest = 'libs_only_l', action = 'store_true',
-                      default = False,
-                      help = 'This prints the -l part of "--libs".')
-    opts.add_argument('--variable', dest = 'variable', action = 'store',
-                      nargs = 1, default = None,
-                      help = 'This returns the value of a variable.')
-    opts.add_argument('--define-variable', dest = 'define_variable', action = 'store',
-                      nargs = 1, default = None,
-                      help = 'This sets a global value for a variable')
-    opts.add_argument('--uninstalled', dest = 'uninstalled', action = 'store_true',
-                      default = False,
-                      help = 'Ignored')
-    opts.add_argument('--atleast-pkgconfig-version', dest = 'atleast_pkgconfig_version',
-                      action = 'store', nargs = 1, default = None,
-                      help = 'Check the version of package config. Always ok.')
-    opts.add_argument('--exists', dest = 'exists', action = 'store_true',
-                      default = False,
-                      help = 'Test if a library is present')
-    opts.add_argument('--atleast-version', dest = 'atleast_version',
-                      action = version_action, nargs = 1, default = None,
-                      help = 'The package is at least this version.')
-    opts.add_argument('--exact-version', dest = 'exact_version', action = version_action,
-                       nargs = 1, default = None,
-                        help = 'The package is the exact version.')
-    opts.add_argument('--max-version', dest = 'max_version', action = version_action,
-                      nargs = 1, default = None,
-                      help = 'The package is no later than this version.')
-    opts.add_argument('--msvc-syntax', dest = 'msvc_syntax', action = 'store_true',
-                      default = False,
-                      help = 'Ignored')
-    opts.add_argument('--dont-define-prefix', dest = 'dont_define_prefix', action = 'store_true',
-                      default = False,
-                      help = 'Ignored')
-    opts.add_argument('--prefix-variable', dest = 'prefix', action = 'store',
-                      nargs = 1, default = sb.pkgconfig.default_prefix(),
-                      help = 'Define the prefix.')
-    opts.add_argument('--static', dest = 'static', action = 'store_true',
-                      default = False,
-                      help = 'Output libraries suitable for static linking')
-    opts.add_argument('--dump', dest = 'dump', action = 'store_true',
-                      default = False,
-                      help = 'Dump the package if one is found.')
-    opts.add_argument('--version', dest = 'version', action = 'store_true',
-                      default = False,
-                      help = 'Print the version.')
+    opts.add_argument('--libs-only-L',
+                      dest='libs_only_L',
+                      action='store_true',
+                      default=False,
+                      help='This prints the -L/-R part of "--libs".')
+    opts.add_argument('--libs-only-l',
+                      dest='libs_only_l',
+                      action='store_true',
+                      default=False,
+                      help='This prints the -l part of "--libs".')
+    opts.add_argument('--variable',
+                      dest='variable',
+                      action='store',
+                      nargs=1,
+                      default=None,
+                      help='This returns the value of a variable.')
+    opts.add_argument('--define-variable',
+                      dest='define_variable',
+                      action='store',
+                      nargs=1,
+                      default=None,
+                      help='This sets a global value for a variable')
+    opts.add_argument('--uninstalled',
+                      dest='uninstalled',
+                      action='store_true',
+                      default=False,
+                      help='Ignored')
+    opts.add_argument('--atleast-pkgconfig-version',
+                      dest='atleast_pkgconfig_version',
+                      action='store',
+                      nargs=1,
+                      default=None,
+                      help='Check the version of package config. Always ok.')
+    opts.add_argument('--exists',
+                      dest='exists',
+                      action='store_true',
+                      default=False,
+                      help='Test if a library is present')
+    opts.add_argument('--atleast-version',
+                      dest='atleast_version',
+                      action=version_action,
+                      nargs=1,
+                      default=None,
+                      help='The package is at least this version.')
+    opts.add_argument('--exact-version',
+                      dest='exact_version',
+                      action=version_action,
+                      nargs=1,
+                      default=None,
+                      help='The package is the exact version.')
+    opts.add_argument('--max-version',
+                      dest='max_version',
+                      action=version_action,
+                      nargs=1,
+                      default=None,
+                      help='The package is no later than this version.')
+    opts.add_argument('--msvc-syntax',
+                      dest='msvc_syntax',
+                      action='store_true',
+                      default=False,
+                      help='Ignored')
+    opts.add_argument('--dont-define-prefix',
+                      dest='dont_define_prefix',
+                      action='store_true',
+                      default=False,
+                      help='Ignored')
+    opts.add_argument('--prefix-variable',
+                      dest='prefix',
+                      action='store',
+                      nargs=1,
+                      default=sb.pkgconfig.default_prefix(),
+                      help='Define the prefix.')
+    opts.add_argument('--static',
+                      dest='static',
+                      action='store_true',
+                      default=False,
+                      help='Output libraries suitable for static linking')
+    opts.add_argument('--dump',
+                      dest='dump',
+                      action='store_true',
+                      default=False,
+                      help='Dump the package if one is found.')
+    opts.add_argument('--version',
+                      dest='version',
+                      action='store_true',
+                      default=False,
+                      help='Print the version.')
 
     args = opts.parse_args(argv)
 
@@ -212,7 +271,8 @@ def run(argv):
             print('version: 1.2.3')
         ec = 0
     else:
-        ec, pkg, flags = sb.pkgconfig.check_package(args.libraries, args, log, src)
+        ec, pkg, flags = sb.pkgconfig.check_package(args.libraries, args, log,
+                                                    src)
         if ec == 0:
             if args.cflags:
                 if len(flags['cflags']):
@@ -221,14 +281,16 @@ def run(argv):
                 else:
                     log('cflags: empty')
             if args.cflags_only_i:
-                cflags = cflags_filter(flags['cflags'], ['-I', '-system'], True)
+                cflags = cflags_filter(flags['cflags'], ['-I', '-system'],
+                                       True)
                 if len(cflags):
                     print(cflags)
                     log('cflags: %s' % (flags['cflags']))
                 else:
                     log('cflags: empty')
             if args.cflags_only_other:
-                cflags = cflags_filter(flags['cflags'], ['-I', '-system'], False)
+                cflags = cflags_filter(flags['cflags'], ['-I', '-system'],
+                                       False)
                 if len(cflags):
                     print(cflags)
                     log('cflags: %s' % (flags['cflags']))
@@ -249,18 +311,19 @@ def run(argv):
 
     return ec
 
+
 try:
     log('-' * 40)
-    log('pkg-config', lf = False)
+    log('pkg-config', lf=False)
     for a in sys.argv[2:]:
-        log(' "%s"' % (a), lf = False)
+        log(' "%s"' % (a), lf=False)
     log('')
     ec = run(sys.argv[1:])
     log('ec = %d' % (ec))
 except ImportError:
-    print("incorrect package config installation", file = sys.stderr)
+    print("incorrect package config installation", file=sys.stderr)
     sys.exit(1)
 except sb.pkgconfig.error as e:
-    print('error: %s' % (e), file = sys.stderr)
+    print('error: %s' % (e), file=sys.stderr)
     sys.exit(1)
 sys.exit(ec)

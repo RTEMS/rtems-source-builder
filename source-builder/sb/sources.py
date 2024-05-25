@@ -23,11 +23,14 @@
 
 from . import log
 
+
 def _args(args):
     return [i for s in [ii.split() for ii in args] for i in s]
 
+
 def _make_key(label, index):
     return '%s%04d' % (label, index)
+
 
 def add(label, args, macros, error):
     args = _args(args)
@@ -52,6 +55,7 @@ def add(label, args, macros, error):
     macros.unset_write_map()
     return None
 
+
 def set(label, args, macros, error):
     args = _args(args)
     if len(args) < 2:
@@ -66,10 +70,12 @@ def set(label, args, macros, error):
         macros.unset_write_map()
     return None
 
+
 def setup(label, args, macros, error):
     args = _args(args)
     if len(args) < 2:
-        error('%%%s setup requires at least 2 arguments: %s' % (label, ' '.join(args)))
+        error('%%%s setup requires at least 2 arguments: %s' %
+              (label, ' '.join(args)))
     ss = '%%setup %s %s' % (label, ' '.join(args))
     _map = '%s-%s' % (label, args[0])
     if 'setup' in macros.map_keys(_map):
@@ -80,10 +86,12 @@ def setup(label, args, macros, error):
     macros.unset_write_map()
     return [ss]
 
+
 def download(label, args, macros, error):
     args = _args(args)
     if len(args) != 1:
-        error('%%%s download requires 1 argument: %s' % (label, ' '.join(args)))
+        error('%%%s download requires 1 argument: %s' %
+              (label, ' '.join(args)))
     ss = '%%setup %s %s -g' % (label, ' '.join(args))
     _map = '%s-%s' % (label, args[0])
     if 'setup' in macros.map_keys(_map):
@@ -93,6 +101,7 @@ def download(label, args, macros, error):
     macros.define('setup', ss)
     macros.unset_write_map()
     return [ss]
+
 
 def process(label, args, macros, error):
     if label != 'source' and label != 'patch':
@@ -108,6 +117,7 @@ def process(label, args, macros, error):
     elif args[0] == 'download':
         return download(label, args[1:], macros, error)
     error('invalid %%%s command: %s' % (label, args[0]))
+
 
 def hash(args, macros, error):
     args = _args(args)
@@ -129,6 +139,7 @@ def hash(args, macros, error):
         macros.unset_write_map()
     return None
 
+
 def get(label, name, macros, error):
     _map = '%s-%s' % (label, name)
     keys = macros.map_keys(_map)
@@ -137,27 +148,33 @@ def get(label, name, macros, error):
         return
     srcs = []
     for s in keys:
-        sm = macros.get(s, globals = False, maps = _map)
+        sm = macros.get(s, globals=False, maps=_map)
         if sm is None:
             error('source macro not found: %s in %s (%s)' % (s, name, _map))
         srcs += [sm[2]]
     return srcs
 
+
 def get_sources(name, macros, error):
     return get('source', name, macros, error)
 
+
 def get_patches(name, macros, error):
     return get('patch', name, macros, error)
+
 
 def get_keys(label, name, macros, error):
     _map = '%s-%s' % (label, name)
     return macros.map_keys(_map)
 
+
 def get_source_keys(name, macros, error):
     return get_keys('source', name, macros, error)
 
+
 def get_patch_keys(name, macros, error):
     return get_keys('patch', name, macros, error)
+
 
 def get_names(label, macros, error):
     names = []
@@ -166,14 +183,17 @@ def get_names(label, macros, error):
             names += [m[len('%s-' % (label)):]]
     return names
 
+
 def get_source_names(macros, error):
     return get_names('source', macros, error)
+
 
 def get_patch_names(macros, error):
     return get_names('patch', macros, error)
 
+
 def get_hash(name, macros):
     hash = None
     if name in macros.map_keys('hashes'):
-        m1, m2, hash = macros.get(name, globals = False, maps = 'hashes')
+        m1, m2, hash = macros.get(name, globals=False, maps='hashes')
     return hash

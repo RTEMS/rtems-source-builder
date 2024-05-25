@@ -30,12 +30,14 @@ import string
 from . import error
 from . import path
 
+
 #
 # Macro tables
 #
 class macros:
 
     class macro_iterator:
+
         def __init__(self, keys):
             self.keys = keys
             self.index = 0
@@ -67,7 +69,7 @@ class macros:
             pass
         return us
 
-    def __init__(self, name = None, original = None, sbdir = '.'):
+    def __init__(self, name=None, original=None, sbdir='.'):
         self.files = []
         self.macro_filter = re.compile(r'%{[^}]+}')
         if original is None:
@@ -76,9 +78,13 @@ class macros:
             self.read_map_locked = False
             self.write_map = 'global'
             self.macros['global'] = {}
-            self.macros['global']['_cwd'] = ('dir', 'required', path.abspath(os.getcwd()))
-            self.macros['global']['_sbdir'] = ('dir', 'required', path.abspath(sbdir))
-            self.macros['global']['_sbtop'] = ('dir', 'required', path.abspath(path.dirname(sbdir)))
+            self.macros['global']['_cwd'] = ('dir', 'required',
+                                             path.abspath(os.getcwd()))
+            self.macros['global']['_sbdir'] = ('dir', 'required',
+                                               path.abspath(sbdir))
+            self.macros['global']['_sbtop'] = ('dir', 'required',
+                                               path.abspath(
+                                                   path.dirname(sbdir)))
         else:
             self.macros = {}
             for m in original.macros:
@@ -93,7 +99,7 @@ class macros:
             self.load(name)
 
     def __copy__(self):
-        return macros(original = self)
+        return macros(original=self)
 
     def __str__(self):
         text_len = 80
@@ -152,7 +158,8 @@ class macros:
     def __setitem__(self, key, value):
         key = self._unicode_to_str(key)
         if type(key) is not str:
-            raise TypeError('bad key type (want str): %s (%s)' % (type(key), key))
+            raise TypeError('bad key type (want str): %s (%s)' %
+                            (type(key), key))
         if type(value) is not tuple:
             value = self._unicode_to_str(value)
         if type(value) is str:
@@ -165,15 +172,20 @@ class macros:
                  self._unicode_to_str(value[1]),
                  self._unicode_to_str(value[2]))
         if type(value[0]) is not str:
-            raise TypeError('bad value tuple type field: %s' % (type(value[0])))
+            raise TypeError('bad value tuple type field: %s' %
+                            (type(value[0])))
         if type(value[1]) is not str:
-            raise TypeError('bad value tuple attrib field: %s' % (type(value[1])))
+            raise TypeError('bad value tuple attrib field: %s' %
+                            (type(value[1])))
         if type(value[2]) is not str:
-            raise TypeError('bad value tuple value field: %s' % (type(value[2])))
+            raise TypeError('bad value tuple value field: %s' %
+                            (type(value[2])))
         if value[0] not in ['none', 'triplet', 'dir', 'file', 'exe']:
             raise TypeError('bad value tuple (type field): %s' % (value[0]))
-        if value[1] not in ['none', 'optional', 'required',
-                            'override', 'undefine', 'convert']:
+        if value[1] not in [
+                'none', 'optional', 'required', 'override', 'undefine',
+                'convert'
+        ]:
             raise TypeError('bad value tuple (attrib field): %s' % (value[1]))
         if value[1] == 'convert':
             value = (value[0], value[1], self.expand(value[2]))
@@ -188,7 +200,7 @@ class macros:
     def __len__(self):
         return len(list(self.keys()))
 
-    def keys(self, globals = True):
+    def keys(self, globals=True):
         if globals:
             keys = list(self.macros['global'].keys())
         else:
@@ -251,7 +263,7 @@ class macros:
         trace_me = False
         if trace_me:
             print('[[[[]]]] parsing macros')
-        macros = { 'global': {} }
+        macros = {'global': {}}
         map = 'global'
         lc = 0
         state = 'key'
@@ -274,7 +286,8 @@ class macros:
                 if c == '\n' or c == '\r':
                     if not (state == 'key' and len(token) == 0) and \
                             not state.startswith('value-multiline'):
-                        raise error.general('malformed macro line:%d: %s' % (lc, l))
+                        raise error.general('malformed macro line:%d: %s' %
+                                            (lc, l))
                 if state == 'key':
                     if c not in string.whitespace:
                         if c == '[':
@@ -299,7 +312,8 @@ class macros:
                     elif c in string.printable and c not in string.whitespace:
                         token += c
                     else:
-                        raise error.general('invalid macro map:%d: %s' % (lc, l))
+                        raise error.general('invalid macro map:%d: %s' %
+                                            (lc, l))
                 elif state == 'directive':
                     if c in string.whitespace:
                         if token == 'include':
@@ -310,7 +324,8 @@ class macros:
                     elif c in string.printable and c not in string.whitespace:
                         token += c
                     else:
-                        raise error.general('invalid macro directive:%d: %s' % (lc, l))
+                        raise error.general('invalid macro directive:%d: %s' %
+                                            (lc, l))
                 elif state == 'include':
                     if c is string.whitespace:
                         if token == 'include':
@@ -318,7 +333,8 @@ class macros:
                     elif c in string.printable and c not in string.whitespace:
                         token += c
                     else:
-                        raise error.general('invalid macro directive:%d: %s' % (lc, l))
+                        raise error.general('invalid macro directive:%d: %s' %
+                                            (lc, l))
                 elif state == 'attribs':
                     if c not in string.whitespace:
                         if c == ',':
@@ -398,7 +414,7 @@ class macros:
         raise error.general('opening macro file: %s' % \
                                 (path.host(self.expand(name))))
 
-    def get(self, key, globals = True, maps = None):
+    def get(self, key, globals=True, maps=None):
         key = self._unicode_to_str(key)
         if type(key) is not str:
             raise TypeError('bad key type: %s' % (type(key)))
@@ -438,7 +454,7 @@ class macros:
     def overridden(self, key):
         return self.get_attribute(key) == 'override'
 
-    def define(self, key, value = '1'):
+    def define(self, key, value='1'):
         self.__setitem__(key, ('none', 'none', value))
 
     def undefine(self, key):
@@ -450,7 +466,7 @@ class macros:
             if key in self.macros[map]:
                 del self.macros[map][key]
 
-    def defined(self, key, globals = True, maps = None):
+    def defined(self, key, globals=True, maps=None):
         return self.get(key, globals, maps) is not None
 
     def expand(self, _str):
@@ -463,13 +479,13 @@ class macros:
                 name = m[2:-1]
                 macro = self.get(name)
                 if macro is None:
-                    raise error.general('cannot expand default macro: %s in "%s"' %
-                                        (m, _str))
+                    raise error.general(
+                        'cannot expand default macro: %s in "%s"' % (m, _str))
                 _str = _str.replace(m, macro[2])
                 expanded = True
         return _str
 
-    def find(self, regex, globals = True):
+    def find(self, regex, globals=True):
         what = re.compile(regex)
         keys = []
         for key in self.keys(globals):
@@ -509,6 +525,7 @@ class macros:
 
     def unlock_read_map(self):
         self.read_map_locked = False
+
 
 if __name__ == "__main__":
     import copy
