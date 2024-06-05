@@ -69,8 +69,8 @@ rtems_pkg_cfgs = [
     [
         'RTEMS Kernel', 'tools/rtems-kernel-%{rtems_version}.cfg',
         'rtems_kernel_version', 'git://git.rtems.org/rtems', 'rtems.git',
-        'master',
-        'https://git.rtems.org/rtems/snapshot/rtems-%{rtems_kernel_version}.tar.bz2',
+        'main',
+        'https://gitlab.rtems.org/rtems/rtos/rtems/-/archive/%{rtems_kernel_version}/rtems-%{rtems_kernel_version}.tar.bz2',
         'rtems-kernel-%{rtems_kernel_version}.tar.bz2'
     ],
     [
