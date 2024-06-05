@@ -75,9 +75,9 @@ rtems_pkg_cfgs = [
     ],
     [
         'RTEMS LibBSD', 'tools/rtems-libbsd-%{rtems_version}.cfg',
-        'rtems_libbsd_version', 'git://git.rtems.org/rtems-libbsd',
+        'rtems_libbsd_version', 'https://gitlab.rtems.org/rtems/pkg/rtems-libbsd',
         'rtems-libbsd.git', '6-freebsd-12',
-        'https://git.rtems.org/rtems-libbsd/snapshot/rtems-libbsd-%{rtems_libbsd_version}.tar.%{rtems_libbsd_ext}',
+        'https://gitlab.rtems.org/rtems/pkg/rtems-libbsd/-/archive/%{rtems_libbsd_version}/rtems-libbsd-%{rtems_libbsd_version}.tar.%{rtems_libbsd_ext}',
         'rtems-libbsd-%{rtems_libbsd_version}.tar.%{rtems_libbsd_ext}'
     ],
     [
