@@ -82,9 +82,9 @@ rtems_pkg_cfgs = [
     ],
     [
         'RTEMS Net Legacy', 'tools/rtems-net-legacy-%{rtems_version}.cfg',
-        'rtems_net_version', 'git://git.rtems.org/rtems-net-legacy',
+        'rtems_net_version', 'https://gitlab.rtems.org/rtems/pkg/rtems-net-legacy',
         'rtems-net-legacy.git', 'main',
-        'https://git.rtems.org/rtems-net-legacy/snapshot/rtems-net-legacy-%{rtems_net_version}.tar.%{rtems_net_ext}',
+        'https://gitlab.rtems.org/rtems/pkg/rtems-net-legacy/-/archive/%{rtems_net_version}/rtems-net-legacy-%{rtems_net_version}.tar.%{rtems_net_ext}',
         'rtems-net-legacy-%{rtems_net_version}.tar.%{rtems_net_ext}'
     ],
     [
