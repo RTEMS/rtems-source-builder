@@ -61,9 +61,9 @@ rpc_package = 7
 rtems_pkg_cfgs = [
     [
         'RTEMS Tools', 'tools/rtems-tools-%{rtems_version}.cfg',
-        'rtems_tools_version', 'git://git.rtems.org/rtems-tools',
-        'rtems-tools.git', 'master',
-        'https://git.rtems.org/rtems-tools/snapshot/rtems-tools-%{rtems_tools_version}.tar.bz2',
+        'rtems_tools_version', 'https://gitlab.rtems.org/rtems/tools/rtems-tools',
+        'rtems-tools.git', 'main',
+        'https://gitlab.rtems.org/rtems/tools/rtems-tools/-/archive/%{rtems_tools_version}/rtems-tools-%{rtems_tools_version}.tar.bz2',
         'rtems-tools-%{rtems_tools_version}.tar.bz2'
     ],
     [
