@@ -89,9 +89,9 @@ rtems_pkg_cfgs = [
     ],
     [
         'RTEMS Net Services', 'net/net-services-1.cfg',
-        'rtems_net_services_version', 'git://git.rtems.org/rtems-net-services',
-        'rtems-net-services.git', 'master',
-        'https://git.rtems.org/rtems-net-services/snapshot/rtems-net-services-%{rtems_net_services_version}.tar.%{rtems_net_services_ext}',
+        'rtems_net_services_version', 'https://gitlab.rtems.org/rtems/pkg/rtems-libbsd',
+        'rtems-net-services.git', 'main',
+        'https://gitlab.rtems.org/rtems/pkg/rtems-net-services/-/archive/%{rtems_net_services_version}/rtems-net-services-%{rtems_net_services_version}.tar.%{rtems_net_services_ext}',
         'rtems-net-services-%{rtems_net_services_version}.tar.%{rtems_net_services_ext}'
     ],
 ]
