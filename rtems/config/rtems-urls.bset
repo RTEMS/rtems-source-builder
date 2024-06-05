@@ -6,8 +6,7 @@
 # The RTEMS http git URL.
 #
 %define rtems_http_git         https://gitlab.rtems.org
-%define rtems_http_devel       https://devel.rtems.org
-%define rtems_devel_ticket     https://devel.rtems.org/raw-attachment/ticket
+%define rtems_trac_patches     %{rtems_http_git}/rtems/rtos/rtems/-/blob/main/assets/tracmigration/ticket_attachments
 %define rtems_git_tools        %{rtems_http_git}/rtems/tools/rtems-tools/-/raw/%{rtems_version}/tools
 %define rtems_autoconf_patches %{rtems_git_tools}/autoconf
 %define rtems_automake_patches %{rtems_git_tools}/automake
