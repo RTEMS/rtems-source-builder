@@ -8,6 +8,15 @@
 %define _internal_gsed_path %{_tmpinternal}
 %defineifnot with_rtems_gsed textproc/gsed-internal
 
+# Expat is internal for RTEMS
+%defineifnot with_expat %{with_rtems_expat}
+
+# GMP is internal for RTEMS
+%defineifnot with_gmp %{with_rtems_gmp}
+
+# MPFR is internal for RTEMS
+%defineifnot with_mpfr %{with_rtems_mpfr}
+
 # GNU tools need texinfo for makeinfo to build documentation
 %define _internal_texinfo_path %{_tmpinternal}
 %defineifnot with_rtems_texinfo print/texinfo-internal
@@ -16,11 +25,12 @@
 # Build gdb first to raise the Python install error as early as
 # possible.
 #
-# GCC and GDB need GMP.
+# GCC and GDB need GMP and MPFR.
 #
 %{with_rtems_dtc}
-%{with_rtems_expat}
-%{with_rtems_gmp}
+devel/expat-internal
+devel/gmp-internal
+devel/mpfr-internal
 %{with_rtems_gsed}
 %{with_rtems_texinfo}
 %{with_rtems_gdb}

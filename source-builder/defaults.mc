@@ -111,6 +111,10 @@ _tmppath:            dir,     none,     '%{_topdir}/build/tmp'
 _tmproot:            dir,     none,     '%{_tmppath}/sb-%{_uid}/%{_bset_tmp}'
 _tmpcxcroot:         dir,     none,     '%{_tmppath}/sb-%{_uid}-cxc/%{_bset_tmp}'
 _tmpinternal:        dir,     none,     '%{_tmppath}/sb-%{_uid}-internal'
+_tmpinternal_bin:    dir,     none,     '%{_tmpinternal}/bin'
+_tmpinternal_inc:    dir,     none,     '%{_tmpinternal}/include'
+_tmpinternal_lib:    dir,     none,     '%{_tmpinternal}/lib'
+_tmpinternal_share:  dir,     none,     '%{_tmpinternal}/share'
 _datadir:            dir,     none,     '%{_prefix}/share'
 _defaultdocdir:      dir,     none,     '%{_prefix}/share/doc'
 _dry_run:            none,    none,     '0'
@@ -221,17 +225,20 @@ SB_SOURCE_DIR="%{_sourcedir}"
 SB_BUILD_DIR="%{_builddir}"
 # host == build, use build; host != build, host uses host and build uses build
 SB_HOST_CPPFLAGS="%{host_includes}"
+# Optional tmpinternal paths
+SB_TMP_INCLUDES="%{?_tmproot:-I%{_tmproot}/${SB_PREFIX_CLEAN}/include} %{?_tmpinternal_inc:-I%{_tmpinternal_inc}}"
+SB_TMP_LDFLAGS="%{?_tmpinternal_lib:-L%{_tmpinternal_lib}}"
 # Optionally do not add includes to c/cxx flags as newer configure's complain
 SB_HOST_CFLAGS="%{host_cflags} %{!?host_cflags_no_includes %{host_includes}}"
 SB_HOST_CXXFLAGS="%{host_cxxflags} %{!?host_cflags_no_includes %{host_includes}}"
 SB_HOST_LDFLAGS="%{host_ldflags} %{?_tmproot:-L%{_tmproot}/${SB_PREFIX_CLEAN}/lib}"
 SB_HOST_LIBS="%{host_libs}"
-SB_BUILD_CFLAGS="%{build_cflags} %{?_tmproot:-I%{_tmproot}/${SB_PREFIX_CLEAN}/include}"
-SB_BUILD_CXXFLAGS="%{build_cxxflags} %{?_tmproot:-I%{_tmproot}/${SB_PREFIX_CLEAN}/include}"
-SB_BUILD_LDFLAGS="%{build_ldflags} %{?_tmproot:-L%{_tmproot}/${SB_PREFIX_CLEAN}/lib}"
-SB_BUILD_LBS="%{build_libs}"
-SB_CFLAGS="${SB_BUILD_CFLAGS} %{build_includes}"
-SB_CXXFLAGS="${SB_BUILD_CXXFLAGS} %{build_includes}"
+SB_BUILD_CFLAGS="%{build_cflags} $SB_TMP_INCLUDES"
+SB_BUILD_CXXFLAGS="%{build_cxxflags} $SB_TMP_INCLUDES"
+SB_BUILD_LDFLAGS="%{build_ldflags} $SB_TMP_LDFLAGS"
+SB_BUILD_LIBS="%{build_libs}"
+SB_CFLAGS="${SB_BUILD_CFLAGS} %{build_includes} $SB_TMP_INCLUDES"
+SB_CXXFLAGS="${SB_BUILD_CXXFLAGS} %{build_includes} $SB_TMP_INCLUDES"
 SB_ARCH="%{_arch}"
 SB_OS="%{_os}"
 export SB_SOURCE_DIR SB_BUILD_DIR SB_ARCH SB_OS

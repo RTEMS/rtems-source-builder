@@ -1,0 +1,14 @@
+#
+# Internal GMP
+#
+
+%define _internal_gmp       yes
+%define _disable_collecting yes
+%define _disable_packaging  yes
+%define _disable_reporting  yes
+%define _disable_installing yes
+
+%defineifnot with_gmp devel/gmp-6.3.0
+%defineifnot _internal_gmp_path %{_tmpinternal}
+
+%{with_gmp}
