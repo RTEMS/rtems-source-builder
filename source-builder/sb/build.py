@@ -267,7 +267,7 @@ class build:
                 else:
                     tar_extract_key = '__tar_extract'
                 if strip_components > 0:
-                    tar_extract = '%%{' + tar_extract_key + '} --strip-components %d' % \
+                    tar_extract = '%{' + tar_extract_key + '} --strip-components %d' % \
                         (strip_components)
                 else:
                     tar_extract = '%{' + tar_extract_key + '}'
