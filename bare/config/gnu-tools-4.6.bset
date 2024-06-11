@@ -19,7 +19,7 @@ package: gnu-tool-%{_target}-%{_host}-%{release}
 #
 # Tool configuration.
 #
-binutils-2.22-1
-gcc-4.6-newlib-1.20-1
-expat-2.1.0-1
+devel/binutils-2.22-1
+devel/gcc-4.6-newlib-1.20-1
+devel/expat-2.1.0-1
 gdb-7.5-1
