@@ -262,11 +262,15 @@ class build:
                                      file_override)
             download.get_file(src['url'], src['local'], self.opts, self.config)
             if not download_only:
+                if self.opts.trace():
+                    tar_extract_key = '__tar_extract_trace'
+                else:
+                    tar_extract_key = '__tar_extract'
                 if strip_components > 0:
-                    tar_extract = '%%{__tar_extract} --strip-components %d' % \
+                    tar_extract = '%%{' + tar_extract_key + '} --strip-components %d' % \
                         (strip_components)
                 else:
-                    tar_extract = '%{__tar_extract}'
+                    tar_extract = '%{' + tar_extract_key + '}'
                 if 'symlink' in src:
                     sname = name.replace('-', '_')
                     src['script'] = '%%{__ln_s} %s ${source_dir_%s}' % \
