@@ -105,7 +105,7 @@ def run(args=sys.argv):
                    (version.string()))
         log.tracing = argopts.trace
 
-        opts = simhost.load_options(args, argopts, extras=['--with-download'])
+        opts = simhost.load_options(args, argopts, extras=['--dry-run', '--with-download'])
         configs = build.get_configs(opts)
 
         stop_on_error = argopts.stop_on_error

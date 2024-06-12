@@ -191,6 +191,10 @@ def strip_common_prefix(files):
 #
 class options(object):
 
+    default_extras = {
+        '_dry_run': '1'
+    }
+
     def __init__(self, argv, argopts, defaults, extras):
         command_path = path.dirname(path.abspath(argv[0]))
         if len(command_path) == 0:
@@ -208,6 +212,8 @@ class options(object):
         self.opts = {'params': extras}
         self.sb_git()
         self.rtems_bsp()
+        for de in options.default_extras:
+            self.defaults[de] = options.default_extras[de]
         if 'download_dir' in argopts and argopts.download_dir is not None:
             self.defaults['_sourcedir'] = ('dir', 'optional',
                                            path.abspath(argopts.download_dir))
@@ -346,6 +352,9 @@ class options(object):
 
     def quiet(self):
         return True
+
+    def trace(self):
+        return False
 
     def no_clean(self):
         return True
