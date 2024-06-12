@@ -8,7 +8,7 @@
 %define _disable_reporting  yes
 %define _disable_installing yes
 
-%defineifnot with_expat devel/expat-6.3.0
+%defineifnot with_expat devel/expat-2.5.0-1
 %defineifnot _internal_expat_path %{_tmpinternal}
 
 %{with_expat}
