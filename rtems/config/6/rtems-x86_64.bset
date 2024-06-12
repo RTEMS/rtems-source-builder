@@ -7,3 +7,4 @@
 %include 6/rtems-default.bset
 
 tools/rtems-grub-2.06
+tools/rtems-makefs-r12
