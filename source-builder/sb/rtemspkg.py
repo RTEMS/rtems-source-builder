@@ -61,35 +61,35 @@ rpc_package = 7
 rtems_pkg_cfgs = [
     [
         'RTEMS Tools', 'tools/rtems-tools-%{rtems_version}.cfg',
-        'rtems_tools_version', 'https://gitlab.rtems.org/rtems/tools/rtems-tools',
+        'rtems_tools_version', 'git://gitlab.rtems.org/rtems/tools/rtems-tools.git?protocol=https',
         'rtems-tools.git', 'main',
         'https://gitlab.rtems.org/rtems/tools/rtems-tools/-/archive/%{rtems_tools_version}/rtems-tools-%{rtems_tools_version}.tar.bz2',
         'rtems-tools-%{rtems_tools_version}.tar.bz2'
     ],
     [
         'RTEMS Kernel', 'tools/rtems-kernel-%{rtems_version}.cfg',
-        'rtems_kernel_version', 'git://git.rtems.org/rtems', 'rtems.git',
+        'rtems_kernel_version', 'git://gitlab.rtems.org/rtems/rtos/rtems.git?protocol=https', 'rtems.git',
         'main',
         'https://gitlab.rtems.org/rtems/rtos/rtems/-/archive/%{rtems_kernel_version}/rtems-%{rtems_kernel_version}.tar.bz2',
         'rtems-kernel-%{rtems_kernel_version}.tar.bz2'
     ],
     [
         'RTEMS LibBSD', 'tools/rtems-libbsd-%{rtems_version}.cfg',
-        'rtems_libbsd_version', 'https://gitlab.rtems.org/rtems/pkg/rtems-libbsd',
+        'rtems_libbsd_version', 'git://gitlab.rtems.org/rtems/pkg/rtems-libbsd.git?protocol=https',
         'rtems-libbsd.git', '6-freebsd-12',
         'https://gitlab.rtems.org/rtems/pkg/rtems-libbsd/-/archive/%{rtems_libbsd_version}/rtems-libbsd-%{rtems_libbsd_version}.tar.%{rtems_libbsd_ext}',
         'rtems-libbsd-%{rtems_libbsd_version}.tar.%{rtems_libbsd_ext}'
     ],
     [
         'RTEMS Net Legacy', 'tools/rtems-net-legacy-%{rtems_version}.cfg',
-        'rtems_net_version', 'https://gitlab.rtems.org/rtems/pkg/rtems-net-legacy',
+        'rtems_net_version', 'git://gitlab.rtems.org/rtems/pkg/rtems-net-legacy.git?protocol=https',
         'rtems-net-legacy.git', 'main',
         'https://gitlab.rtems.org/rtems/pkg/rtems-net-legacy/-/archive/%{rtems_net_version}/rtems-net-legacy-%{rtems_net_version}.tar.%{rtems_net_ext}',
         'rtems-net-legacy-%{rtems_net_version}.tar.%{rtems_net_ext}'
     ],
     [
         'RTEMS Net Services', 'net/net-services-1.cfg',
-        'rtems_net_services_version', 'https://gitlab.rtems.org/rtems/pkg/rtems-libbsd',
+        'rtems_net_services_version', 'git://gitlab.rtems.org/rtems/pkg/rtems-net-services.git?protocol=https',
         'rtems-net-services.git', 'main',
         'https://gitlab.rtems.org/rtems/pkg/rtems-net-services/-/archive/%{rtems_net_services_version}/rtems-net-services-%{rtems_net_services_version}.tar.%{rtems_net_services_ext}',
         'rtems-net-services-%{rtems_net_services_version}.tar.%{rtems_net_services_ext}'
