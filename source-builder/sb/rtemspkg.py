@@ -61,35 +61,40 @@ rpc_package = 7
 rtems_pkg_cfgs = [
     [
         'RTEMS Tools', 'tools/rtems-tools-%{rtems_version}.cfg',
-        'rtems_tools_version', 'git://gitlab.rtems.org/rtems/tools/rtems-tools.git?protocol=https',
+        'rtems_tools_version',
+        'git://gitlab.rtems.org/rtems/tools/rtems-tools.git?protocol=https',
         'rtems-tools.git', 'main',
         'https://gitlab.rtems.org/rtems/tools/rtems-tools/-/archive/%{rtems_tools_version}/rtems-tools-%{rtems_tools_version}.tar.bz2',
         'rtems-tools-%{rtems_tools_version}.tar.bz2'
     ],
     [
         'RTEMS Kernel', 'tools/rtems-kernel-%{rtems_version}.cfg',
-        'rtems_kernel_version', 'git://gitlab.rtems.org/rtems/rtos/rtems.git?protocol=https', 'rtems.git',
-        'main',
+        'rtems_kernel_version',
+        'git://gitlab.rtems.org/rtems/rtos/rtems.git?protocol=https',
+        'rtems.git', 'main',
         'https://gitlab.rtems.org/rtems/rtos/rtems/-/archive/%{rtems_kernel_version}/rtems-%{rtems_kernel_version}.tar.bz2',
         'rtems-kernel-%{rtems_kernel_version}.tar.bz2'
     ],
     [
         'RTEMS LibBSD', 'tools/rtems-libbsd-%{rtems_version}.cfg',
-        'rtems_libbsd_version', 'git://gitlab.rtems.org/rtems/pkg/rtems-libbsd.git?protocol=https',
+        'rtems_libbsd_version',
+        'git://gitlab.rtems.org/rtems/pkg/rtems-libbsd.git?protocol=https',
         'rtems-libbsd.git', '6-freebsd-12',
         'https://gitlab.rtems.org/rtems/pkg/rtems-libbsd/-/archive/%{rtems_libbsd_version}/rtems-libbsd-%{rtems_libbsd_version}.tar.%{rtems_libbsd_ext}',
         'rtems-libbsd-%{rtems_libbsd_version}.tar.%{rtems_libbsd_ext}'
     ],
     [
         'RTEMS Net Legacy', 'tools/rtems-net-legacy-%{rtems_version}.cfg',
-        'rtems_net_version', 'git://gitlab.rtems.org/rtems/pkg/rtems-net-legacy.git?protocol=https',
+        'rtems_net_version',
+        'git://gitlab.rtems.org/rtems/pkg/rtems-net-legacy.git?protocol=https',
         'rtems-net-legacy.git', 'main',
         'https://gitlab.rtems.org/rtems/pkg/rtems-net-legacy/-/archive/%{rtems_net_version}/rtems-net-legacy-%{rtems_net_version}.tar.%{rtems_net_ext}',
         'rtems-net-legacy-%{rtems_net_version}.tar.%{rtems_net_ext}'
     ],
     [
         'RTEMS Net Services', 'net/net-services-1.cfg',
-        'rtems_net_services_version', 'git://gitlab.rtems.org/rtems/pkg/rtems-net-services.git?protocol=https',
+        'rtems_net_services_version',
+        'git://gitlab.rtems.org/rtems/pkg/rtems-net-services.git?protocol=https',
         'rtems-net-services.git', 'main',
         'https://gitlab.rtems.org/rtems/pkg/rtems-net-services/-/archive/%{rtems_net_services_version}/rtems-net-services-%{rtems_net_services_version}.tar.%{rtems_net_services_ext}',
         'rtems-net-services-%{rtems_net_services_version}.tar.%{rtems_net_services_ext}'
@@ -113,8 +118,12 @@ def clean_and_pack(line, last_line):
     return line
 
 
-def config_patch(configdir, config, version_label, config_hash, repo_hash,
-                 checksum):
+def config_patch(macros, mconfigdir, pkg_config, pkg_package, version_label,
+                 config_hash, repo_hash, checksum):
+    macros[version_label] = config_hash
+    configdir = macros.expand(mconfigdir)
+    config = macros.expand(pkg_config)
+    package = macros.expand(pkg_package)
     for cd in configdir.split(':'):
         cf = path.join(cd, config)
         if path.exists(cf):
@@ -135,7 +144,12 @@ def config_patch(configdir, config, version_label, config_hash, repo_hash,
                         last_line = line[:-1]
                         continue
                     last_line = ''
-                    if version_label in line and not 'rsb_version' in line:
+                    try:
+                        eline = macros.expand(line)
+                    except:
+                        eline = line
+                    if (version_label in line and not 'rsb_version' in line) or \
+                       package in eline:
                         if line.startswith('%define ' + version_label):
                             new_lines = [
                                 '%define ' + version_label + ' ' + repo_hash +
@@ -254,10 +268,9 @@ def run(args=sys.argv):
                                   tarball_path, bopts, b)
                 tarball_hash = checksum_sha512_base64(tarball_path)
                 if update and not argopts.dry_run:
-                    config_patch(b.macros.expand('%{_configdir}'),
-                                 b.macros.expand(cfg[rpc_config]),
-                                 cfg[rpc_version], config_hash, repo_hash,
-                                 tarball_hash)
+                    config_patch(b.macros, '%{_configdir}', cfg[rpc_config],
+                                 cfg[rpc_package], cfg[rpc_version],
+                                 config_hash, repo_hash, tarball_hash)
                 del b
             except error.general as gerr:
                 log.stderr(str(gerr))
