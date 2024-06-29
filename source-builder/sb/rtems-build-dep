@@ -87,7 +87,7 @@ do
 		echo 'error: no library path (-L) provided'
 		exit 2
 	    fi
-            libraries="$2"; shift;
+            libraries="$libraries $2"; shift;
             shift;;
 	-v)
 	    verbose=yes
