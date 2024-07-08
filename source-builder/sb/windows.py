@@ -133,6 +133,7 @@ def load():
         '__unzip': ('exe', 'required', 'unzip'),
         '__xz': ('exe', 'required', 'xz'),
         '_buildshell': ('exe', 'required', '%{__sh}'),
+        '__setup_post': ('exe', 'none', '' ),
         '___setup_shell': ('exe', 'required', '%{__sh}')
     }
 
