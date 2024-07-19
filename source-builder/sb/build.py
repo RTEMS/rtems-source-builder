@@ -67,7 +67,8 @@ def short_name(name):
         buildname = ''
         add = True
         for n in name.split('-'):
-            buildname += n[0]
+            if n:
+                buildname += n[0]
         return buildname
     else:
         return name
