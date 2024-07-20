@@ -1,5 +1,10 @@
-RTEMS Tools Project (http://www.rtems.org/)
+RTEMS Tools Project
+===================
+
+http://www.rtems.org/
+
 Copyright 2010-2017 Chris Johns (chrisj@rtems.org)
+
 All rights reserved.
 
 This package is part of the RTEMS Tools Project.
