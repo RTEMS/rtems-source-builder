@@ -245,9 +245,12 @@ def run(args=sys.argv):
                 config_hash = b.macros.expand('%{' + cfg[rpc_version] + '}')
                 repo_path = path.join(source_dir, cfg[rpc_repo_name])
                 download.get_file(
-                    cfg[rpc_repo] + '?fetch?checkout=' + cfg[rpc_branch],
+                    cfg[rpc_repo] + '?fetch?checkout=' + cfg[rpc_branch] + '?pull',
                     repo_path, bopts, b)
                 repo = git.repo(repo_path)
+                if repo.dirty():
+                    raise error.general(cfg[rpc_label] +
+                                        ': repo is dirty')
                 repo_hash = repo.head()
                 if config_hash != repo_hash:
                     update = True
