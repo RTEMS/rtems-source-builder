@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: BSD-2-Clause
+
 # RTEMS Tools Project (http://www.rtems.org/)
 # Copyright 2024-2024 Suraj Kumar 
 # All rights reserved.
