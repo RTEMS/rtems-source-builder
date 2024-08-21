@@ -118,10 +118,11 @@ class package:
     def directive_extend(self, dir, data):
         if dir not in self.directives:
             self.directives[dir] = []
-        for i in range(0, len(data)):
-            data[i] = data[i].strip()
-        self.directives[dir].extend(data)
-        self.config.macros[dir] = '\n'.join(self.directives[dir])
+        if len(data) != 0:
+            for i in range(0, len(data)):
+                data[i] = data[i].strip()
+            self.directives[dir].extend(data)
+            self.config.macros[dir] = '\n'.join(self.directives[dir])
 
     def info_append(self, info, data):
         if info not in self.infos:
@@ -878,6 +879,9 @@ class file:
         in_iftrue = True
         data = []
         while True:
+            if dir is not None:
+                self._directive_extend(dir, data)
+                data = []
             if isvalid and \
                     ((iftrue and in_iftrue) or (not iftrue and not in_iftrue)):
                 this_isvalid = True
@@ -910,7 +914,7 @@ class file:
             elif r[0] == 'directive':
                 if this_isvalid:
                     if r[1] == '%include':
-                        self.load(r[2][0])
+                        self.load(r[2][0], dir, info)
                         continue
                     dir, info, data = self._process_directive(
                         r, dir, info, data)
@@ -1372,7 +1376,7 @@ class file:
         else:
             self.macros = macros
 
-    def load(self, name):
+    def load(self, name, dir=None, info=None):
 
         def common_end(left, right):
             end = ''
@@ -1424,8 +1428,8 @@ class file:
         name = path.basename(configname)
 
         try:
-            log.trace('config: %s:  _open: %s' %
-                      (self.name, path.host(configname)))
+            log.trace('config: %s:  _open: %s [dir: %s info: %s]' %
+                      (self.name, path.host(configname), dir, info))
             config = open(path.host(configname), 'r')
         except IOError as err:
             raise error.general('error opening config file: %s' %
@@ -1440,10 +1444,8 @@ class file:
         self.lc = 0
 
         try:
-            dir = None
-            info = None
-            data = []
             while True:
+                data = []
                 r = self._parse(config, dir, info)
                 if r[0] == 'package':
                     dir, info, data = self._process_package(r, dir, info, data)
@@ -1454,7 +1456,7 @@ class file:
                                                     (r[1])))
                 elif r[0] == 'directive':
                     if r[1] == '%include':
-                        self.load(r[2][0])
+                        self.load(r[2][0], dir, info)
                         continue
                     dir, info, data = self._process_directive(
                         r, dir, info, data)
@@ -1463,8 +1465,8 @@ class file:
                 else:
                     self._error("%d: invalid parse state: '%s" %
                                 (self.lc, r[0]))
-            if dir is not None:
-                self._directive_extend(dir, data)
+                if dir is not None:
+                    self._directive_extend(dir, data)
         except:
             config.close()
             raise
