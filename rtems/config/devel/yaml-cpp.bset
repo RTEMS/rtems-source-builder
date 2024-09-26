@@ -1,0 +1,15 @@
+#
+# Build set for Yaml-CPP
+#
+
+%define release 1
+
+#
+# The RTEMS Package defines
+#
+%include rtems-package.bset
+
+#
+# Build Yaml-CPP
+#
+devel/yaml-cpp.cfg
