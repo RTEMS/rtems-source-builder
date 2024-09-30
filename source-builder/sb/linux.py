@@ -137,7 +137,7 @@ def load():
         distro_like = distro_like.lower().split(' ')[0]
 
     # Some additional distro aliases
-    if distro in ['centos']:
+    if distro in ['centos', 'rocky']:
         distro_like = 'redhat'
     elif distro in ['fedora']:
         if distro_ver < 17:
