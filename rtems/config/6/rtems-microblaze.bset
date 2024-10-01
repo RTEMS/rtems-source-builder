@@ -13,7 +13,7 @@
 
 devel/expat-2.5.0-1
 devel/gmp-6.2.1
-tools/rtems-gdb-13.2
+tools/rtems-gdb-15.2
 
 tools/rtems-xilinx-binutils-2.36
 tools/rtems-xilinx-gcc-12-newlib-head

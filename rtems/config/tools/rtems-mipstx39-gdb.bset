@@ -4,4 +4,4 @@
 %define win32-gdb-disable-sim
 %define _target mipstx39-rtems%{rtems_version}
 devel/gmp-6.2.1
-tools/rtems-gdb-13.1
+tools/rtems-gdb-15.2
