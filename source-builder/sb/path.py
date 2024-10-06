@@ -36,6 +36,7 @@ from . import log
 
 windows_posix = sys.platform == 'msys'
 windows = os.name == 'nt'
+windows11 = sys.getwindowsversion().build >= 22000
 
 win_maxpath = 254
 
@@ -51,7 +52,7 @@ def host(path):
                 path[1] in string.ascii_uppercase):
                 path = '%s:%s' % (path[1], path[2:])
             path = path.replace('/', '\\')
-            if len(path) > win_maxpath:
+            if len(path) > win_maxpath and not windows11:
                 if path.startswith('\\\\?\\'):
                     path = path[4:]
                 path = u'\\'.join([u'\\\\?', path])
@@ -63,7 +64,8 @@ def shell(path):
         path = path.decode('utf8')
     if path is not None:
         if windows or windows_posix:
-            path = path.encode('ascii', 'ignore').decode('ascii')
+            if not windows11:
+                path = path.encode('ascii', 'ignore').decode('ascii')
             if path.startswith('\\\\?\\'):
                 path = path[4:]
             if len(path) > 1 and path[1] == ':':
