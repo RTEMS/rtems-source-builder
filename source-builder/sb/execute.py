@@ -218,15 +218,16 @@ class execute(object):
                         data = ''
                     if len(data) == 0:
                         if len(line) > 0:
-                            _output_line(line + '\n', exe, prefix, out, count)
+                            _output_line(line + os.linesep, exe, prefix, out, count)
+                            line = ''
                         break
                     # str and bytes are the same type in Python2
                     if decoder is not None and type(data) is not str and type(
                             data) is bytes:
                         data = decoder.decode(data)
                     last_ch = data[-1]
-                    sd = (line + data).split('\n')
-                    if last_ch != '\n':
+                    sd = (line + data).split(os.linesep)
+                    if last_ch != os.linesep:
                         line = sd[-1]
                     else:
                         line = ''
@@ -236,7 +237,7 @@ class execute(object):
                             if trace_threads:
                                 print('execute:_readthread: output-line:',
                                       count, type(l))
-                            _output_line(l + '\n', exe, prefix, out, count)
+                            _output_line(l + os.linesep, exe, prefix, out, count)
                             count += 1
                         if count > 10:
                             count -= 10

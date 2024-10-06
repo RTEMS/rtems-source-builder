@@ -97,9 +97,9 @@ class package:
             dll.sort()
             for d in dll:
                 if d:
-                    s += '  ' + d + ':\n'
+                    s += '  ' + d + ':' + os.linesep
                     for l in dl[d]:
-                        s += '    ' + l + '\n'
+                        s += '    ' + l + os.linesep
             return s
 
         s = '\npackage: ' + self._name + \
@@ -122,17 +122,17 @@ class package:
             for i in range(0, len(data)):
                 data[i] = data[i].strip()
             self.directives[dir].extend(data)
-            self.config.macros[dir] = '\n'.join(self.directives[dir])
+            self.config.macros[dir] = os.linesep.join(self.directives[dir])
 
     def info_append(self, info, data):
         if info not in self.infos:
             self.infos[info] = []
         self.infos[info].append(data)
-        self.config.macros[info] = '\n'.join(self.infos[info])
+        self.config.macros[info] = os.linesep.join(self.infos[info])
 
     def get_info(self, info, expand=True):
         if info in self.config.macros:
-            _info = self.config.macros[info].split('\n')
+            _info = self.config.macros[info].split(os.linesep)
             if expand:
                 return self.config.expand(_info)
             else:
@@ -153,7 +153,7 @@ class package:
 
     def _find_macro(self, label, expand=True):
         if label in self.config.macros:
-            macro = self.config.macros[label].split('\n')
+            macro = self.config.macros[label].split(os.linesep)
             if expand:
                 return self.config.expand(macro)
             else:
@@ -282,7 +282,7 @@ class file:
             ddl = list(dd.keys())
             ddl.sort()
             for d in ddl:
-                s += '  ' + d + ': ' + dd[d] + '\n'
+                s += '  ' + d + ': ' + dd[d] + os.linesep
             return s
 
         s = 'config: %s' % ('.'.join(self.configpath)) + \
