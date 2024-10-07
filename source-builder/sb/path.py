@@ -36,7 +36,9 @@ from . import log
 
 windows_posix = sys.platform == 'msys'
 windows = os.name == 'nt'
-windows11 = sys.getwindowsversion().build >= 22000
+windows11 = False
+if windows:
+    windows11 = sys.getwindowsversion().build >= 22000
 
 win_maxpath = 254
 
