@@ -129,7 +129,7 @@ def hash(args, macros, error):
     new_value = '%s %s' % (args[0], args[2])
     existing_value = get_hash(_file, macros)
     if existing_value is not None:
-        if existing_value != new_value:
+        if existing_value != new_value and macros.get_value('release') is None:
             error('conflicting hash definitions for: %s' % (args[1]))
             return
     else:
