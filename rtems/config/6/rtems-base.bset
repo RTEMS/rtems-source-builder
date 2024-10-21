@@ -4,10 +4,4 @@
 
 %include rtems-urls.bset
 
-%ifos win32 mingw ming32
- %define rtems_waf_build_root_suffix %{waf_build_root_suffix}
-%else
- %define rtems_waf_build_root_suffix %{nil}
-%endif
-
 package: rtems-%{rtems_version}-%{_target}-%{_host}-%{release}
