@@ -50,55 +50,114 @@ except:
 #
 # RTEMS Packages we maintian a git hash of in the RSB
 #
-rpc_label = 0
-rpc_config = 1
-rpc_version = 2
-rpc_repo = 3
-rpc_repo_name = 4
-rpc_branch = 5
-rpc_snapshot = 6
-rpc_package = 7
 rtems_pkg_cfgs = [
-    [
-        'RTEMS Tools', 'tools/rtems-tools-%{rtems_version}.cfg',
-        'rtems_tools_version',
+    {
+        'label': 'RTEMS Tools',
+        'config': 'tools/rtems-tools-%{rtems_version}.cfg',
+        'version': 'rtems_tools_version',
+        'repo':
         'git://gitlab.rtems.org/rtems/tools/rtems-tools.git?protocol=https',
-        'rtems-tools.git', 'main',
+        'repo-name': 'rtems-tools.git',
+        'branch': 'main',
+        'snapshot':
         'https://gitlab.rtems.org/rtems/tools/rtems-tools/-/archive/%{rtems_tools_version}/rtems-tools-%{rtems_tools_version}.tar.bz2',
-        'rtems-tools-%{rtems_tools_version}.tar.bz2'
-    ],
-    [
-        'RTEMS Kernel', 'tools/rtems-kernel-%{rtems_version}.cfg',
-        'rtems_kernel_version',
-        'git://gitlab.rtems.org/rtems/rtos/rtems.git?protocol=https',
-        'rtems.git', 'main',
+        'package': 'rtems-tools-%{rtems_tools_version}.tar.bz2'
+    },
+    {
+        'label': 'RTEMS Kernel',
+        'config': 'tools/rtems-kernel-%{rtems_version}.cfg',
+        'version': 'rtems_kernel_version',
+        'repo': 'git://gitlab.rtems.org/rtems/rtos/rtems.git?protocol=https',
+        'repo-name': 'rtems.git',
+        'branch': 'main',
+        'snapshot':
         'https://gitlab.rtems.org/rtems/rtos/rtems/-/archive/%{rtems_kernel_version}/rtems-%{rtems_kernel_version}.tar.bz2',
-        'rtems-kernel-%{rtems_kernel_version}.tar.bz2'
-    ],
-    [
-        'RTEMS LibBSD', 'tools/rtems-libbsd-%{rtems_version}.cfg',
-        'rtems_libbsd_version',
+        'package': 'rtems-kernel-%{rtems_kernel_version}.tar.bz2'
+    },
+    {
+        'label': 'RTEMS LibBSD',
+        'config': 'tools/rtems-libbsd-%{rtems_version}.cfg',
+        'version': 'rtems_libbsd_version',
+        'repo':
         'git://gitlab.rtems.org/rtems/pkg/rtems-libbsd.git?protocol=https',
-        'rtems-libbsd.git', '6-freebsd-12',
+        'repo-name': 'rtems-libbsd.git',
+        'branch': '6-freebsd-12',
+        'snapshot':
         'https://gitlab.rtems.org/rtems/pkg/rtems-libbsd/-/archive/%{rtems_libbsd_version}/rtems-libbsd-%{rtems_libbsd_version}.tar.%{rtems_libbsd_ext}',
-        'rtems-libbsd-%{rtems_libbsd_version}.tar.%{rtems_libbsd_ext}'
-    ],
-    [
-        'RTEMS Net Legacy', 'tools/rtems-net-legacy-%{rtems_version}.cfg',
-        'rtems_net_version',
+        'package':
+        'rtems-libbsd-%{rtems_libbsd_version}.tar.%{rtems_libbsd_ext}',
+        'submodules': {
+            'rtems_waf': {
+                'label': 'RTEMS Waf',
+                'config': 'net/net-services-1.cfg',
+                'version': 'rtems_waf_version',
+                'repo':
+                'git://gitlab.rtems.org/rtems/tools/rtems_waf.git?protocol=https',
+                'repo-name': 'rtems_waf.git',
+                'branch': 'main',
+                'snapshot':
+                'https://gitlab.rtems.org/rtems/tools/rtems_waf/-/archive/%{rtems_waf_version}/rtems_waf-%{rtems_waf_version}.tar.%{rtems_waf_ext}',
+                'package':
+                'rtems_waf-%{rtems_waf_version}.tar.%{rtems_waf_ext}'
+            }
+        }
+    },
+    {
+        'label': 'RTEMS Net Legacy',
+        'config': 'tools/rtems-net-legacy-%{rtems_version}.cfg',
+        'version': 'rtems_net_version',
+        'repo':
         'git://gitlab.rtems.org/rtems/pkg/rtems-net-legacy.git?protocol=https',
-        'rtems-net-legacy.git', 'main',
+        'repo-name': 'rtems-net-legacy.git',
+        'branch': 'main',
+        'snapshot':
         'https://gitlab.rtems.org/rtems/pkg/rtems-net-legacy/-/archive/%{rtems_net_version}/rtems-net-legacy-%{rtems_net_version}.tar.%{rtems_net_ext}',
-        'rtems-net-legacy-%{rtems_net_version}.tar.%{rtems_net_ext}'
-    ],
-    [
-        'RTEMS Net Services', 'net/net-services-1.cfg',
-        'rtems_net_services_version',
+        'package':
+        'rtems-net-legacy-%{rtems_net_version}.tar.%{rtems_net_ext}',
+        'submodules': {
+            'rtems_waf': {
+                'label': 'RTEMS Waf',
+                'config': 'net/net-services-1.cfg',
+                'version': 'rtems_waf_version',
+                'repo':
+                'git://gitlab.rtems.org/rtems/tools/rtems_waf.git?protocol=https',
+                'repo-name': 'rtems_waf.git',
+                'branch': 'main',
+                'snapshot':
+                'https://gitlab.rtems.org/rtems/tools/rtems_waf/-/archive/%{rtems_waf_version}/rtems_waf-%{rtems_waf_version}.tar.%{rtems_waf_ext}',
+                'package':
+                'rtems_waf-%{rtems_waf_version}.tar.%{rtems_waf_ext}'
+            }
+        }
+    },
+    {
+        'label': 'RTEMS Net Services',
+        'config': 'net/net-services-1.cfg',
+        'version': 'rtems_net_services_version',
+        'repo':
         'git://gitlab.rtems.org/rtems/pkg/rtems-net-services.git?protocol=https',
-        'rtems-net-services.git', 'main',
+        'repo-name': 'rtems-net-services.git',
+        'branch': 'main',
+        'snapshot':
         'https://gitlab.rtems.org/rtems/pkg/rtems-net-services/-/archive/%{rtems_net_services_version}/rtems-net-services-%{rtems_net_services_version}.tar.%{rtems_net_services_ext}',
-        'rtems-net-services-%{rtems_net_services_version}.tar.%{rtems_net_services_ext}'
-    ],
+        'package':
+        'rtems-net-services-%{rtems_net_services_version}.tar.%{rtems_net_services_ext}',
+        'submodules': {
+            'rtems_waf': {
+                'label': 'RTEMS Waf',
+                'config': 'net/net-services-1.cfg',
+                'version': 'rtems_waf_version',
+                'repo':
+                'git://gitlab.rtems.org/rtems/tools/rtems_waf.git?protocol=https',
+                'repo-name': 'rtems_waf.git',
+                'branch': 'main',
+                'snapshot':
+                'https://gitlab.rtems.org/rtems/tools/rtems_waf/-/archive/%{rtems_waf_version}/rtems_waf-%{rtems_waf_version}.tar.%{rtems_waf_ext}',
+                'package':
+                'rtems_waf-%{rtems_waf_version}.tar.%{rtems_waf_ext}'
+            }
+        }
+    },
 ]
 
 
@@ -190,6 +249,93 @@ def checksum_sha512_base64(tarball):
     return hash_base64
 
 
+def process_package(config, opts, argopts):
+    bopts = copy.copy(opts)
+    bmacros = copy.copy(opts.defaults)
+    b = build.build(config['config'], False, bopts, bmacros)
+    source_dir = b.macros.expand('%{_sourcedir}')
+    config_hash = b.macros.expand('%{' + config['version'] + '}')
+    if len(config_hash) == 0:
+        raise error.general(config['label'] + ': cannot find version macro: ' +
+                            config['version'])
+    repo_path = path.join(source_dir, config['repo-name'])
+    download.get_file(
+        config['repo'] + '?fetch?checkout=' + config['branch'] + '?pull',
+        repo_path, bopts, b)
+    repo = git.repo(repo_path)
+    if repo.dirty():
+        raise error.general(config['label'] + ': repo is dirty')
+    repo_hash = repo.head()
+    if config_hash != repo_hash:
+        update = True
+        update_str = 'UPDATE'
+    else:
+        update = False
+        update_str = 'matching'
+    print(config['label'] + ': ' + update_str + ' config:' + config_hash +
+          ' repo:' + repo_hash)
+    b.macros[config['version']] = repo_hash
+    tarball = b.macros.expand(config['package'])
+    b.macros.set_write_map('hashes')
+    b.macros[tarball] = 'NO-HASH NO-HASH'
+    b.macros.unset_write_map()
+    tarball_path = path.join(source_dir, b.macros.expand(config['package']))
+    download.get_file(b.macros.expand(config['snapshot']), tarball_path, bopts,
+                      b)
+    tarball_hash = checksum_sha512_base64(tarball_path)
+    if update and not argopts.dry_run:
+        config_patch(b.macros, '%{_configdir}', config['config'],
+                     config['package'], config['version'], config_hash,
+                     repo_hash, tarball_hash)
+    repo_submodules = repo.submodules()
+    if len(repo_submodules) == 0 and 'submodules' in config:
+        raise error.general('package has no submodule and some defined: ' +
+                            config['label'])
+    if len(repo_submodules) != 0:
+        if 'submodules' not in config:
+            raise error.general('package has submodules, none defined: ' +
+                                config['label'])
+        for submodule in config['submodules']:
+            if submodule not in repo_submodules:
+                raise error.general('untraced submodule ' + submodule +
+                                    ' in ' + config['label'])
+            repo_hash = repo_submodules[submodule]
+            config_submodule = config['submodules'][submodule]
+            config_hash = b.macros.expand('%{' + config_submodule['version'] +
+                                          '}')
+            if len(config_hash) == 0:
+                raise error.general(config_submodule['label'] +
+                                    ': cannot find version macro: ' +
+                                    config_submodule['version'])
+            if config_hash != repo_hash:
+                update = True
+                update_str = 'UPDATE'
+            else:
+                update = False
+                update_str = 'matching'
+            print(' Submodule: ' + config_submodule['label'] + ': ' +
+                  update_str + ' config:' + config_hash + ' repo:' + repo_hash)
+            if update and not argopts.dry_run:
+                b.macros[config_submodule['version']] = repo_hash
+                tarball = b.macros.expand(config_submodule['package'])
+                b.macros.set_write_map('hashes')
+                b.macros[tarball] = 'NO-HASH NO-HASH'
+                b.macros.unset_write_map()
+                tarball_path = path.join(
+                    source_dir, b.macros.expand(config_submodule['package']))
+                download.get_file(
+                    b.macros.expand(config_submodule['snapshot']),
+                    tarball_path, bopts, b)
+                tarball_hash = checksum_sha512_base64(tarball_path)
+                config_patch(b.macros, '%{_configdir}',
+                             config_submodule['config'],
+                             config_submodule['package'],
+                             config_submodule['version'], config_hash,
+                             repo_hash, tarball_hash)
+    del repo
+    del b
+
+
 def run(args=sys.argv):
     ec = 0
     output = []
@@ -232,49 +378,8 @@ def run(args=sys.argv):
         opts.defaults['rtems_version'] = argopts.rtems_version
 
         for cfg in rtems_pkg_cfgs:
-            b = None
             try:
-                bopts = copy.copy(opts)
-                bmacros = copy.copy(opts.defaults)
-                b = build.build(cfg[rpc_config], False, bopts, bmacros)
-                git_hash_key = b.macros.find(cfg[rpc_version])
-                if len(git_hash_key) == 0:
-                    raise error.general(cfg[rpc_label] +
-                                        ': cannot find version macro')
-                source_dir = b.macros.expand('%{_sourcedir}')
-                config_hash = b.macros.expand('%{' + cfg[rpc_version] + '}')
-                repo_path = path.join(source_dir, cfg[rpc_repo_name])
-                download.get_file(
-                    cfg[rpc_repo] + '?fetch?checkout=' + cfg[rpc_branch] + '?pull',
-                    repo_path, bopts, b)
-                repo = git.repo(repo_path)
-                if repo.dirty():
-                    raise error.general(cfg[rpc_label] +
-                                        ': repo is dirty')
-                repo_hash = repo.head()
-                if config_hash != repo_hash:
-                    update = True
-                    update_str = 'UPDATE'
-                else:
-                    update = False
-                    update_str = 'matching'
-                print(cfg[rpc_label] + ': ' + update_str + ' config:' +
-                      config_hash + ' repo:' + repo_hash)
-                b.macros[cfg[rpc_version]] = repo_hash
-                tarball = b.macros.expand(cfg[rpc_package])
-                b.macros.set_write_map('hashes')
-                b.macros[tarball] = 'NO-HASH NO-HASH'
-                b.macros.unset_write_map()
-                tarball_path = path.join(source_dir,
-                                         b.macros.expand(cfg[rpc_package]))
-                download.get_file(b.macros.expand(cfg[rpc_snapshot]),
-                                  tarball_path, bopts, b)
-                tarball_hash = checksum_sha512_base64(tarball_path)
-                if update and not argopts.dry_run:
-                    config_patch(b.macros, '%{_configdir}', cfg[rpc_config],
-                                 cfg[rpc_package], cfg[rpc_version],
-                                 config_hash, repo_hash, tarball_hash)
-                del b
+                process_package(cfg, opts, argopts)
             except error.general as gerr:
                 log.stderr(str(gerr))
                 log.stderr('Configuration load FAILED')

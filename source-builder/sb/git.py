@@ -121,8 +121,8 @@ class repo:
         if ec == 0:
             for l in output.split('\n'):
                 ms = l.split()
-                if len(ms) == 3:
-                    smodules[ms[1]] = (ms[0], ms[2][1:-1])
+                if len(ms) == 2:
+                    smodules[ms[1]] = (ms[0][1:])
         return smodules
 
     def clean(self, args=[]):
