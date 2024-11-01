@@ -89,7 +89,7 @@ rtems_pkg_cfgs = [
         'submodules': {
             'rtems_waf': {
                 'label': 'RTEMS Waf',
-                'config': 'net/net-services-1.cfg',
+                'config': 'tools/rtems-libbsd-%{rtems_version}.cfg',
                 'version': 'rtems_waf_version',
                 'repo':
                 'git://gitlab.rtems.org/rtems/tools/rtems_waf.git?protocol=https',
@@ -117,7 +117,7 @@ rtems_pkg_cfgs = [
         'submodules': {
             'rtems_waf': {
                 'label': 'RTEMS Waf',
-                'config': 'net/net-services-1.cfg',
+                'config': 'tools/rtems-net-legacy-%{rtems_version}.cfg',
                 'version': 'rtems_waf_version',
                 'repo':
                 'git://gitlab.rtems.org/rtems/tools/rtems_waf.git?protocol=https',
