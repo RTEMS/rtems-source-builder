@@ -259,9 +259,11 @@ def process_package(config, opts, argopts):
         raise error.general(config['label'] + ': cannot find version macro: ' +
                             config['version'])
     repo_path = path.join(source_dir, config['repo-name'])
-    download.get_file(
-        config['repo'] + '?fetch?checkout=' + config['branch'] + '?pull',
-        repo_path, bopts, b)
+    branch = config['branch']
+    if argopts.release_branch and branch == 'main':
+        branch = opts.defaults['rtems_version']
+    download.get_file(config['repo'] + '?fetch?checkout=' + branch + '?pull',
+                      repo_path, bopts, b)
     repo = git.repo(repo_path)
     if repo.dirty():
         raise error.general(config['label'] + ': repo is dirty')
@@ -356,6 +358,9 @@ def run(args=sys.argv):
                            help='Log file.',
                            type=str,
                            default=simhost.log_default('rtems-pkg'))
+        argsp.add_argument('--release-branch',
+                           help='Use with release branches.',
+                           action='store_true')
         argsp.add_argument('--trace',
                            help='Enable trace logging for debugging.',
                            action='store_true')
@@ -376,6 +381,9 @@ def run(args=sys.argv):
         opts.defaults[
             'rtems_waf_build_root_suffix'] = '%{waf_build_root_suffix}'
         opts.defaults['rtems_version'] = argopts.rtems_version
+
+        if not version.version_control():
+            raise error.general('not running in a git repo')
 
         for cfg in rtems_pkg_cfgs:
             try:
