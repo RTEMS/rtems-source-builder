@@ -1,3 +1,0 @@
-%define release 1
-%define rtems_arch bfin
-%include 7/rtems-default.bset

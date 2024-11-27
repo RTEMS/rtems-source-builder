@@ -1,5 +1,0 @@
-%define release 1
-%define rtems_arch powerpc
-%define with_libgomp
-%define with_newlib_tls
-%include 7/rtems-default.bset
