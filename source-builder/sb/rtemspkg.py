@@ -103,6 +103,34 @@ rtems_pkg_cfgs = [
         }
     },
     {
+        'label': 'RTEMS lwIP',
+        'config': 'tools/rtems-lwip-%{rtems_version}.cfg',
+        'version': 'rtems_lwip_version',
+        'repo':
+        'git://gitlab.rtems.org/rtems/pkg/rtems-lwip.git?protocol=https',
+        'repo-name': 'rtems-lwip.git',
+        'branch': 'main',
+        'snapshot':
+        'https://gitlab.rtems.org/rtems/pkg/rtems-lwip/-/archive/%{rtems_lwip_version}/rtems-lwip-%{rtems_lwip_version}.tar.%{rtems_lwip_ext}',
+        'package':
+        'rtems-lwip-%{rtems_lwip_version}.tar.%{rtems_lwip_ext}',
+        'submodules': {
+            'rtems_waf': {
+                'label': 'RTEMS Waf',
+                'config': 'net/rtems-lwip-1.cfg',
+                'version': 'rtems_waf_version',
+                'repo':
+                'git://gitlab.rtems.org/rtems/tools/rtems_waf.git?protocol=https',
+                'repo-name': 'rtems_waf.git',
+                'branch': 'main',
+                'snapshot':
+                'https://gitlab.rtems.org/rtems/tools/rtems_waf/-/archive/%{rtems_waf_version}/rtems_waf-%{rtems_waf_version}.tar.%{rtems_waf_ext}',
+                'package':
+                'rtems_waf-%{rtems_waf_version}.tar.%{rtems_waf_ext}'
+            }
+        }
+    },
+    {
         'label': 'RTEMS Net Legacy',
         'config': 'tools/rtems-net-legacy-%{rtems_version}.cfg',
         'version': 'rtems_net_version',
