@@ -5,4 +5,4 @@
 #
 # Build the BSD library for RTEMS.
 #
-tools/rtems-libbsd-6
+tools/rtems-libbsd-7

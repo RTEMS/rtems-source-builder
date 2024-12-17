@@ -1,4 +1,3 @@
 %define release 1
 %define rtems_arch m68k
-%define with_newlib_tls
 %include 7/rtems-default.bset

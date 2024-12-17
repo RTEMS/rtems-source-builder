@@ -3,5 +3,5 @@
 %define with_libgomp
 %define with_newlib_tls
 %define gdb-disable-sim 1
-%include 6/rtems-default.bset
+%include 8/rtems-default.bset
 devel/sis-2-1
