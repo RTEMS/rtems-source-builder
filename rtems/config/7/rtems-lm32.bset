@@ -1,3 +1,0 @@
-%define release 1
-%define rtems_arch lm32
-%include 7/rtems-default.bset
