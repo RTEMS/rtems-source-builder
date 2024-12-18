@@ -137,6 +137,21 @@ profiles = {
     },
 }
 
+common = {
+    'force_package_build': ('none', 'none', '1'),
+    '_internal_autotools': ('none', 'none', 'yes'),
+    '_internal_expat': ('none', 'none', 'yes'),
+    '_internal_expat_path': ('none', 'none', '%{_tmpinternal}'),
+    '_internal_gmp': ('none', 'none', 'yes'),
+    '_internal_gmp_path': ('none', 'none', '%{_tmpinternal}'),
+    '_internal_gsed': ('none', 'none', 'yes'),
+    '_internal_gsed_path': ('none', 'none', '%{_tmpinternal}'),
+    '_internal_mpfr': ('none', 'none', 'yes'),
+    '_internal_mpfr_path': ('none', 'none', '%{_tmpinternal}'),
+    '_internal_texinfo': ('none', 'none', 'yes'),
+    '_internal_texinfo_path': ('none', 'none', '%{_tmpinternal}'),
+}
+
 
 class log_capture(object):
 
@@ -191,9 +206,7 @@ def strip_common_prefix(files):
 #
 class options(object):
 
-    default_extras = {
-        '_dry_run': '1'
-    }
+    default_extras = {'_dry_run': '1'}
 
     def __init__(self, argv, argopts, defaults, extras):
         command_path = path.dirname(path.abspath(argv[0]))
@@ -458,6 +471,13 @@ class buildset:
                 line = line[1:b]
             return line.strip()
 
+        def _clean_and_pack(line, last_line):
+            leading_ws = ' ' if len(line) > 0 and line[0].isspace() else ''
+            line = _clean(line)
+            if len(last_line) > 0:
+                line = last_line + leading_ws + line
+            return line
+
         bsetname = find_bset_config(bset, self.macros)
 
         try:
@@ -474,11 +494,16 @@ class buildset:
 
         try:
             lc = 0
+            ll = ''
             for l in bsetf:
                 lc += 1
-                l = _clean(l)
+                l = _clean_and_pack(l, ll)
                 if len(l) == 0:
                     continue
+                if l[-1] == '\\':
+                    ll = l[0:-1]
+                    continue
+                ll = ''
                 log.trace('_bset: %s: %03d: %s' % (self.bset, lc, l))
                 ls = l.split()
                 if ls[0][-1] == ':' and ls[0][:-1] == 'package':
@@ -487,6 +512,7 @@ class buildset:
                 elif ls[0][0] == '%' and (len(ls[0]) > 1 and ls[0][1] != '{'):
 
                     def err(msg):
+                        self._errors += [self.bset + ':' + self.parent]
                         raise error.general('%s:%d: %s' % (self.bset, lc, msg))
 
                     if ls[0] == '%define' or ls[0] == '%defineifnot':
@@ -504,6 +530,7 @@ class buildset:
                                 self.macros.define(name)
                     elif ls[0] == '%undefine':
                         if len(ls) > 2:
+                            self._errors += [bset + ':' + self.parent]
                             raise error.general('%s:%d: %undefine requires ' \
                                                 'just the name' % (self.bset, lc))
                         self.macros.undefine(ls[1].strip())
@@ -523,6 +550,7 @@ class buildset:
                     if l is not None:
                         c = build.find_config(l, self.configs)
                         if c is None:
+                            self._errors += [bset + ':' + self.parent]
                             raise error.general('%s:%d: cannot find file: %s' %
                                                 (self.bset, lc, l))
                         configs += [c + ':' + self.parent]
@@ -584,6 +612,11 @@ class buildset:
         if not macros.defined('__cxx'):
             raise error.general('no valid c++ found')
 
+    def set_common_details(self, opts, macros):
+        for m in common:
+            opts.defaults[m] = common[m]
+            macros[m] = common[m]
+
     def build(self, host, nesting_count=0):
 
         build_error = False
@@ -622,6 +655,7 @@ class buildset:
                     opts = copy.copy(self.opts)
                     macros = copy.copy(self.macros)
                     self.set_host_details(host, opts, macros)
+                    self.set_common_details(opts, macros)
                     config, parent = configs[s].split(':', 2)
                     if config.endswith('.bset'):
                         log.trace('_bset: %2d: %s' %
@@ -630,6 +664,7 @@ class buildset:
                         bs.build(host, nesting_count)
                         self._includes += \
                             self._rebase_includes(bs.includes(), parent)
+                        self._errors += bs._errors
                         del bs
                     elif config.endswith('.cfg'):
                         log.trace('_bset: %2d: %s' %
@@ -654,12 +689,15 @@ class buildset:
                                             (config))
                 except error.general as gerr:
                     have_errors = True
+                    self._errors += \
+                        [find_bset_config(config, opts.defaults) + ':' + parent]
+                    if bs is not None:
+                        self._errors += bs._errors
                     if b is not None:
                         if self.build_failure is None:
                             self.build_failure = b.name()
                         self._includes += b.includes()
-                    self._errors += \
-                        [find_bset_config(config, opts.defaults) + ':' + parent] + self._includes
+                        self._errors += b._errors
                     raise
             #
             # Clear out the builds ...

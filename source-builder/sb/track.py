@@ -124,7 +124,7 @@ def run(args=sys.argv):
         #
         description = 'RTEMS Track Dependencies a build set has for all hosts.'
 
-        argsp = argparse.ArgumentParser(prog='sb-dep-check',
+        argsp = argparse.ArgumentParser(prog='sb-track',
                                         description=description)
         argsp.add_argument('--rtems-version',
                            help='Set the RTEMS version.',
@@ -143,7 +143,7 @@ def run(args=sys.argv):
         argsp.add_argument('--log',
                            help='Log file.',
                            type=str,
-                           default=simhost.log_default('trackdeps'))
+                           default=simhost.log_default('track'))
         argsp.add_argument('--trace',
                            help='Enable trace logging for debugging.',
                            action='store_true')
@@ -178,6 +178,9 @@ def run(args=sys.argv):
             for bset in bsets:
                 b = None
                 try:
+                    if not bset.endswith('.bset'):
+                        bset += '.bset'
+                    includes += [bset + ':root']
                     for host in simhost.profiles:
                         b = simhost.buildset(bset, configs, opts)
                         b.build(host)
@@ -204,11 +207,6 @@ def run(args=sys.argv):
                 errors = [
                     e.split(':', 2)[0] for e in normalise_paths(errors, root)
                 ]
-                errs = []
-                for e in errors:
-                    if e not in bsets + configs:
-                        errs += [e]
-                errors = errs
             output = [
                 'RSB Dependency Tracker', '',
                 'Total buildsets: %d' % (len(all_bsets)),
