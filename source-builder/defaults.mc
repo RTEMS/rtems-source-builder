@@ -45,6 +45,7 @@ name:                none,    none,     ''
 version:             none,    none,     ''
 release:             none,    none,     ''
 buildname:           none,    none,     '%{name}'
+force_package_build: none,    none,     '0'
 
 # The default is not released.
 rsb_released:        none,    none,     '0'
