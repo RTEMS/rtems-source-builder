@@ -94,7 +94,7 @@ _top_dir = None
 
 def _top():
     if _top_dir is None:
-        top = path.dirname(sys.argv[0])
+        top = path.abspath(path.dirname(path.dirname(sys.argv[0])))
     else:
         top = _top_dir
     if len(top) == 0:
