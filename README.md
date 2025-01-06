@@ -13,13 +13,13 @@ welcome this happening in other open source or commercial projects.
 
 The project is part of the *RTEMS Project*. The project's websites are:
 
- **RTEMS Project Website** : https://www.rtems.org/
+  **RTEMS Project Website** : https://www.rtems.org/
 
- **GIT Source Repository** : https://gitlab.rtems.org/rtems/tools/rtems-source-builder.git/
+  **GIT Source Repository** : https://gitlab.rtems.org/rtems/tools/rtems-source-builder.git/
 
- **Documentation** : https://docs.rtems.org/branches/master/user/rsb/index.html
+  **Documentation** : https://docs.rtems.org/branches/master/user/rsb/index.html
 
- **Bugs and Issues** : https://gitlab.rtems.org/rtems/tools/rtems-source-builder/-/issues
+  **Bugs and Issues** : https://gitlab.rtems.org/rtems/tools/rtems-source-builder/-/issues
 
 Please refer to the **LICENSE** file for license details.
 
