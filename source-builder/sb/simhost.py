@@ -697,7 +697,6 @@ class buildset:
                         if self.build_failure is None:
                             self.build_failure = b.name()
                         self._includes += b.includes()
-                        self._errors += b._errors
                     raise
             #
             # Clear out the builds ...
