@@ -13,7 +13,7 @@
 
 %define with_rtems_bsp arm/raspberrypi2
 
-6/rtems-arm
-6/rtems-kernel
-6/rtems-libbsd
-6/rtems-packages
+7/rtems-arm
+7/rtems-kernel
+7/rtems-libbsd
+7/rtems-packages

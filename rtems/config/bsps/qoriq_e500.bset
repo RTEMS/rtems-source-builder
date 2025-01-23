@@ -2,7 +2,7 @@
 
 %define with_rtems_bsp powerpc/qoriq_e500
 
-6/rtems-powerpc
-6/rtems-kernel
-6/rtems-libbsd
-6/rtems-packages
+7/rtems-powerpc
+7/rtems-kernel
+7/rtems-libbsd
+7/rtems-packages

@@ -2,5 +2,5 @@
 
 %define with_rtems_bsp sparc/gr740
 
-6/rtems-sparc
-6/rtems-kernel
+7/rtems-sparc
+7/rtems-kernel
