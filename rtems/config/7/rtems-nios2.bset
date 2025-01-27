@@ -1,4 +1,5 @@
 %define release 1
 %define rtems_arch nios2
 %define with_newlib_tls
+%define gcc_configure_extra_options --enable-obsolete
 %include 7/rtems-default.bset
