@@ -10,17 +10,6 @@
 %include rtems-package.bset
 
 #
-# RTEMS-lwIP Version
-#
-%define rtems_lwip_version 24f46d35dedf08807d6088443ab5c82e95c36ed8
-%hash sha512 rtems-lwip-%{rtems_lwip_version}.tar.bz2 \
-              Dsmi0SwB6s/bAQKIqfsVfegr/2DPFTzLskNwPz8sD+k8RQTYVrVT/QiGF+CloQrxQAtUZGkGg3CHQAkBdImoeg==
-
-%define rtems_waf_version 1a118bbcd52138dbdc3236e64bc23fd430a064b1
-%hash sha512 rtems_waf-%{rtems_waf_version}.tar.bz2 \
-              wHiMBCaJjnNd8EEnbl5A9qyGwcQ5E+BcG9Q5SwJmlbarcrQ4U6//Q2ni2XNyXtWQzzy959o6YSg8PvVjgEi0vg==
-
-#
 # RTEMS-lwIP Build configuration
 #
 tools/rtems-lwip
