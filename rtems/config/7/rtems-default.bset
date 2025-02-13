@@ -15,7 +15,7 @@
 %defineifnot with_rtems_mpfr     devel/mpfr-4.2.1
 %defineifnot with_rtems_gdb      tools/rtems-gdb-16.2
 %defineifnot with_rtems_binutils tools/rtems-binutils-2.44
-%defineifnot with_rtems_gcc      tools/rtems-gcc-14.2-newlib-head
+%defineifnot with_rtems_gcc      tools/rtems-gcc-13.3-newlib-head
 %defineifnot with_rtems_tools    tools/rtems-tools-7
 
 tools/rtems-default-tools.bset
