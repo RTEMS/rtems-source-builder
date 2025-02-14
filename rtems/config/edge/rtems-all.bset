@@ -1,0 +1,13 @@
+edge/rtems-aarch64
+edge/rtems-arm
+edge/rtems-i386
+edge/rtems-m68k
+edge/rtems-microblaze
+edge/rtems-mips
+edge/rtems-moxie
+edge/rtems-nios2
+edge/rtems-or1k
+edge/rtems-powerpc
+edge/rtems-riscv
+edge/rtems-sparc
+edge/rtems-x86_64

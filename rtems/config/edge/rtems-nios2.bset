@@ -2,4 +2,4 @@
 %define rtems_arch nios2
 %define with_newlib_tls
 %define gcc_configure_extra_options --enable-obsolete
-%include 8/rtems-default.bset
+%include edge/rtems-default.bset

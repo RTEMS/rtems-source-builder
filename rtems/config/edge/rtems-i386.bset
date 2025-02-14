@@ -1,4 +1,4 @@
 %define release 1
 %define rtems_arch i386
 %define with_libgomp
-%include 8/rtems-default.bset
+%include edge/rtems-default.bset

@@ -1,7 +1,7 @@
 #
 # Default tools configuration.
 #
-%include 8/rtems-base.bset
+%include edge/rtems-base.bset
 
 #
 # Default RTEMS build. Override on the command line to the

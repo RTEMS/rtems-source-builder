@@ -1,4 +1,3 @@
-%define rtems_version 7
 %define _target %{rtems_arch}-rtems%{rtems_version}
 %define gcc_version_message RTEMS %{rtems_version}, RSB %{_sbgit_id}, Newlib %{newlib_version}
 
