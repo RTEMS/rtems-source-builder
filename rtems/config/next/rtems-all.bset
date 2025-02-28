@@ -1,0 +1,13 @@
+next/rtems-aarch64
+next/rtems-arm
+next/rtems-i386
+next/rtems-m68k
+next/rtems-microblaze
+next/rtems-mips
+next/rtems-moxie
+next/rtems-nios2
+next/rtems-or1k
+next/rtems-powerpc
+next/rtems-riscv
+next/rtems-sparc
+next/rtems-x86_64

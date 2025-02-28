@@ -1,0 +1,21 @@
+#
+# LLVM for RTEMS 5 Tools Stable
+#
+
+%define release 1
+
+%define rtems_arch none
+
+#
+# The RTEMS base defines.
+#
+%include rtems-base.bset
+
+#
+# Build and install into a prefix that is away from the staged area or it will
+# be installed.
+#
+%define swig_prefix %{_tmproot}/swig
+
+devel/swig
+tools/rtems-llvm-8.0.1

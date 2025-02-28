@@ -1,0 +1,10 @@
+%define release 1
+%define rtems_arch x86_64
+%define with_libgomp
+%define grub2_platform efi
+%define grub2_target x86_64
+
+%include next/rtems-default.bset
+
+tools/rtems-grub-2.06
+tools/rtems-makefs-r12

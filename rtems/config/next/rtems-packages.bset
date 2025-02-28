@@ -1,0 +1,23 @@
+#
+# RTEMS Packages that build for this release.
+#
+
+#
+# Databases
+#
+databases/sqlite
+
+#
+# Graphics
+#
+graphics/freetype2
+graphics/libjpeg
+graphics/libpng
+graphics/libtiff
+graphics/t1lib
+
+#
+# Networking
+#
+ftp/curl
+net/protobuf

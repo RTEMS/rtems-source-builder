@@ -1,0 +1,15 @@
+#
+# RTEMS Kernel configuration.
+#
+%define release 1
+
+#
+# The RTEMS version and URLs
+#
+%include rtems-version.bset
+%include rtems-urls.bset
+
+#
+# Build the kernel.
+#
+tools/rtems-kernel-7

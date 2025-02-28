@@ -1,0 +1,6 @@
+%define _target %{rtems_arch}-rtems%{rtems_version}
+%define gcc_version_message RTEMS %{rtems_version}, RSB %{_sbgit_id}, Newlib %{newlib_version}
+
+%include rtems-urls.bset
+
+package: rtems-%{rtems_version}-%{_target}-%{_host}-%{release}
