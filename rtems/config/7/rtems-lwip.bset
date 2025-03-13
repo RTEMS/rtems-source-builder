@@ -4,23 +4,4 @@
 
 %define release 1
 
-#
-# The RTEMS Package defines
-#
-%include rtems-package.bset
-
-#
-# RTEMS-lwIP Version
-#
-%define rtems_lwip_version 14195a85092fad60babf6c00a6d7b19bab0da829
-%hash sha512 rtems-lwip-%{rtems_lwip_version}.tar.bz2 \
-              zeX2Djef7wZ5Io1h2WXklpeOLHOkleD17b/l6+y+gbWlBEzTHgCKcvM00aKxwOrgZATaGRWT6SIbEIIQpc9RLA==
-
-%define rtems_waf_version 1a118bbcd52138dbdc3236e64bc23fd430a064b1
-%hash sha512 rtems_waf-%{rtems_waf_version}.tar.bz2 \
-              wHiMBCaJjnNd8EEnbl5A9qyGwcQ5E+BcG9Q5SwJmlbarcrQ4U6//Q2ni2XNyXtWQzzy959o6YSg8PvVjgEi0vg==
-
-#
-# RTEMS-lwIP Build configuration
-#
-tools/rtems-lwip
+tools/rtems-lwip-stable

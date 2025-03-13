@@ -104,7 +104,7 @@ rtems_pkg_cfgs = [
     },
     {
         'label': 'RTEMS lwIP',
-        'config': 'tools/rtems-lwip-%{rtems_version}.cfg',
+        'config': 'tools/rtems-lwip-stable.cfg',
         'version': 'rtems_lwip_version',
         'repo':
         'git://gitlab.rtems.org/rtems/pkg/rtems-lwip.git?protocol=https',
