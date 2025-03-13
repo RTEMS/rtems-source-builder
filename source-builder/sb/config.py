@@ -1344,7 +1344,7 @@ class file:
                     self._info_append(info, info_data)
                 else:
                     log.warning(self._name_line_msg("invalid format: '%s'" % \
-                                                    (info_data[:-1])))
+                                                    (info_data.rstrip())))
             else:
                 l = self._expand(l)
                 log.trace('config: %s: %3d:  _data: %s %s' % \
