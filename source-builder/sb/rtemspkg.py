@@ -81,7 +81,7 @@ rtems_pkg_cfgs = [
         'repo':
         'git://gitlab.rtems.org/rtems/pkg/rtems-libbsd.git?protocol=https',
         'repo-name': 'rtems-libbsd.git',
-        'branch': '6-freebsd-12',
+        'branch': '7-freebsd-14',
         'snapshot':
         'https://gitlab.rtems.org/rtems/pkg/rtems-libbsd/-/archive/%{rtems_libbsd_version}/rtems-libbsd-%{rtems_libbsd_version}.tar.%{rtems_libbsd_ext}',
         'package':
