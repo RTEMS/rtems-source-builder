@@ -75,8 +75,8 @@ rtems_pkg_cfgs = [
         'package': 'rtems-kernel-%{rtems_kernel_version}.tar.bz2'
     },
     {
-        'label': 'RTEMS LibBSD',
-        'config': 'tools/rtems-libbsd-%{rtems_version}.cfg',
+        'label': 'RTEMS LibBSD FreeBSD 14',
+        'config': 'tools/rtems-libbsd-%{rtems_version}-fb14.cfg',
         'version': 'rtems_libbsd_version',
         'repo':
         'git://gitlab.rtems.org/rtems/pkg/rtems-libbsd.git?protocol=https',
@@ -89,7 +89,7 @@ rtems_pkg_cfgs = [
         'submodules': {
             'rtems_waf': {
                 'label': 'RTEMS Waf',
-                'config': 'tools/rtems-libbsd-%{rtems_version}.cfg',
+                'config': 'tools/rtems-libbsd-%{rtems_version}-fb14.cfg',
                 'version': 'rtems_waf_version',
                 'repo':
                 'git://gitlab.rtems.org/rtems/tools/rtems_waf.git?protocol=https',
@@ -280,7 +280,7 @@ def checksum_sha512_base64(tarball):
 def process_package(config, opts, argopts):
     bopts = copy.copy(opts)
     bmacros = copy.copy(opts.defaults)
-    b = build.build(config['config'], False, bopts, bmacros)
+    b = build.build(opts.defaults.expand(config['config']), False, bopts, bmacros)
     source_dir = b.macros.expand('%{_sourcedir}')
     config_hash = b.macros.expand('%{' + config['version'] + '}')
     if len(config_hash) == 0:
