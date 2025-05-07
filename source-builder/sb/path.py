@@ -66,8 +66,6 @@ def shell(path):
         path = path.decode('utf8')
     if path is not None:
         if windows or windows_posix:
-            if not windows11:
-                path = path.encode('ascii', 'ignore').decode('ascii')
             if path.startswith('\\\\?\\'):
                 path = path[4:]
             if len(path) > 1 and path[1] == ':':
