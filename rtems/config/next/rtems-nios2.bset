@@ -4,8 +4,10 @@
 %define gcc_configure_extra_options --enable-obsolete
 
 # Nios2 support has been deprecated. As more tools drop nios2 support,
-# the list of older tools which must used will grow.
+# the list of older tools which must used will grow. These are the last
+# versions to include nios2 support.
 %define with_rtems_gdb      tools/rtems-gdb-15.2
 %define with_rtems_binutils tools/rtems-binutils-2.43
+%define with_rtems_gcc      tools/rtems-gcc-14.2-newlib-head
 
 %include next/rtems-default.bset
