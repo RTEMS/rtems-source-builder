@@ -215,7 +215,7 @@ class build:
             not _disable_installing and \
             not _canadian_cross
 
-    def source(self, name, strip_components, download_only):
+    def source(self, name, strip_components, download_only, copy_target):
         #
         # Return the list of sources. Merge in any macro defined sources as
         # these may be overridden by user loaded macros.
@@ -262,6 +262,9 @@ class build:
             src = download.parse_url(url, '_sourcedir', self.config, self.opts,
                                      file_override)
             download.get_file(src['url'], src['local'], self.opts, self.config)
+            if download_only and copy_target is not None:
+                src['script'] = "%%{__cp} %s %s" % (src['local'], copy_target)
+                srcs += [src]
             if not download_only:
                 if self.opts.trace():
                     tar_extract_key = '__tar_extract_trace'
@@ -293,7 +296,7 @@ class build:
         setup_name = args[1]
         args = args[1:]
         try:
-            opts, args = getopt.getopt(args[1:], 'qDcn:bas:gE')
+            opts, args = getopt.getopt(args[1:], 'qDcn:bas:gp:E')
         except getopt.GetoptError as ge:
             raise error.general('source setup error: %s' % str(ge))
         quiet = False
@@ -307,6 +310,7 @@ class build:
         strip_components = 0
         opt_name = None
         download_only = False
+        copy_target = None
         for o in opts:
             if o[0] == '-q':
                 quiet = True
@@ -329,8 +333,11 @@ class build:
                 strip_components = int(o[1])
             elif o[0] == '-g':
                 download_only = True
+            elif o[0] == '-p':
+                copy_target = o[1]
         name = None
-        for source in self.source(setup_name, strip_components, download_only):
+        for source in self.source(setup_name, strip_components, download_only,
+                                  copy_target):
             if name is None:
                 if opt_name is None:
                     if source:
@@ -340,6 +347,8 @@ class build:
                                             (source_tag))
                 else:
                     name = opt_name
+            if download_only and copy_target is not None:
+                self.script_build.append(self.config.expand(source['script']))
             if not download_only:
                 self.script_build.append(self.config.expand('cd %{_builddir}'))
                 if not deleted_dir and delete_before_unpack and name is not None:
