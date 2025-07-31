@@ -1334,7 +1334,10 @@ class file:
         for l in results[1]:
             if l.startswith('%error'):
                 l = self._expand(l)
-                raise error.general('config error: %s' % (l[7:]))
+                if self.opts.keep_going():
+                    print('config error: %s' % (l[7:]))
+                else:
+                    raise error.general('config error: %s' % (l[7:]))
             elif l.startswith('%log'):
                 l = self._expand(l)
                 log.output(l[4:])
