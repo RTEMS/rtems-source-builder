@@ -117,7 +117,7 @@ rtems_pkg_cfgs = [
         'submodules': {
             'rtems_waf': {
                 'label': 'RTEMS Waf',
-                'config': 'net/rtems-lwip-1.cfg',
+                'config': 'tools/rtems-lwip-stable.cfg',
                 'version': 'rtems_waf_version',
                 'repo':
                 'git://gitlab.rtems.org/rtems/tools/rtems_waf.git?protocol=https',
