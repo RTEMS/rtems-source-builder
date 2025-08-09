@@ -8,6 +8,6 @@
 #  use these special flags.
 
 %define _targetcflags   -Wno-error=deprecated
-%define with_rtems_gcc  tools/rtems-gcc-15.1-newlib-head
+%define with_rtems_gcc  tools/rtems-gcc-15.2-newlib-head
 
 %include next/rtems-default.bset
