@@ -17,7 +17,7 @@ The project is part of the *RTEMS Project*. The project's websites are:
 
   **GIT Source Repository** : https://gitlab.rtems.org/rtems/tools/rtems-source-builder.git/
 
-  **Documentation** : https://docs.rtems.org/branches/master/user/rsb/index.html
+  **Documentation** : https://docs.rtems.org/branches/main/user/rsb/index.html
 
   **Bugs and Issues** : https://gitlab.rtems.org/rtems/tools/rtems-source-builder/-/issues
 
