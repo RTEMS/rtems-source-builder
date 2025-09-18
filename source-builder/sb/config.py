@@ -300,6 +300,9 @@ class file:
         self.load_depth = 0
         self.configpath = []
         self._includes = []
+        self._sources = []
+        self._patches = []
+        self._hashes = []
         self._packages = {}
         self.in_error = False
         self.lc = 0
@@ -836,10 +839,20 @@ class file:
                           (self.name, self.lc,
                            r, ls[1], self.macros.maps()))
 
-    def _sources(self, ls):
-        return sources.process(ls[0][1:], ls[1:], self.macros, self._error)
+    def _source(self, ls):
+        label = ls[0][1:]
+        if label == 'source':
+            if len(ls) > 0 and ls[1] == 'add':
+                src = self._expand(ls[-1].split(' ')[-1])
+                self._sources += [src]
+        elif label == 'patch':
+            if len(ls) > 0 and ls[1] == 'add':
+                patch = self._expand(ls[-1].split(' ')[-1])
+                self._patches += [patch]
+        return sources.process(label, ls[1:], self.macros, self._error)
 
     def _hash(self, ls):
+        self._hashes += [' '.join([self._expand(i) for i in ls[1:]])]
         return sources.hash(ls[1:], self.macros, self._error)
 
     def _define(self, config, ls):
@@ -1189,7 +1202,7 @@ class file:
                         self._select(config, ls)
                 elif ls[0] == '%source' or ls[0] == '%patch':
                     if isvalid:
-                        d = self._sources(ls)
+                        d = self._source(ls)
                         if d is not None:
                             return ('data', d)
                 elif ls[0] == '%hash':
@@ -1524,6 +1537,9 @@ class file:
 
     def includes(self):
         return self._includes
+
+    def hashes(self):
+        return self._hashes
 
     def file_name(self):
         return self.name

@@ -123,7 +123,7 @@ def hash(args, macros, error):
     args = _args(args)
     if len(args) != 3:
         error('invalid number of hash args')
-        return
+        return None
     _map = 'hashes'
     _file = macros.expand(args[1])
     new_value = '%s %s' % (args[0], args[2])
@@ -131,7 +131,7 @@ def hash(args, macros, error):
     if existing_value is not None:
         if existing_value != new_value and macros.get_value('release') is None:
             error('conflicting hash definitions for: %s' % (args[1]))
-            return
+            return None
     else:
         macros.create_map(_map)
         macros.set_write_map(_map)

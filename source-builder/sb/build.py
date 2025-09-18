@@ -150,6 +150,9 @@ class build:
             self.script_build = script()
             self.script_clean = script()
             self.macros['buildname'] = short_name(self.macros['name'])
+            self._sources = []
+            self._patches = []
+            self._hashes = []
         except error.general as gerr:
             log.notice(str(gerr))
             log.stderr('Build FAILED')
@@ -264,7 +267,6 @@ class build:
             download.get_file(src['url'], src['local'], self.opts, self.config)
             if download_only and copy_target is not None:
                 src['script'] = "%%{__cp} %s %s" % (src['local'], copy_target)
-                srcs += [src]
             if not download_only:
                 if self.opts.trace():
                     tar_extract_key = '__tar_extract_trace'
@@ -288,7 +290,7 @@ class build:
                         src['script'] += ' | %s -f -' % (tar_extract)
                 else:
                     src['script'] = '%s -f %s' % (tar_extract, src['local'])
-                srcs += [src]
+            srcs += [src]
         return srcs
 
     def source_setup(self, package, args):
@@ -336,8 +338,12 @@ class build:
             elif o[0] == '-p':
                 copy_target = o[1]
         name = None
-        for source in self.source(setup_name, strip_components, download_only,
-                                  copy_target):
+        srcs =  self.source(setup_name, strip_components, download_only,
+                            copy_target)
+        self._sources += srcs
+        if not download.enabled(self.opts):
+            return
+        for source in srcs:
             if name is None:
                 if opt_name is None:
                     if source:
@@ -400,7 +406,6 @@ class build:
         _map = 'patch-%s' % (name)
         default_opts = ' '.join(args)
         patch_keys = [p for p in self.macros.map_keys(_map) if p != 'setup']
-        patches = []
         for p in patch_keys:
             pm = self.macros.get(p, globals=False, maps=_map)
             if pm is None:
@@ -456,6 +461,7 @@ class build:
                 patch['script'] = '%{__cat} ' + patch['local']
             patch['script'] += ' | %%{__patch} %s' % (opts)
             self.script_build.append(self.config.expand(patch['script']))
+            self._patches += [patch]
 
     def run(self, command, shell_opts='', cwd=None):
         e = execute.capture_execution(log=log.default, dump=self.opts.quiet())
@@ -498,6 +504,7 @@ class build:
                     elif args[0] == '%hash':
                         sources.hash(args[1:], self.macros, err)
                         self.hash(package, args)
+                        self._hashes += [' '.join(args[1:])]
                     else:
                         self.script_build.append(' '.join(args))
 
@@ -687,7 +694,12 @@ class build:
     def includes(self):
         if self.config:
             return self.config.includes()
+        return None
 
+    def hashes(self):
+        if self.config:
+            return self._hashes + self.config.hashes()
+        return self._hashes
 
 def get_configs(opts):
 

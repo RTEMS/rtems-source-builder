@@ -106,6 +106,9 @@ class buildset:
         self.mail_report = ''
         self.mail_report_0subject = ''
         self.build_failure = None
+        self._sources = []
+        self._patches = []
+        self._hashes = []
 
     def write_mail_header(self, text='', prepend=False):
         if type(text) is list:
@@ -381,6 +384,7 @@ class buildset:
                         sources.process(ls[0][1:], ls[1:], self.macros, err)
                     elif ls[0] == '%hash':
                         sources.hash(ls[1:], self.macros, err)
+                        self.hashes += [ls[1:]]
                 else:
                     l = macro_expand(self.macros, l.strip())
                     c = build.find_config(l, self.configs)
@@ -487,6 +491,9 @@ class buildset:
                                    (74 - len(configs[s]))))
                         bs = buildset(configs[s], self.configs, opts, macros)
                         bs.build(deps, nesting_count, mail)
+                        self._sources += bs._sources
+                        self._patches += bs._patches
+                        self._hashes += bs._hashes
                         del bs
                     elif configs[s].endswith('.cfg'):
                         if mail:
@@ -620,9 +627,12 @@ class buildset:
             if len(builds) > 1:
                 log.notice('Build Sizes: %s' % (build_size))
             #
-            # Clear out the builds ...
+            # Capture the source details and clear out the builds ...
             #
             for b in builds:
+                self._sources += b._sources
+                self._patches += b._patches
+                self._hashes += b._hashes
                 del b
 
             #

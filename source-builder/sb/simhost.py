@@ -400,6 +400,9 @@ class buildset:
         log.trace('_bset: %s: init' % (bset))
         self.parent = 'root'
         self._includes = []
+        self._sources = []
+        self._patches = []
+        self._hashes = []
         self._errors = []
         self.configs = _configs
         self.opts = opts
@@ -540,6 +543,7 @@ class buildset:
                         sources.process(ls[0][1:], ls[1:], self.macros, err)
                     elif ls[0] == '%hash':
                         sources.hash(ls[1:], self.macros, err)
+                        self._hashes += [' '.join(ls[1:])]
                 else:
                     try:
                         l = macro_expand(self.macros, l.strip())
@@ -664,6 +668,9 @@ class buildset:
                         bs.build(host, nesting_count)
                         self._includes += \
                             self._rebase_includes(bs.includes(), parent)
+                        self._sources += bs._sources
+                        self._patches += bs._patches
+                        self._hashes += bs._hashes
                         self._errors += bs._errors
                         del bs
                     elif config.endswith('.cfg'):
@@ -673,6 +680,7 @@ class buildset:
                             b = build.build(config, False, opts, macros)
                             self._includes += \
                                 self._rebase_includes(b.includes(), parent)
+
                         except:
                             build_error = True
                             raise
@@ -699,9 +707,12 @@ class buildset:
                         self._includes += b.includes()
                     raise
             #
-            # Clear out the builds ...
+            # Capture the source details and clear out the builds ...
             #
             for b in builds:
+                self._sources += b._sources
+                self._patches += b._patches
+                self._hashes += b.hashes()
                 del b
             self._includes += \
                 [find_bset_config(c.split(':')[0], self.macros) + ':' + self.bset for c in configs]
