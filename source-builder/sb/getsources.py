@@ -27,6 +27,7 @@ from __future__ import print_function
 import argparse
 import copy
 import datetime
+import json
 import os
 import sys
 
@@ -34,6 +35,7 @@ try:
     from . import build
     from . import error
     from . import log
+    from . import path
     from . import simhost
     from . import version
 except KeyboardInterrupt:
@@ -41,6 +43,38 @@ except KeyboardInterrupt:
     sys.exit(1)
 except:
     raise
+
+
+def process_sources(isources):
+
+    def remove(key, record):
+        if key in record:
+            del record[key]
+
+    urls = {}
+    osources = []
+    for src in isources:
+        if src['url'] not in urls:
+            remove('local', src)
+            remove('local_prefix', src)
+            remove('compressed', src)
+            remove('script', src)
+            osources += [src]
+            urls[src['url']] = True
+    return sorted(osources, key=lambda src: src['file'])
+
+
+def process_hashes(ihashes):
+    files = {}
+    ohashes = []
+
+    for hsh in ihashes:
+        hs = hsh.replace('  ', ' ').split(' ')
+        if len(hs) == 3:
+            if hs[1] not in files:
+                ohashes += [{'type': hs[0], 'file': hs[1], 'hash': hs[2]}]
+                files[hs[1]] = True
+    return sorted(ohashes, key=lambda hsh: hsh['file'])
 
 
 def run(args=sys.argv):
@@ -72,6 +106,9 @@ def run(args=sys.argv):
         argsp.add_argument('--download-dir',
                            help='Download directory.',
                            type=str)
+        argsp.add_argument('--no-download',
+                           help='No downloads.',
+                           action='store_true')
         argsp.add_argument('--clean',
                            help='Clean the download directory.',
                            action='store_true')
@@ -82,9 +119,10 @@ def run(args=sys.argv):
                            help='Log file.',
                            type=str,
                            default=simhost.log_default('getsource'))
-        argsp.add_argument('--stop-on-error',
-                           help='Stop on error.',
-                           action='store_true')
+        argsp.add_argument('--keep-going',
+                           help='Keep going on error.',
+                           action='store_false',
+                           default=True)
         argsp.add_argument('--trace',
                            help='Enable trace logging for debugging.',
                            action='store_true')
@@ -96,6 +134,11 @@ def run(args=sys.argv):
                            help='Save the unused buildset and config files.',
                            type=str,
                            default=None)
+        argsp.add_argument(
+            '--catalog',
+            help='Save the URLs of downloads as a JSON catalog.',
+            type=str,
+            default=None)
         argsp.add_argument('bsets', nargs='*', help='Build sets.')
 
         argopts = argsp.parse_args(args[1:])
@@ -105,10 +148,17 @@ def run(args=sys.argv):
                    (version.string()))
         log.tracing = argopts.trace
 
-        opts = simhost.load_options(args, argopts, extras=['--dry-run', '--with-download'])
+        if argopts.no_download:
+            download_opt = '--no-download'
+        else:
+            download_opt = '--with-download'
+
+        opts = simhost.load_options(args,
+                                    argopts,
+                                    extras=['--dry-run', download_opt])
         configs = build.get_configs(opts)
 
-        stop_on_error = argopts.stop_on_error
+        stop_on_error = not argopts.keep_going
 
         if argopts.list_hosts:
             simhost.list_hosts()
@@ -131,6 +181,7 @@ def run(args=sys.argv):
             else:
                 bsets = argopts.bsets
             deps = copy.copy(simhost.strip_common_prefix(bsets))
+            sources = {'sources': [], 'patches': [], 'hashes': []}
             for bset in bsets:
                 b = None
                 try:
@@ -140,6 +191,9 @@ def run(args=sys.argv):
                         get_sources_error = False
                         b.build(host)
                         deps += b.deps()
+                        sources['sources'] += b._sources
+                        sources['patches'] += b._patches
+                        sources['hashes'] += b._hashes
                         del b
                 except error.general as gerr:
                     if stop_on_error:
@@ -156,6 +210,16 @@ def run(args=sys.argv):
                     [cb for cb in simhost.get_config_bset_files(opts, configs) if not cb in deps]
                 with open(argopts.unused, 'w') as o:
                     o.write(os.linesep.join(cfgs_bsets))
+            if argopts.catalog is not None:
+                sources['sources'] = process_sources(sources['sources'])
+                sources['patches'] = process_sources(sources['patches'])
+                sources['hashes'] = process_hashes(sources['hashes'])
+                print('Catalog has',
+                      len(sources['sources']), 'source packages,',
+                      len(sources['patches']), 'patches and',
+                      len(sources['hashes']), 'hashes')
+                with open(argopts.catalog, 'w') as f:
+                    f.write(json.dumps(sources, indent=2))
     except error.general as gerr:
         if get_sources_error:
             log.stderr(str(gerr))

@@ -46,7 +46,7 @@ from . import sources
 from . import version
 
 
-def _do_download(opts):
+def enabled(opts):
     download = True
     if opts.dry_run():
         download = False
@@ -379,7 +379,7 @@ def _http_downloader(url, local, config, opts):
     log.output('download: (full) %s -> %s' % (url, dst))
     log.notice('download: %s -> %s' % (_sensible_url(url, len(dst)), dst))
     failed = False
-    if _do_download(opts):
+    if enabled(opts):
         _in = None
         _out = None
         _length = None
@@ -501,7 +501,7 @@ def _git_downloader(url, local, config, opts):
                 us[0] = _as[1] + url_base
     if not repo.valid():
         log.notice('git: clone: %s -> %s' % (us[0], rlp))
-        if _do_download(opts):
+        if enabled(opts):
             repo.clone(us[0], local)
     else:
         repo.clean(['-f', '-d'])
@@ -514,32 +514,32 @@ def _git_downloader(url, local, config, opts):
             if len(_as) != 2:
                 raise error.general('invalid git branch/checkout: %s' % (_as))
             log.notice('git: checkout: %s => %s' % (us[0], _as[1]))
-            if _do_download(opts):
+            if enabled(opts):
                 repo.checkout(_as[1])
         elif _as[0] == 'submodule':
             if len(_as) != 2:
                 raise error.general('invalid git submodule: %s' % (_as))
             log.notice('git: submodule: %s <= %s' % (us[0], _as[1]))
-            if _do_download(opts):
+            if enabled(opts):
                 repo.submodule(_as[1])
         elif _as[0] == 'fetch':
             log.notice('git: fetch: %s -> %s' % (us[0], rlp))
-            if _do_download(opts):
+            if enabled(opts):
                 repo.fetch()
         elif _as[0] == 'merge':
             log.notice('git: merge: %s' % (us[0]))
-            if _do_download(opts):
+            if enabled(opts):
                 repo.merge()
         elif _as[0] == 'pull':
             log.notice('git: pull: %s' % (us[0]))
-            if _do_download(opts):
+            if enabled(opts):
                 repo.pull()
         elif _as[0] == 'reset':
             arg = []
             if len(_as) > 1:
                 arg = ['--%s' % (_as[1])]
             log.notice('git: reset: %s' % (us[0]))
-            if _do_download(opts):
+            if enabled(opts):
                 repo.reset(arg)
                 repo.submodule_foreach(['reset'] + arg)
         elif _as[0] == 'clean':
@@ -547,7 +547,7 @@ def _git_downloader(url, local, config, opts):
             if len(_as) > 1:
                 arg = ['--%s' % (_as[1])]
             log.notice('git: clean: %s' % (us[0]))
-            if _do_download(opts):
+            if enabled(opts):
                 repo.clean(arg)
                 repo.submodule_foreach(['clean'] + arg)
         elif _as[0] == 'protocol':
@@ -587,20 +587,20 @@ def _cvs_downloader(url, local, config, opts):
         if not path.isdir(local):
             log.notice('Creating source directory: %s' % \
                            (os.path.relpath(path.host(local))))
-            if _do_download(opts):
+            if enabled(opts):
                 path.mkdir(local)
             log.notice('cvs: checkout: %s -> %s' % (us[0], rlp))
-            if _do_download(opts):
+            if enabled(opts):
                 repo.checkout(':%s' % (us[0][6:]), module, tag, date)
     for a in us[1:]:
         _as = a.split('=')
         if _as[0] == 'update':
             log.notice('cvs: update: %s' % (us[0]))
-            if _do_download(opts):
+            if enabled(opts):
                 repo.update()
         elif _as[0] == 'reset':
             log.notice('cvs: reset: %s' % (us[0]))
-            if _do_download(opts):
+            if enabled(opts):
                 repo.reset()
     return True
 
@@ -634,7 +634,7 @@ def get_file(url, local, opts, config):
         log.notice('Creating source directory: %s' % \
                        (os.path.relpath(path.host(path.dirname(local)))))
     log.output('making dir: %s' % (path.host(path.dirname(local))))
-    if _do_download(opts):
+    if enabled(opts):
         path.mkdir(path.dirname(local))
     if not path.exists(local) and opts.download_disabled():
         raise error.general('source not found: %s' % (path.host(local)))
@@ -709,6 +709,6 @@ def get_file(url, local, opts, config):
             if url.startswith(dl):
                 if downloaders[dl](url, local, config, opts):
                     return
-    if _do_download(opts):
+    if enabled(opts):
         raise error.general(
             'downloading %s: all paths have failed, giving up' % (url))
