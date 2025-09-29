@@ -1,0 +1,9 @@
+#
+# clang-format
+#
+
+%if %{release} == %{nil}
+ %define release 1
+%endif
+
+devel/clang-format-21.1.2
