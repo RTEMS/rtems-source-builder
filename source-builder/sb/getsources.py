@@ -122,7 +122,7 @@ def run(args=sys.argv):
         argsp.add_argument('--keep-going',
                            help='Keep going on error.',
                            action='store_false',
-                           default=True)
+                           default=False)
         argsp.add_argument('--trace',
                            help='Enable trace logging for debugging.',
                            action='store_true')
