@@ -2,4 +2,12 @@
 %define rtems_arch aarch64
 %define with_libgomp
 %define with_newlib_tls
+
+# GCC 14 is the last GCC series to include ilp32 as not deprecated.
+# GCC 15 generates an error because ilp32 is deprecated. Must
+#  use these special flags.
+
+%define _targetcflags   -Wno-error=deprecated
+%define with_rtems_gcc  tools/rtems-gcc-15.2-newlib-head
+
 %include 7/rtems-default.bset
