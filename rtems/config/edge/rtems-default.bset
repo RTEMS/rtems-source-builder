@@ -10,7 +10,7 @@
 #  --with-rtems-gcc=tools/rtems-gcc-head-newlib-head
 #
 %defineifnot with_rtems_dtc      devel/dtc-1.7.2-1
-%defineifnot with_rtems_expat    devel/expat-2.5.0-1
+%defineifnot with_rtems_expat    devel/expat-2.7.3-1
 %defineifnot with_rtems_gmp      devel/gmp-6.3.0
 %defineifnot with_rtems_mpfr     devel/mpfr-4.2.1
 %defineifnot with_rtems_gdb      tools/rtems-gdb-head
