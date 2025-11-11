@@ -59,6 +59,9 @@ _target:             none,    optional, ''
 # RTEMS release URL
 rtems_release_url:   none,    none,     'https://ftp.rtems.org/pub/rtems/releases/%{rtems_version}'
 
+# RTEMS file dowbload cache URL
+rtems_dl_url:        none,    none,     'https://dl.rtems.org/'
+
 # The user
 _uid:                none,    convert,  '%(%{__id_u})'
 
