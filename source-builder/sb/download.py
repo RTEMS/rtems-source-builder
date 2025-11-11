@@ -22,8 +22,6 @@
 # installed not to be package unless you run a packager around this.
 #
 
-from __future__ import print_function
-
 import base64
 import hashlib
 import os
@@ -71,8 +69,8 @@ def _humanize_bytes(bytes, precision = 1):
             break
     return '%.*f%s' % (precision, float(bytes) / factor, suffix)
 
-def _sensible_url(url, used = 0):
-    space = 100
+def _sensible_url(url, used=0):
+    space = 250
     if len(url) > space:
         size = int(space - 14)
         url = url[:size] + '...<see log>'
@@ -593,26 +591,10 @@ downloaders = { 'http': _http_downloader,
                 'cvs':  _cvs_downloader,
                 'file': _file_downloader }
 
-def get_file(url, local, opts, config):
-    if local is None:
-        raise error.general('source/patch path invalid')
-    if not path.isdir(path.dirname(local)) and not opts.download_disabled():
-        log.notice('Creating source directory: %s' % \
-                       (os.path.relpath(path.host(path.dirname(local)))))
-    log.output('making dir: %s' % (path.host(path.dirname(local))))
-    if _do_download(opts):
-        path.mkdir(path.dirname(local))
-    if not path.exists(local) and opts.download_disabled():
-        raise error.general('source not found: %s' % (path.host(local)))
+def process_release_url(url_bases, opts, config):
     #
-    # Check if a URL has been provided on the command line. If the package is
-    # released push the release path URLs to the start the RTEMS URL list
-    # unless overriden by the command line option --without-release-url. The
-    # variant --without-release-url can override the released check.
+    # See if a release path has been specified and this is a release?
     #
-    url_bases = opts.urls()
-    if url_bases is None:
-        url_bases = []
     try:
         rtems_release_url_value = config.macros.expand('%{release_path}')
     except:
@@ -644,8 +626,56 @@ def get_file(url, local, opts, config):
             # If the URL being fetched is under the release path do not add
             # the sources release path because it is already there.
             #
-            if not url.startswith(release_url):
-                url_bases = [release_url] + url_bases
+            url_bases.insert(0, release_url)
+    url_bases = list(set(url_bases))
+
+
+def process_download_file_cache(local, url_bases, config):
+    local_file = path.basename(local)
+    file_hash = sources.get_hash(local_file.lower(), config.macros)
+    if file_hash is not None:
+        hash_parts = file_hash.split()
+        if len(hash_parts) != 2:
+            raise error.internal('invalid hash format: %s' % (local_file))
+        if hash_parts[0] == 'NO-HASH':
+            return
+        if len(hash_parts[1]) % 2 == 0 and all(c in '0123456789ABCDEFabcdef'
+                                               for c in hash_parts[1]):
+            hash_str = hash_parts[1]
+        else:
+            try:
+                hash_str = ''.join([
+                    '{:02x}'.format(b)
+                    for b in base64.decodebytes(hash_parts[1].encode('ascii'))
+                ])
+            except:
+                hash_str = base64.standard_b64decode(hash_parts[1].encode('ascii')).encode('hex')
+        url = config.macros.expand('%{rtems_dl_url}') + '/' + hash_str
+        url_bases.append(url)
+
+
+def get_file(url, local, opts, config):
+    if local is None:
+        raise error.general('source/patch path invalid')
+    if not path.isdir(path.dirname(local)) and not opts.download_disabled():
+        log.notice('Creating source directory: %s' % \
+                       (os.path.relpath(path.host(path.dirname(local)))))
+    log.output('making dir: %s' % (path.host(path.dirname(local))))
+    if _do_download(opts):
+        path.mkdir(path.dirname(local))
+    if not path.exists(local) and opts.download_disabled():
+        raise error.general('source not found: %s' % (path.host(local)))
+    #
+    # Check if a URL has been provided on the command line. If the package is
+    # released push the release path URLs to the start the RTEMS URL list
+    # unless overriden by the command line option --without-release-url. The
+    # variant --without-release-url can override the released check.
+    #
+    url_bases = opts.urls()
+    if url_bases is None:
+        url_bases = []
+    process_download_file_cache(local, url_bases, config)
+    process_release_url(url_bases, opts, config)
     urls = []
     if len(url_bases) > 0:
         #
