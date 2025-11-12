@@ -379,7 +379,7 @@ class options(object):
         return True
 
     def download_disabled(self):
-        return False
+        return 'no-download' not in self.opts['params']
 
     def disable_install(self):
         return True

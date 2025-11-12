@@ -497,6 +497,8 @@ def _git_downloader(url, local, config, opts):
                 ]:
                     raise error.general('unknown git protocol: %s' % (_as[1]))
                 us[0] = _as[1] + url_base
+    if opts.download_disabled():
+        return True
     if not repo.valid():
         log.notice('git: clone: %s -> %s' % (us[0], rlp))
         if enabled(opts):
@@ -698,7 +700,7 @@ def get_file(url, local, opts, config):
     log.output('making dir: %s' % (path.host(path.dirname(local))))
     if enabled(opts):
         path.mkdir(path.dirname(local))
-    if not path.exists(local) and opts.download_disabled():
+    if not path.exists(local) and not opts.download_disabled():
         raise error.general('source not found: %s' % (path.host(local)))
     #
     # Check if a URL has been provided on the command line. If the package is
