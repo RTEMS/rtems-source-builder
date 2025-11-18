@@ -502,10 +502,11 @@ def _git_downloader(url, local, config, opts):
         if enabled(opts):
             repo.clone(us[0], local)
     else:
-        repo.clean(['-f', '-d'])
-        repo.reset('--hard')
-        default_branch = repo.default_branch()
-        repo.checkout(default_branch)
+        if enabled(opts):
+            repo.clean(['-f', '-d'])
+            repo.reset('--hard')
+            default_branch = repo.default_branch()
+            repo.checkout(default_branch)
     for a in us[1:]:
         _as = a.split('=')
         if _as[0] == 'branch' or _as[0] == 'checkout':
