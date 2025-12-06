@@ -20,10 +20,16 @@
 
 from __future__ import print_function
 
+import sys
+
+# Check for Python 3.6 or newer
+if sys.version_info < (3, 6):
+    print("error: RTEMS Source Builder requires Python 3.6 or newer.", file=sys.stderr)
+    sys.exit(1)
+
 try:
     import sb.check
     sb.check.run()
 except ImportError:
-    import sys
     print("Incorrect Source Builder installation", file=sys.stderr)
     sys.exit(1)
