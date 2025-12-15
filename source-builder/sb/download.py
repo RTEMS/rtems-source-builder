@@ -219,14 +219,6 @@ def _http_parser(source, pathkey, config, opts):
         source['compressed'] = '%{__xz} -dc'
 
 
-def _patchworks_parser(source, pathkey, config, opts):
-    #
-    # Check local path
-    #
-    _local_path(source, pathkey, config)
-    source['url'] = 'http%s' % (source['path'][2:])
-
-
 def _git_parser(source, pathkey, config, opts):
     #
     # Check local path
@@ -314,7 +306,6 @@ def _file_parser(source, pathkey, config, opts):
 parsers = {
     'http': _http_parser,
     'ftp': _http_parser,
-    'pw': _patchworks_parser,
     'git': _git_parser,
     'cvs': _cvs_parser,
     'file': _file_parser
