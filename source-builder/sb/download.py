@@ -83,10 +83,7 @@ def _hash_check(file_, absfile, macros, remove = True):
         hash = hash.split()
         if len(hash) != 2:
             raise error.internal('invalid hash format: %s' % (file_))
-        try:
-            hashlib_algorithms = hashlib.algorithms
-        except:
-            hashlib_algorithms = ['md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512']
+        hashlib_algorithms = ['sha512']
         if hash[0] not in hashlib_algorithms:
             raise error.general('invalid hash algorithm for %s: %s' % (file_, hash[0]))
         if hash[0] in ['md5', 'sha1']:
