@@ -649,8 +649,8 @@ def process_release_url(url_bases, opts, config):
             # If the URL being fetched is under the release path do not add
             # the sources release path because it is already there.
             #
-            if not url.startswith(release_url):
-                url_bases = [release_url] + url_bases
+            url_bases.insert(0, release_url)
+    url_bases = list(set(url_bases))
 
 
 def process_download_file_cache(local, url_bases, config):
@@ -694,8 +694,8 @@ def get_file(url, local, opts, config):
     url_bases = opts.urls()
     if url_bases is None:
         url_bases = []
-    process_release_url(url_bases, opts, config)
     process_download_file_cache(local, url_bases, config)
+    process_release_url(url_bases, opts, config)
     urls = []
     if len(url_bases) > 0:
         #
