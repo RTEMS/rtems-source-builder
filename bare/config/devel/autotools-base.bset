@@ -4,6 +4,6 @@
 
 %define release 1
 
-devel/autoconf-2.69-1
-devel/automake-1.12.6-1
+devel/autoconf-2.72-1
+devel/automake-1.18.1-1
 devel/libtool-2.4.7-1
