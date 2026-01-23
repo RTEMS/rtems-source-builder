@@ -6,4 +6,4 @@
  %define release 1
 %endif
 
-devel/clang-format-21.1.2
+devel/clang-format-22.1.0-rc1
