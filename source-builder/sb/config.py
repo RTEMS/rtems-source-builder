@@ -1217,6 +1217,9 @@ class file:
                     if isvalid:
                         return ('data',
                                 ['%%error %s' % (self._name_line_msg(l[7:]))])
+                elif ls[0] == '%finish':
+                    if isvalid:
+                        break
                 elif ls[0] == '%log':
                     if isvalid:
                         return ('data',
