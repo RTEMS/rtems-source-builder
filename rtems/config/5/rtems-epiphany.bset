@@ -21,7 +21,7 @@
 #
 %define epiphany_gdb_version f05996c7c42e6b2781946acbab153a481ce3fd0b
 %source set gdb --rsb-file=gdb-f05996c7c42e6b2781946acbab153a481ce3fd0b.zip https://github.com/adapteva/epiphany-binutils-gdb/archive/f05996c7c42e6b2781946acbab153a481ce3fd0b.zip
-%hash sha256 gdb-f05996c7c42e6b2781946acbab153a481ce3fd0b.zip 2b2034fd12f2fd5108205ade66400c175ede8cef8141a38ae03fc78bf2d65325
+%hash sha512 gdb-f05996c7c42e6b2781946acbab153a481ce3fd0b.zip 7rRJUf+eI+yq0VYHocxAaZRksXBzAs1BBTY7hiqrGTgpKZF960q+vttGN+Whwwt8lBsdfTcoJEUiA72h7Y5cfQ==
 
 #
 # The RTEMS base defines.

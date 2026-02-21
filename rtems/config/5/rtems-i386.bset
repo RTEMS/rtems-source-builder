@@ -3,6 +3,6 @@
 %define with_libgomp
 
 %patch add gcc https://gitlab.rtems.org/rtems/rtos/rtems/-/blob/main/assets/tracmigration/ticket_attachments/gcc-7.5.0-i386march-1.diff
-%hash sha256 gcc-7.5.0-i386march-1.diff e6664ff45e8ae8bfcf292bed1bbace1d5be6f1c3bd625cdb141bbe24c986f5d7
+%hash sha512 gcc-7.5.0-i386march-1.diff PsWyHiLvEYkmCifnqepieYjbhPqRBkEaMvR6se5JSimeoxeyHBB3PGzaqL3FLXf+XJoWKEn/fGunqxDlh4vN6Q==
 
 %include 5/rtems-default.bset
