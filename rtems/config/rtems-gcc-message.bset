@@ -1,0 +1,5 @@
+%ifn %{defined gcc_build_date}
+%error No GCC build date defined.
+%endif
+%define gcc_version_message \
+    RTEMS %{rtems_version}, Build %{gcc_build_date}, RSB %{_sbgit_id}, Newlib %{newlib_version}
