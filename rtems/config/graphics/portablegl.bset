@@ -1,0 +1,15 @@
+#
+# Build set for PortableGL
+#
+
+%define release 1
+
+#
+# The RTEMS Package defines
+#
+%include rtems-package.bset
+
+#
+# Build PortablGL
+#
+graphics/portablegl-0.100.0-1.cfg
