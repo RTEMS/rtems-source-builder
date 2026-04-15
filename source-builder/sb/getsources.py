@@ -45,6 +45,24 @@ except:
     raise
 
 
+def expand(i, imacros):
+    if isinstance(i, list):
+        o = []
+        for rec in i:
+            if isinstance(rec, dict):
+                for key in rec:
+                    if isinstance(rec[key], list):
+                        rec[key] = [imacros.expand(r) for r in rec[key]]
+                    else:
+                        rec[key] = imacros.expand(rec[key])
+                    o += [rec]
+            else:
+                o = [imacros.expand(r) for r in i]
+        return o
+    else:
+        return imacros.expand(i)
+
+
 def process_sources(isources):
 
     def remove(key, record):
@@ -191,9 +209,9 @@ def run(args=sys.argv):
                         get_sources_error = False
                         b.build(host)
                         deps += b.deps()
-                        sources['sources'] += b._sources
-                        sources['patches'] += b._patches
-                        sources['hashes'] += b._hashes
+                        sources['sources'] += expand(b._sources, b.macros)
+                        sources['patches'] += expand(b._patches, b.macros)
+                        sources['hashes'] += expand(b._hashes, b.macros)
                         del b
                 except error.general as gerr:
                     if stop_on_error:
