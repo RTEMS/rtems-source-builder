@@ -87,7 +87,7 @@ def process_hashes(ihashes):
     ohashes = []
 
     for hsh in ihashes:
-        hs = hsh.replace('  ', ' ').split(' ')
+        hs = ' '.join(hsh.split()).split()
         if len(hs) == 3:
             if hs[1] not in files:
                 ohashes += [{'type': hs[0], 'file': hs[1], 'hash': hs[2]}]
