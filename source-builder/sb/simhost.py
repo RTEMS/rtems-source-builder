@@ -45,6 +45,8 @@ except KeyboardInterrupt:
 except:
     raise
 
+host_windows = os.name == 'nt'
+
 #
 # Define host profiles so it can simulated on another host.
 #
@@ -232,6 +234,10 @@ class options(object):
                                            path.abspath(argopts.download_dir))
             self.defaults['_patchdir'] = ('dir', 'optional',
                                           path.abspath(argopts.download_dir))
+        # Set the _uid field, performance improvement on Unix
+        if not host_windows:
+            self.defaults['_uid'] = str(os.getuid())
+            self.defaults['_gid'] = str(os.getgid())
 
     def load_overrides(self):
         overrides = None
