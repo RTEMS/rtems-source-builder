@@ -9,7 +9,7 @@
 #
 # The RTEMS base defines.
 #
-%include rtems-base.bset
+%include rtems-base
 
 #
 # Build and install into a prefix that is away from the staged area or it will

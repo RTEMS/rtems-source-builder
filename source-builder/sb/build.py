@@ -50,6 +50,8 @@ except KeyboardInterrupt:
 except:
     raise
 
+file_exts = ['.cfg', '.bset', '.binc']
+
 
 def humanize_number(num, suffix):
     for unit in ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z']:
@@ -338,8 +340,8 @@ class build:
             elif o[0] == '-p':
                 copy_target = o[1]
         name = None
-        srcs =  self.source(setup_name, strip_components, download_only,
-                            copy_target)
+        srcs = self.source(setup_name, strip_components, download_only,
+                           copy_target)
         self._sources += srcs
         if not download.enabled(self.opts):
             return
@@ -701,6 +703,7 @@ class build:
             return self._hashes + self.config.hashes()
         return self._hashes
 
+
 def get_configs(opts):
 
     def _scan(_path, ext):
@@ -721,7 +724,7 @@ def get_configs(opts):
     for cp in paths:
         hcp = path.host(path.abspath(cp))
         configs['paths'] += [hcp]
-        hpconfigs = sorted(set(_scan(hcp, ['.cfg', '.bset'])))
+        hpconfigs = sorted(set(_scan(hcp, file_exts)))
         hcplocal = hcp[len(root):]
         configs[hcplocal] = [path.join(hcplocal, c) for c in hpconfigs]
         configs['files'] += hpconfigs
@@ -731,7 +734,7 @@ def get_configs(opts):
 
 def find_config(config, configs):
     config_root, config_ext = path.splitext(config)
-    if config_ext not in ['', '.bset', '.cfg']:
+    if config_ext not in [''] + file_exts:
         config_root = config
         config_ext = ''
     for c in configs['files']:

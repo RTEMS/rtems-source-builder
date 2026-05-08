@@ -1,6 +1,6 @@
 %define _target %{rtems_arch}-rtems%{rtems_version}
 
-%include rtems-gcc-message.bset
-%include rtems-urls.bset
+%include rtems-gcc-message
+%include rtems-urls
 
 package: rtems-%{rtems_version}-%{_target}-%{_host}-%{release}

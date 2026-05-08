@@ -4,7 +4,7 @@
 #
 # Default tools configuration.
 #
-%include 7/rtems-base.bset
+%include 7/rtems-base
 
 #
 # Build gdb first to raise the Python install error as early as possible.

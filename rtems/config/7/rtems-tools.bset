@@ -12,6 +12,6 @@
 #
 # The RTEMS base defines.
 #
-%include rtems-base.bset
+%include rtems-base
 
 tools/rtems-tools-7

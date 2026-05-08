@@ -2,4 +2,4 @@
 %define rtems_arch arm
 %define with_libgomp
 %define with_newlib_tls
-%include 7/rtems-default.bset
+%include 7/rtems-default
