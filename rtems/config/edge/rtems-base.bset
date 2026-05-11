@@ -1,7 +1,7 @@
 %define _target %{rtems_arch}-rtems%{rtems_version}
 
-%include rtems-gcc-message.bset
-%include rtems-urls.bset
+%include rtems-gcc-message
+%include rtems-urls
 
 %ifos win32 mingw ming32
  %define rtems_waf_build_root_suffix %{waf_build_root_suffix}
