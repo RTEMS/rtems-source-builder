@@ -684,7 +684,8 @@ def get_file(url, local, opts, config):
     log.output('making dir: %s' % (path.host(path.dirname(local))))
     if enabled(opts):
         path.mkdir(path.dirname(local))
-    if not path.exists(local) and opts.download_disabled():
+    if not path.exists(local) and opts.download_disabled(
+    ) and opts.defaults.expand('%{_rsb_getting_source}') == '0':
         raise error.general('source not found: %s' % (path.host(local)))
     #
     # Check if a URL has been provided on the command line. If the package is
@@ -695,7 +696,8 @@ def get_file(url, local, opts, config):
     url_bases = opts.urls()
     if url_bases is None:
         url_bases = []
-    process_download_file_cache(local, url_bases, config)
+    if not opts.download_disabled():
+        process_download_file_cache(local, url_bases, config)
     process_release_url(url_bases, opts, config)
     urls = []
     if len(url_bases) > 0:

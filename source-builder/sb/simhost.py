@@ -226,7 +226,12 @@ class options(object):
         self.argv = argv
         self.args = argv[1:] + extras
         self.defaults = macros.macros(name=defaults, sbdir=command_path)
+        self.defaults.define('_rsb_getting_source', '1')
         self.load_overrides()
+        self.no_download = False
+        for arg in self.args:
+            if arg == '--no-download':
+                self.no_download = True
         self.opts = {'params': extras}
         self.sb_git()
         self.rtems_bsp()
@@ -388,7 +393,7 @@ class options(object):
         return True
 
     def download_disabled(self):
-        return False
+        return self.no_download
 
     def disable_install(self):
         return True
@@ -419,7 +424,7 @@ class buildset:
             self.macros = copy.copy(opts.defaults)
         else:
             self.macros = copy.copy(macros)
-        self.macros.define('_rsb_getting_source')
+        self.macros.define('_rsb_getting_source', '1')
         log.trace('_bset: %s: macro defaults' % (bset))
         log.trace(str(self.macros))
         self.bset = bset
