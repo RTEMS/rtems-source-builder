@@ -7,7 +7,7 @@
 #
 # The RTEMS Package defines
 #
-%include rtems-package.bset
+%include rtems-package
 
 #
 # Build Yaml-CPP

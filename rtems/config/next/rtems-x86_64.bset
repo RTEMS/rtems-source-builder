@@ -4,7 +4,7 @@
 %define grub2_platform efi
 %define grub2_target x86_64
 
-%include next/rtems-default.bset
+%include next/rtems-default
 
 tools/rtems-grub-2.06
 tools/rtems-makefs-r12

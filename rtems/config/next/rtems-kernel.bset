@@ -6,8 +6,8 @@
 #
 # The RTEMS version and URLs
 #
-%include rtems-version.bset
-%include rtems-urls.bset
+%include rtems-version
+%include rtems-urls
 
 #
 # Build the kernel.

@@ -5,7 +5,7 @@
 #
 # Get the version of RTEMS
 #
-%include rtems-version.bset
+%include rtems-version
 
 #
 # Define the build target.
@@ -31,7 +31,7 @@ package: rtems-%{rtems_version}-%{_target}-%{_host}-%{release}
 #
 # Pick up the RTEMS URLs.
 #
-%include rtems-urls.bset
+%include rtems-urls
 
 #
 # Handle the Waf install root.

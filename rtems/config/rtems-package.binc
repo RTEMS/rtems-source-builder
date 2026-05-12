@@ -5,9 +5,9 @@
 #
 # Get the version of RTEMS
 #
-%include rtems-version.bset
+%include rtems-version
 
 #
 # Pick up the RTEMS URLs.
 #
-%include rtems-urls.bset
+%include rtems-urls

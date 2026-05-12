@@ -183,6 +183,9 @@ def find_bset_config(bset_config, macros):
             name = path.join(configdir, bset_config)
             if path.exists(name):
                 break
+            elif path.exists(name + '.binc'):
+                name += '.binc'
+                break
             name = None
         if name is None:
             raise error.general('no build set file found: %s' % (bset_config))

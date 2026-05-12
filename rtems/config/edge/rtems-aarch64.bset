@@ -10,4 +10,4 @@
 %define _targetcflags   -Wno-error=deprecated
 %define with_rtems_gcc  tools/rtems-gcc-15.2-newlib-head
 
-%include edge/rtems-default.bset
+%include edge/rtems-default

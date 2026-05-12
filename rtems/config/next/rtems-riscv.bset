@@ -2,5 +2,5 @@
 %define rtems_arch riscv
 %define with_libgomp
 %define with_newlib_tls
-%include next/rtems-default.bset
+%include next/rtems-default
 devel/sis-2-1

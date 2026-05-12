@@ -2,4 +2,4 @@
 %define rtems_arch moxie
 %define win32-gdb-disable-sim
 %define with_libgomp
-%include next/rtems-default.bset
+%include next/rtems-default
