@@ -1,0 +1,14 @@
+#
+# Internal MPFR
+#
+
+%define _internal_mpfr      yes
+%define _disable_collecting yes
+%define _disable_packaging  yes
+%define _disable_reporting  yes
+%define _disable_installing yes
+
+%defineifnot with_mpfr devel/mpfr-4.2.0
+%defineifnot _internal_mpfr_path %{_tmpinternal}
+
+%{with_mpfr}

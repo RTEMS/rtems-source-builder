@@ -1,0 +1,14 @@
+
+# Internal Expat
+#
+
+%define _internal_expat     yes
+%define _disable_collecting yes
+%define _disable_packaging  yes
+%define _disable_reporting  yes
+%define _disable_installing yes
+
+%defineifnot with_expat devel/expat-2.5.0-1
+%defineifnot _internal_expat_path %{_tmpinternal}
+
+%{with_expat}

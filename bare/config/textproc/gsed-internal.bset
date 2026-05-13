@@ -1,0 +1,11 @@
+#
+# Internal GNU sed
+#
+
+%define _internal_gsed      yes
+%define _disable_collecting yes
+%define _disable_packaging  yes
+%define _disable_reporting  yes
+%define _disable_installing yes
+
+%include textproc/gsed.bset
