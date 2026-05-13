@@ -34,18 +34,19 @@ import re
 import sys
 
 try:
-    import error
-    import execute
-    import log
-    import options
-    import path
-    import pkgconfig
-    import sources
+    from . import error
+    from . import execute
+    from . import log
+    from . import options
+    from . import path
+    from . import pkgconfig
+    from . import sources
 except KeyboardInterrupt:
-    print('user terminated', file = sys.stderr)
+    print('user terminated', file=sys.stderr)
     sys.exit(1)
 except:
     raise
+
 
 def _check_bool(value):
     istrue = None
@@ -61,6 +62,7 @@ def _check_bool(value):
                 istrue = not istrue
     return istrue
 
+
 def _check_nil(value):
     if len(value):
         istrue = True
@@ -68,12 +70,14 @@ def _check_nil(value):
         istrue = False
     return istrue
 
+
 def _check_number(value):
     try:
         float(value)
         return True
     except ValueError:
         return False
+
 
 class package:
 
@@ -93,9 +97,9 @@ class package:
             dll.sort()
             for d in dll:
                 if d:
-                    s += '  ' + d + ':\n'
+                    s += '  ' + d + ':' + os.linesep
                     for l in dl[d]:
-                        s += '    ' + l + '\n'
+                        s += '    ' + l + os.linesep
             return s
 
         s = '\npackage: ' + self._name + \
@@ -114,27 +118,28 @@ class package:
     def directive_extend(self, dir, data):
         if dir not in self.directives:
             self.directives[dir] = []
-        for i in range(0, len(data)):
-            data[i] = data[i].strip()
-        self.directives[dir].extend(data)
-        self.config.macros[dir] = '\n'.join(self.directives[dir])
+        if len(data) != 0:
+            for i in range(0, len(data)):
+                data[i] = data[i].strip()
+            self.directives[dir].extend(data)
+            self.config.macros[dir] = os.linesep.join(self.directives[dir])
 
     def info_append(self, info, data):
         if info not in self.infos:
             self.infos[info] = []
         self.infos[info].append(data)
-        self.config.macros[info] = '\n'.join(self.infos[info])
+        self.config.macros[info] = os.linesep.join(self.infos[info])
 
-    def get_info(self, info, expand = True):
+    def get_info(self, info, expand=True):
         if info in self.config.macros:
-            _info = self.config.macros[info].split('\n')
+            _info = self.config.macros[info].split(os.linesep)
             if expand:
                 return self.config.expand(_info)
             else:
                 return _info
         return None
 
-    def extract_info(self, label, expand = True):
+    def extract_info(self, label, expand=True):
         ll = label.lower()
         infos = {}
         keys = self.config.macros.find('%s.*' % (ll))
@@ -146,19 +151,19 @@ class package:
             infos[k] = [self.config.expand(self.config.macros[k])]
         return infos
 
-    def _find_macro(self, label, expand = True):
+    def _find_macro(self, label, expand=True):
         if label in self.config.macros:
-            macro = self.config.macros[label].split('\n')
+            macro = self.config.macros[label].split(os.linesep)
             if expand:
                 return self.config.expand(macro)
             else:
                 return macro
         return None
 
-    def find_info(self, label, expand = True):
+    def find_info(self, label, expand=True):
         return self._find_macro(label, expand)
 
-    def find_directive(self, label, expand = True):
+    def find_directive(self, label, expand=True):
         return self._find_macro(label, expand)
 
     def name(self):
@@ -239,26 +244,26 @@ class package:
             return self.sizes[what]
         return 0
 
+
 class file:
     """Parse a config file."""
 
-    _directive = [ '%include',
-                   '%description',
-                   '%prep',
-                   '%build',
-                   '%clean',
-                   '%install',
-                   '%testing' ]
+    _directive = [
+        '%include', '%description', '%prep', '%build', '%clean', '%install',
+        '%testing'
+    ]
 
-    _ignore = [ re.compile('%setup'),
-                re.compile('%configure'),
-                re.compile('%source'),
-                re.compile('%patch'),
-                re.compile('%hash'),
-                re.compile('%select'),
-                re.compile('%disable') ]
+    _ignore = [
+        re.compile('%setup'),
+        re.compile('%configure'),
+        re.compile('%source'),
+        re.compile('%patch'),
+        re.compile('%hash'),
+        re.compile('%select'),
+        re.compile('%disable')
+    ]
 
-    def __init__(self, name, opts, macros = None, load = True):
+    def __init__(self, name, opts, macros=None, load=True):
         log.trace('config: %s: initialising' % (name))
         self.opts = opts
         self.init_name = name
@@ -277,7 +282,7 @@ class file:
             ddl = list(dd.keys())
             ddl.sort()
             for d in ddl:
-                s += '  ' + d + ': ' + dd[d] + '\n'
+                s += '  ' + d + ': ' + dd[d] + os.linesep
             return s
 
         s = 'config: %s' % ('.'.join(self.configpath)) + \
@@ -295,6 +300,9 @@ class file:
         self.load_depth = 0
         self.configpath = []
         self._includes = []
+        self._sources = []
+        self._patches = []
+        self._hashes = []
         self._packages = {}
         self.in_error = False
         self.lc = 0
@@ -327,8 +335,8 @@ class file:
                 p = p[len(sbdir) + 1:]
         return p
 
-    def _name_line_msg(self,  msg):
-        return '%s:%d: %s' % (path.basename(self.name), self.lc,  msg)
+    def _name_line_msg(self, msg):
+        return '%s:%d: %s' % (path.basename(self.name), self.lc, msg)
 
     def _output(self, text):
         if not self.opts.quiet():
@@ -374,7 +382,8 @@ class file:
         c = 0
         while c < len(s):
             if trace_me:
-                print('ms:', c, '"' + s[c:] + '"', has_braces, len(nesting), nesting)
+                print('ms:', c, '"' + s[c:] + '"', has_braces, len(nesting),
+                      nesting)
             #
             # We need to watch for shell type variables or the form '${var}' because
             # they can upset the brace matching.
@@ -387,7 +396,8 @@ class file:
                 #
                 # Do we have '%%' or '%(' or '$%' or '$(' or not '${' ?
                 #
-                if s[c] == '%' or s[c] == '(' or (start == '$' and s[c] != '{'):
+                if s[c] == '%' or s[c] == '(' or (start == '$'
+                                                  and s[c] != '{'):
                     continue
                 elif not s[c].isspace():
                     #
@@ -427,7 +437,7 @@ class file:
             print('-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=')
         return macros
 
-    def _shell(self, line, nesting = 0):
+    def _shell(self, line, nesting=0):
         #
         # Parse the line and handle nesting '()' pairs. If on Windows
         # handle embedded '"' (double quotes) as the command is run as
@@ -440,15 +450,15 @@ class file:
                 if options.host_windows:
                     shell_cmd = \
                         ''.join([c if c != '"' else '\\' + c for c in shell_macro[2:-1]])
-                    cmd = '%s -c "%s"' % (self.macros.expand('%{__sh}'), shell_cmd)
+                    cmd = '%s -c "%s"' % (self.macros.expand('%{__sh}'),
+                                          shell_cmd)
                 else:
                     cmd = shell_macro[2:-1]
                 exit_code, proc, output = e.shell(cmd)
                 log.trace('shell-output: %d %s' % (exit_code, output))
                 if exit_code != 0:
-                    raise error.general('shell macro failed: %s: %d: %s' % (cmd,
-                                                                            exit_code,
-                                                                            output))
+                    raise error.general('shell macro failed: %s: %d: %s' %
+                                        (cmd, exit_code, output))
             return output
 
         if nesting > 200:
@@ -482,19 +492,18 @@ class file:
            ('with_download' in self.macros and self.macros['with_download'] == '1'):
             return '0'
         ok = False
-        log.trace('pkgconfig: check: crossc=%d pkg_crossc=%d prefix=%s'
-                  % ( self._cross_compile(),
-                      self.pkgconfig_crosscompile,
-                      self.pkgconfig_prefix))
+        log.trace('pkgconfig: check: crossc=%d pkg_crossc=%d prefix=%s' %
+                  (self._cross_compile(), self.pkgconfig_crosscompile,
+                   self.pkgconfig_prefix))
         log.trace('pkgconfig: check: test=%s' % (test))
         if type(test) == str:
             test = test.split()
         if not self._cross_compile() or self.pkgconfig_crosscompile:
             try:
                 pkg = pkgconfig.package(test[0],
-                                        prefix = self.pkgconfig_prefix,
-                                        output = self._output,
-                                        src = log.trace)
+                                        prefix=self.pkgconfig_prefix,
+                                        output=self._output,
+                                        src=log.trace)
                 if len(test) != 1 and len(test) != 3:
                     self._error('malformed check: %s' % (' '.join(test)))
                 else:
@@ -518,9 +527,9 @@ class file:
         if not self._cross_compile() or self.pkgconfig_crosscompile:
             try:
                 pkg = pkgconfig.package(package,
-                                        prefix = self.pkgconfig_prefix,
-                                        output = self._output,
-                                        src = log.trace)
+                                        prefix=self.pkgconfig_prefix,
+                                        output=self._output,
+                                        src=log.trace)
                 pkg_flags = pkg.get(flags)
                 if pkg_flags and self.pkgconfig_filter_flags:
                     fflags = []
@@ -627,7 +636,9 @@ class file:
                     mn = None
                 elif m.startswith('%{echo'):
                     if not m.endswith('}'):
-                        log.warning(self._name_line_msg("malformed conditional macro '%s'" % (m)))
+                        log.warning(
+                            self._name_line_msg(
+                                "malformed conditional macro '%s'" % (m)))
                         mn = None
                     else:
                         e = self._expand(m[6:-1].strip())
@@ -752,7 +763,9 @@ class file:
                     colon = m[start:].find(':')
                     if colon < 0:
                         if not m.endswith('}'):
-                            log.warning(self._name_line_msg("malformed conditional macro '%s'" % (m)))
+                            log.warning(
+                                self._name_line_msg(
+                                    "malformed conditional macro '%s'" % (m)))
                             mn = None
                         else:
                             mn = self._label(m[start:-1])
@@ -791,7 +804,10 @@ class file:
                             ss = []
                             for sp in s.split():
                                 if m in sp:
-                                    sp = ':'.join([sp.replace(mn, ps) for ps in em.split(':')])
+                                    sp = ':'.join([
+                                        sp.replace(mn, ps)
+                                        for ps in em.split(':')
+                                    ])
                                 ss += [sp]
                                 s = ' '.join(ss)
                         else:
@@ -807,10 +823,12 @@ class file:
         else:
             if ls[1] == 'select':
                 self.macros.lock_read_map()
-                log.trace('config: %s: %3d:  _disable_select: %s' % (self.name, self.lc,
-                                                                     ls[1]))
+                log.trace('config: %s: %3d:  _disable_select: %s' %
+                          (self.name, self.lc, ls[1]))
             else:
-                log.warning(self._name_line_msg('invalid disable statement: %s' % (ls[1])))
+                log.warning(
+                    self._name_line_msg('invalid disable statement: %s' %
+                                        (ls[1])))
 
     def _select(self, config, ls):
         if len(ls) != 2:
@@ -821,10 +839,20 @@ class file:
                           (self.name, self.lc,
                            r, ls[1], self.macros.maps()))
 
-    def _sources(self, ls):
-        return sources.process(ls[0][1:], ls[1:], self.macros, self._error)
+    def _source(self, ls):
+        label = ls[0][1:]
+        if label == 'source':
+            if len(ls) > 0 and ls[1] == 'add':
+                src = self._expand(ls[-1].split(' ')[-1])
+                self._sources += [src]
+        elif label == 'patch':
+            if len(ls) > 0 and ls[1] == 'add':
+                patch = self._expand(ls[-1].split(' ')[-1])
+                self._patches += [patch]
+        return sources.process(label, ls[1:], self.macros, self._error)
 
     def _hash(self, ls):
+        self._hashes += [' '.join([self._expand(i) for i in ls[1:]])]
         return sources.hash(ls[1:], self.macros, self._error)
 
     def _define(self, config, ls):
@@ -840,7 +868,9 @@ class file:
                     else:
                         self.macros[d] = ' '.join([f.strip() for f in ls[2:]])
                 else:
-                    log.warning(self._name_line_msg("macro '%s' already defined" % (d)))
+                    log.warning(
+                        self._name_line_msg("macro '%s' already defined" %
+                                            (d)))
             else:
                 if len(ls) == 2:
                     self.macros[d] = '1'
@@ -862,12 +892,15 @@ class file:
         in_iftrue = True
         data = []
         while True:
+            if dir is not None:
+                self._directive_extend(dir, data)
+                data = []
             if isvalid and \
                     ((iftrue and in_iftrue) or (not iftrue and not in_iftrue)):
                 this_isvalid = True
             else:
                 this_isvalid = False
-            r = self._parse(config, dir, info, roc = True, isvalid = this_isvalid)
+            r = self._parse(config, dir, info, roc=True, isvalid=this_isvalid)
             if r[0] == 'package':
                 if this_isvalid:
                     dir, info, data = self._process_package(r, dir, info, data)
@@ -881,7 +914,8 @@ class file:
                                str(dir), r[1], this_isvalid, data))
                     if in_dir is None:
                         if dir is not None:
-                            dir, info, data = self._process_directive(r, dir, info, data)
+                            dir, info, data = self._process_directive(
+                                r, dir, info, data)
                     else:
                         if in_dir != dir:
                             self._error('directives cannot change' \
@@ -893,15 +927,16 @@ class file:
             elif r[0] == 'directive':
                 if this_isvalid:
                     if r[1] == '%include':
-                        self.load(r[2][0])
+                        self.load(r[2][0], dir, info)
                         continue
-                    dir, info, data = self._process_directive(r, dir, info, data)
+                    dir, info, data = self._process_directive(
+                        r, dir, info, data)
             elif r[0] == 'data':
                 if this_isvalid:
                     dir, info, data = self._process_data(r, dir, info, data)
         # @note is a directive extend missing
 
-    def _if(self, config, ls, isvalid, dir, info, invert = False):
+    def _if(self, config, ls, isvalid, dir, info, invert=False):
 
         def add(x, y):
             return x + ' ' + str(y)
@@ -909,12 +944,12 @@ class file:
         if len(ls) == 1:
             self._error('invalid if expression: ' + reduce(add, ls, ''))
 
-        cistrue = True # compound istrue
+        cistrue = True  # compound istrue
         sls = reduce(add, ls[1:], '').split()
         cls = sls
 
-        log.trace('config: %s: %3d:  _if[%i]: %s' % (self.name, self.lc,
-                                                    self.if_depth, sls))
+        log.trace('config: %s: %3d:  _if[%i]: %s' %
+                  (self.name, self.lc, self.if_depth, sls))
 
         self.if_depth += 1
 
@@ -986,13 +1021,15 @@ class file:
                 else:
                     istrue = _check_bool(ifls[0])
                     if istrue == None:
-                        self._error('invalid if bool value: ' + reduce(add, ls, ''))
+                        self._error('invalid if bool value: ' +
+                                    reduce(add, ls, ''))
                         istrue = False
             elif len(ifls) == 2:
                 if ifls[0] == '!':
                     istrue = _check_bool(ifls[1])
                     if istrue == None:
-                        self._error('invalid if bool value: ' + reduce(add, ls, ''))
+                        self._error('invalid if bool value: ' +
+                                    reduce(add, ls, ''))
                         istrue = False
                     else:
                         istrue = not istrue
@@ -1005,16 +1042,18 @@ class file:
                     #
                     if ifls[1] == '==':
                         istrue = False
-                    elif  ifls[1] == '!=':
+                    elif ifls[1] == '!=':
                         istrue = True
                     else:
-                        self._error('invalid if bool operator: ' + reduce(add, ls, ''))
+                        self._error('invalid if bool operator: ' +
+                                    reduce(add, ls, ''))
             else:
                 if len(ifls) >= 3:
                     for op in ['==', '!=', '>=', '=>', '=<', '<=', '>', '<']:
                         if op in ifls:
                             op_pos = ifls.index(op)
-                            ifls = (' '.join(ifls[:op_pos]), op, ' '.join(ifls[op_pos + 1:]))
+                            ifls = (' '.join(ifls[:op_pos]), op,
+                                    ' '.join(ifls[op_pos + 1:]))
                             break
                 if len(ifls) != 3:
                     self._error('malformed if: ' + reduce(add, ls, ''))
@@ -1050,10 +1089,9 @@ class file:
             else:
                 cistrue = istrue
 
-            log.trace('config: %s: %3d:  _if[%i]:  %s %s %s %s' % (self.name, self.lc,
-                                                                   self.if_depth,
-                                                                   ifls, str(cistrue),
-                                                                   join_op, str(istrue)))
+            log.trace('config: %s: %3d:  _if[%i]:  %s %s %s %s' %
+                      (self.name, self.lc, self.if_depth, ifls, str(cistrue),
+                       join_op, str(istrue)))
 
         if invert:
             cistrue = not cistrue
@@ -1062,8 +1100,8 @@ class file:
 
         self.if_depth -= 1
 
-        log.trace('config: %s: %3d:  _if[%i]: %r' % (self.name, self.lc,
-                                                     self.if_depth, ifs_return))
+        log.trace('config: %s: %3d:  _if[%i]: %r' %
+                  (self.name, self.lc, self.if_depth, ifs_return))
 
         return ifs_return
 
@@ -1102,7 +1140,7 @@ class file:
             isarch = not isarch
         return self._ifs(config, ls, '%ifarch', isarch, isvalid, dir, info)
 
-    def _parse(self, config, dir, info, roc = False, isvalid = True):
+    def _parse(self, config, dir, info, roc=False, isvalid=True):
         # roc = return on control
 
         def _clean(line):
@@ -1164,7 +1202,7 @@ class file:
                         self._select(config, ls)
                 elif ls[0] == '%source' or ls[0] == '%patch':
                     if isvalid:
-                        d = self._sources(ls)
+                        d = self._source(ls)
                         if d is not None:
                             return ('data', d)
                 elif ls[0] == '%hash':
@@ -1177,13 +1215,20 @@ class file:
                         self._select(config, ls)
                 elif ls[0] == '%error':
                     if isvalid:
-                        return ('data', ['%%error %s' % (self._name_line_msg(l[7:]))])
+                        return ('data',
+                                ['%%error %s' % (self._name_line_msg(l[7:]))])
+                elif ls[0] == '%finish':
+                    if isvalid:
+                        break
                 elif ls[0] == '%log':
                     if isvalid:
-                        return ('data', ['%%log %s' % (self._name_line_msg(l[4:]))])
+                        return ('data',
+                                ['%%log %s' % (self._name_line_msg(l[4:]))])
                 elif ls[0] == '%warning':
                     if isvalid:
-                        return ('data', ['%%warning %s' % (self._name_line_msg(l[9:]))])
+                        return ('data', [
+                            '%%warning %s' % (self._name_line_msg(l[9:]))
+                        ])
                 elif ls[0] == '%define' or ls[0] == '%global':
                     if isvalid:
                         self._define(config, ls)
@@ -1193,12 +1238,14 @@ class file:
                 elif ls[0] == '%if':
                     d = self._if(config, ls, isvalid, dir, info)
                     if len(d):
-                        log.trace('config: %s: %3d:  %%if: %s' % (self.name, self.lc, d))
+                        log.trace('config: %s: %3d:  %%if: %s' %
+                                  (self.name, self.lc, d))
                         return ('data', d)
                 elif ls[0] == '%ifn':
                     d = self._if(config, ls, isvalid, dir, info, True)
                     if len(d):
-                        log.trace('config: %s: %3d:  %%ifn: %s' % (self.name, self.lc, d))
+                        log.trace('config: %s: %3d:  %%ifn: %s' %
+                                  (self.name, self.lc, d))
                         return ('data', d)
                 elif ls[0] == '%ifos':
                     d = self._ifos(config, ls, isvalid, dir, info)
@@ -1219,11 +1266,13 @@ class file:
                 elif ls[0] == '%endif':
                     if roc:
                         return ('control', '%endif', '%endif')
-                    log.warning(self._name_line_msg("unexpected '" + ls[0] + "'"))
+                    log.warning(
+                        self._name_line_msg("unexpected '" + ls[0] + "'"))
                 elif ls[0] == '%else':
                     if roc:
                         return ('control', '%else', '%else')
-                    log.warning(self._name_line_msg("unexpected '" + ls[0] + "'"))
+                    log.warning(
+                        self._name_line_msg("unexpected '" + ls[0] + "'"))
                 elif ls[0].startswith('%defattr'):
                     return ('data', [l])
                 elif ls[0] == '%bcond_with':
@@ -1288,7 +1337,10 @@ class file:
         for l in results[1]:
             if l.startswith('%error'):
                 l = self._expand(l)
-                raise error.general('config error: %s' % (l[7:]))
+                if self.opts.keep_going():
+                    print('config error: %s' % (l[7:]))
+                else:
+                    raise error.general('config error: %s' % (l[7:]))
             elif l.startswith('%log'):
                 l = self._expand(l)
                 log.output(l[4:])
@@ -1298,7 +1350,8 @@ class file:
             if not directive:
                 l = self._expand(l)
                 ls = self.tags.split(l, 1)
-                log.trace('config: %s: %3d:  _tag: %s %s' % (self.name, self.lc, l, ls))
+                log.trace('config: %s: %3d:  _tag: %s %s' %
+                          (self.name, self.lc, l, ls))
                 if len(ls) > 1:
                     info = ls[0].lower()
                     if info[-1] == ':':
@@ -1310,7 +1363,7 @@ class file:
                     self._info_append(info, info_data)
                 else:
                     log.warning(self._name_line_msg("invalid format: '%s'" % \
-                                                    (info_data[:-1])))
+                                                    (info_data.rstrip())))
             else:
                 l = self._expand(l)
                 log.trace('config: %s: %3d:  _data: %s %s' % \
@@ -1325,8 +1378,7 @@ class file:
                 return
         if _package not in self._packages:
             self._packages[_package] = package(_package,
-                                               self.define('%{_arch}'),
-                                               self)
+                                               self.define('%{_arch}'), self)
         self.package = _package
 
     def _directive_extend(self, dir, data):
@@ -1343,7 +1395,7 @@ class file:
         else:
             self.macros = macros
 
-    def load(self, name):
+    def load(self, name, dir=None, info=None):
 
         def common_end(left, right):
             end = ''
@@ -1386,17 +1438,21 @@ class file:
 
         configname = search_path(exname)
         if configname is None:
-            configname = search_path(self.expand(path.join('%{_configdir}', exname)))
+            configname = search_path(
+                self.expand(path.join('%{_configdir}', exname)))
         if configname is None:
-            raise error.general('no config file found: %s' % (','.join(exname.split(':'))))
+            raise error.general('no config file found: %s' %
+                                (','.join(exname.split(':'))))
 
         name = path.basename(configname)
 
         try:
-            log.trace('config: %s:  _open: %s' % (self.name, path.host(configname)))
+            log.trace('config: %s:  _open: %s [dir: %s info: %s]' %
+                      (self.name, path.host(configname), dir, info))
             config = open(path.host(configname), 'r')
         except IOError as err:
-            raise error.general('error opening config file: %s' % (path.host(configname)))
+            raise error.general('error opening config file: %s' %
+                                (path.host(configname)))
 
         self.configpath += [configname]
 
@@ -1407,28 +1463,29 @@ class file:
         self.lc = 0
 
         try:
-            dir = None
-            info = None
-            data = []
             while True:
+                data = []
                 r = self._parse(config, dir, info)
                 if r[0] == 'package':
                     dir, info, data = self._process_package(r, dir, info, data)
                 elif r[0] == 'control':
                     if r[1] == '%end':
                         break
-                    log.warning(self._name_line_msg("unexpected '%s'" % (r[1])))
+                    log.warning(self._name_line_msg("unexpected '%s'" %
+                                                    (r[1])))
                 elif r[0] == 'directive':
                     if r[1] == '%include':
-                        self.load(r[2][0])
+                        self.load(r[2][0], dir, info)
                         continue
-                    dir, info, data = self._process_directive(r, dir, info, data)
+                    dir, info, data = self._process_directive(
+                        r, dir, info, data)
                 elif r[0] == 'data':
                     dir, info, data = self._process_data(r, dir, info, data)
                 else:
-                    self._error("%d: invalid parse state: '%s" % (self.lc, r[0]))
-            if dir is not None:
-                self._directive_extend(dir, data)
+                    self._error("%d: invalid parse state: '%s" %
+                                (self.lc, r[0]))
+                if dir is not None:
+                    self._directive_extend(dir, data)
         except:
             config.close()
             raise
@@ -1450,7 +1507,8 @@ class file:
             if n in self.macros:
                 d = self.macros[n]
             else:
-                raise error.general('%d: macro "%s" not found' % (self.lc, name))
+                raise error.general('%d: macro "%s" not found' %
+                                    (self.lc, name))
         return self._expand(d)
 
     def set_define(self, name, value):
@@ -1486,8 +1544,12 @@ class file:
     def includes(self):
         return self._includes
 
+    def hashes(self):
+        return self._hashes
+
     def file_name(self):
         return self.name
+
 
 def run():
     import sys
@@ -1495,7 +1557,7 @@ def run():
         #
         # Run where defaults.mc is located
         #
-        opts = options.load(sys.argv, defaults = 'defaults.mc')
+        opts = options.load(sys.argv, defaults='defaults.mc')
         log.trace('config: count %d' % (len(opts.config_files())))
         for config_file in opts.config_files():
             s = open(config_file, opts)
@@ -1511,6 +1573,7 @@ def run():
         log.notice('abort: user terminated')
         sys.exit(1)
     sys.exit(0)
+
 
 if __name__ == "__main__":
     run()

@@ -76,14 +76,14 @@ from __future__ import print_function
 import os
 import sys
 
-import error
-import git
-import path
+from . import error
+from . import git
+from . import path
 
 #
 # Default to an internal string.
 #
-_version = '5'
+_version = '7'
 _revision = 'not_released'
 _version_str = '%s.%s' % (_version, _revision)
 _released = False
@@ -91,22 +91,21 @@ _git = False
 _is_loaded = False
 _top_dir = None
 
+
 def _top():
     if _top_dir is None:
-        top = path.dirname(sys.argv[0])
-        if top.endswith('source-builder/sb'):
-            top = path.dirname(path.dirname(top))
+        top = path.abspath(path.dirname(path.dirname(sys.argv[0])))
     else:
         top = _top_dir
     if len(top) == 0:
         top = '.'
     return top
 
+
 def _load_released_version_config():
     '''Local worker to load a configuration file.'''
     top = _top()
-    for ver in [path.join(top, 'VERSION'),
-                path.join('..', 'VERSION')]:
+    for ver in [path.join(top, 'VERSION'), path.join('..', 'VERSION')]:
         if path.exists(path.join(ver)):
             try:
                 import configparser
@@ -116,10 +115,11 @@ def _load_released_version_config():
             try:
                 v.read(path.host(ver))
             except Exception as e:
-                raise error.general('Invalid version config format: %s: %s' % (ver,
-                                                                               e))
+                raise error.general('Invalid version config format: %s: %s' %
+                                    (ver, e))
             return ver, v
     return None, None
+
 
 def _load_released_version():
     '''Load the release data if present. If not found the package is not released.
@@ -148,21 +148,22 @@ def _load_released_version():
                 raise error.general('Invalid version file: %s: %s' % (vc, e))
             ver_split = ver_str.split('.', 1)
             if len(ver_split) < 2:
-                raise error.general('Invalid version release value: %s: %s' % (vc,
-                                                                               ver_str))
+                raise error.general('Invalid version release value: %s: %s' %
+                                    (vc, ver_str))
             ver = ver_split[0]
             rev = ver_split[1]
             try:
                 _version = int(ver)
             except:
-                raise error.general('Invalid version config value: %s: %s' % (vc,
-                                                                              ver))
+                raise error.general('Invalid version config value: %s: %s' %
+                                    (vc, ver))
             _revision = rev
             if 'not_released' not in ver:
                 _released = True
             _version_str = ver_str
             _is_loaded = True
     return _released
+
 
 def _load_git_version():
     global _version
@@ -184,16 +185,19 @@ def _load_git_version():
                 revision_sep = ''
                 sep = ''
             _revision = '%s%s%s' % (head[0:12], revision_sep, modified)
-            _version_str = '%s (%s%s%s)' % (_version, head[0:12], sep, modified)
+            _version_str = '%s (%s%s%s)' % (_version, head[0:12], sep,
+                                            modified)
             _git = True
             _is_loaded = True
     return _git
+
 
 def set_top(top):
     global _top_dir
     _top_dir = top
 
-def load_release_settings(section, error = False):
+
+def load_release_settings(section, error=False):
     vc, v = _load_released_version_config()
     items = []
     if v is not None:
@@ -203,47 +207,51 @@ def load_release_settings(section, error = False):
             if not isinstance(error, bool):
                 error(e)
             elif error:
-                raise error.general('Invalid config section: %s: %s: %s' % (vc,
-                                                                            section,
-                                                                            e))
+                raise error.general('Invalid config section: %s: %s: %s' %
+                                    (vc, section, e))
     return items
 
-def load_release_setting(section, option, raw = False, error = False):
+
+def load_release_setting(section, option, raw=False, error=False):
     vc, v = _load_released_version_config()
     value = None
     if v is not None:
         try:
-            value = v.get(section, option, raw = raw)
+            value = v.get(section, option, raw=raw)
         except Exception as e:
             if not isinstance(error, bool):
                 error(e)
             elif error:
-                raise error.general('Invalid config section: %s: %s: %s.%s' % (vc,
-                                                                               section,
-                                                                               option,
-                                                                               e))
+                raise error.general('Invalid config section: %s: %s: %s.%s' %
+                                    (vc, section, option, e))
     return value
+
 
 def released():
     return _load_released_version()
 
+
 def version_control():
     return _load_git_version()
+
 
 def string():
     _load_released_version()
     _load_git_version()
     return _version_str
 
+
 def version():
     _load_released_version()
     _load_git_version()
     return _version
 
+
 def revision():
     _load_released_version()
     _load_git_version()
     return _revision
+
 
 if __name__ == '__main__':
     print('Version: %s' % (str(version())))

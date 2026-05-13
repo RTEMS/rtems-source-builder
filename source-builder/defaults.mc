@@ -45,6 +45,7 @@ name:                none,    none,     ''
 version:             none,    none,     ''
 release:             none,    none,     ''
 buildname:           none,    none,     '%{name}'
+force_package_build: none,    none,     '0'
 
 # The default is not released.
 rsb_released:        none,    none,     '0'
@@ -94,6 +95,7 @@ install_mode:        none,    none,     'installing'
 # Extra path a platform can override.
 _extra_path:         none,    none,     '%{_sbdir}'
 _ld_library_path:    none,    none,     'LD_LIBRARY_PATH'
+_library_path:       none,    none,     'LIBRARY_PATH'
 
 # Paths
 _host_platform:      none,    none,     '%{_host_cpu}-%{_host_vendor}-%{_host_os}%{?_gnu}'
@@ -112,6 +114,11 @@ _docdir:             dir,     none,     '%{_defaultdocdir}'
 _tmppath:            dir,     none,     '%{_topdir}/build/tmp'
 _tmproot:            dir,     none,     '%{_tmppath}/sb-%{_uid}/%{_bset_tmp}'
 _tmpcxcroot:         dir,     none,     '%{_tmppath}/sb-%{_uid}-cxc/%{_bset_tmp}'
+_tmpinternal:        dir,     none,     '%{_tmppath}/sb-%{_uid}-internal'
+_tmpinternal_bin:    dir,     none,     '%{_tmpinternal}/bin'
+_tmpinternal_inc:    dir,     none,     '%{_tmpinternal}/include'
+_tmpinternal_lib:    dir,     none,     '%{_tmpinternal}/lib'
+_tmpinternal_share:  dir,     none,     '%{_tmpinternal}/share'
 _datadir:            dir,     none,     '%{_prefix}/share'
 _defaultdocdir:      dir,     none,     '%{_prefix}/share/doc'
 _dry_run:            none,    none,     '0'
@@ -134,7 +141,7 @@ _infodir:            dir,     none,     '%{_datarootdir}/info'
 _localedir:          dir,     none,     '%{_datarootdir}/locale'
 _localedir:          dir,     none,     '%{_datadir}/locale'
 _localstatedir:      dir,     none,     '%{_prefix}/var'
-_pathprepend:        none,    none,     ''
+_pathprepend:        none,    none,     '%{_tmpinternal}/bin'
 _pathpostpend:       none,    none,     ''
 _prefix:             dir,     none,     '%{_usr}'
 _usr:                dir,     none,     '/usr/local'
@@ -182,18 +189,17 @@ __ld:                exe,     required, '/usr/bin/ld'
 __ldconfig:          exe,     required, '/sbin/ldconfig'
 __ln_s:              exe,     none,     'ln -s'
 __make:              exe,     required, 'make'
-__makeinfo:          exe,     required, '/usr/bin/makeinfo'
+__makeinfo:          exe,     optional, '/usr/bin/makeinfo'
 __mkdir:             exe,     required, '/bin/mkdir'
 __mkdir_p:           exe,     none,     '/bin/mkdir -p'
 __mv:                exe,     required, '/bin/mv'
 __nm:                exe,     required, '/usr/bin/nm'
-__objcopy:           exe,     optional, '/usr/bin/objcopy'
-__objdump:           exe,     optional, '/usr/bin/objdump'
+__objcopy:           exe,     none,     '/usr/bin/objcopy'
+__objdump:           exe,     none,     '/usr/bin/objdump'
 __patch_bin:         exe,     required, '/usr/bin/patch'
 __patch_opts:        none,    none,     '%{nil}'
 __patch:             exe,     none,     '%{__patch_bin} %{__patch_opts}'
 __perl:              exe,     optional, 'perl'
-__svn:               exe,     optional, '/usr/bin/svn'
 __ranlib:            exe,     required, 'ranlib'
 __rm:                exe,     required, '/bin/rm'
 __rmfile:            exe,     none,     '%{__rm} -f'
@@ -202,7 +208,8 @@ __sed:               exe,     required, '/usr/bin/sed'
 __setup_post:        exe,     none,     '%{__chmod} -R a+rX,g-w,o-w .'
 __sh:                exe,     required, '/bin/sh'
 __tar:               exe,     required, '/usr/bin/tar'
-__tar_extract:       exe,     none,     '%{__tar} -xvv'
+__tar_extract:       exe,     none,     '%{__tar} -x'
+__tar_extract_trace: exe,     none,     '%{__tar} -xvv'
 __touch:             exe,     required, '/usr/bin/touch'
 __unzip:             exe,     required, '/usr/bin/unzip'
 __xz:                exe,     required, '/usr/bin/xz'
@@ -223,17 +230,20 @@ SB_SOURCE_DIR="%{_sourcedir}"
 SB_BUILD_DIR="%{_builddir}"
 # host == build, use build; host != build, host uses host and build uses build
 SB_HOST_CPPFLAGS="%{host_includes}"
+# Optional tmpinternal paths
+SB_TMP_INCLUDES="%{?_tmproot:-I%{_tmproot}/${SB_PREFIX_CLEAN}/include} %{?_tmpinternal_inc:-I%{_tmpinternal_inc}}"
+SB_TMP_LDFLAGS="%{?_tmpinternal_lib:-L%{_tmpinternal_lib}}"
 # Optionally do not add includes to c/cxx flags as newer configure's complain
 SB_HOST_CFLAGS="%{host_cflags} %{!?host_cflags_no_includes %{host_includes}}"
 SB_HOST_CXXFLAGS="%{host_cxxflags} %{!?host_cflags_no_includes %{host_includes}}"
 SB_HOST_LDFLAGS="%{host_ldflags} %{?_tmproot:-L%{_tmproot}/${SB_PREFIX_CLEAN}/lib}"
 SB_HOST_LIBS="%{host_libs}"
-SB_BUILD_CFLAGS="%{build_cflags} %{?_tmproot:-I%{_tmproot}/${SB_PREFIX_CLEAN}/include}"
-SB_BUILD_CXXFLAGS="%{build_cxxflags} %{?_tmproot:-I%{_tmproot}/${SB_PREFIX_CLEAN}/include}"
-SB_BUILD_LDFLAGS="%{build_ldflags} %{?_tmproot:-L%{_tmproot}/${SB_PREFIX_CLEAN}/lib}"
-SB_BUILD_LBS="%{build_libs}"
-SB_CFLAGS="${SB_BUILD_CFLAGS} %{build_includes}"
-SB_CXXFLAGS="${SB_BUILD_CXXFLAGS} %{build_includes}"
+SB_BUILD_CFLAGS="%{build_cflags} $SB_TMP_INCLUDES"
+SB_BUILD_CXXFLAGS="%{build_cxxflags} $SB_TMP_INCLUDES"
+SB_BUILD_LDFLAGS="%{build_ldflags} $SB_TMP_LDFLAGS"
+SB_BUILD_LIBS="%{build_libs}"
+SB_CFLAGS="${SB_BUILD_CFLAGS} %{build_includes} $SB_TMP_INCLUDES"
+SB_CXXFLAGS="${SB_BUILD_CXXFLAGS} %{build_includes} $SB_TMP_INCLUDES"
 SB_ARCH="%{_arch}"
 SB_OS="%{_os}"
 export SB_SOURCE_DIR SB_BUILD_DIR SB_ARCH SB_OS

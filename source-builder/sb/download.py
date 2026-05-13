@@ -35,15 +35,16 @@ except ImportError:
     import urllib2 as urllib_request
     import urlparse as urllib_parse
 
-import cvs
-import error
-import git
-import log
-import path
-import sources
-import version
+from . import cvs
+from . import error
+from . import git
+from . import log
+from . import path
+from . import sources
+from . import version
 
-def _do_download(opts):
+
+def enabled(opts):
     download = True
     if opts.dry_run():
         download = False
@@ -53,21 +54,17 @@ def _do_download(opts):
                 download = True
     return download
 
-def _humanize_bytes(bytes, precision = 1):
-    abbrevs = (
-        (1 << 50, 'PB'),
-        (1 << 40, 'TB'),
-        (1 << 30, 'GB'),
-        (1 << 20, 'MB'),
-        (1 << 10, 'kB'),
-        (1, ' bytes')
-    )
+
+def _humanize_bytes(bytes, precision=1):
+    abbrevs = ((1 << 50, 'PB'), (1 << 40, 'TB'), (1 << 30, 'GB'),
+               (1 << 20, 'MB'), (1 << 10, 'kB'), (1, ' bytes'))
     if bytes == 1:
         return '1 byte'
     for factor, suffix in abbrevs:
         if bytes >= factor:
             break
     return '%.*f%s' % (precision, float(bytes) / factor, suffix)
+
 
 def _sensible_url(url, used=0):
     space = 250
@@ -76,16 +73,20 @@ def _sensible_url(url, used=0):
         url = url[:size] + '...<see log>'
     return url
 
-def _hash_check(file_, absfile, macros, remove = True):
+
+def _hash_check(file_, absfile, macros, remove=True):
     failed = False
     hash = sources.get_hash(file_.lower(), macros)
     if hash is not None:
         hash = hash.split()
         if len(hash) != 2:
             raise error.internal('invalid hash format: %s' % (file_))
+        if hash[0] == 'NO-HASH':
+            return not failed
         hashlib_algorithms = ['sha512']
         if hash[0] not in hashlib_algorithms:
-            raise error.general('invalid hash algorithm for %s: %s' % (file_, hash[0]))
+            raise error.general('invalid hash algorithm for %s: %s' %
+                                (file_, hash[0]))
         if hash[0] in ['md5', 'sha1']:
             raise error.general('hash: %s: insecure: %s' % (file_, hash[0]))
         hasher = None
@@ -108,10 +109,8 @@ def _hash_check(file_, absfile, macros, remove = True):
             _in.close()
         hash_hex = hasher.hexdigest()
         hash_base64 = base64.b64encode(hasher.digest()).decode('utf-8')
-        log.output('checksums: %s: (hex: %s) (b64: %s) => %s' % (file_,
-                                                                 hash_hex,
-                                                                 hash_base64,
-                                                                 hash[1]))
+        log.output('checksums: %s: (hex: %s) (b64: %s) => %s' %
+                   (file_, hash_hex, hash_base64, hash[1]))
         if hash_hex != hash[1] and hash_base64 != hash[1]:
             log.warning('checksum error: %s' % (file_))
             failed = True
@@ -121,14 +120,16 @@ def _hash_check(file_, absfile, macros, remove = True):
                 try:
                     os.remove(path.host(absfile))
                 except IOError as err:
-                    raise error.general('hash: %s: remove: %s' % (absfile, str(err)))
+                    raise error.general('hash: %s: remove: %s' %
+                                        (absfile, str(err)))
                 except:
                     raise error.general('hash: %s: remove error' % (file_))
         if hasher is not None:
             del hasher
     else:
-        raise error.general('%s: no hash found in released RSB' % (file_))
+        raise error.general('%s: no hash found' % (file_))
     return not failed
+
 
 def _local_path(source, pathkey, config):
     for p in config.define(pathkey).split(':'):
@@ -142,6 +143,7 @@ def _local_path(source, pathkey, config):
             source['local'] = local
             _hash_check(source['file'], local, config.macros)
             break
+
 
 def _http_parser(source, pathkey, config, opts):
     #
@@ -179,12 +181,13 @@ def _http_parser(source, pathkey, config, opts):
                 elif rs[0] == 'h':
                     h = rs[1]
             if p is None or h is None:
-                raise error.general('gitweb.cgi path missing p or h: %s' % (url))
+                raise error.general('gitweb.cgi path missing p or h: %s' %
+                                    (url))
             source['file'] = '%s-%s.patch' % (p, h)
         #
         # Wipe out everything special in the file name.
         #
-        source['file'] = re.sub(r'[^a-zA-Z0-9.\-]+', '-', source['file'])
+        source['file'] = re.sub(r'[^a-zA-Z0-9.\-_]+', '-', source['file'])
         max_file_len = 127
         if len(source['file']) > max_file_len:
             raise error.general('file name length is greater than %i (maybe use --rsb-file=FILE option): %s' % \
@@ -210,12 +213,6 @@ def _http_parser(source, pathkey, config, opts):
         source['compressed-type'] = 'xz'
         source['compressed'] = '%{__xz} -dc'
 
-def _patchworks_parser(source, pathkey, config, opts):
-    #
-    # Check local path
-    #
-    _local_path(source, pathkey, config)
-    source['url'] = 'http%s' % (source['path'][2:])
 
 def _git_parser(source, pathkey, config, opts):
     #
@@ -234,6 +231,7 @@ def _git_parser(source, pathkey, config, opts):
     source['local'] = \
         path.join(source['local_prefix'], 'git', source['file'])
     source['symlink'] = source['local']
+
 
 def _cvs_parser(source, pathkey, config, opts):
     #
@@ -271,7 +269,8 @@ def _cvs_parser(source, pathkey, config, opts):
                 raise error.general('invalid cvs date: %s' % (a))
             source['date'] = _as[1]
     if 'date' in source and 'tag' in source:
-        raise error.general('cvs URL cannot have a date and tag: %s' % (source['url']))
+        raise error.general('cvs URL cannot have a date and tag: %s' %
+                            (source['url']))
     # Do here to ensure an ordered path, the URL can include options in any order
     if 'module' in source:
         source['file'] += '_%s' % (source['module'])
@@ -287,6 +286,7 @@ def _cvs_parser(source, pathkey, config, opts):
     else:
         source['symlink'] = source['local']
 
+
 def _file_parser(source, pathkey, config, opts):
     #
     # Check local path
@@ -297,19 +297,23 @@ def _file_parser(source, pathkey, config, opts):
     #
     source['file'] = source['url'][6:]
 
-parsers = { 'http': _http_parser,
-            'ftp':  _http_parser,
-            'pw':   _patchworks_parser,
-            'git':  _git_parser,
-            'cvs':  _cvs_parser,
-            'file': _file_parser }
+
+parsers = {
+    'http': _http_parser,
+    'ftp': _http_parser,
+    'git': _git_parser,
+    'cvs': _cvs_parser,
+    'file': _file_parser
+}
+
 
 def set_release_path(release_path, macros):
     if release_path is None:
         release_path = '%{rtems_release_url}/%{rsb_version}/sources'
     macros.define('release_path', release_path)
 
-def parse_url(url, pathkey, config, opts, file_override = None):
+
+def parse_url(url, pathkey, config, opts, file_override=None):
     #
     # Split the source up into the parts we need.
     #
@@ -325,7 +329,8 @@ def parse_url(url, pathkey, config, opts, file_override = None):
     else:
         bad_chars = [c for c in ['/', '\\', '?', '*'] if c in file_override]
         if len(bad_chars) > 0:
-            raise error.general('bad characters in file name: %s' % (file_override))
+            raise error.general('bad characters in file name: %s' %
+                                (file_override))
         log.output('download: file-override: %s' % (file_override))
         source['file'] = file_override
         source['options'] += ['file-override']
@@ -345,6 +350,7 @@ def parse_url(url, pathkey, config, opts, file_override = None):
     source['script'] = ''
     return source
 
+
 def _http_downloader(url, local, config, opts):
     if path.exists(local):
         return True
@@ -357,7 +363,7 @@ def _http_downloader(url, local, config, opts):
     log.output('download: (full) %s -> %s' % (url, dst))
     log.notice('download: %s -> %s' % (_sensible_url(url, len(dst)), dst))
     failed = False
-    if _do_download(opts):
+    if enabled(opts):
         _in = None
         _out = None
         _length = None
@@ -378,7 +384,7 @@ def _http_downloader(url, local, config, opts):
                 try:
                     import ssl
                     _ssl_context = ssl._create_unverified_context()
-                    _in = urllib_request.urlopen(_req, context = _ssl_context)
+                    _in = urllib_request.urlopen(_req, context=_ssl_context)
                 except:
                     log.output('download: no ssl context')
                     _ssl_context = None
@@ -394,14 +400,17 @@ def _http_downloader(url, local, config, opts):
                 except:
                     pass
                 while True:
-                    _msg = '\rdownloading: %s - %s ' % (dst, _humanize_bytes(_have))
+                    _msg = '\rdownloading: %s - %s ' % (dst,
+                                                        _humanize_bytes(_have))
                     if _length:
                         _percent = round((float(_have) / _length) * 100, 2)
                         if _percent != _last_percent:
-                            _msg += 'of %s (%0.0f%%) ' % (_humanize_bytes(_length), _percent)
+                            _msg += 'of %s (%0.0f%%) ' % (
+                                _humanize_bytes(_length), _percent)
                     if _msg != _last_msg:
                         extras = (len(_last_msg) - len(_msg))
-                        log.stdout_raw('%s%s' % (_msg, ' ' * extras + '\b' * extras))
+                        log.stdout_raw('%s%s' %
+                                       (_msg, ' ' * extras + '\b' * extras))
                         _last_msg = _msg
                         _have_status_output = True
                     _chunk = _in.read(_chunk_size)
@@ -415,12 +424,14 @@ def _http_downloader(url, local, config, opts):
                     log.stdout_raw('\n\r')
                 raise
         except IOError as err:
-            log.notice('download: %s: error: %s' % (_sensible_url(_url), str(err)))
+            log.notice('download: %s: error: %s' %
+                       (_sensible_url(_url), str(err)))
             if path.exists(local):
                 os.remove(path.host(local))
             failed = True
         except ValueError as err:
-            log.notice('download: %s: error: %s' % (_sensible_url(_url), str(err)))
+            log.notice('download: %s: error: %s' %
+                       (_sensible_url(_url), str(err)))
             if path.exists(local):
                 os.remove(path.host(local))
             failed = True
@@ -440,10 +451,13 @@ def _http_downloader(url, local, config, opts):
             del _in
         if not failed:
             if not path.isfile(local):
-                raise error.general('source is not a file: %s' % (path.host(local)))
-            if not _hash_check(path.basename(local), local, config.macros, False):
+                raise error.general('source is not a file: %s' %
+                                    (path.host(local)))
+            if not _hash_check(path.basename(local), local, config.macros,
+                               False):
                 raise error.general('checksum failure file: %s' % (dst))
     return not failed
+
 
 def _git_downloader(url, local, config, opts):
     repo = git.repo(local, opts, config.macros)
@@ -464,49 +478,53 @@ def _git_downloader(url, local, config, opts):
                 # remove the rest of the protocol header leaving nothing.
                 us[0] = url_base[len('://'):]
             else:
-                if _as[1] not in ['ssh', 'git', 'http', 'https', 'ftp', 'ftps', 'rsync']:
+                if _as[1] not in [
+                        'ssh', 'git', 'http', 'https', 'ftp', 'ftps', 'rsync'
+                ]:
                     raise error.general('unknown git protocol: %s' % (_as[1]))
                 us[0] = _as[1] + url_base
     if not repo.valid():
         log.notice('git: clone: %s -> %s' % (us[0], rlp))
-        if _do_download(opts):
+        if enabled(opts):
             repo.clone(us[0], local)
     else:
-        repo.clean(['-f', '-d'])
-        repo.reset('--hard')
-        repo.checkout('master')
+        if enabled(opts):
+            repo.clean(['-f', '-d'])
+            repo.reset('--hard')
+            default_branch = repo.default_branch()
+            repo.checkout(default_branch)
     for a in us[1:]:
         _as = a.split('=')
         if _as[0] == 'branch' or _as[0] == 'checkout':
             if len(_as) != 2:
                 raise error.general('invalid git branch/checkout: %s' % (_as))
             log.notice('git: checkout: %s => %s' % (us[0], _as[1]))
-            if _do_download(opts):
+            if enabled(opts):
                 repo.checkout(_as[1])
         elif _as[0] == 'submodule':
             if len(_as) != 2:
                 raise error.general('invalid git submodule: %s' % (_as))
             log.notice('git: submodule: %s <= %s' % (us[0], _as[1]))
-            if _do_download(opts):
+            if enabled(opts):
                 repo.submodule(_as[1])
         elif _as[0] == 'fetch':
             log.notice('git: fetch: %s -> %s' % (us[0], rlp))
-            if _do_download(opts):
+            if enabled(opts):
                 repo.fetch()
         elif _as[0] == 'merge':
             log.notice('git: merge: %s' % (us[0]))
-            if _do_download(opts):
+            if enabled(opts):
                 repo.merge()
         elif _as[0] == 'pull':
             log.notice('git: pull: %s' % (us[0]))
-            if _do_download(opts):
+            if enabled(opts):
                 repo.pull()
         elif _as[0] == 'reset':
             arg = []
             if len(_as) > 1:
                 arg = ['--%s' % (_as[1])]
             log.notice('git: reset: %s' % (us[0]))
-            if _do_download(opts):
+            if enabled(opts):
                 repo.reset(arg)
                 repo.submodule_foreach(['reset'] + arg)
         elif _as[0] == 'clean':
@@ -514,7 +532,7 @@ def _git_downloader(url, local, config, opts):
             if len(_as) > 1:
                 arg = ['--%s' % (_as[1])]
             log.notice('git: clean: %s' % (us[0]))
-            if _do_download(opts):
+            if enabled(opts):
                 repo.clean(arg)
                 repo.submodule_foreach(['clean'] + arg)
         elif _as[0] == 'protocol':
@@ -522,6 +540,7 @@ def _git_downloader(url, local, config, opts):
         else:
             raise error.general('invalid git option: %s' % (_as))
     return True
+
 
 def _cvs_downloader(url, local, config, opts):
     rlp = os.path.relpath(path.host(local))
@@ -553,22 +572,23 @@ def _cvs_downloader(url, local, config, opts):
         if not path.isdir(local):
             log.notice('Creating source directory: %s' % \
                            (os.path.relpath(path.host(local))))
-            if _do_download(opts):
+            if enabled(opts):
                 path.mkdir(local)
             log.notice('cvs: checkout: %s -> %s' % (us[0], rlp))
-            if _do_download(opts):
+            if enabled(opts):
                 repo.checkout(':%s' % (us[0][6:]), module, tag, date)
     for a in us[1:]:
         _as = a.split('=')
         if _as[0] == 'update':
             log.notice('cvs: update: %s' % (us[0]))
-            if _do_download(opts):
+            if enabled(opts):
                 repo.update()
         elif _as[0] == 'reset':
             log.notice('cvs: reset: %s' % (us[0]))
-            if _do_download(opts):
+            if enabled(opts):
                 repo.reset()
     return True
+
 
 def _file_downloader(url, local, config, opts):
     if not path.exists(local):
@@ -581,12 +601,16 @@ def _file_downloader(url, local, config, opts):
             return False
     return True
 
-downloaders = { 'http': _http_downloader,
-                'ftp':  _http_downloader,
-                'pw':   _http_downloader,
-                'git':  _git_downloader,
-                'cvs':  _cvs_downloader,
-                'file': _file_downloader }
+
+downloaders = {
+    'http': _http_downloader,
+    'ftp': _http_downloader,
+    'pw': _http_downloader,
+    'git': _git_downloader,
+    'cvs': _cvs_downloader,
+    'file': _file_downloader
+}
+
 
 def process_release_url(url_bases, opts, config):
     #
@@ -600,6 +624,9 @@ def process_release_url(url_bases, opts, config):
     rtems_release_urls = []
     if version.released() and rtems_release_url_value:
         rtems_release_url = rtems_release_url_value
+    #
+    # A with/without release URL is a testing option
+    #
     with_rel_url = opts.with_arg('release-url')
     if with_rel_url[1] == 'not-found':
         if config.defined('without_release_url'):
@@ -640,13 +667,10 @@ def process_download_file_cache(local, url_bases, config):
                                                for c in hash_parts[1]):
             hash_str = hash_parts[1]
         else:
-            try:
-                hash_str = ''.join([
-                    '{:02x}'.format(b)
-                    for b in base64.decodebytes(hash_parts[1].encode('ascii'))
-                ])
-            except:
-                hash_str = base64.standard_b64decode(hash_parts[1].encode('ascii')).encode('hex')
+            hash_str = ''.join([
+                '{:02x}'.format(b)
+                for b in base64.decodebytes(hash_parts[1].encode('ascii'))
+            ])
         url = config.macros.expand('%{rtems_dl_url}') + '/' + hash_str
         url_bases.append(url)
 
@@ -658,9 +682,10 @@ def get_file(url, local, opts, config):
         log.notice('Creating source directory: %s' % \
                        (os.path.relpath(path.host(path.dirname(local)))))
     log.output('making dir: %s' % (path.host(path.dirname(local))))
-    if _do_download(opts):
+    if enabled(opts):
         path.mkdir(path.dirname(local))
-    if not path.exists(local) and opts.download_disabled():
+    if not path.exists(local) and opts.download_disabled(
+    ) and opts.defaults.expand('%{_rsb_getting_source}') == '0':
         raise error.general('source not found: %s' % (path.host(local)))
     #
     # Check if a URL has been provided on the command line. If the package is
@@ -671,7 +696,8 @@ def get_file(url, local, opts, config):
     url_bases = opts.urls()
     if url_bases is None:
         url_bases = []
-    process_download_file_cache(local, url_bases, config)
+    if not opts.download_disabled():
+        process_download_file_cache(local, url_bases, config)
     process_release_url(url_bases, opts, config)
     urls = []
     if len(url_bases) > 0:
@@ -680,29 +706,22 @@ def get_file(url, local, opts, config):
         #
         url_path = urllib_parse.urlsplit(url)[2]
         slash = url_path.rfind('/')
-        if slash < 0:
-            url_file = url_path
-        else:
-            url_file = url_path[slash + 1:]
-        log.trace('url_file: %s' %(url_file))
+        url_file = path.basename(local)
+        log.trace('url_file: %s' % (url_file))
         for base in url_bases:
-            #
-            # Hack to fix #3064 where --rsb-file is being used. This code is a
-            # mess and should be refactored.
-            #
-            if version.released() and base in rtems_release_urls:
-                url_file = path.basename(local)
             if base[-1:] != '/':
                 base += '/'
             next_url = urllib_parse.urljoin(base, url_file)
-            log.trace('url: %s' %(next_url))
+            log.trace('url: %s' % (next_url))
             urls.append(next_url)
     urls += url.split()
-    log.trace('_url: %s -> %s' % (','.join(urls), local))
+    for url in urls:
+        log.trace('url: get: %s -> %s' % (url, local))
     for url in urls:
         for dl in downloaders:
             if url.startswith(dl):
                 if downloaders[dl](url, local, config, opts):
                     return
-    if _do_download(opts):
-        raise error.general('downloading %s: all paths have failed, giving up' % (url))
+    if enabled(opts):
+        raise error.general(
+            'downloading %s: all paths have failed, giving up' % (url))

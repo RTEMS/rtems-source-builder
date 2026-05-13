@@ -29,101 +29,134 @@ import datetime
 import os
 
 try:
-    import build
-    import check
-    import error
-    import git
-    import log
-    import macros
-    import path
-    import shell
-    import sources
-    import version
+    from . import build
+    from . import check
+    from . import error
+    from . import git
+    from . import log
+    from . import macros
+    from . import path
+    from . import shell
+    from . import sources
+    from . import version
 except KeyboardInterrupt:
-    print('abort: user terminated', file = sys.stderr)
+    print('abort: user terminated', file=sys.stderr)
     sys.exit(1)
 except:
     raise
+
+host_windows = os.name == 'nt'
 
 #
 # Define host profiles so it can simulated on another host.
 #
 profiles = {
-    'darwin':  { '_os':              ('none',    'none',     'darwin'),
-                 '_host':            ('triplet', 'required', 'x86_64-apple-darwin18.5.0'),
-                 '_host_vendor':     ('none',    'none',     'apple'),
-                 '_host_os':         ('none',    'none',     'darwin'),
-                 '_host_os_version': ('none',    'none',     '18.5.0'),
-                 '_host_cpu':        ('none',    'none',     'x86_64'),
-                 '_host_alias':      ('none',    'none',     '%{nil}'),
-                 '_host_arch':       ('none',    'none',     'x86_64'),
-                 '_usr':             ('dir',     'optional', '/usr/local'),
-                 '_var':             ('dir',     'optional', '/usr/local/var') },
-    'freebsd': { '_os':              ('none',    'none',     'freebsd'),
-                 '_host':            ('triplet', 'required', 'x86_64-freebsd12.0-RELEASE-p3'),
-                 '_host_vendor':     ('none',    'none',     'pc'),
-                 '_host_os':         ('none',    'none',     'freebsd'),
-                 '_host_os_version': ('none',    'none',     '12.0-RELEASE-p3'),
-                 '_host_cpu':        ('none',    'none',     'x86_64'),
-                 '_host_alias':      ('none',    'none',     '%{nil}'),
-                 '_host_arch':       ('none',    'none',     'x86_64'),
-                 '_usr':             ('dir',     'optional', '/usr/local'),
-                 '_var':             ('dir',     'optional', '/usr/local/var') },
-    'linux':   { '_os':              ('none',    'none',     'linux'),
-                 '_host':            ('triplet', 'required', 'x86_64-linux-gnu'),
-                 '_host_vendor':     ('none',    'none',     'gnu'),
-                 '_host_os':         ('none',    'none',     'linux'),
-                 '_host_os_version': ('none',    'none',     '4.18.0-16'),
-                 '_host_cpu':        ('none',    'none',     'x86_64'),
-                 '_host_alias':      ('none',    'none',     '%{nil}'),
-                 '_host_arch':       ('none',    'none',     'x86_64'),
-                 '_usr':             ('dir',     'optional', '/usr/local'),
-                 '_var':             ('dir',     'optional', '/usr/local/var') },
-    'netbsd':  { '_os':              ('none',    'none',     'netbsd'),
-                 '_host':            ('triplet', 'required', 'x86_64-netbsd8.0'),
-                 '_host_vendor':     ('none',    'none',     'pc'),
-                 '_host_os':         ('none',    'none',     'netbsd'),
-                 '_host_os_version': ('none',    'none',     '8.0'),
-                 '_host_cpu':        ('none',    'none',     'x86_64'),
-                 '_host_alias':      ('none',    'none',     '%{nil}'),
-                 '_host_arch':       ('none',    'none',     'x86_64'),
-                 '_usr':             ('dir',     'optional', '/usr/local'),
-                 '_var':             ('dir',     'optional', '/usr/local/var') },
-    'solaris': { '_os':              ('none',    'none',     'solaris'),
-                 '_host':            ('triplet', 'required', 'x86_64-pc-solaris2'),
-                 '_host_vendor':     ('none',    'none',     'pc'),
-                 '_host_os':         ('none',    'none',     'solaris'),
-                 '_host_os_version': ('none',    'none',     '2'),
-                 '_host_cpu':        ('none',    'none',     'x86_64'),
-                 '_host_alias':      ('none',    'none',     '%{nil}'),
-                 '_host_arch':       ('none',    'none',     'x86_64'),
-                 '_usr':             ('dir',     'optional', '/usr/local'),
-                 '_var':             ('dir',     'optional', '/usr/local/var') },
-    'win32':   { '_os':              ('none',    'none',     'win32'),
-                 '_windows_os':      ('none',    'none',     'mingw32'),
-                 '_host':            ('triplet', 'required', 'x86_64-w64-mingw32'),
-                 '_host_vendor':     ('none',    'none',     'pc'),
-                 '_host_os':         ('none',    'none',     'win32'),
-                 '_host_os_version': ('none',    'none',     '10'),
-                 '_host_cpu':        ('none',    'none',     'x86_64'),
-                 '_host_alias':      ('none',    'none',     '%{nil}'),
-                 '_host_arch':       ('none',    'none',     'x86_64'),
-                 '_usr':             ('dir',     'optional', '/usr/local'),
-                 '_var':             ('dir',     'optional', '/usr/local/var') },
-    'cygwin':  { '_os':              ('none',    'none',     'win32'),
-                 '_windows_os':      ('none',    'none',     'cygwin'),
-                 '_host':            ('triplet', 'required', 'x86_64-w64-cygwin'),
-                 '_host_vendor':     ('none',    'none',     'microsoft'),
-                 '_host_os':         ('none',    'none',     'win32'),
-                 '_host_os_version': ('none',    'none',     '10'),
-                 '_host_cpu':        ('none',    'none',     'x86_64'),
-                 '_host_alias':      ('none',    'none',     '%{nil}'),
-                 '_host_arch':       ('none',    'none',     'x86_64'),
-                 '_usr':             ('dir',     'optional', '/usr/local'),
-                 '_var':             ('dir',     'optional', '/usr/local/var') },
+    'darwin': {
+        '_os': ('none', 'none', 'darwin'),
+        '_host': ('triplet', 'required', 'x86_64-apple-darwin18.5.0'),
+        '_host_vendor': ('none', 'none', 'apple'),
+        '_host_os': ('none', 'none', 'darwin'),
+        '_host_os_version': ('none', 'none', '18.5.0'),
+        '_host_cpu': ('none', 'none', 'x86_64'),
+        '_host_alias': ('none', 'none', '%{nil}'),
+        '_host_arch': ('none', 'none', 'x86_64'),
+        '_usr': ('dir', 'optional', '/usr/local'),
+        '_var': ('dir', 'optional', '/usr/local/var')
+    },
+    'freebsd': {
+        '_os': ('none', 'none', 'freebsd'),
+        '_host': ('triplet', 'required', 'x86_64-freebsd12.0-RELEASE-p3'),
+        '_host_vendor': ('none', 'none', 'pc'),
+        '_host_os': ('none', 'none', 'freebsd'),
+        '_host_os_version': ('none', 'none', '12.0-RELEASE-p3'),
+        '_host_cpu': ('none', 'none', 'x86_64'),
+        '_host_alias': ('none', 'none', '%{nil}'),
+        '_host_arch': ('none', 'none', 'x86_64'),
+        '_usr': ('dir', 'optional', '/usr/local'),
+        '_var': ('dir', 'optional', '/usr/local/var')
+    },
+    'linux': {
+        '_os': ('none', 'none', 'linux'),
+        '_host': ('triplet', 'required', 'x86_64-linux-gnu'),
+        '_host_vendor': ('none', 'none', 'gnu'),
+        '_host_os': ('none', 'none', 'linux'),
+        '_host_os_version': ('none', 'none', '4.18.0-16'),
+        '_host_cpu': ('none', 'none', 'x86_64'),
+        '_host_alias': ('none', 'none', '%{nil}'),
+        '_host_arch': ('none', 'none', 'x86_64'),
+        '_usr': ('dir', 'optional', '/usr/local'),
+        '_var': ('dir', 'optional', '/usr/local/var')
+    },
+    'netbsd': {
+        '_os': ('none', 'none', 'netbsd'),
+        '_host': ('triplet', 'required', 'x86_64-netbsd8.0'),
+        '_host_vendor': ('none', 'none', 'pc'),
+        '_host_os': ('none', 'none', 'netbsd'),
+        '_host_os_version': ('none', 'none', '8.0'),
+        '_host_cpu': ('none', 'none', 'x86_64'),
+        '_host_alias': ('none', 'none', '%{nil}'),
+        '_host_arch': ('none', 'none', 'x86_64'),
+        '_usr': ('dir', 'optional', '/usr/local'),
+        '_var': ('dir', 'optional', '/usr/local/var')
+    },
+    'solaris': {
+        '_os': ('none', 'none', 'solaris'),
+        '_host': ('triplet', 'required', 'x86_64-pc-solaris2'),
+        '_host_vendor': ('none', 'none', 'pc'),
+        '_host_os': ('none', 'none', 'solaris'),
+        '_host_os_version': ('none', 'none', '2'),
+        '_host_cpu': ('none', 'none', 'x86_64'),
+        '_host_alias': ('none', 'none', '%{nil}'),
+        '_host_arch': ('none', 'none', 'x86_64'),
+        '_usr': ('dir', 'optional', '/usr/local'),
+        '_var': ('dir', 'optional', '/usr/local/var')
+    },
+    'win32': {
+        '_os': ('none', 'none', 'win32'),
+        '_windows_os': ('none', 'none', 'mingw32'),
+        '_host': ('triplet', 'required', 'x86_64-w64-mingw32'),
+        '_host_vendor': ('none', 'none', 'pc'),
+        '_host_os': ('none', 'none', 'win32'),
+        '_host_os_version': ('none', 'none', '10'),
+        '_host_cpu': ('none', 'none', 'x86_64'),
+        '_host_alias': ('none', 'none', '%{nil}'),
+        '_host_arch': ('none', 'none', 'x86_64'),
+        '_usr': ('dir', 'optional', '/usr/local'),
+        '_var': ('dir', 'optional', '/usr/local/var')
+    },
+    'cygwin': {
+        '_os': ('none', 'none', 'win32'),
+        '_windows_os': ('none', 'none', 'cygwin'),
+        '_host': ('triplet', 'required', 'x86_64-w64-cygwin'),
+        '_host_vendor': ('none', 'none', 'microsoft'),
+        '_host_os': ('none', 'none', 'win32'),
+        '_host_os_version': ('none', 'none', '10'),
+        '_host_cpu': ('none', 'none', 'x86_64'),
+        '_host_alias': ('none', 'none', '%{nil}'),
+        '_host_arch': ('none', 'none', 'x86_64'),
+        '_usr': ('dir', 'optional', '/usr/local'),
+        '_var': ('dir', 'optional', '/usr/local/var')
+    },
 }
 
+common = {
+    'force_package_build': ('none', 'none', '1'),
+    '_internal_autotools': ('none', 'none', 'yes'),
+    '_internal_expat': ('none', 'none', 'yes'),
+    '_internal_expat_path': ('none', 'none', '%{_tmpinternal}'),
+    '_internal_gmp': ('none', 'none', 'yes'),
+    '_internal_gmp_path': ('none', 'none', '%{_tmpinternal}'),
+    '_internal_gsed': ('none', 'none', 'yes'),
+    '_internal_gsed_path': ('none', 'none', '%{_tmpinternal}'),
+    '_internal_mpfr': ('none', 'none', 'yes'),
+    '_internal_mpfr_path': ('none', 'none', '%{_tmpinternal}'),
+    '_internal_texinfo': ('none', 'none', 'yes'),
+    '_internal_texinfo_path': ('none', 'none', '%{_tmpinternal}'),
+}
+
+
 class log_capture(object):
+
     def __init__(self):
         self.log = []
         log.capture = self.capture
@@ -140,6 +173,7 @@ class log_capture(object):
     def clear(self):
         self.log = []
 
+
 def find_bset_config(bset_config, macros):
     '''Find the build set or config file using the macro config defined path.'''
     name = bset_config
@@ -149,10 +183,14 @@ def find_bset_config(bset_config, macros):
             name = path.join(configdir, bset_config)
             if path.exists(name):
                 break
+            elif path.exists(name + '.binc'):
+                name += '.binc'
+                break
             name = None
         if name is None:
             raise error.general('no build set file found: %s' % (bset_config))
     return name
+
 
 def macro_expand(macros, _str):
     cstr = None
@@ -162,40 +200,52 @@ def macro_expand(macros, _str):
         _str = shell.expand(macros, _str)
     return _str
 
+
 def strip_common_prefix(files):
     commonprefix = os.path.commonprefix(files)
     return sorted(list(set([f[len(commonprefix):] for f in files])))
+
 
 #
 # A skinny options command line class to get the configs to load.
 #
 class options(object):
+
+    default_extras = {'_dry_run': '1'}
+
     def __init__(self, argv, argopts, defaults, extras):
         command_path = path.dirname(path.abspath(argv[0]))
         if len(command_path) == 0:
             command_path = '.'
         self.command_path = command_path
         self.command_name = path.basename(argv[0])
-        extras += ['--dry-run',
-                   '--quiet',
-                   '--without-log',
-                   '--without-error-report',
-                   '--without-release-url']
+        extras += [
+            '--dry-run', '--quiet', '--without-log', '--without-error-report',
+            '--without-release-url'
+        ]
         self.argv = argv
         self.args = argv[1:] + extras
-        self.defaults = macros.macros(name = defaults,
-                                      sbdir = command_path)
+        self.defaults = macros.macros(name=defaults, sbdir=command_path)
+        self.defaults.define('_rsb_getting_source', '1')
         self.load_overrides()
-        self.opts = { 'params' :  extras }
+        self.no_download = False
+        for arg in self.args:
+            if arg == '--no-download':
+                self.no_download = True
+        self.opts = {'params': extras}
         self.sb_git()
         self.rtems_bsp()
+        for de in options.default_extras:
+            self.defaults[de] = options.default_extras[de]
         if 'download_dir' in argopts and argopts.download_dir is not None:
-            self.defaults['_sourcedir'] = ('dir',
-                                           'optional',
+            self.defaults['_sourcedir'] = ('dir', 'optional',
                                            path.abspath(argopts.download_dir))
-            self.defaults['_patchdir'] = ('dir',
-                                          'optional',
+            self.defaults['_patchdir'] = ('dir', 'optional',
                                           path.abspath(argopts.download_dir))
+        # Set the _uid field, performance improvement on Unix
+        if not host_windows:
+            self.defaults['_uid'] = str(os.getuid())
+            self.defaults['_gid'] = str(os.getgid())
 
     def load_overrides(self):
         overrides = None
@@ -211,31 +261,33 @@ class options(object):
             uname = os.uname()
             try:
                 if uname[0].startswith('MINGW64_NT'):
-                    import windows
+                    from . import windows
                     overrides = windows.load()
                     host_windows = True
                 elif uname[0].startswith('CYGWIN_NT'):
-                    import windows
+                    from . import windows
                     overrides = windows.load()
                 elif uname[0] == 'Darwin':
-                    import darwin
+                    from . import darwin
                     overrides = darwin.load()
                 elif uname[0] == 'FreeBSD':
-                    import freebsd
+                    from . import freebsd
                     overrides = freebsd.load()
                 elif uname[0] == 'NetBSD':
-                    import netbsd
+                    from . import netbsd
                     overrides = netbsd.load()
                 elif uname[0] == 'Linux':
-                    import linux
+                    from . import linux
                     overrides = linux.load()
                 elif uname[0] == 'SunOS':
-                    import solaris
+                    from . import solaris
                     overrides = solaris.load()
             except error.general as ge:
-                raise error.general('failed to load %s host support: %s' % (uname[0], ge))
+                raise error.general('failed to load %s host support: %s' %
+                                    (uname[0], ge))
             except:
-                raise error.general('failed to load %s host support' % (uname[0]))
+                raise error.general('failed to load %s host support' %
+                                    (uname[0]))
         else:
             raise error.general('unsupported host type; please add')
         if overrides is None:
@@ -243,7 +295,7 @@ class options(object):
         for k in overrides:
             self.defaults[k] = overrides[k]
 
-    def parse_args(self, arg, error = True, extra = True):
+    def parse_args(self, arg, error=True, extra=True):
         for a in range(0, len(self.args)):
             if self.args[a].startswith(arg):
                 lhs = None
@@ -292,10 +344,10 @@ class options(object):
             repo_remotes = '%{nil}'
             repo_id = 'no-repo'
         self.defaults['_sbgit_valid'] = repo_valid
-        self.defaults['_sbgit_head']  = repo_head
+        self.defaults['_sbgit_head'] = repo_head
         self.defaults['_sbgit_clean'] = str(repo_clean)
         self.defaults['_sbgit_remotes'] = str(repo_remotes)
-        self.defaults['_sbgit_id']    = repo_id
+        self.defaults['_sbgit_id'] = repo_id
         if repo_mail is not None:
             self.defaults['_sbgit_mail'] = repo_mail
 
@@ -304,15 +356,15 @@ class options(object):
             return None
         return self.parse_args(arg)
 
-    def with_arg(self, label, default = 'not-found'):
+    def with_arg(self, label, default='not-found'):
         # the default if there is no option for without.
         result = default
         for pre in ['with', 'without']:
             arg_str = '--%s-%s' % (pre, label)
             arg_label = '%s_%s' % (pre, label)
-            arg = self.parse_args(arg_str, error = False, extra = False)
+            arg = self.parse_args(arg_str, error=False, extra=False)
             if arg is not None:
-                if arg[1] is  None:
+                if arg[1] is None:
                     result = 'yes'
                 else:
                     result = arg[1]
@@ -326,7 +378,10 @@ class options(object):
         return False
 
     def quiet(self):
-            return True
+        return True
+
+    def trace(self):
+        return False
 
     def no_clean(self):
         return True
@@ -338,7 +393,7 @@ class options(object):
         return True
 
     def download_disabled(self):
-        return False
+        return self.no_download
 
     def disable_install(self):
         return True
@@ -351,13 +406,17 @@ class options(object):
         s += ' Python: %s' % (sys.version.replace('\n', ''))
         return s
 
+
 class buildset:
     """Build a set builds a set of packages."""
 
-    def __init__(self, bset, _configs, opts, macros = None):
+    def __init__(self, bset, _configs, opts, macros=None):
         log.trace('_bset: %s: init' % (bset))
         self.parent = 'root'
         self._includes = []
+        self._sources = []
+        self._patches = []
+        self._hashes = []
         self._errors = []
         self.configs = _configs
         self.opts = opts
@@ -365,7 +424,7 @@ class buildset:
             self.macros = copy.copy(opts.defaults)
         else:
             self.macros = copy.copy(macros)
-        self.macros.define('_rsb_getting_source')
+        self.macros.define('_rsb_getting_source', '1')
         log.trace('_bset: %s: macro defaults' % (bset))
         log.trace(str(self.macros))
         self.bset = bset
@@ -377,7 +436,7 @@ class buildset:
         self.bset_pkg = '%s-%s-set' % (pkg_prefix, self.bset)
         self.build_failure = None
 
-    def _add_includes(self, includes, parent = None):
+    def _add_includes(self, includes, parent=None):
         if parent is None:
             parent = self.parent
         if not isinstance(includes, list):
@@ -429,6 +488,13 @@ class buildset:
                 line = line[1:b]
             return line.strip()
 
+        def _clean_and_pack(line, last_line):
+            leading_ws = ' ' if len(line) > 0 and line[0].isspace() else ''
+            line = _clean(line)
+            if len(last_line) > 0:
+                line = last_line + leading_ws + line
+            return line
+
         bsetname = find_bset_config(bset, self.macros)
 
         try:
@@ -445,20 +511,28 @@ class buildset:
 
         try:
             lc = 0
+            ll = ''
             for l in bsetf:
                 lc += 1
-                l = _clean(l)
+                l = _clean_and_pack(l, ll)
                 if len(l) == 0:
                     continue
+                if l[-1] == '\\':
+                    ll = l[0:-1]
+                    continue
+                ll = ''
                 log.trace('_bset: %s: %03d: %s' % (self.bset, lc, l))
                 ls = l.split()
                 if ls[0][-1] == ':' and ls[0][:-1] == 'package':
                     self.bset_pkg = ls[1].strip()
                     self.macros['package'] = self.bset_pkg
                 elif ls[0][0] == '%' and (len(ls[0]) > 1 and ls[0][1] != '{'):
+
                     def err(msg):
+                        self._errors += [self.bset + ':' + self.parent]
                         raise error.general('%s:%d: %s' % (self.bset, lc, msg))
-                    if ls[0] == '%define' or ls[0] == '%defineifnot' :
+
+                    if ls[0] == '%define' or ls[0] == '%defineifnot':
                         name = ls[1].strip()
                         value = None
                         if len(ls) > 2:
@@ -473,6 +547,7 @@ class buildset:
                                 self.macros.define(name)
                     elif ls[0] == '%undefine':
                         if len(ls) > 2:
+                            self._errors += [bset + ':' + self.parent]
                             raise error.general('%s:%d: %undefine requires ' \
                                                 'just the name' % (self.bset, lc))
                         self.macros.undefine(ls[1].strip())
@@ -482,6 +557,7 @@ class buildset:
                         sources.process(ls[0][1:], ls[1:], self.macros, err)
                     elif ls[0] == '%hash':
                         sources.hash(ls[1:], self.macros, err)
+                        self._hashes += [' '.join(ls[1:])]
                 else:
                     try:
                         l = macro_expand(self.macros, l.strip())
@@ -492,8 +568,9 @@ class buildset:
                     if l is not None:
                         c = build.find_config(l, self.configs)
                         if c is None:
-                            raise error.general('%s:%d: cannot find file: %s'
-                                                % (self.bset, lc, l))
+                            self._errors += [bset + ':' + self.parent]
+                            raise error.general('%s:%d: cannot find file: %s' %
+                                                (self.bset, lc, l))
                         configs += [c + ':' + self.parent]
         finally:
             bsetf.close()
@@ -527,11 +604,11 @@ class buildset:
         for m in profiles[host]:
             opts.defaults[m] = profiles[host][m]
             macros[m] = profiles[host][m]
-        macros_to_copy = [('%{_build}',        '%{_host}'),
-                          ('%{_build_alias}',  '%{_host_alias}'),
-                          ('%{_build_arch}',   '%{_host_arch}'),
-                          ('%{_build_cpu}',    '%{_host_cpu}'),
-                          ('%{_build_os}',     '%{_host_os}'),
+        macros_to_copy = [('%{_build}', '%{_host}'),
+                          ('%{_build_alias}', '%{_host_alias}'),
+                          ('%{_build_arch}', '%{_host_arch}'),
+                          ('%{_build_cpu}', '%{_host_cpu}'),
+                          ('%{_build_os}', '%{_host_os}'),
                           ('%{_build_vendor}', '%{_host_vendor}')]
         for m in macros_to_copy:
             opts.defaults[m[0]] = opts.defaults[m[1]]
@@ -553,17 +630,22 @@ class buildset:
         if not macros.defined('__cxx'):
             raise error.general('no valid c++ found')
 
-    def build(self, host, nesting_count = 0):
+    def set_common_details(self, opts, macros):
+        for m in common:
+            opts.defaults[m] = common[m]
+            macros[m] = common[m]
+
+    def build(self, host, nesting_count=0):
 
         build_error = False
 
         nesting_count += 1
 
-        log.trace('_bset: %2d: %s for %s: make' % (nesting_count, self.bset, host))
+        log.trace('_bset: %2d: %s for %s: make' %
+                  (nesting_count, self.bset, host))
         log.notice('Build Set: %s for %s' % (self.bset, host))
 
-        mail_subject = '%s on %s' % (self.bset,
-                                     self.macros.expand('%{_host}'))
+        mail_subject = '%s on %s' % (self.bset, self.macros.expand('%{_host}'))
 
         current_path = os.environ['PATH']
 
@@ -574,7 +656,8 @@ class buildset:
         try:
             configs = self.load()
 
-            log.trace('_bset: %2d: %s: configs: %s'  % (nesting_count, self.bset, ','.join(configs)))
+            log.trace('_bset: %2d: %s: configs: %s' %
+                      (nesting_count, self.bset, ','.join(configs)))
 
             sizes_valid = False
             builds = []
@@ -590,23 +673,28 @@ class buildset:
                     opts = copy.copy(self.opts)
                     macros = copy.copy(self.macros)
                     self.set_host_details(host, opts, macros)
+                    self.set_common_details(opts, macros)
                     config, parent = configs[s].split(':', 2)
                     if config.endswith('.bset'):
-                        log.trace('_bset: %2d: %s' % (nesting_count + 1, '=' * 75))
+                        log.trace('_bset: %2d: %s' %
+                                  (nesting_count + 1, '=' * 75))
                         bs = buildset(config, self.configs, opts, macros)
                         bs.build(host, nesting_count)
                         self._includes += \
                             self._rebase_includes(bs.includes(), parent)
+                        self._sources += bs._sources
+                        self._patches += bs._patches
+                        self._hashes += bs._hashes
+                        self._errors += bs._errors
                         del bs
                     elif config.endswith('.cfg'):
-                        log.trace('_bset: %2d: %s' % (nesting_count + 1, '-' * 75))
+                        log.trace('_bset: %2d: %s' %
+                                  (nesting_count + 1, '-' * 75))
                         try:
-                            b = build.build(config,
-                                            False,
-                                            opts,
-                                            macros)
+                            b = build.build(config, False, opts, macros)
                             self._includes += \
                                 self._rebase_includes(b.includes(), parent)
+
                         except:
                             build_error = True
                             raise
@@ -615,23 +703,30 @@ class buildset:
                         #
                         # Dump post build macros.
                         #
-                        log.trace('_bset: %2d: macros post-build' % (nesting_count))
+                        log.trace('_bset: %2d: macros post-build' %
+                                  (nesting_count))
                         log.trace(str(macros))
                     else:
-                        raise error.general('invalid config type: %s' % (config))
+                        raise error.general('invalid config type: %s' %
+                                            (config))
                 except error.general as gerr:
                     have_errors = True
+                    self._errors += \
+                        [find_bset_config(config, opts.defaults) + ':' + parent]
+                    if bs is not None:
+                        self._errors += bs._errors
                     if b is not None:
                         if self.build_failure is None:
                             self.build_failure = b.name()
                         self._includes += b.includes()
-                    self._errors += \
-                        [find_bset_config(config, opts.defaults) + ':' + parent] + self._includes
                     raise
             #
-            # Clear out the builds ...
+            # Capture the source details and clear out the builds ...
             #
             for b in builds:
+                self._sources += b._sources
+                self._patches += b._patches
+                self._hashes += b.hashes()
                 del b
             self._includes += \
                 [find_bset_config(c.split(':')[0], self.macros) + ':' + self.bset for c in configs]
@@ -650,14 +745,16 @@ class buildset:
             build_time = str(end - start)
             log.notice('Build Set: Time %s' % (build_time))
 
+
 def list_hosts():
     hosts = sorted(profiles.keys())
     max_os_len = max(len(h) for h in hosts)
     max_host_len = max(len(profiles[h]['_host'][2]) for h in hosts)
     for h in hosts:
-        log.notice('%*s: %-*s %s' % (max_os_len, h, max_host_len,
-                                     profiles[h]['_host'][2],
-                                     profiles[h]['_host'][2]))
+        log.notice('%*s: %-*s %s' %
+                   (max_os_len, h, max_host_len, profiles[h]['_host'][2],
+                    profiles[h]['_host'][2]))
+
 
 def get_files(configs, ext, localpath):
     files = []
@@ -668,22 +765,30 @@ def get_files(configs, ext, localpath):
         files = [c for c in configs['files'] if c.endswith(ext)]
     return files
 
-def get_config_files(configs, localpath = False):
+
+def get_config_files(configs, localpath=False):
     return get_files(configs, '.cfg', localpath)
 
-def get_bset_files(configs, localpath = False):
+
+def get_bset_files(configs, localpath=False):
     return get_files(configs, '.bset', localpath)
+
 
 def get_config_bset_files(opts, configs):
     cbs = get_config_files(configs) + get_bset_files(configs)
-    return strip_common_prefix([find_bset_config(cb, opts.defaults) for cb in cbs])
+    return strip_common_prefix(
+        [find_bset_config(cb, opts.defaults) for cb in cbs])
 
-def get_root_bset_files(opts, configs, localpath = False):
+
+def get_root_bset_files(opts, configs, localpath=False):
     bsets = get_bset_files(configs, localpath)
     incs = {}
     for bs in bsets:
         bset = buildset(bs, configs, opts)
-        cfgs = [find_bset_config(c.split(':')[0], bset.macros) for c in bset.parse(bs, False)]
+        cfgs = [
+            find_bset_config(c.split(':')[0], bset.macros)
+            for c in bset.parse(bs, False)
+        ]
         incs[bset.root()] = bset.includes() + cfgs
     roots = sorted(incs.keys())
     for inc in incs:
@@ -693,8 +798,10 @@ def get_root_bset_files(opts, configs, localpath = False):
                 roots.remove(si[0])
     return roots
 
+
 def get_root(configs):
     return configs['root']
+
 
 def list_root_bset_files(opts, configs):
     for p in configs['paths']:
@@ -702,19 +809,24 @@ def list_root_bset_files(opts, configs):
     for r in strip_common_prefix(get_root_bset_files(opts, configs)):
         log.notice(' %s' % (r))
 
+
 def list_bset_files(opts, configs):
     for p in configs['paths']:
         log.notice('Examining: %s' % (os.path.relpath(p)))
     for b in get_bset_files(configs):
         log.notice(' %s' % (b[:b.rfind('.')]))
 
+
 def load_log(logfile):
-    log.default = log.log(streams = [logfile])
+    log.default = log.log(streams=[logfile])
+
 
 def log_default(name):
-    return 'rsb-log-%s-%s.txt' % (name, datetime.datetime.now().strftime('%Y%m%d-%H%M%S'))
+    return 'rsb-log-%s-%s.txt' % (
+        name, datetime.datetime.now().strftime('%Y%m%d-%H%M%S'))
 
-def load_options(argv, argopts, defaults = '%{_sbdir}/defaults.mc', extras = []):
+
+def load_options(argv, argopts, defaults='%{_sbdir}/defaults.mc', extras=[]):
     opts = options(argv, argopts, defaults, extras)
     opts.defaults['rtems_version'] = str(argopts.rtems_version)
     return opts

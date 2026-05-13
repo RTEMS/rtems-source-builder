@@ -25,19 +25,23 @@
 
 from __future__ import print_function
 
-import log
 import os
 import shutil
 import stat
 import string
 import sys
 
-import error
+from . import error
+from . import log
 
 windows_posix = sys.platform == 'msys'
 windows = os.name == 'nt'
+windows11 = False
+if windows:
+    windows11 = sys.getwindowsversion().build >= 22000
 
 win_maxpath = 254
+
 
 def host(path):
     if path is not None:
@@ -50,18 +54,18 @@ def host(path):
                 path[1] in string.ascii_uppercase):
                 path = '%s:%s' % (path[1], path[2:])
             path = path.replace('/', '\\')
-            if len(path) > win_maxpath:
+            if len(path) > win_maxpath and not windows11:
                 if path.startswith('\\\\?\\'):
                     path = path[4:]
                 path = u'\\'.join([u'\\\\?', path])
     return path
 
+
 def shell(path):
     if isinstance(path, bytes):
-        path = path.decode('ascii')
+        path = path.decode('utf8')
     if path is not None:
         if windows or windows_posix:
-            path = path.encode('ascii', 'ignore').decode('ascii')
             if path.startswith('\\\\?\\'):
                 path = path[4:]
             if len(path) > 1 and path[1] == ':':
@@ -71,18 +75,37 @@ def shell(path):
             path = path.replace('//', '/')
     return path
 
+
+def host_encode(dpath):
+    '''Encoding the path was present in the RSB however on a ZFS pool I am
+       seeing a failure with a go test in gcc:
+          gcc/testsuite/go.test/test/fixedbugs/issue27836.dir
+       Not encoding works however I am not sure why the encoding was added
+       so the following keeps the encoding and falls back to not encoded
+       if there is an error.0
+    '''
+    try:
+        return host(dpath).encode('utf8')
+    except:
+        pass
+    return dpath
+
+
 def basename(path):
     path = shell(path)
     return shell(os.path.basename(host(path)))
+
 
 def dirname(path):
     path = shell(path)
     return shell(os.path.dirname(path))
 
+
 def is_abspath(path):
     if path is not None and len(path) > 0:
         return '/' == path[0]
     return False
+
 
 def join(path, *args):
     path = shell(path)
@@ -93,11 +116,13 @@ def join(path, *args):
             path = shell(arg)
     return shell(path)
 
+
 def abspath(path):
     path = shell(path)
     return shell(os.path.abspath(host(path)))
 
-def relpath(path, start = None):
+
+def relpath(path, start=None):
     path = shell(path)
     if start is None:
         path = os.path.relpath(host(path))
@@ -105,10 +130,12 @@ def relpath(path, start = None):
         path = os.path.relpath(host(path), start)
     return shell(path)
 
+
 def splitext(path):
     path = shell(path)
     root, ext = os.path.splitext(host(path))
     return shell(root), ext
+
 
 def listdir(path):
     path = shell(path)
@@ -117,7 +144,9 @@ def listdir(path):
         return []
     return os.listdir(hp)
 
+
 def exists(paths):
+
     def _exists(p):
         if not is_abspath(p):
             p = shell(join(os.getcwd(), host(p)))
@@ -130,21 +159,26 @@ def exists(paths):
         return results
     return _exists(shell(paths))
 
+
 def isdir(path):
     path = shell(path)
     return os.path.isdir(host(path))
+
 
 def isfile(path):
     path = shell(path)
     return os.path.isfile(host(path))
 
+
 def isabspath(path):
     path = shell(path)
     return path[0] == '/'
 
+
 def iswritable(path):
     path = shell(path)
     return os.access(host(path), os.W_OK)
+
 
 def ispathwritable(path):
     path = shell(path)
@@ -154,11 +188,13 @@ def ispathwritable(path):
         path = dirname(path)
     return False
 
+
 def mkdir(path):
     path = shell(path)
     if exists(path):
         if not isdir(path):
-            raise error.general('path exists and is not a directory: %s' % (path))
+            raise error.general('path exists and is not a directory: %s' %
+                                (path))
     else:
         if windows:
             try:
@@ -177,9 +213,11 @@ def mkdir(path):
             except OSError as err:
                 raise error.general('cannot make directory: %s' % (path))
 
+
 def chdir(path):
     path = shell(path)
     os.chdir(host(path))
+
 
 def removeall(path):
     #
@@ -189,11 +227,11 @@ def removeall(path):
     # get to the max path length on Windows.
     #
     def _isdir(path):
-        hpath = host(path)
+        hpath = host_encode(path)
         return os.path.isdir(hpath) and not os.path.islink(hpath)
 
     def _remove_node(path):
-        hpath = host(path)
+        hpath = host_encode(path)
         if not os.path.islink(hpath) and not os.access(hpath, os.W_OK):
             os.chmod(hpath, stat.S_IWUSR)
         if _isdir(path):
@@ -216,17 +254,19 @@ def removeall(path):
             _remove_node(dir)
 
     path = shell(path)
-    hpath = host(path)
+    hpath = host_encode(path)
 
     if os.path.exists(hpath):
         _remove(path)
         _remove_node(path)
+
 
 def expand(name, paths):
     l = []
     for p in paths:
         l += [join(shell(p), name)]
     return l
+
 
 def copy(src, dst):
     src = shell(src)
@@ -240,7 +280,9 @@ def copy(src, dst):
             if WindowsError is not None and isinstance(why, WindowsError):
                 pass
         else:
-            raise error.general('copying tree (1): %s -> %s: %s' % (hsrc, hdst, str(why)))
+            raise error.general('copying tree (1): %s -> %s: %s' %
+                                (hsrc, hdst, str(why)))
+
 
 def copy_tree(src, dst):
     trace = False
@@ -307,9 +349,11 @@ def copy_tree(src, dst):
             if WindowsError is not None and isinstance(why, WindowsError):
                 pass
         else:
-            raise error.general('copying tree (4): %s -> %s: %s' % (hsrc, hdst, str(why)))
+            raise error.general('copying tree (4): %s -> %s: %s' %
+                                (hsrc, hdst, str(why)))
 
-def get_size(path, depth = -1):
+
+def get_size(path, depth=-1):
     #
     # Get the size the directory tree manually to the required depth.
     # This makes sure on Windows the files are correctly encoded to avoid
@@ -317,17 +361,17 @@ def get_size(path, depth = -1):
     # get to the max path length on Windows.
     #
     def _isdir(path):
-        hpath = host(path)
+        hpath = host_encode(path)
         return os.path.isdir(hpath) and not os.path.islink(hpath)
 
     def _node_size(path):
-        hpath = host(path)
+        hpath = host_encode(path)
         size = 0
         if not os.path.islink(hpath):
             size = os.path.getsize(hpath)
         return size
 
-    def _get_size(path, depth, level = 0):
+    def _get_size(path, depth, level=0):
         level += 1
         dirs = []
         size = 0
@@ -345,7 +389,7 @@ def get_size(path, depth = -1):
         return size
 
     path = shell(path)
-    hpath = host(path)
+    hpath = host_encode(path)
     size = 0
 
     if os.path.exists(hpath):
@@ -353,13 +397,15 @@ def get_size(path, depth = -1):
 
     return size
 
-def get_humanize_size(path, depth = -1):
+
+def get_humanize_size(path, depth=-1):
     size = get_size(path, depth)
-    for unit in ['','K','M','G','T','P','E','Z']:
+    for unit in ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z']:
         if abs(size) < 1024.0:
             return "%5.3f%sB" % (size, unit)
         size /= 1024.0
     return "%.3f%sB" % (size, 'Y')
+
 
 if __name__ == '__main__':
     print(host('/a/b/c/d-e-f'))

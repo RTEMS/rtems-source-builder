@@ -27,22 +27,75 @@ from __future__ import print_function
 import argparse
 import copy
 import datetime
+import json
 import os
 import sys
 
 try:
-    import build
-    import error
-    import log
-    import simhost
-    import version
+    from . import build
+    from . import error
+    from . import log
+    from . import path
+    from . import simhost
+    from . import version
 except KeyboardInterrupt:
-    print('abort: user terminated', file = sys.stderr)
+    print('abort: user terminated', file=sys.stderr)
     sys.exit(1)
 except:
     raise
 
-def run(args = sys.argv):
+
+def expand(i, imacros):
+    if isinstance(i, list):
+        o = []
+        for rec in i:
+            if isinstance(rec, dict):
+                for key in rec:
+                    if isinstance(rec[key], list):
+                        rec[key] = [imacros.expand(r) for r in rec[key]]
+                    else:
+                        rec[key] = imacros.expand(rec[key])
+                    o += [rec]
+            else:
+                o = [imacros.expand(r) for r in i]
+        return o
+    else:
+        return imacros.expand(i)
+
+
+def process_sources(isources):
+
+    def remove(key, record):
+        if key in record:
+            del record[key]
+
+    urls = {}
+    osources = []
+    for src in isources:
+        if src['url'] not in urls:
+            remove('local', src)
+            remove('local_prefix', src)
+            remove('compressed', src)
+            remove('script', src)
+            osources += [src]
+            urls[src['url']] = True
+    return sorted(osources, key=lambda src: src['file'])
+
+
+def process_hashes(ihashes):
+    files = {}
+    ohashes = []
+
+    for hsh in ihashes:
+        hs = ' '.join(hsh.split()).split()
+        if len(hs) == 3:
+            if hs[1] not in files:
+                ohashes += [{'type': hs[0], 'file': hs[1], 'hash': hs[2]}]
+                files[hs[1]] = True
+    return sorted(ohashes, key=lambda hsh: hsh['file'])
+
+
+def run(args=sys.argv):
     ec = 0
     get_sources_error = True
     try:
@@ -50,49 +103,80 @@ def run(args = sys.argv):
         # The RSB options support cannot be used because it loads the defaults
         # for the host which we cannot do here.
         #
-        description  = 'RTEMS Get Sources downloads all the source a build set '
+        description = 'RTEMS Get Sources downloads all the source a build set '
         description += 'references for all hosts.'
 
-        argsp = argparse.ArgumentParser(prog = 'sb-get-sources',
-                                        description = description)
-        argsp.add_argument('--rtems-version', help = 'Set the RTEMS version.',
-                           type = str,
-                           default = version.version())
-        argsp.add_argument('--list-hosts', help = 'List the hosts.',
-                           action = 'store_true')
-        argsp.add_argument('--list-bsets', help = 'List the buildsets.',
-                           action = 'store_true')
-        argsp.add_argument('--list-root-bsets', help = 'List the toplevel or root buildsets.',
-                           action = 'store_true')
-        argsp.add_argument('--download-dir', help = 'Download directory.',
-                           type = str)
-        argsp.add_argument('--clean', help = 'Clean the download directory.',
-                           action = 'store_true')
-        argsp.add_argument('--tar', help = 'Create a tarball of all the source.',
-                           action = 'store_true')
-        argsp.add_argument('--log', help = 'Log file.',
-                           type = str,
-                           default = simhost.log_default('getsource'))
-        argsp.add_argument('--stop-on-error', help = 'Stop on error.',
-                           action = 'store_true')
-        argsp.add_argument('--trace', help = 'Enable trace logging for debugging.',
-                           action = 'store_true')
-        argsp.add_argument('--used', help = 'Save the used buildset and config files.',
-                           type = str, default = None)
-        argsp.add_argument('--unused', help = 'Save the unused buildset and config files.',
-                           type = str, default = None)
-        argsp.add_argument('bsets', nargs='*', help = 'Build sets.')
+        argsp = argparse.ArgumentParser(prog='rtems-get-sources',
+                                        description=description)
+        argsp.add_argument('--rtems-version',
+                           help='Set the RTEMS version.',
+                           type=str,
+                           default=version.version())
+        argsp.add_argument('--list-hosts',
+                           help='List the hosts.',
+                           action='store_true')
+        argsp.add_argument('--list-bsets',
+                           help='List the buildsets.',
+                           action='store_true')
+        argsp.add_argument('--list-root-bsets',
+                           help='List the toplevel or root buildsets.',
+                           action='store_true')
+        argsp.add_argument('--download-dir',
+                           help='Download directory.',
+                           type=str)
+        argsp.add_argument('--no-download',
+                           help='No downloads.',
+                           action='store_true')
+        argsp.add_argument('--clean',
+                           help='Clean the download directory.',
+                           action='store_true')
+        argsp.add_argument('--tar',
+                           help='Create a tarball of all the source.',
+                           action='store_true')
+        argsp.add_argument('--log',
+                           help='Log file.',
+                           type=str,
+                           default=simhost.log_default('getsource'))
+        argsp.add_argument('--keep-going',
+                           help='Keep going on error.',
+                           action='store_false',
+                           default=False)
+        argsp.add_argument('--trace',
+                           help='Enable trace logging for debugging.',
+                           action='store_true')
+        argsp.add_argument('--used',
+                           help='Save the used buildset and config files.',
+                           type=str,
+                           default=None)
+        argsp.add_argument('--unused',
+                           help='Save the unused buildset and config files.',
+                           type=str,
+                           default=None)
+        argsp.add_argument(
+            '--catalog',
+            help='Save the URLs of downloads as a JSON catalog.',
+            type=str,
+            default=None)
+        argsp.add_argument('bsets', nargs='*', help='Build sets.')
 
-        argopts = argsp.parse_args(args[2:])
+        argopts = argsp.parse_args(args[1:])
 
         simhost.load_log(argopts.log)
-        log.notice('RTEMS Source Builder - Get Sources, %s' % (version.string()))
+        log.notice('RTEMS Source Builder - Get Sources, %s' %
+                   (version.string()))
         log.tracing = argopts.trace
 
-        opts = simhost.load_options(args[1:], argopts, extras = ['--with-download'])
+        if argopts.no_download:
+            download_opt = '--no-download'
+        else:
+            download_opt = '--with-download'
+
+        opts = simhost.load_options(args,
+                                    argopts,
+                                    extras=['--dry-run', download_opt])
         configs = build.get_configs(opts)
 
-        stop_on_error = argopts.stop_on_error
+        stop_on_error = not argopts.keep_going
 
         if argopts.list_hosts:
             simhost.list_hosts()
@@ -103,15 +187,19 @@ def run(args = sys.argv):
         else:
             if argopts.clean:
                 if argopts.download_dir is None:
-                    raise error.general('cleaning of the default download directories is not supported')
+                    raise error.general(
+                        'cleaning of the default download directories is not supported'
+                    )
                 if path.exists(argopts.download_dir):
-                    log.notice('Cleaning source directory: %s' % (argopts.download_dir))
+                    log.notice('Cleaning source directory: %s' %
+                               (argopts.download_dir))
                     path.removeall(argopts.download_dir)
             if len(argopts.bsets) == 0:
                 bsets = simhost.get_root_bset_files(opts, configs)
             else:
                 bsets = argopts.bsets
             deps = copy.copy(simhost.strip_common_prefix(bsets))
+            sources = {'sources': [], 'patches': [], 'hashes': []}
             for bset in bsets:
                 b = None
                 try:
@@ -121,6 +209,9 @@ def run(args = sys.argv):
                         get_sources_error = False
                         b.build(host)
                         deps += b.deps()
+                        sources['sources'] += expand(b._sources, b.macros)
+                        sources['patches'] += expand(b._patches, b.macros)
+                        sources['hashes'] += expand(b._hashes, b.macros)
                         del b
                 except error.general as gerr:
                     if stop_on_error:
@@ -137,6 +228,16 @@ def run(args = sys.argv):
                     [cb for cb in simhost.get_config_bset_files(opts, configs) if not cb in deps]
                 with open(argopts.unused, 'w') as o:
                     o.write(os.linesep.join(cfgs_bsets))
+            if argopts.catalog is not None:
+                sources['sources'] = process_sources(sources['sources'])
+                sources['patches'] = process_sources(sources['patches'])
+                sources['hashes'] = process_hashes(sources['hashes'])
+                print('Catalog has',
+                      len(sources['sources']), 'source packages,',
+                      len(sources['patches']), 'patches and',
+                      len(sources['hashes']), 'hashes')
+                with open(argopts.catalog, 'w') as f:
+                    f.write(json.dumps(sources, indent=2))
     except error.general as gerr:
         if get_sources_error:
             log.stderr(str(gerr))
@@ -157,6 +258,7 @@ def run(args = sys.argv):
         log.notice('abort: unknown error')
         ec = 1
     sys.exit(ec)
+
 
 if __name__ == "__main__":
     run()
