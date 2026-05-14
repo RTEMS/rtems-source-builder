@@ -1,6 +1,6 @@
 #
 # RTEMS Tools Project (http://www.rtems.org/)
-# Copyright 2010-2013 Chris Johns (chrisj@rtems.org)
+# Copyright 2010-2026 Chris Johns (chrisj@rtems.org)
 # All rights reserved.
 #
 # This file is part of the RTEMS Tools package in 'rtems-tools'.
@@ -234,12 +234,16 @@ SB_HOST_CPPFLAGS="%{host_includes}"
 SB_TMP_INCLUDES="%{?_tmproot:-I%{_tmproot}/${SB_PREFIX_CLEAN}/include} %{?_tmpinternal_inc:-I%{_tmpinternal_inc}}"
 SB_TMP_LDFLAGS="%{?_tmpinternal_lib:-L%{_tmpinternal_lib}}"
 # Optionally do not add includes to c/cxx flags as newer configure's complain
-SB_HOST_CFLAGS="%{host_cflags} %{!?host_cflags_no_includes %{host_includes}}"
-SB_HOST_CXXFLAGS="%{host_cxxflags} %{!?host_cflags_no_includes %{host_includes}}"
+# Include the host standards flags if provided
+SB_HOST_CFLAGS="%{host_cflags} %{?host_c_std:--std=%{host_c_std}} %{!?host_cflags_no_includes:%{host_includes}}"
+SB_HOST_CXXFLAGS="%{host_cxxflags} %{?host_cxx_std:--std=%{host_cxx_std}} %{!?host_cflags_no_includes:%{host_includes}}"
 SB_HOST_LDFLAGS="%{host_ldflags} %{?_tmproot:-L%{_tmproot}/${SB_PREFIX_CLEAN}/lib}"
 SB_HOST_LIBS="%{host_libs}"
-SB_BUILD_CFLAGS="%{build_cflags} $SB_TMP_INCLUDES"
-SB_BUILD_CXXFLAGS="%{build_cxxflags} $SB_TMP_INCLUDES"
+# Include the host standards flags if provided and no build standards defined
+SB_BUILD_C_STD="%{!?build_c_std:%{?host_c_std:--std=%{host_c_std}}} %{?build_c_std:--std=%{build_c_std}}"
+SB_BUILD_CFLAGS="%{build_cflags} $SB_BUILD_C_STD $SB_TMP_INCLUDES"
+SB_BUILD_CXX_STD="%{!?build_cxx_std:%{?host_cxx_std:--std=%{host_cxx_std}}} %{?build_cxx_std:--std=%{build_cxx_std}}"
+SB_BUILD_CXXFLAGS="%{build_cxxflags} $SB_BUILD_CXX_STD $SB_TMP_INCLUDES"
 SB_BUILD_LDFLAGS="%{build_ldflags} $SB_TMP_LDFLAGS"
 SB_BUILD_LIBS="%{build_libs}"
 SB_CFLAGS="${SB_BUILD_CFLAGS} %{build_includes} $SB_TMP_INCLUDES"
