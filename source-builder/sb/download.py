@@ -605,7 +605,6 @@ def _file_downloader(url, local, config, opts):
 downloaders = {
     'http': _http_downloader,
     'ftp': _http_downloader,
-    'pw': _http_downloader,
     'git': _git_downloader,
     'cvs': _cvs_downloader,
     'file': _file_downloader
@@ -677,7 +676,7 @@ def process_download_file_cache(local, url_bases, config):
 
 def get_file(url, local, opts, config):
     if local is None:
-        raise error.general('source/patch path invalid')
+        raise error.general('source/patch path invalid:' + url)
     if not path.isdir(path.dirname(local)) and not opts.download_disabled():
         log.notice('Creating source directory: %s' % \
                        (os.path.relpath(path.host(path.dirname(local)))))
