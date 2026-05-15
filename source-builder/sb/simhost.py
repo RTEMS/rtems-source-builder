@@ -45,6 +45,8 @@ except KeyboardInterrupt:
 except:
     raise
 
+host_windows = os.name == 'nt'
+
 #
 # Define host profiles so it can simulated on another host.
 #
@@ -181,6 +183,9 @@ def find_bset_config(bset_config, macros):
             name = path.join(configdir, bset_config)
             if path.exists(name):
                 break
+            elif path.exists(name + '.binc'):
+                name += '.binc'
+                break
             name = None
         if name is None:
             raise error.general('no build set file found: %s' % (bset_config))
@@ -221,7 +226,12 @@ class options(object):
         self.argv = argv
         self.args = argv[1:] + extras
         self.defaults = macros.macros(name=defaults, sbdir=command_path)
+        self.defaults.define('_rsb_getting_source', '1')
         self.load_overrides()
+        self.no_download = False
+        for arg in self.args:
+            if arg == '--no-download':
+                self.no_download = True
         self.opts = {'params': extras}
         self.sb_git()
         self.rtems_bsp()
@@ -232,6 +242,10 @@ class options(object):
                                            path.abspath(argopts.download_dir))
             self.defaults['_patchdir'] = ('dir', 'optional',
                                           path.abspath(argopts.download_dir))
+        # Set the _uid field, performance improvement on Unix
+        if not host_windows:
+            self.defaults['_uid'] = str(os.getuid())
+            self.defaults['_gid'] = str(os.getgid())
 
     def load_overrides(self):
         overrides = None
@@ -379,7 +393,7 @@ class options(object):
         return True
 
     def download_disabled(self):
-        return False
+        return self.no_download
 
     def disable_install(self):
         return True
@@ -410,7 +424,7 @@ class buildset:
             self.macros = copy.copy(opts.defaults)
         else:
             self.macros = copy.copy(macros)
-        self.macros.define('_rsb_getting_source')
+        self.macros.define('_rsb_getting_source', '1')
         log.trace('_bset: %s: macro defaults' % (bset))
         log.trace(str(self.macros))
         self.bset = bset

@@ -83,7 +83,7 @@ from . import path
 #
 # Default to an internal string.
 #
-_version = '6'
+_version = '7'
 _revision = 'not_released'
 _version_str = '%s.%s' % (_version, _revision)
 _released = False

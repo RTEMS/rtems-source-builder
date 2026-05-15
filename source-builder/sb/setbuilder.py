@@ -327,6 +327,9 @@ class buildset:
                 bsetname = path.join(configdir, bset)
                 if path.exists(bsetname):
                     break
+                bsetname += '.binc'
+                if path.exists(bsetname):
+                    break
                 bsetname = None
             if bsetname is None:
                 raise error.general('no build set file found: %s' % (bset))
@@ -721,9 +724,12 @@ class buildset:
 
 
 def list_bset_cfg_files(opts, configs):
-    if opts.get_arg('--list-configs') or opts.get_arg('--list-bsets'):
+    if opts.get_arg('--list-configs') or opts.get_arg(
+            '--list-bsets') or opts.get_arg('--list-bincs'):
         if opts.get_arg('--list-configs'):
             ext = '.cfg'
+        elif opts.get_arg('--list-bincs'):
+            ext = '.binc'
         else:
             ext = '.bset'
         for p in configs['paths']:
@@ -757,6 +763,7 @@ def run():
         optargs = {
             '--list-configs': 'List available configurations',
             '--list-bsets': 'List available build sets',
+            '--list-bincs': 'List available build set includes',
             '--list-configs': 'List available configuration files.',
             '--list-deps': 'List the dependent files.',
             '--list-host': 'List host information and the host triplet.',

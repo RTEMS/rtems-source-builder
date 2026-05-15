@@ -488,10 +488,11 @@ def _git_downloader(url, local, config, opts):
         if enabled(opts):
             repo.clone(us[0], local)
     else:
-        repo.clean(['-f', '-d'])
-        repo.reset('--hard')
-        default_branch = repo.default_branch()
-        repo.checkout(default_branch)
+        if enabled(opts):
+            repo.clean(['-f', '-d'])
+            repo.reset('--hard')
+            default_branch = repo.default_branch()
+            repo.checkout(default_branch)
     for a in us[1:]:
         _as = a.split('=')
         if _as[0] == 'branch' or _as[0] == 'checkout':
@@ -604,7 +605,6 @@ def _file_downloader(url, local, config, opts):
 downloaders = {
     'http': _http_downloader,
     'ftp': _http_downloader,
-    'pw': _http_downloader,
     'git': _git_downloader,
     'cvs': _cvs_downloader,
     'file': _file_downloader
@@ -676,14 +676,15 @@ def process_download_file_cache(local, url_bases, config):
 
 def get_file(url, local, opts, config):
     if local is None:
-        raise error.general('source/patch path invalid')
+        raise error.general('source/patch path invalid:' + url)
     if not path.isdir(path.dirname(local)) and not opts.download_disabled():
         log.notice('Creating source directory: %s' % \
                        (os.path.relpath(path.host(path.dirname(local)))))
     log.output('making dir: %s' % (path.host(path.dirname(local))))
     if enabled(opts):
         path.mkdir(path.dirname(local))
-    if not path.exists(local) and opts.download_disabled():
+    if not path.exists(local) and opts.download_disabled(
+    ) and opts.defaults.expand('%{_rsb_getting_source}') == '0':
         raise error.general('source not found: %s' % (path.host(local)))
     #
     # Check if a URL has been provided on the command line. If the package is
@@ -694,7 +695,8 @@ def get_file(url, local, opts, config):
     url_bases = opts.urls()
     if url_bases is None:
         url_bases = []
-    process_download_file_cache(local, url_bases, config)
+    if not opts.download_disabled():
+        process_download_file_cache(local, url_bases, config)
     process_release_url(url_bases, opts, config)
     urls = []
     if len(url_bases) > 0:

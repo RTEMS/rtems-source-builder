@@ -58,7 +58,7 @@ rtems_pkg_cfgs = [
         'repo':
         'git://gitlab.rtems.org/rtems/tools/rtems-tools.git?protocol=https',
         'repo-name': 'rtems-tools.git',
-        'branch': '6',
+        'branch': 'main',
         'snapshot':
         'https://gitlab.rtems.org/rtems/tools/rtems-tools/-/archive/%{rtems_tools_version}/rtems-tools-%{rtems_tools_version}.tar.bz2',
         'package': 'rtems-tools-%{rtems_tools_version}.tar.bz2'
@@ -69,38 +69,10 @@ rtems_pkg_cfgs = [
         'version': 'rtems_kernel_version',
         'repo': 'git://gitlab.rtems.org/rtems/rtos/rtems.git?protocol=https',
         'repo-name': 'rtems.git',
-        'branch': '6',
+        'branch': 'main',
         'snapshot':
         'https://gitlab.rtems.org/rtems/rtos/rtems/-/archive/%{rtems_kernel_version}/rtems-%{rtems_kernel_version}.tar.bz2',
         'package': 'rtems-kernel-%{rtems_kernel_version}.tar.bz2'
-    },
-    {
-        'label': 'RTEMS LibBSD FreeBSD 12',
-        'config': 'tools/rtems-libbsd-%{rtems_version}-fb12.cfg',
-        'version': 'rtems_libbsd_version',
-        'repo':
-        'git://gitlab.rtems.org/rtems/pkg/rtems-libbsd.git?protocol=https',
-        'repo-name': 'rtems-libbsd.git',
-        'branch': '6-freebsd-12',
-        'snapshot':
-        'https://gitlab.rtems.org/rtems/pkg/rtems-libbsd/-/archive/%{rtems_libbsd_version}/rtems-libbsd-%{rtems_libbsd_version}.tar.%{rtems_libbsd_ext}',
-        'package':
-        'rtems-libbsd-%{rtems_libbsd_version}.tar.%{rtems_libbsd_ext}',
-        'submodules': {
-            'rtems_waf': {
-                'label': 'RTEMS Waf',
-                'config': 'tools/rtems-libbsd-%{rtems_version}-fb12.cfg',
-                'version': 'rtems_waf_version',
-                'repo':
-                'git://gitlab.rtems.org/rtems/tools/rtems_waf.git?protocol=https',
-                'repo-name': 'rtems_waf.git',
-                'branch': '6',
-                'snapshot':
-                'https://gitlab.rtems.org/rtems/tools/rtems_waf/-/archive/%{rtems_waf_version}/rtems_waf-%{rtems_waf_version}.tar.%{rtems_waf_ext}',
-                'package':
-                'rtems_waf-%{rtems_waf_version}.tar.%{rtems_waf_ext}'
-            }
-        }
     },
     {
         'label': 'RTEMS LibBSD FreeBSD 14',
@@ -109,7 +81,7 @@ rtems_pkg_cfgs = [
         'repo':
         'git://gitlab.rtems.org/rtems/pkg/rtems-libbsd.git?protocol=https',
         'repo-name': 'rtems-libbsd.git',
-        'branch': '6-freebsd-14',
+        'branch': '7-freebsd-14',
         'snapshot':
         'https://gitlab.rtems.org/rtems/pkg/rtems-libbsd/-/archive/%{rtems_libbsd_version}/rtems-libbsd-%{rtems_libbsd_version}.tar.%{rtems_libbsd_ext}',
         'package':
@@ -122,7 +94,7 @@ rtems_pkg_cfgs = [
                 'repo':
                 'git://gitlab.rtems.org/rtems/tools/rtems_waf.git?protocol=https',
                 'repo-name': 'rtems_waf.git',
-                'branch': '6',
+                'branch': 'main',
                 'snapshot':
                 'https://gitlab.rtems.org/rtems/tools/rtems_waf/-/archive/%{rtems_waf_version}/rtems_waf-%{rtems_waf_version}.tar.%{rtems_waf_ext}',
                 'package':
@@ -132,12 +104,12 @@ rtems_pkg_cfgs = [
     },
     {
         'label': 'RTEMS lwIP',
-        'config': 'tools/rtems-lwip.cfg',
+        'config': 'tools/rtems-lwip-stable.cfg',
         'version': 'rtems_lwip_version',
         'repo':
         'git://gitlab.rtems.org/rtems/pkg/rtems-lwip.git?protocol=https',
         'repo-name': 'rtems-lwip.git',
-        'branch': '6',
+        'branch': 'main',
         'snapshot':
         'https://gitlab.rtems.org/rtems/pkg/rtems-lwip/-/archive/%{rtems_lwip_version}/rtems-lwip-%{rtems_lwip_version}.tar.%{rtems_lwip_ext}',
         'package':
@@ -145,12 +117,12 @@ rtems_pkg_cfgs = [
         'submodules': {
             'rtems_waf': {
                 'label': 'RTEMS Waf',
-                'config': 'net/rtems-lwip-1.cfg',
+                'config': 'tools/rtems-lwip-stable.cfg',
                 'version': 'rtems_waf_version',
                 'repo':
                 'git://gitlab.rtems.org/rtems/tools/rtems_waf.git?protocol=https',
                 'repo-name': 'rtems_waf.git',
-                'branch': '6',
+                'branch': 'main',
                 'snapshot':
                 'https://gitlab.rtems.org/rtems/tools/rtems_waf/-/archive/%{rtems_waf_version}/rtems_waf-%{rtems_waf_version}.tar.%{rtems_waf_ext}',
                 'package':
@@ -165,7 +137,7 @@ rtems_pkg_cfgs = [
         'repo':
         'git://gitlab.rtems.org/rtems/pkg/rtems-net-legacy.git?protocol=https',
         'repo-name': 'rtems-net-legacy.git',
-        'branch': '6',
+        'branch': 'main',
         'snapshot':
         'https://gitlab.rtems.org/rtems/pkg/rtems-net-legacy/-/archive/%{rtems_net_version}/rtems-net-legacy-%{rtems_net_version}.tar.%{rtems_net_ext}',
         'package':
@@ -178,7 +150,7 @@ rtems_pkg_cfgs = [
                 'repo':
                 'git://gitlab.rtems.org/rtems/tools/rtems_waf.git?protocol=https',
                 'repo-name': 'rtems_waf.git',
-                'branch': '6',
+                'branch': 'main',
                 'snapshot':
                 'https://gitlab.rtems.org/rtems/tools/rtems_waf/-/archive/%{rtems_waf_version}/rtems_waf-%{rtems_waf_version}.tar.%{rtems_waf_ext}',
                 'package':
@@ -193,7 +165,7 @@ rtems_pkg_cfgs = [
         'repo':
         'git://gitlab.rtems.org/rtems/pkg/rtems-net-services.git?protocol=https',
         'repo-name': 'rtems-net-services.git',
-        'branch': '6',
+        'branch': 'main',
         'snapshot':
         'https://gitlab.rtems.org/rtems/pkg/rtems-net-services/-/archive/%{rtems_net_services_version}/rtems-net-services-%{rtems_net_services_version}.tar.%{rtems_net_services_ext}',
         'package':
@@ -206,7 +178,7 @@ rtems_pkg_cfgs = [
                 'repo':
                 'git://gitlab.rtems.org/rtems/tools/rtems_waf.git?protocol=https',
                 'repo-name': 'rtems_waf.git',
-                'branch': '6',
+                'branch': 'main',
                 'snapshot':
                 'https://gitlab.rtems.org/rtems/tools/rtems_waf/-/archive/%{rtems_waf_version}/rtems_waf-%{rtems_waf_version}.tar.%{rtems_waf_ext}',
                 'package':

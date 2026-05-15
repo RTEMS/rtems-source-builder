@@ -1217,6 +1217,9 @@ class file:
                     if isvalid:
                         return ('data',
                                 ['%%error %s' % (self._name_line_msg(l[7:]))])
+                elif ls[0] == '%finish':
+                    if isvalid:
+                        break
                 elif ls[0] == '%log':
                     if isvalid:
                         return ('data',
@@ -1334,7 +1337,10 @@ class file:
         for l in results[1]:
             if l.startswith('%error'):
                 l = self._expand(l)
-                raise error.general('config error: %s' % (l[7:]))
+                if self.opts.keep_going():
+                    print('config error: %s' % (l[7:]))
+                else:
+                    raise error.general('config error: %s' % (l[7:]))
             elif l.startswith('%log'):
                 l = self._expand(l)
                 log.output(l[4:])
@@ -1357,7 +1363,7 @@ class file:
                     self._info_append(info, info_data)
                 else:
                     log.warning(self._name_line_msg("invalid format: '%s'" % \
-                                                    (info_data[:-1])))
+                                                    (info_data.rstrip())))
             else:
                 l = self._expand(l)
                 log.trace('config: %s: %3d:  _data: %s %s' % \
