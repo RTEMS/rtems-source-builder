@@ -80,6 +80,14 @@ build_includes:      none,    convert,  ''
 build_libs:          none,    convert,  ''
 
 #
+# Host and Build standards
+#
+host_c_std:          none,    none,     'gnu17'
+host_cxx_std:        none,    none,     'gnu++17'
+build_c_std:         none,    none,     'gnu17'
+build_cxx_std:       none,    none,     'gnu++17'
+
+#
 # Build and staging paths.
 #
 buildroot:           dir,     none,     '%{_tmppath}/%{buildname}-%{_uid}'
