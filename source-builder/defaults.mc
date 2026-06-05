@@ -82,10 +82,10 @@ build_libs:          none,    convert,  ''
 #
 # Host and Build standards
 #
-host_c_std:          none,    none,     'gnu17'
-host_cxx_std:        none,    none,     'gnu++17'
-build_c_std:         none,    none,     'gnu17'
-build_cxx_std:       none,    none,     'gnu++17'
+host_c_std:          none,    none,     'gnu11'
+host_cxx_std:        none,    none,     'gnu++14'
+build_c_std:         none,    none,     'gnu11'
+build_cxx_std:       none,    none,     'gnu++14'
 
 #
 # Build and staging paths.
