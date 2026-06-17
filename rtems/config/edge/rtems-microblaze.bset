@@ -5,7 +5,7 @@
 
 # Microblaze port is not fully upstream
 
-devel/expat-2.7.3-1
+devel/expat-2.8.1-1
 devel/gmp-6.2.1
 tools/rtems-gdb-17.1
 
