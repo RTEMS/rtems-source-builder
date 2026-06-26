@@ -8,6 +8,6 @@
 # last versions to include nios2 support.
 %define with_rtems_gdb      tools/rtems-gdb-15.2
 %define with_rtems_binutils tools/rtems-binutils-2.43
-%define with_rtems_gcc      tools/rtems-gcc-14.2-newlib-head
+%define with_rtems_gcc      tools/rtems-gcc-14.4-newlib-head
 
 %include edge/rtems-default
