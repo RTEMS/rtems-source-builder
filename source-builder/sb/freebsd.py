@@ -62,6 +62,7 @@ def load():
         'host_ldflags': ('none', 'convert', '-L%{_usr}/lib'),
         '_usr': ('dir', 'required', '/usr/local'),
         '_var': ('dir', 'optional', '/usr/local/var'),
+        '__as': ('exe', 'optional', 'as'),
         '__bash': ('exe', 'optional', '/usr/local/bin/bash'),
         '__bison': ('exe', 'required', '/usr/local/bin/bison'),
         '__cmake': ('exe', 'optional', '/usr/local/bin/cmake'),
