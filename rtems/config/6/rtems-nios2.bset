@@ -1,4 +1,12 @@
 %define release 1
 %define rtems_arch nios2
 %define with_newlib_tls
+
+# Nios2 support has been deprecated. As more tools drop nios2 support,
+# the list of older tools which must be used will grow. For the most
+# part, 6 defaults to tool versions that are old enough to still include
+# nios support.  Future updates that move past binutils 2.43 and gcc
+# 14.2 will have to make sure the nios2 does not move past those.
+%define with_rtems_gdb      tools/rtems-gdb-15.2
+
 %include 6/rtems-default.bset
