@@ -95,6 +95,37 @@ def process_hashes(ihashes):
     return sorted(ohashes, key=lambda hsh: hsh['file'])
 
 
+def check_sources(sources):
+
+    def check_hashes(filename, filebase, not_founds):
+        found = False
+        possibles = []
+        for h in sources['hashes']:
+            if filename == h['file']:
+                found = True
+                break
+            if h['file'].startswith(filebase):
+                possibles.append(h['file'])
+        if not found:
+            if filename not in not_founds:
+                not_founds[filename] = []
+            not_founds[filename] = list(set(not_founds[filename] + possibles))
+
+    not_founds = {}
+    for s in sources['sources']:
+        check_hashes(s['file'], s['name'], not_founds)
+    for p in sources['patches']:
+        check_hashes(p['file'], s['name'], not_founds)
+    if len(not_founds) > 0:
+        for not_found in not_founds:
+            print('error: no hash for file {}'.format(not_found))
+        if len(not_founds[not_found]) > 0:
+            print('Possible hashes: {}'.format(len(not_founds[not_found])))
+            for p in not_founds[not_found]:
+                print(' {}'.format(p))
+        raise RuntimeError('sources and hashses have errors')
+
+
 def run(args=sys.argv):
     ec = 0
     get_sources_error = True
@@ -228,16 +259,16 @@ def run(args=sys.argv):
                     [cb for cb in simhost.get_config_bset_files(opts, configs) if not cb in deps]
                 with open(argopts.unused, 'w') as o:
                     o.write(os.linesep.join(cfgs_bsets))
+            sources['sources'] = process_sources(sources['sources'])
+            sources['patches'] = process_sources(sources['patches'])
+            sources['hashes'] = process_hashes(sources['hashes'])
+            print('RSB Get Sources processed', len(sources['sources']),
+                  'source packages,', len(sources['patches']), 'patches and',
+                  len(sources['hashes']), 'hashes')
             if argopts.catalog is not None:
-                sources['sources'] = process_sources(sources['sources'])
-                sources['patches'] = process_sources(sources['patches'])
-                sources['hashes'] = process_hashes(sources['hashes'])
-                print('Catalog has',
-                      len(sources['sources']), 'source packages,',
-                      len(sources['patches']), 'patches and',
-                      len(sources['hashes']), 'hashes')
                 with open(argopts.catalog, 'w') as f:
                     f.write(json.dumps(sources, indent=2))
+            check_sources(sources)
     except error.general as gerr:
         if get_sources_error:
             log.stderr(str(gerr))
@@ -250,6 +281,11 @@ def run(args=sys.argv):
         ec = 1
     except error.exit as eerr:
         pass
+    except RuntimeError as rterr:
+        if get_sources_error:
+            log.stderr(str(rterr))
+        log.stderr('Build FAILED')
+        ec = 1
     except KeyboardInterrupt:
         log.notice('abort: user terminated')
         ec = 1
