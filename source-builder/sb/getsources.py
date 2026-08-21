@@ -121,10 +121,11 @@ def check_sources(sources):
     if len(not_founds) > 0:
         for not_found in not_founds:
             print('error: no hash for file {}'.format(not_found))
-        if len(not_founds[not_found]) > 0:
-            print('Possible hashes: {}'.format(len(not_founds[not_found])))
-            for p in not_founds[not_found]:
-                print(' {}'.format(p))
+            if len(not_founds[not_found]) > 0:
+                print(' Possible hashes: {}'.format(len(
+                    not_founds[not_found])))
+                for p in not_founds[not_found]:
+                    print('  {}'.format(p))
         raise RuntimeError('sources and hashes have errors')
 
 
