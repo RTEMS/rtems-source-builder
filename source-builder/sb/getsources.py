@@ -113,17 +113,20 @@ def check_sources(sources):
 
     not_founds = {}
     for s in sources['sources']:
-        check_hashes(s['file'], s['name'], not_founds)
+        if s['type'] == 'file':
+            check_hashes(s['file'], s['name'], not_founds)
     for p in sources['patches']:
-        check_hashes(p['file'], s['name'], not_founds)
+        if s['type'] == 'file':
+            check_hashes(p['file'], s['name'], not_founds)
     if len(not_founds) > 0:
         for not_found in not_founds:
             print('error: no hash for file {}'.format(not_found))
-        if len(not_founds[not_found]) > 0:
-            print('Possible hashes: {}'.format(len(not_founds[not_found])))
-            for p in not_founds[not_found]:
-                print(' {}'.format(p))
-        raise RuntimeError('sources and hashses have errors')
+            if len(not_founds[not_found]) > 0:
+                print(' Possible hashes: {}'.format(len(
+                    not_founds[not_found])))
+                for p in not_founds[not_found]:
+                    print('  {}'.format(p))
+        raise RuntimeError('sources and hashes have errors')
 
 
 def run(args=sys.argv):
