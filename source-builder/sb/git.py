@@ -172,9 +172,7 @@ class repo:
 
     def dirty(self):
         _status = self.status()
-        _status.pop('untracked', None)
-        _status.pop('detached', None)
-        return not (len(_status) == 1 and 'branch' in _status)
+        return 'staged' in _status or 'unstaged' in _status
 
     def valid(self):
         if path.exists(self.path):
